@@ -4,20 +4,9 @@ Getting started
 Installation
 ------------
 
-To install the ``delira`` you need to clone the repo by
+To install the ``delira`` you need can simply run
 
-* ``git clone https://git.lfb.rwth-aachen.de/schock/Delira2.0.git``
-
-and install the requirements
-
-* ``cd Delira2.0``
-
-* ``pip install -r requirements_unix.txt``
-
-and can then finally install ``delira`` itself by
-
-* ``pip install .``
-
+* ``pip install git+https://github.com/justusschock/delira.git``
 
 Introduction
 ------------
