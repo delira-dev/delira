@@ -17,10 +17,7 @@ Delira is deep learning framework for medical images such as CT or MRI. Based on
 Delira supports classification and regression problems as well as generative adversarial networks.
 
 ## Installation
-* `git clone -b v1.1 https://git.lfb.rwth-aachen.de/Radiology/Delira.git`
-* `cd Delira`
-* `pip install -r requirements_unix.txt`
-* `pip install .`
+* `pip install git+https://github.com/justusschock/delira.git`
 
 ## Getting Started
 The best way to learn how to use is to have a look at the [Delira tutorial notebook](https://git.lfb.rwth-aachen.de/Radiology/Delira/blob/master/notebooks/Tutorial_Delira.ipynb).
