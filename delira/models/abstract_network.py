@@ -1,4 +1,5 @@
 import torch
+import tensorflow as tf
 import abc
 import logging
 
@@ -227,3 +228,60 @@ class AbstractPyTorchNetwork(AbstractNetwork, torch.nn.Module):
         return return_dict
 
 
+class AbstractTfNetwork(AbstractNetwork):
+    """
+    Abstract Class for Tf Networks
+
+    See Also
+    --------
+    :class:`AbstractNetwork`
+
+    """
+    @abc.abstractmethod
+    def __init__(self, sess=tf.Session(), **kwargs):
+        """
+
+        Parameters
+        ----------
+        **kwargs :
+            keyword arguments (are passed to :class:`AbstractNetwork`'s `
+            __init__ to register them as init kwargs
+
+        """
+        AbstractNetwork.__init__(self, **kwargs)
+        self.sess = sess
+        self.inputs = None
+        self.outputs_train = None
+        self.outputs_eval = None
+        self.training = True
+
+    def train(self):
+        self.training = True
+
+    def eval(self):
+        self.training = False
+
+    def run(self, *args):
+        """
+        Based on state of self.train, runs either self.outputs_train or
+        self.outputs_eval
+
+        Parameters
+        ----------
+        *args :
+            positional arguments passed to `self.sess.run` as feed dict
+
+        Returns
+        -------
+        Any
+            result: module results of arbitrary type and number
+        """
+
+        if isinstance(self.inputs, tf.Tensor):
+            _feed_dict = dict(zip([self.inputs], args))
+        else:
+            _feed_dict = dict(zip(self.inputs, args))
+        if self.training:
+            return self.sess.run(self.outputs_train, feed_dict=_feed_dict)
+        else:
+            return self.sess.run(self.outputs_eval, feed_dict=_feed_dict)
