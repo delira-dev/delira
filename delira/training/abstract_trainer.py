@@ -223,7 +223,7 @@ class AbstractNetworkTrainer(object):
             current fold
 
         """
-        return self._fold,
+        return self._fold
 
     @fold.setter
     def fold(self, fold):
@@ -357,6 +357,8 @@ class AbstractNetworkTrainer(object):
 
         """
         for attr in dir(new_state):
+            if (attr.startswith("__") and attr.endswith("__")):
+                continue
 
             try:
                 setattr(self, attr, getattr(new_state, attr))
