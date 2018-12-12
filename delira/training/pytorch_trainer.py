@@ -126,7 +126,7 @@ class PyTorchNetworkTrainer(AbstractNetworkTrainer):
         # schedulers
         if lr_scheduler_cls is not None:
             for key, optim in self.optimizers.items():
-                if not isinstance(lr_scheduler_cls, AbstractCallback):
+                if not issubclass(lr_scheduler_cls, AbstractCallback):
                     logger.warning("lr_scheduler_cls is not a callback.")
                 self.register_callback(lr_scheduler_cls(optim,
                                                         **lr_scheduler_params))
