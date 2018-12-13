@@ -16,7 +16,7 @@ class AbstractNetwork(object):
     @abc.abstractmethod
     def __init__(self, **kwargs):
         """
-        Init function to register init kwargs (should be called from all 
+        Init function to register init kwargs (should be called from all
         subclasses)
 
         Parameters
@@ -136,7 +136,7 @@ class AbstractNetwork(object):
 
 if "torch" in os.environ["DELIRA_BACKEND"]:
     import torch
-        
+
     class AbstractPyTorchNetwork(AbstractNetwork, torch.nn.Module):
         """
         Abstract Class for PyTorch Networks
@@ -240,6 +240,7 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
         :class:`AbstractNetwork`
 
         """
+
         @abc.abstractmethod
         def __init__(self, sess=tf.Session(), **kwargs):
             """
@@ -263,6 +264,24 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
 
         def eval(self):
             self.training = False
+
+        def __call__(self, *args):
+            """
+            Wrapper for calling self.run in eval setting
+
+            Parameters
+            ----------
+            *args :
+                positional arguments (passed to `self.run`)
+
+            Returns
+            -------
+            Any
+                result: module results of arbitrary type and number
+
+            """
+            self.eval()
+            return self.run(*args)
 
         def run(self, *args):
             """
