@@ -100,14 +100,18 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
         return model
 
-    def closure(self, data_dict: dict,
+    @staticmethod
+    def closure(model: Type[AbstractTfNetwork], data_dict: dict,
                 metrics={}, fold=0, **kwargs):
         """
                 closure method to do a single prediction.
-                This is followed by backpropagation or not based on self.train
+                This is followed by backpropagation or not based state of
+                on model.train
 
                 Parameters
                 ----------
+                model: AbstractTfNetwork
+                    AbstractTfNetwork or its child-clases
                 data_dict : dict
                     dictionary containing the data
                 metrics : dict
@@ -122,7 +126,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
                 dict
                     Metric values (with same keys as input dict metrics)
                 dict
-                    Loss values (with same keys as those initially passed to self.init).
+                    Loss values (with same keys as those initially passed to model.init).
                     Additionally, a total_loss key is added
                 list
                     Arbitrary number of predictions as np.array
@@ -134,7 +138,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
         inputs = data.pop('data')
 
-        preds, losses, *_ = self.run(inputs, data_dict['label'])
+        preds, losses, *_ = model.run(inputs, data_dict['label'])
 
         for key, loss_val in losses.items():
             loss_vals[key] = loss_val
@@ -143,7 +147,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             metric_vals[key] = metric_fn(
                 preds, *data_dict.values())
 
-        if not self.training:
+        if not model.training:
             # add prefix "val" in validation mode
             eval_loss_vals, eval_metrics_vals = {}, {}
             for key in loss_vals.keys():
@@ -170,7 +174,7 @@ if __name__ == '__main__':
     l['softCE'] = tf.losses.softmax_cross_entropy
     l['sigCE'] = tf.losses.sigmoid_cross_entropy
     asd = ClassificationNetworkBaseTf(3, 7, losses=l, optim=tf.train.AdamOptimizer)
-    
+
     def accuracy_score(y_true, y_pred):
         y_true = np.argmax(y_true, axis=0)
         y_pred = np.argmax(y_pred, axis=0)
@@ -184,11 +188,11 @@ if __name__ == '__main__':
         metrics['Accuracy'] = accuracy_score
 
         asd.train()
-        asd.closure(data, metrics)
+        asd.closure(asd, data, metrics)
 
         data = {}
         data['data'] = np.random.rand(100, 3, 224, 224)
         data['label'] = np.random.random_integers(0, 1, size=(100, 7))
 
         asd.eval()
-        asd.closure(data, metrics)
+        asd.closure(asd, data, metrics)
