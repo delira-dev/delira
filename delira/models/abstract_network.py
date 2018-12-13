@@ -261,6 +261,24 @@ class AbstractTfNetwork(AbstractNetwork):
     def eval(self):
         self.training = False
 
+    def __call__(self, *args):
+        """
+        Wrapper for calling self.run in eval setting
+
+        Parameters
+        ----------
+        *args :
+            positional arguments (passed to `self.run`)
+
+        Returns
+        -------
+        Any
+            result: module results of arbitrary type and number
+
+        """
+        self.eval()
+        return self.run(*args)
+
     def run(self, *args):
         """
         Based on state of self.train, runs either self.outputs_train or
