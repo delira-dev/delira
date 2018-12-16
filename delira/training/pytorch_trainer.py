@@ -6,6 +6,7 @@ import typing
 from tqdm.auto import tqdm
 import torch
 from collections import OrderedDict
+from apex import amp
 from batchgenerators.dataloading import MultiThreadedAugmenter
 from .callbacks import AbstractCallback
 from .abstract_trainer import AbstractNetworkTrainer
@@ -31,7 +32,10 @@ class PyTorchNetworkTrainer(AbstractNetworkTrainer):
                  optimizer_params={}, metrics={}, lr_scheduler_cls=None,
                  lr_scheduler_params={}, gpu_ids=[], save_freq=1,
                  optim_fn=create_optims_default,
-                 fold=0, callbacks=[], start_epoch=1,
+                 fold=0, callbacks=[], start_epoch=1, half_precision=False,
+                 half_precision_kwargs={"enable_caching": True,
+                                        "verbose": False,
+                                        "allow_banned": False},
                  **kwargs):
 
         """
@@ -93,13 +97,15 @@ class PyTorchNetworkTrainer(AbstractNetworkTrainer):
         self.start_epoch = start_epoch
 
         self._setup(network, optim_fn, optimizer_cls, optimizer_params,
-                    lr_scheduler_cls, lr_scheduler_params, gpu_ids)
+                    lr_scheduler_cls, lr_scheduler_params, gpu_ids,
+                    half_precision, half_precision_kwargs)
 
         for key, val in kwargs.items():
             setattr(self, key, val)
 
     def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
-               lr_scheduler_cls, lr_scheduler_params, gpu_ids):
+               lr_scheduler_cls, lr_scheduler_params, gpu_ids,
+               half_precision, half_precision_kwargs):
         """
         Defines the Trainers Setup
 
@@ -120,8 +126,12 @@ class PyTorchNetworkTrainer(AbstractNetworkTrainer):
             list containing ids of GPUs to use; if empty: use cpu instead
 
         """
+        self._amp_handle = amp.init(half_precision, **half_precision_kwargs)
 
-        self.optimizers = optim_fn(network, optimizer_cls, **optimizer_params)
+        # wrap optimizers by half_precision_optimizer via apex if necessary
+        self.optimizers = {k: self._amp_handle.wrap_optimizer(
+            v, num_loss=len(self.criterions)) for k, v
+            in optim_fn(network, optimizer_cls, **optimizer_params).items()}
 
         # schedulers
         if lr_scheduler_cls is not None:
@@ -561,3 +571,4 @@ class PyTorchNetworkTrainer(AbstractNetworkTrainer):
                                                       **kwargs)
             return {"module": model, "optimizers": optimizer,
                     "start_epoch": epoch}
+
