@@ -105,7 +105,6 @@ def sitk_resample_to_image(image, reference_image, default_value=0.,
     return resample_filter.Execute(image)
 
 
-@sitk_img_func
 def sitk_new_blank_image(size, spacing, direction, origin, default_value=0.):
     """
     Create a new blank image with given properties
