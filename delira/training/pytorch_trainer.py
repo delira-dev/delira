@@ -32,8 +32,8 @@ class PyTorchNetworkTrainer(AbstractNetworkTrainer):
                  optimizer_params={}, metrics={}, lr_scheduler_cls=None,
                  lr_scheduler_params={}, gpu_ids=[], save_freq=1,
                  optim_fn=create_optims_default,
-                 fold=0, callbacks=[], start_epoch=1, half_precision=False,
-                 half_precision_kwargs={"enable_caching": True,
+                 fold=0, callbacks=[], start_epoch=1, mixed_precision=False,
+                 mixed_precision_kwargs={"enable_caching": True,
                                         "verbose": False,
                                         "allow_banned": False},
                  **kwargs):
@@ -71,6 +71,10 @@ class PyTorchNetworkTrainer(AbstractNetworkTrainer):
             initial callbacks to register
         start_epoch : int
             epoch to start training at
+        mixed_precision : bool
+            whether to use mixed precision or not (False per default)
+        mixed_precision_kwargs : dict
+            additional keyword arguments for mixed precision
         **kwargs :
             additional keyword arguments
 
@@ -98,14 +102,14 @@ class PyTorchNetworkTrainer(AbstractNetworkTrainer):
 
         self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                     lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-                    half_precision, half_precision_kwargs)
+                    mixed_precision, mixed_precision_kwargs)
 
         for key, val in kwargs.items():
             setattr(self, key, val)
 
     def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
                lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-               half_precision, half_precision_kwargs):
+               mixed_precision, mixed_precision_kwargs):
         """
         Defines the Trainers Setup
 
@@ -124,9 +128,13 @@ class PyTorchNetworkTrainer(AbstractNetworkTrainer):
             keyword arguments passed to lr scheduler during construction
         gpu_ids : list
             list containing ids of GPUs to use; if empty: use cpu instead
+        mixed_precision : bool
+            whether to use mixed precision or not (False per default)
+        mixed_precision_kwargs : dict
+            additional keyword arguments for mixed precision
 
         """
-        self._amp_handle = amp.init(half_precision, **half_precision_kwargs)
+        self._amp_handle = amp.init(mixed_precision, **mixed_precision_kwargs)
 
         # wrap optimizers by half_precision_optimizer via apex if necessary
         self.optimizers = {k: self._amp_handle.wrap_optimizer(
