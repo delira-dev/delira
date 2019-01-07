@@ -1,4 +1,4 @@
-lira# Adapted from https://github.com/jaxony/unet-pytorch/blob/master/model.py
+# Adapted from https://github.com/jaxony/unet-pytorch/blob/master/model.py
 
 import torch
 import torch.nn.functional as F
