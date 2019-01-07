@@ -164,7 +164,10 @@ class GenerativeAdversarialNetworkBasePyTorch(AbstractPyTorchNetwork):
 
                 # actual backpropagation
                 optimizers["discr"].zero_grad()
-                total_loss_discr.backward(retain_graph=True)
+                # perform loss scaling via apex if half precision is enabled
+                with optimizers["discr"].scale_loss(
+                        total_loss_discr) as scaled_loss:
+                    scaled_loss.backward(retain_graph=True)
                 optimizers["discr"].step()
 
             # calculate adversarial loss for generator update
@@ -197,7 +200,10 @@ class GenerativeAdversarialNetworkBasePyTorch(AbstractPyTorchNetwork):
             if optimizers:
                 # actual backpropagation
                 optimizers["gen"].zero_grad()
-                total_loss_gen.backward()
+                # perform loss scaling via apex if half precision is enabled
+                with optimizers["gen"].scale_loss(
+                        total_loss_gen) as scaled_loss:
+                    scaled_loss.backward()
                 optimizers["gen"].step()
 
             else:

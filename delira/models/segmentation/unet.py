@@ -243,7 +243,9 @@ class UNet2dPyTorch(AbstractPyTorchNetwork):
 
         if optimizers:
             optimizers['default'].zero_grad()
-            total_loss.backward()
+            # perform loss scaling via apex if half precision is enabled
+            with optimizers["default"].scale_loss(total_loss) as scaled_loss:
+                scaled_loss.backward()
             optimizers['default'].step()
 
         else:
@@ -690,7 +692,9 @@ class UNet3dPyTorch(AbstractPyTorchNetwork):
 
         if optimizers:
             optimizers['default'].zero_grad()
-            total_loss.backward()
+            # perform loss scaling via apex if half precision is enabled
+            with optimizers["default"].scale_loss(total_loss) as scaled_loss:
+                scaled_loss.backward()
             optimizers['default'].step()
 
         else:

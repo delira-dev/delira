@@ -4,13 +4,15 @@ from delira.models import AbstractPyTorchNetwork, UNet2dPyTorch, \
 from delira.training.train_utils import create_optims_default_pytorch, \
     create_optims_gan_default_pytorch
 import torch
+from apex import amp
 import numpy as np
 import pytest
 import time
+import gc
 
 
 @pytest.mark.parametrize("model,input_shape,target_shape,loss_fn,"
-                         "create_optim_fn,max_range",
+                         "create_optim_fn,max_range,half_precision",
                          [
                              # UNet 2D
                              (
@@ -20,7 +22,8 @@ import time
                                      {"loss_fn": torch.nn.CrossEntropyLoss()
                                       },  # loss function
                                      create_optims_default_pytorch,  # optim_fn
-                                     4  # output range (num_classes -1)
+                                     4,  # output range (num_classes -1)
+                                     True  # half precision
                              ),
                              # UNet 3D
                              (
@@ -30,7 +33,8 @@ import time
                                      {"loss_fn": torch.nn.CrossEntropyLoss()
                                       },  # loss function
                                      create_optims_default_pytorch,  # optim_fn
-                                     4  # output range (num_classes) - 1
+                                     4,  # output range (num_classes) - 1
+                                     True  # half precision
                              ),
                              # Base Classifier (Resnet 18)
                              (
@@ -41,7 +45,8 @@ import time
                                      {"loss_fn": torch.nn.CrossEntropyLoss()
                                       },  # loss function
                                      create_optims_default_pytorch,  # optim_fn
-                                     None  # no max_range needed
+                                     None,  # no max_range needed
+                                     True  # half precision
                              ),
                              # 3D VGG
                              (
@@ -52,7 +57,8 @@ import time
                                      {"loss_fn": torch.nn.CrossEntropyLoss()
                                       },  # loss function
                                      create_optims_default_pytorch,  # optim fn
-                                     None  # no max_range needed
+                                     None,  # no max_range needed
+                                     True  # half precision
                              ),
                              # DCGAN
                              (
@@ -64,18 +70,21 @@ import time
                                      {"loss_fn": torch.nn.MSELoss()},  # loss
                                      create_optims_gan_default_pytorch,
                                      # optimizer function
-                                     1  # standard max range
+                                     1,  # standard max range
+                                     True  # half precision
                              )
                          ])
 def test_pytorch_model_default(model: AbstractPyTorchNetwork, input_shape,
                                target_shape, loss_fn, create_optim_fn,
-                               max_range):
+                               max_range, half_precision):
 
+    amp_handle = amp.init(half_precision)
     start_time = time.time()
 
     # test backward if optimizer fn is not None
     if create_optim_fn is not None:
-        optim = create_optim_fn(model, torch.optim.Adam)
+        optim = {k: amp_handle.wrap_optimizer(v, num_loss=len(loss_fn))
+                 for k, v in create_optim_fn(model, torch.optim.Adam).items()}
 
     else:
         optim = {}
@@ -108,6 +117,14 @@ def test_pytorch_model_default(model: AbstractPyTorchNetwork, input_shape,
 
     print("Time needed for %s: %.3f" % (model.__class__.__name__, end_time -
                                         start_time))
+
+    del device
+    del optim
+    del closure
+    del prepare_batch
+    del model
+    del amp_handle
+    gc.collect()
 
 
 if __name__ == '__main__':
