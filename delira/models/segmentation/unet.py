@@ -1,4 +1,4 @@
-# Adapted from https://github.com/jaxony/unet-pytorch/blob/master/model.py
+lira# Adapted from https://github.com/jaxony/unet-pytorch/blob/master/model.py
 
 import torch
 import torch.nn.functional as F
@@ -448,6 +448,9 @@ class UNet2dPyTorch(AbstractPyTorchNetwork):
             input_device).to(torch.float)}
 
         for key, vals in batch.items():
+            if key == "label" and len(vals.shape) == 4:
+                vals = vals[:, 0]  # remove first axis if to many axis
+                                # (channel dimension)
             return_dict[key] = torch.from_numpy(vals).to(output_device).to(
                 torch.long)
 
@@ -900,6 +903,9 @@ class UNet3dPyTorch(AbstractPyTorchNetwork):
             input_device).to(torch.float)}
 
         for key, vals in batch.items():
+            if key == "label" and len(vals.shape) == 5:
+                vals = vals[:, 0]  # remove first axis if to many axis
+                # (channel dimension)
             return_dict[key] = torch.from_numpy(vals).to(output_device).to(
                 torch.long)
 
