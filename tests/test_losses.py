@@ -73,7 +73,7 @@ def test_focalloss():
     # test if loss function also works on gpu
     focal = BCEFocalLossPyTorch(gamma=gamma, alpha=alpha, reduction='none')
     if torch.cuda.is_available():
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cpu")
         p_cuda = p.to(device)
         t_cuda = t.to(device)
         focal_loss = focal(p_cuda, t_cuda)
@@ -81,7 +81,7 @@ def test_focalloss():
 
     focal = BCEFocalLossLogitPyTorch(gamma=gamma, alpha=alpha, reduction='none')
     if torch.cuda.is_available():
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cpu")
         p_l_cuda = p_l.to(device)
         t_cuda = t.to(device)
         focal_loss = focal(p_l_cuda, t_cuda)
