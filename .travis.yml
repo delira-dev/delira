@@ -5,6 +5,7 @@ python:
   
 # command to install dependencies
 install:
+  - pip install -q -U pip wheel
   - pip install -q -r requirements.txt
   
 # command to run tests
