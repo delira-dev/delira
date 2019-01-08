@@ -20,8 +20,8 @@ Delira supports classification and regression problems as well as generative adv
 * `pip install git+https://github.com/justusschock/delira.git`
 
 ## Getting Started
-The best way to learn how to use is to have a look at the [Delira tutorial notebook](https://git.lfb.rwth-aachen.de/Radiology/Delira/blob/master/notebooks/Tutorial_Delira.ipynb).
-Example implementations for classification problems and GANs are provided in the [examples](https://git.lfb.rwth-aachen.de/Radiology/Delira/tree/master/examples) folder.
+The best way to learn how to use is to have a look at the [tutorial notebook](https://github.com/justusschock/delira/blob/master/notebooks/tutorial_delira.ipynb).
+Example implementations for classification problems and GANs are also provided in the [notebooks](https://github.com/justusschock/delira/blob/master/notebooks) folder.
 
 ## Contributing
 If you find a bug or have an idea for an improvement, please have a look at our [contribution guideline](CONTRIBUTING.md).
