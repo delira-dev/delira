@@ -266,10 +266,10 @@ class UNet2dPyTorch(AbstractPyTorchNetwork):
                                     "env_appendix": "_%02d" % fold
                                     }})
 
-        logging.info({'image_grid': {"inputs": inputs, "name": "input_images",
+        logging.info({'image_grid': {"images": inputs, "name": "input_images",
                                      "env_appendix": "_%02d" % fold}})
 
-        logging.info({'image_grid': {"results": preds,
+        logging.info({'image_grid': {"images": preds,
                                      "name": "predicted_images",
                                      "env_appendix": "_%02d" % fold}})
 
