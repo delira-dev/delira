@@ -4,6 +4,7 @@ from tqdm import tqdm
 import numpy as np
 from torchvision.datasets import CIFAR10, CIFAR100, MNIST, FashionMNIST, EMNIST
 from skimage.transform import resize
+from sklearn.model_selection import train_test_split
 from ..utils import subdirs
 
 
@@ -12,6 +13,7 @@ class AbstractDataset:
     Base Class for Dataset
 
     """
+
     def __init__(self, data_path, load_fn, img_extensions, gt_extensions):
         """
 
@@ -81,12 +83,116 @@ class AbstractDataset:
         """
         return len(self.data)
 
+    def train_test_split(self, *args, **kwargs):
+        """
+        split dataset into train and test data
+
+        Parameters
+        ----------
+        *args : 
+            positional arguments of ``train_test_split``
+        **kwargs :
+            keyword arguments of ``train_test_split``
+
+        Returns
+        -------
+        :class:`BlankDataset`
+            train dataset
+        :class:`BlankDataset`
+            test dataset
+
+        See Also
+        --------
+        ``sklearn.model_selection.train_test_split``
+
+        """
+
+        train_idxs, test_idxs = train_test_split(
+            np.arange(len(self)), *args, **kwargs)
+
+        train_data = [self.data[idx] for idx in train_idxs]
+        test_data = [self.data[idx] for idx in test_idxs]
+
+        kwargs = {}
+
+        for key, val in vars(self).items():
+            if not (key.startswith("__") and key.endswith("__")):
+                kwargs[key] = val
+
+        kwargs["__getitem__"] = self.__getitem__
+        train_dset = BlankDataset(train_data, **kwargs)
+        test_dset = BlankDataset(test_data, **kwargs)
+
+        return train_dset, test_dset
+
+
+class BlankDataset(AbstractDataset):
+    """
+    Blank Dataset loading the data, which has been passed 
+    in it's ``__init__`` by it's ``load_fn``
+
+    """
+
+    def __init__(self, data, load_fn, load_kwargs={}, **kwargs):
+        """
+
+        Parameters
+        ----------
+        data : iterable
+            data to load
+        load_fn : function
+            function to load the ``data``
+        load_kwargs : dict
+            dictionary containing all keyword arguments passed to the ``load_fn``
+        **kwargs :
+            additional keyword arguments (are set as class attribute)
+
+        """
+        super().__init__(None, load_fn, None, None)
+
+        self.data = data
+        self.load_kwargs = load_kwargs
+
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+    def __getitem__(self, index):
+        """
+        returns single sample corresponding to ``index`` via the ``load_fn``
+
+        Parameters
+        ----------
+        index : int
+            index specifying the data to load
+
+        Returns
+        -------
+        dict
+            dictionary containing a single sample
+
+        """
+        return self._load_fn(self.data[index], **self.load_kwargs)
+
+    def __len__(self):
+        """
+        returns the length of the dataset
+
+        Returns
+        -------
+        int
+            number of samples
+
+        """
+
+        return len(self.data)
+
 
 class BaseLazyDataset(AbstractDataset):
     """
     Dataset to load data in a lazy way
 
     """
+
     def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
                  **load_kwargs):
         """
@@ -205,6 +311,7 @@ class BaseCacheDataset(AbstractDataset):
     data needs to fit completely into RAM!
 
     """
+
     def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
                  **load_kwargs):
         """
@@ -321,6 +428,7 @@ class Nii3DLazyDataset(BaseLazyDataset):
     Dataset to load 3D medical images (e.g. from .nii files) during training
 
     """
+
     def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
                  img_files, label_file, **load_kwargs):
         """
@@ -372,8 +480,8 @@ class Nii3DLazyDataset(BaseLazyDataset):
         """
         assert os.path.isdir(path)
 
-        data = [[{'img':[os.path.join(t, i) for i in self.img_files],
-                 'label': os.path.join(t, self.label_file)}]
+        data = [[{'img': [os.path.join(t, i) for i in self.img_files],
+                  'label': os.path.join(t, self.label_file)}]
                 for t in subdirs(path)]
         return data
 
@@ -383,6 +491,7 @@ class Nii3DCacheDatset(BaseCacheDataset):
     Dataset to load 3D medical images (e.g. from .nii files) before training
 
     """
+
     def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
                  img_files, label_file, **load_kwargs):
         """
@@ -435,7 +544,7 @@ class Nii3DCacheDatset(BaseCacheDataset):
         assert os.path.isdir(path)
         data = []
         for s in tqdm(subdirs(path), unit='samples', desc="Loading samples"):
-            files = {'img':[os.path.join(s, i) for i in self.img_files],
+            files = {'img': [os.path.join(s, i) for i in self.img_files],
                      'label': os.path.join(s, self.label_file)}
 
             data.append(self._load_fn(files, **self._load_kwargs))
@@ -447,6 +556,7 @@ class TorchvisionClassificationDataset(AbstractDataset):
     Wrapper for torchvision classification datasets to provide consistent API
 
     """
+
     def __init__(self, dataset, root="/tmp/", train=True, download=True,
                  img_shape=(28, 28), **kwargs):
         """
@@ -549,7 +659,7 @@ class TorchvisionClassificationDataset(AbstractDataset):
             img = img.reshape(
                 *img.shape, 1)
 
-        img = img.transpose((len(img.shape) -1, *range(len(img.shape) - 1)))
+        img = img.transpose((len(img.shape) - 1, *range(len(img.shape) - 1)))
 
         data_dict["data"] = img.astype(np.float32)
         return data_dict
@@ -565,5 +675,3 @@ class TorchvisionClassificationDataset(AbstractDataset):
 
         """
         return len(self.data)
-
-

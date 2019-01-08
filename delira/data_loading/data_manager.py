@@ -132,6 +132,36 @@ class BaseDataManager(object):
                                       num_cached_per_queue=2,
                                       seeds=self.n_process_augmentation*[seed])
 
+    def train_test_split(self, *args, **kwargs):
+        """
+        Calls :method:`AbstractDataset.train_test_split` and returns 
+        a manager for each subset with same configuration as current manager
+
+        *args : 
+            positional arguments for 
+            ``sklearn.model_selection.train_test_split``
+        **kwargs :
+            keyword arguments for 
+            ``sklearn.model_selection.train_test_split``
+        
+        """
+
+        trainset, valset = self.dataset.train_test_split(*args, **kwargs)
+
+        subset_kwargs = {
+            "batch_size": self.batch_size,
+            "n_process_augmentation": self.n_process_augmentation,
+            "transforms": self.transforms,
+            "sampler_cls": self.sampler.__class__,
+            "data_loader_cls": self.data_loader_cls,
+            "dataset_cls": None,
+            "load_fn": None,
+            "from_disc": True
+        }
+
+        train_mgr = self.__class__(trainset, **subset_kwargs)
+        val_mgr = self.__class__(valset, **subset_kwargs)
+
     @property
     def n_samples(self):
         """
@@ -172,7 +202,7 @@ class BaseDataManager(object):
                                'Forcing n_process_augmentation={} '
                                'instead'.format(self.n_process_augmentation, 1))
             n_batches = int(np.floor(self.n_samples / self.batch_size /
-                                    self.n_process_augmentation))
+                                     self.n_process_augmentation))
         else:
             raise ValueError('Invalid value for n_process_augmentation')
         return n_batches
@@ -282,4 +312,3 @@ class ConcatDataManager(object):
         else:
             raise ValueError('Invalid value for n_process')
         return n_batches
-
