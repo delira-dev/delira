@@ -1,11 +1,11 @@
-from .hyper_params import Hyperparameters
+from .parameters import Parameters
 from .experiment import AbstractExperiment, PyTorchExperiment
 from .abstract_trainer import AbstractNetworkTrainer
 from .pytorch_trainer import PyTorchNetworkTrainer
 from .metrics import AccuracyMetricPyTorch, AurocMetricPyTorch
 
 __all__ = [
-    'Hyperparameters',
+    'Parameters',
     'PyTorchExperiment',
     'AbstractExperiment',
     'AbstractNetworkTrainer',

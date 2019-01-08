@@ -5,14 +5,25 @@ import typing
 import numpy as np
 import torch
 import pickle
+import ray
+
 from abc import abstractmethod
 from sklearn.model_selection import KFold
+from sklearn.model_selection import train_test_split
 from datetime import datetime
+from inspect import signature
+from functools import partial
+
 from trixi.experiment import Experiment as TrixiExperiment
 from trixi.experiment import PytorchExperiment as TrixiPTExperiment
 from trixi.logger.experiment import PytorchExperimentLogger as ExpLogger
+
+from ray.tune.function_runner import StatusReporter
+from ray.tune import run_experiments, register_trainable
+from ray.tune.schedulers import TrialScheduler
+
 from .. import __version__ as delira_version
-from .hyper_params import Hyperparameters
+from .parameters import Parameters
 from ..data_loading import BaseDataManager, ConcatDataManager
 from ..models import AbstractPyTorchNetwork
 from .pytorch_trainer import PyTorchNetworkTrainer as PTNetworkTrainer
@@ -48,10 +59,10 @@ class AbstractExperiment(TrixiExperiment):
             keyword arguments
         """
         super().__init__(n_epochs)
-        self.current_trainer = None
+        self._run = 0
 
     @abstractmethod
-    def setup(self):
+    def setup(self, *args, **kwargs):
         """
         Abstract Method to setup a :class:`AbstractNetworkTrainer`
 
@@ -65,9 +76,12 @@ class AbstractExperiment(TrixiExperiment):
 
     @abstractmethod
     def run(self, train_data: typing.Union[BaseDataManager, ConcatDataManager],
-            val_data: typing.Union[BaseDataManager, ConcatDataManager, None],
+            val_data: typing.Optional[typing.Union[BaseDataManager,
+                                                   ConcatDataManager]] = None,
+            params: typing.Optional[Parameters] = None,
             **kwargs):
         """
+        trains single model
 
         Parameters
         ----------
@@ -75,13 +89,15 @@ class AbstractExperiment(TrixiExperiment):
             data manager containing the training data
         val_data : :class:`BaseDataManager` or :class:`ConcatDataManager`
             data manager containing the validation data
-        **kwargs :
-            keyword arguments
+        parameters : :class:`Parameters`, optional
+            Class containing all parameters (defaults to None).
+            If not specified, the parameters fall back to the ones given during 
+            class initialization
 
         Raises
         ------
         NotImplementedError
-            if not overwritten by subclass
+            If not overwritten in subclass
 
         """
 
@@ -205,10 +221,10 @@ class PyTorchExperiment(AbstractExperiment):
     :class:`AbstractExperiment`
 
     """
+
     def __init__(self,
-                 hyper_params: typing.Union[Hyperparameters, str],
+                 params: typing.Union[Parameters, str],
                  model_cls: AbstractPyTorchNetwork,
-                 model_kwargs: dict,
                  name=None,
                  save_path=None,
                  val_score_key=None,
@@ -217,10 +233,11 @@ class PyTorchExperiment(AbstractExperiment):
                  **kwargs
                  ):
 
-        if isinstance(hyper_params, str):
-            hyper_params = Hyperparameters.from_file(hyper_params)
+        if isinstance(params, str):
+            with open(params, "rb") as f:
+                params = pickle.load(f)
 
-        n_epochs = hyper_params.num_epochs
+        n_epochs = params.nested_get("num_epochs")
         AbstractExperiment.__init__(self, n_epochs)
 
         if name is None:
@@ -239,14 +256,13 @@ class PyTorchExperiment(AbstractExperiment):
 
         os.makedirs(self.save_path, exist_ok=True)
 
-        if val_score_key is None and hyper_params.metrics:
-            val_score_key = sorted(hyper_params.metrics.keys())[0]
+        if val_score_key is None and params.nested_get("metrics"):
+            val_score_key = sorted(params.nested_get("metrics").keys())[0]
 
         self.val_score_key = val_score_key
 
-        self.hyper_params = hyper_params
+        self.params = params
         self.model_cls = model_cls
-        self.model_kwargs = model_kwargs
         self.kwargs = kwargs
         self._optim_builder = optim_builder
         self.checkpoint_freq = checkpoint_freq
@@ -254,28 +270,43 @@ class PyTorchExperiment(AbstractExperiment):
 
         # log HyperParameters
         logger.info({"text": {"text":
-                                  str(hyper_params) + "\n\tmodel_class = %s"
-                                  % model_cls.__class__.__name__}})
+                              str(params) + "\n\tmodel_class = %s"
+                              % model_cls.__class__.__name__}})
 
-    def setup(self, **kwargs):
+    def setup(self, params: Parameters, **kwargs):
         """
         Perform setup of Network Trainer
 
         Parameters
         ----------
+        params : :class:`Parameters`
+            the parameters to construct a model and network trainer
         **kwargs :
             keyword arguments
 
         """
-        model = self.model_cls(**self.model_kwargs)
+        model_params = params.permute_training_on_top().model
 
-        criterions = self.hyper_params.criterions
-        optimizer_cls = self.hyper_params.optimizer_cls
-        optimizer_params = self.hyper_params.optimizer_params
-        metrics = self.hyper_params.metrics
-        lr_scheduler_cls = self.hyper_params.lr_sched_cls
-        lr_scheduler_params = self.hyper_params.lr_sched_params
-        self.current_trainer = PTNetworkTrainer(
+        model_kwargs = {}
+        for key in signature(self.model_cls.__init__).parameters.keys():
+            if key in ["self", "args", "kwargs"]:
+                continue
+            try:
+                model_kwargs[key] = model_params.nested_get(key)
+
+            except KeyError:
+                pass
+
+        model = self.model_cls(**model_kwargs)
+
+        training_params = params.permute_training_on_top().training
+        criterions = training_params.nested_get("criterions")
+        optimizer_cls = training_params.nested_get("optimizer_cls")
+        optimizer_params = training_params.nested_get("optimizer_params")
+        metrics = training_params.nested_get("metrics")
+        lr_scheduler_cls = training_params.nested_get("lr_sched_cls")
+        lr_scheduler_params = training_params.nested_get("lr_sched_params")
+        return PTNetworkTrainer(
             network=model,
             save_path=os.path.join(
                 self.save_path,
@@ -296,6 +327,7 @@ class PyTorchExperiment(AbstractExperiment):
     def run(self,
             train_data: typing.Union[BaseDataManager, ConcatDataManager],
             val_data: typing.Union[BaseDataManager, ConcatDataManager, None],
+            params: typing.Optional[Parameters] = None,
             **kwargs):
         """
         trains single model
@@ -306,6 +338,8 @@ class PyTorchExperiment(AbstractExperiment):
             holds the trainset
         val_data : BaseDataManager or ConcatDataManager or None
             holds the validation set (if None: Model will not be validated)
+        params : :class:`Parameters`
+            the parameters to construct a model and network trainer
         **kwargs :
             holds additional keyword arguments 
             (which are completly passed to the trainers init)
@@ -315,15 +349,34 @@ class PyTorchExperiment(AbstractExperiment):
         :class:`AbstractNetworkTrainer`
             trainer of trained network
 
+        Raises
+        ------
+        ValueError
+            Class has no Attribute ``params`` and no parameters were given as 
+            function argument
+
         """
-        self.setup(**kwargs)
+
+        if params is None:
+            if hasattr(self, "params"):
+                params = self.params
+            else:
+                raise ValueError("No parameters given")
+
+        else:
+            self.params = params
+
+        training_params = params.permute_training_on_top().training
+
+        trainer = self.setup(params, **kwargs)
         self._run += 1
-        num_epochs = kwargs.get("num_epochs", self.hyper_params.num_epochs)
-        return self.current_trainer.train(num_epochs, train_data, val_data,
-                                          self.val_score_key,
-                                          self.kwargs.get("val_score_mode",
-                                                          "lowest")
-                                          )
+        num_epochs = kwargs.get("num_epochs", training_params.nested_get(
+            "num_epochs"))
+        return trainer.train(num_epochs, train_data, val_data,
+                             self.val_score_key,
+                             self.kwargs.get("val_score_mode",
+                                             "lowest")
+                             )
 
     def save(self):
         """
@@ -334,7 +387,7 @@ class PyTorchExperiment(AbstractExperiment):
                   "wb") as f:
             pickle.dump(self, f)
 
-        self.hyper_params.export_to_files(self.save_path, True)
+        self.params.save(os.path.join(self.save_path, "parameters"))
 
     @staticmethod
     def load(file_name):
@@ -349,3 +402,9 @@ class PyTorchExperiment(AbstractExperiment):
         """
         with open(file_name, "rb") as f:
             return pickle.load(f)
+
+    def __getstate__(self):
+        return vars(self)
+
+    def __setstate__(self, state):
+        vars(self).update(state)

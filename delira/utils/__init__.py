@@ -5,6 +5,8 @@ from .imageops import bounding_box, calculate_origin_offset, max_energy_slice, \
 from .path import subdirs
 from .time import now
 
+from .config import LookupConfig
+
 __all__ = [
     'bounding_box',
     'calculate_origin_offset',
@@ -13,5 +15,6 @@ __all__ = [
     'sitk_resample_to_spacing',
     'sitk_resample_to_shape', 'sitk_resample_to_image',
     'subdirs',
-    'now'
+    'now',
+    'LookupConfig'
 ]
