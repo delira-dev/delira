@@ -24,3 +24,5 @@ path operations and time operations.
     :undoc-members:
     :show-inheritance:
 
+.. automodule:: delira.utils.config
+

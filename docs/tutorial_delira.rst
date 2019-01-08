@@ -1,4 +1,3 @@
-.. _Delira Introduction:
 
 Delira Introduction
 ===================
@@ -78,34 +77,12 @@ Now, let's just initialize our trainset:
     dataset_train = TorchvisionClassificationDataset("mnist", train=True,
                                                      img_shape=(224, 224))
 
-
-.. parsed-literal::
-
-    Using torch multi processing
-
-
 Getting a single sample of your dataset with dataset\_train[0] will
 produce:
 
 .. code:: ipython3
 
     dataset_train[0]
-
-
-
-
-.. parsed-literal::
-
-    {'data': array([[[0., 0., 0., ..., 0., 0., 0.],
-             [0., 0., 0., ..., 0., 0., 0.],
-             [0., 0., 0., ..., 0., 0., 0.],
-             ...,
-             [0., 0., 0., ..., 0., 0., 0.],
-             [0., 0., 0., ..., 0., 0., 0.],
-             [0., 0., 0., ..., 0., 0., 0.]]], dtype=float32),
-     'label': array([5.], dtype=float32)}
-
-
 
 which means, that our data is stored in a dictionary containing the keys
 ``data`` and ``label``, each of them holding the corresponding numpy
@@ -213,33 +190,6 @@ Iterating over a DataManager is possible in simple loops:
     
     for data in tqdm(batchgen):
         pass # here you can access the data of the current batch
-
-
-
-.. parsed-literal::
-
-    HBox(children=(IntProgress(value=1, bar_style='info', max=1), HTML(value='')))
-
-
-.. parsed-literal::
-
-    
-
-
-.. parsed-literal::
-
-    Process Process-1:
-    Traceback (most recent call last):
-      File "/home/temp/schock/anaconda3/envs/delira/lib/python3.6/multiprocessing/process.py", line 258, in _bootstrap
-        self.run()
-      File "/home/temp/schock/anaconda3/envs/delira/lib/python3.6/multiprocessing/process.py", line 93, in run
-        self._target(*self._args, **self._kwargs)
-      File "/home/temp/schock/anaconda3/envs/delira/lib/python3.6/site-packages/batchgenerators/dataloading/multi_threaded_augmenter.py", line 37, in producer
-        queue.put("end")
-      File "/home/temp/schock/anaconda3/envs/delira/lib/python3.6/multiprocessing/queues.py", line 82, in put
-        if not self._sem.acquire(block, timeout):
-    KeyboardInterrupt
-
 
 Sampler
 ~~~~~~~
@@ -551,11 +501,11 @@ approaches or segmentation networks.
 Training
 --------
 
-Hyperparameters
-~~~~~~~~~~~~~~~
+Parameters
+~~~~~~~~~~
 
-Hyperparameters can be defined in the
-``delira.training.Hyperparameters`` class.
+Training-parameters (often called hyperparameters) can be defined in the
+``delira.training.Parameters`` class.
 
 The class accepts the parameters ``batch_size`` and ``num_epochs`` to
 define the batchsize and the number of epochs to train, the parameters
@@ -569,31 +519,36 @@ evaluation metrics.
 Additionally, it is possible to pass an aritrary number of keyword
 arguments to the class
 
-It is good practice to create a ``Hyperparameters`` object at the
-beginning and then use it for creating other objects which are needed
-for training, since you can use the classes attributes and changes in
+It is good practice to create a ``Parameters`` object at the beginning
+and then use it for creating other objects which are needed for
+training, since you can use the classes attributes and changes in
 hyperparameters only have to be done once:
 
 .. code:: ipython3
 
     import torch
-    from delira.training import Hyperparameters 
+    from delira.training import Parameters
     from delira.data_loading import RandomSampler, SequentialSampler
     
-    hyper_params = Hyperparameters(batch_size=64, # batchsize to use
-                                   num_epochs=2, # number of epochs to train
-                                   optimizer_cls=torch.optim.Adam, # optimization algorithm to use
-                                   optimizer_params={'lr': 1e-3}, # initialization parameters for this algorithm
-                                   criterions=[torch.nn.CrossEntropyLoss()], # the loss function
-                                   lr_sched_cls=None,  # the learning rate scheduling algorithm to use
-                                   lr_sched_params={}, # the corresponding initialization parameters
-                                   metrics=[]) #
+    params = Parameters(fixed_params={
+        "model": {},
+        "training": {
+            "batch_size": 64, # batchsize to use
+            "num_epochs": 2, # number of epochs to train
+            "optimizer_cls": torch.optim.Adam, # optimization algorithm to use
+            "optimizer_params": {'lr': 1e-3}, # initialization parameters for this algorithm
+            "criterions": {"CE": torch.nn.CrossEntropyLoss()}, # the loss function
+            "lr_sched_cls": None,  # the learning rate scheduling algorithm to use
+            "lr_sched_params": {}, # the corresponding initialization parameters
+            "metrics": {} # and some evaluation metrics
+        }
+    }) 
     
-    # recreating the data managers with the batchsize of the hyperparams object
-    manager_train = BaseDataManager(dataset_train, hyper_params.batch_size, 1,
+    # recreating the data managers with the batchsize of the params object
+    manager_train = BaseDataManager(dataset_train, params.nested_get("batch_size"), 1,
                                     transforms=None, sampler_cls=RandomSampler,
                                     n_process_loading=4)
-    manager_val = BaseDataManager(dataset_val, hyper_params.batch_size, 3,
+    manager_val = BaseDataManager(dataset_val, params.nested_get("batch_size"), 3,
                                   transforms=None, sampler_cls=SequentialSampler,
                                   n_process_loading=4)
 
@@ -602,8 +557,8 @@ Trainer
 ~~~~~~~
 
 The ``delira.training.NetworkTrainer`` class provides functions to train
-a single network by passing attributes from your hyperparameter object,
-a ``save_freq`` to specify how often your model should be saved
+a single network by passing attributes from your parameter object, a
+``save_freq`` to specify how often your model should be saved
 (``save_freq=1`` indicates every epoch, ``save_freq=2`` every second
 epoch etc.) and ``gpu_ids``. If you don't pass any ids at all, your
 network will be trained on CPU (and probably take a lot of time). If you
@@ -633,177 +588,24 @@ Training your network might look like this:
     
     trainer = PyTorchNetworkTrainer(network=model,
                                     save_path=save_path,
-                                    criterions=hyper_params.criterions,
-                                    optimizer_cls=hyper_params.optimizer_cls,
-                                    optimizer_params=hyper_params.optimizer_params,
-                                    metrics=hyper_params.metrics,
-                                    lr_scheduler_cls=hyper_params.lr_sched_cls,
-                                    lr_scheduler_params=hyper_params.lr_sched_params,
+                                    criterions=params.nested_get("criterions"),
+                                    optimizer_cls=params.nested_get("optimizer_cls"),
+                                    optimizer_params=params.nested_get("optimizer_params"),
+                                    metrics=params.nested_get("metrics"),
+                                    lr_scheduler_cls=params.nested_get("lr_sched_cls"),
+                                    lr_scheduler_params=params.nested_get("lr_sched_params"),
                                     gpu_ids=[0]
                             )
     
-    trainer.train(hyper_params.num_epochs, manager_train, manager_val)
-
-
-
-.. parsed-literal::
-
-    WARNING:delira.training.pytorch_trainer:Save Path already exists. Saved Models may be overwritten
-
-
-
-.. parsed-literal::
-
-    HBox(children=(IntProgress(value=0, description='Epoch 1', max=937, style=ProgressStyle(description_width='ini…
-
-
-.. parsed-literal::
-
-    
-
-
-
-.. parsed-literal::
-
-    HBox(children=(IntProgress(value=0, description='Test', max=10000, style=ProgressStyle(description_width='init…
-
-
-.. parsed-literal::
-
-    WARNING:delira.training.pytorch_trainer:Validation score key not in metric dict. Logging metrics but can't decide which model is best
-
-
-.. parsed-literal::
-
-    
-
-
-
-.. parsed-literal::
-
-    HBox(children=(IntProgress(value=0, description='Epoch 2', max=937, style=ProgressStyle(description_width='ini…
-
-
-.. parsed-literal::
-
-    
-
-
-
-.. parsed-literal::
-
-    HBox(children=(IntProgress(value=0, description='Test', max=10000, style=ProgressStyle(description_width='init…
-
-
-.. parsed-literal::
-
-    WARNING:delira.training.pytorch_trainer:Validation score key not in metric dict. Logging metrics but can't decide which model is best
-
-
-.. parsed-literal::
-
-    
-
-
-
-
-.. parsed-literal::
-
-    ClassificationNetworkBasePyTorch(
-      (module): ResNet(
-        (conv1): Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        (relu): ReLU(inplace)
-        (maxpool): MaxPool2d(kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False)
-        (layer1): Sequential(
-          (0): BasicBlock(
-            (conv1): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-          (1): BasicBlock(
-            (conv1): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-        )
-        (layer2): Sequential(
-          (0): BasicBlock(
-            (conv1): Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (downsample): Sequential(
-              (0): Conv2d(64, 128, kernel_size=(1, 1), stride=(2, 2), bias=False)
-              (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            )
-          )
-          (1): BasicBlock(
-            (conv1): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-        )
-        (layer3): Sequential(
-          (0): BasicBlock(
-            (conv1): Conv2d(128, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (downsample): Sequential(
-              (0): Conv2d(128, 256, kernel_size=(1, 1), stride=(2, 2), bias=False)
-              (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            )
-          )
-          (1): BasicBlock(
-            (conv1): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-        )
-        (layer4): Sequential(
-          (0): BasicBlock(
-            (conv1): Conv2d(256, 512, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (downsample): Sequential(
-              (0): Conv2d(256, 512, kernel_size=(1, 1), stride=(2, 2), bias=False)
-              (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            )
-          )
-          (1): BasicBlock(
-            (conv1): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-        )
-        (avgpool): AvgPool2d(kernel_size=7, stride=1, padding=0)
-        (fc): Linear(in_features=512, out_features=10, bias=True)
-      )
-    )
-
+    #trainer.train(params.nested_get("num_epochs"), manager_train, manager_val)
 
 
 Experiment
 ~~~~~~~~~~
 
 The ``delira.training.AbstractExperiment`` class needs an experiment
-name, a path to save it's results to, a Hyperparameter object, a model
-class and the keyword arguments to create an instance of this class. It
+name, a path to save it's results to, a parameter object, a model class
+and the keyword arguments to create an instance of this class. It
 provides methods to perform a single training and also a method for
 running a kfold-cross validation. In order to create it, you must choose
 the ``PyTorchExperiment``, which is basically just a subclass of the
@@ -815,166 +617,17 @@ Running an experiment could look like this:
     from delira.training import PyTorchExperiment
     from delira.training.train_utils import create_optims_default_pytorch
     
-    # For real training uncomment the following line (this will simply increase the number of training epochs)
-    # hyper_params.num_epochs = 50
+    # Add model parameters to Parameter class
+    params.fixed.model = {"in_channels": 1, "n_outputs": 10}
     
-    experiment = PyTorchExperiment(hyper_params=hyper_params, 
+    experiment = PyTorchExperiment(params=params, 
                                    model_cls=ClassificationNetworkBasePyTorch,
                                    name="TestExperiment", 
                                    save_path="./results",
-                                   model_kwargs={'in_channels': 1, 'n_outputs': 10},
                                    optim_builder=create_optims_default_pytorch,
                                    gpu_ids=[0])
     
     experiment.run(manager_train, manager_val)
-
-
-
-.. parsed-literal::
-
-    HBox(children=(IntProgress(value=0, description='Epoch 1', max=937, style=ProgressStyle(description_width='ini…
-
-
-.. parsed-literal::
-
-    
-
-
-
-.. parsed-literal::
-
-    HBox(children=(IntProgress(value=0, description='Test', max=10000, style=ProgressStyle(description_width='init…
-
-
-.. parsed-literal::
-
-    WARNING:delira.training.pytorch_trainer:Validation score key not in metric dict. Logging metrics but can't decide which model is best
-
-
-.. parsed-literal::
-
-    
-
-
-
-.. parsed-literal::
-
-    HBox(children=(IntProgress(value=0, description='Epoch 2', max=937, style=ProgressStyle(description_width='ini…
-
-
-.. parsed-literal::
-
-    
-
-
-
-.. parsed-literal::
-
-    HBox(children=(IntProgress(value=0, description='Test', max=10000, style=ProgressStyle(description_width='init…
-
-
-.. parsed-literal::
-
-    WARNING:delira.training.pytorch_trainer:Validation score key not in metric dict. Logging metrics but can't decide which model is best
-
-
-.. parsed-literal::
-
-    
-
-
-
-
-.. parsed-literal::
-
-    ClassificationNetworkBasePyTorch(
-      (module): ResNet(
-        (conv1): Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        (relu): ReLU(inplace)
-        (maxpool): MaxPool2d(kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False)
-        (layer1): Sequential(
-          (0): BasicBlock(
-            (conv1): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-          (1): BasicBlock(
-            (conv1): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-        )
-        (layer2): Sequential(
-          (0): BasicBlock(
-            (conv1): Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (downsample): Sequential(
-              (0): Conv2d(64, 128, kernel_size=(1, 1), stride=(2, 2), bias=False)
-              (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            )
-          )
-          (1): BasicBlock(
-            (conv1): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-        )
-        (layer3): Sequential(
-          (0): BasicBlock(
-            (conv1): Conv2d(128, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (downsample): Sequential(
-              (0): Conv2d(128, 256, kernel_size=(1, 1), stride=(2, 2), bias=False)
-              (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            )
-          )
-          (1): BasicBlock(
-            (conv1): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-        )
-        (layer4): Sequential(
-          (0): BasicBlock(
-            (conv1): Conv2d(256, 512, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (downsample): Sequential(
-              (0): Conv2d(256, 512, kernel_size=(1, 1), stride=(2, 2), bias=False)
-              (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            )
-          )
-          (1): BasicBlock(
-            (conv1): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            (relu): ReLU(inplace)
-            (conv2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-            (bn2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-        )
-        (avgpool): AvgPool2d(kernel_size=7, stride=1, padding=0)
-        (fc): Linear(in_features=512, out_features=10, bias=True)
-      )
-    )
-
-
 
 An ``Experiment`` is the most abstract (and recommended) way to define,
 train and validate your network.
@@ -1098,6 +751,7 @@ More Examples
 -------------
 
 More Examples can be found in \* `the classification
-example <classification_pytorch.ipynb,>`__ \* `the segmentation
-example <segmentation_pytorch.ipynb,>`__ \* `the generative adversarial
-example <gan_pytorch.ipynb,>`__
+example <classification_pytorch.ipynb,>`__ \* `the 2d segmentation
+example <segmentation_2d_pytorch.ipynb,>`__ \* `the 3d segmentation
+example <segmentation_3d_pytorch.ipynb,>`__ \* `the generative
+adversarial example <gan_pytorch.ipynb,>`__

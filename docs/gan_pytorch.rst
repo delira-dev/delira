@@ -1,4 +1,3 @@
-.. _GAN Tutorial PyTorch:
 
 Generative Adversarial Nets with Delira - A very short introduction
 ===================================================================
@@ -14,21 +13,28 @@ HyperParameters
 ---------------
 
 Let's first setup the essential hyperparameters. We will use
-``delira``'s ``Hyperparameters``-class for this:
+``delira``'s ``Parameters``-class for this:
 
 .. code:: ipython3
 
     import torch
-    from delira.training import Hyperparameters
-    
-    hyper_params = Hyperparameters(batch_size=64, # batchsize to use
-                                   num_epochs=2, # number of epochs to train
-                                   optimizer_cls=torch.optim.Adam, # optimization algorithm to use
-                                   optimizer_params={'lr': 1e-3}, # initialization parameters for this algorithm
-                                   criterions=[torch.nn.L1Loss()], # the loss function
-                                   lr_sched_cls=None,  # the learning rate scheduling algorithm to use
-                                   lr_sched_params={}, # the corresponding initialization parameters
-                                   metrics=[torch.nn.MSELoss()]) # and some evaluation metrics
+    from delira.training import Parameters
+    params = Parameters(fixed_params={
+        "model": {
+            "n_channels": 1, 
+            "noise_length": 10
+        },
+        "training": {
+            "batch_size": 64, # batchsize to use
+            "num_epochs": 10, # number of epochs to train
+            "optimizer_cls": torch.optim.Adam, # optimization algorithm to use
+            "optimizer_params": {'lr': 1e-3}, # initialization parameters for this algorithm
+            "criterions": {"L1": torch.nn.L1Loss()}, # the loss function
+            "lr_sched_cls": None,  # the learning rate scheduling algorithm to use
+            "lr_sched_params": {}, # the corresponding initialization parameters
+            "metrics": {} # and some evaluation metrics
+        }
+    }) 
 
 Since we specified ``torch.nn.L1Loss`` as criterion and
 ``torch.nn.MSELoss`` as metric, they will be both calculated for each
@@ -130,12 +136,12 @@ datamanagers:
 
     from delira.data_loading import BaseDataManager, SequentialSampler, RandomSampler
     
-    manager_train = BaseDataManager(dataset_train, hyper_params.batch_size,
+    manager_train = BaseDataManager(dataset_train, params.nested_get("batch_size"),
                                     transforms=transforms,
                                     sampler_cls=RandomSampler,
                                     n_process_augmentation=4)
     
-    manager_val = BaseDataManager(dataset_val, hyper_params.batch_size,
+    manager_val = BaseDataManager(dataset_val, params.nested_get("batch_size"),
                                   transforms=transforms,
                                   sampler_cls=SequentialSampler,
                                   n_process_augmentation=4)
@@ -161,10 +167,9 @@ DCGAN:
     from delira.models.gan import GenerativeAdversarialNetworkBasePyTorch
     
     logger.info("Init Experiment")
-    experiment = PyTorchExperiment(hyper_params, GenerativeAdversarialNetworkBasePyTorch,
+    experiment = PyTorchExperiment(params, GenerativeAdversarialNetworkBasePyTorch,
                                    name="GANExample",
                                    save_path="./tmp/delira_Experiments",
-                                   model_kwargs={'n_channels': 1, 'noise_length': 10},
                                    optim_builder=create_optims_gan_default_pytorch,
                                    gpu_ids=[0])
     experiment.save()
@@ -178,6 +183,7 @@ See Also
 --------
 
 For a more detailed explanation have a look at \* `the introduction
-tutorial <tutorial_delira.ipynb,>`__ \* `the segmentation
-example <segmentation_pytorch.ipynb,>`__ \* `the classification
+tutorial <tutorial_delira.ipynb,>`__ \* `the 2d segmentation
+example <segmentation_2d_pytorch.ipynb,>`__ \* `the 3d segmentation
+example <segmentation_3d_pytorch.ipynb,>`__ \* `the classification
 example <classification_pytorch.ipynb,>`__

@@ -5,7 +5,7 @@ training routines and wrapping experiments.
 
 .. toctree::
 
-    Hyperparameters <hyper_params>
+    Parameters <parameters>
     Network Trainer <trainer>
     Experiment <experiment>
     Callbacks <callbacks>

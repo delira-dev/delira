@@ -1,13 +1,13 @@
 
-Classification with Delira - A very short introduction
-======================================================
+Segmentation in 2D using U-Nets with Delira - A very short introduction
+=======================================================================
 
-*Author: Justus Schock*
+*Author: Justus Schock, Alexander Moriz*
 
-*Date: 04.12.2018*
+*Date: 17.12.2018*
 
-This Example shows how to set up a basic classification PyTorch
-experiment and Visdom Logging Environment.
+This Example shows how use the U-Net implementation in Delira with
+PyTorch.
 
 Let's first setup the essential hyperparameters. We will use
 ``delira``'s ``Parameters``-class for this:
@@ -19,7 +19,7 @@ Let's first setup the essential hyperparameters. We will use
     params = Parameters(fixed_params={
         "model": {
             "in_channels": 1, 
-            "n_outputs": 10
+            "num_classes": 4
         },
         "training": {
             "batch_size": 64, # batchsize to use
@@ -82,27 +82,117 @@ Since a single visdom server can run multiple environments, we need to
 specify a (unique) name for our environment and need to tell the logger,
 on which port it can find the visdom server.
 
-Data Preparation
+Data Praparation
 ----------------
 
 Loading
 ~~~~~~~
 
-Next we will create a small train and validation set (based on
-``torchvision`` MNIST):
+Next we will create a small train and validation set (in this case they
+will be the same to show the overfitting capability of the UNet).
+
+Our data is a brain MR-image thankfully provided by the
+`FSL <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki>`__ in their
+`introduction <http://www.fmrib.ox.ac.uk/primers/intro_primer/ExBox3/IntroBox3.html>`__.
+
+We first download the data and extract the T1 image and the
+corresponding segmentation:
 
 .. code:: ipython3
 
-    from delira.data_loading import TorchvisionClassificationDataset
+    from io import BytesIO
+    from zipfile import ZipFile
+    from urllib.request import urlopen
     
-    dataset_train = TorchvisionClassificationDataset("mnist", # which dataset to use
-                                                     train=True, # use trainset
-                                                     img_shape=(224, 224) # resample to 224 x 224 pixels
-                                                    )
-    dataset_val = TorchvisionClassificationDataset("mnist", 
-                                                   train=False,
-                                                   img_shape=(224, 224)
-                                                  )
+    resp = urlopen("http://www.fmrib.ox.ac.uk/primers/intro_primer/ExBox3/ExBox3.zip")
+    zipfile = ZipFile(BytesIO(resp.read()))
+    #zipfile_list = zipfile.namelist()
+    #print(zipfile_list)
+    img_file = zipfile.extract("ExBox3/T1_brain.nii.gz")
+    mask_file = zipfile.extract("ExBox3/T1_brain_seg.nii.gz")
+
+Now, we load the image and the mask (they are both 3D), convert them to
+a 32-bit floating point numpy array and ensure, they have the same shape
+(i.e. that for each voxel in the image, there is a voxel in the mask):
+
+.. code:: ipython3
+
+    import SimpleITK as sitk
+    import numpy as np
+    
+    # load image and mask
+    img = sitk.GetArrayFromImage(sitk.ReadImage(img_file))
+    img = img.astype(np.float32)
+    mask = mask = sitk.GetArrayFromImage(sitk.ReadImage(mask_file))
+    mask = mask.astype(np.float32)
+    
+    assert mask.shape == img.shape
+    print(img.shape)
+
+
+.. parsed-literal::
+
+    (192, 192, 174)
+
+
+By querying the unique values in the mask, we get the following:
+
+.. code:: ipython3
+
+    np.unique(mask)
+
+This means, there are 4 classes (background and 3 types of tissue) in
+our sample.
+
+Since we want to do a 2D segmentation, we extract a single slice out of
+the image and the mask (we choose slice 100 here) and plot it:
+
+.. code:: ipython3
+
+    import matplotlib.pyplot as plt
+    
+    # load single slice
+    img_slice = img[:, :, 100]
+    mask_slice = mask[:, :, 100]
+    
+    # plot slices
+    plt.figure(1, figsize=(15,10))
+    plt.subplot(121)
+    plt.imshow(img_slice, cmap="gray")
+    plt.colorbar(fraction=0.046, pad=0.04)
+    plt.subplot(122)
+    plt.imshow(mask_slice, cmap="gray")
+    plt.colorbar(fraction=0.046, pad=0.04)
+    plt.show()
+
+
+To load the data, we have to use a ``Dataset``. The following defines a
+very simple dataset, accepting an image slice, a mask slice and the
+number of samples. It always returns the same sample until
+``num_samples`` samples have been returned.
+
+.. code:: ipython3
+
+    from delira.data_loading import AbstractDataset
+    
+    class CustomDataset(AbstractDataset):
+        def __init__(self, img, mask, num_samples=1000):
+            super().__init__(None, None, None, None)
+            self.data = {"data": img.reshape(1, *img.shape), "label": mask.reshape(1, *mask.shape)}
+            self.num_samples = num_samples
+            
+        def __getitem__(self, index):
+            return self.data
+        
+        def __len__(self):
+            return self.num_samples
+
+Now, we can finally instantiate our datasets:
+
+.. code:: ipython3
+
+    dataset_train = CustomDataset(img_slice, mask_slice, num_samples=10000)
+    dataset_val = CustomDataset(img_slice, mask_slice, num_samples=1)
 
 Augmentation
 ~~~~~~~~~~~~
@@ -117,12 +207,10 @@ For Data-Augmentation we will apply a few transformations:
     from batchgenerators.transforms.sample_normalization_transforms import MeanStdNormalizationTransform
     
     transforms = Compose([
-        RandomCropTransform((200, 200)), # Perform Random Crops of Size 200 x 200 pixels
-        ResizeTransform((224, 224)), # Resample these crops back to 224 x 224 pixels
+        RandomCropTransform((150, 150), label_key="label"), # Perform Random Crops of Size 150 x 150 pixels
+        ResizeTransform((224, 224), label_key="label"), # Resample these crops back to 224 x 224 pixels
         ContrastAugmentationTransform(), # randomly adjust contrast
-        MeanStdNormalizationTransform(mean=[0.5], std=[0.5])]) 
-    
-
+        MeanStdNormalizationTransform(mean=[img_slice.mean()], std=[img_slice.std()])]) # use concrete values since we only have one sample (have to estimate it over whole dataset otherwise)
 
 With these transformations we can now wrap our datasets into
 datamanagers:
@@ -141,13 +229,11 @@ datamanagers:
                                   sampler_cls=SequentialSampler,
                                   n_process_augmentation=4)
 
-
 Training
 --------
 
 After we have done that, we can finally specify our experiment and run
-it. We will therfore use the already implemented
-``ClassificationNetworkBasePyTorch`` which is basically a ResNet18:
+it. We will therfore use the already implemented ``UNet2dPytorch``:
 
 .. code:: ipython3
 
@@ -158,52 +244,24 @@ it. We will therfore use the already implemented
     
     from delira.training import PyTorchExperiment
     from delira.training.train_utils import create_optims_default_pytorch
-    from delira.models.classification import ClassificationNetworkBasePyTorch
+    from delira.models.segmentation import UNet2dPyTorch
     
     logger.info("Init Experiment")
-    experiment = PyTorchExperiment(params, ClassificationNetworkBasePyTorch,
-                                   name="ClassificationExample",
+    experiment = PyTorchExperiment(params, UNet2dPyTorch,
+                                   name="Segmentation2dExample",
                                    save_path="./tmp/delira_Experiments",
                                    optim_builder=create_optims_default_pytorch,
-                                   gpu_ids=[0])
+                                   gpu_ids=[0], mixed_precision=True)
     experiment.save()
     
     model = experiment.run(manager_train, manager_val)
 
-Congratulations, you have now trained your first Classification Model
-using ``delira``, we will now predict a few samples from the testset to
-show, that the networks predictions are valid:
-
-.. code:: ipython3
-
-    import numpy as np
-    from tqdm.auto import tqdm # utility for progress bars
-    
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # set device (use GPU if available)
-    model = model.to(device) # push model to device
-    preds, labels = [], []
-    
-    with torch.no_grad():
-        for i in tqdm(range(len(dataset_val))):
-            img = dataset_val[i]["data"] # get image from current batch
-            img_tensor = torch.from_numpy(img).unsqueeze(0).to(device).to(torch.float) # create a tensor from image, push it to device and add batch dimension
-            pred_tensor = model(img_tensor) # feed it through the network
-            pred = pred_tensor.argmax(1).item() # get index with maximum class confidence
-            label = np.asscalar(dataset_val[i]["label"]) # get label from batch
-            if i % 1000 == 0:
-                print("Prediction: %d \t label: %d" % (pred, label)) # print result
-            preds.append(pred)
-            labels.append(label)
-            
-    # calculate accuracy
-    accuracy = (np.asarray(preds) == np.asarray(labels)).sum() / len(preds)
-    print("Accuracy: %.3f" % accuracy)
 
 See Also
 --------
 
 For a more detailed explanation have a look at \* `the introduction
-tutorial <tutorial_delira.ipynb,>`__ \* `the 2d segmentation
-example <segmentation_2d_pytorch.ipynb,>`__ \* `the 3d segmentation
+tutorial <tutorial_delira.ipynb,>`__ \* `the classification
+example <classification_pytorch.ipynb,>`__ \* `the 3d segmentation
 example <segmentation_3d_pytorch.ipynb,>`__ \* `the generative
 adversarial example <gan_pytorch.ipynb,>`__

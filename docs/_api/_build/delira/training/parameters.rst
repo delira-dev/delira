@@ -3,13 +3,13 @@
 
 .. currentmodule:: delira.training
 
-Hyperparameters
+Parameters
 ===============
 
-:hidden:`Hyperparameters`
+:hidden:`Parameters`
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: Hyperparameters
+.. autoclass:: Parameters
     :members:
     :undoc-members:
     :show-inheritance:
