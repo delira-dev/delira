@@ -10,6 +10,4 @@ python:
 requirements_file: docs/requirements.txt
 
 # Build PDF & ePub
-formats:
-    - epub
-    - pdf
+formats: []
