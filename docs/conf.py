@@ -235,6 +235,7 @@ autodoc_mock_imports = [
     "plotly",
     "PIL",
     "umap",
+    "tornado",
 ]
 
 # We use the following to automatically run sphinx-apidoc, whenever we run make html.
