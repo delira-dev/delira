@@ -66,7 +66,7 @@ class LookupConfig(Config):
         """
 
         if type(value) == dict or type(value) == Config:
-            new_config = self.__class__()
+            new_config = LookupConfig()
             new_config.update(value, deep=False)
             super().__setattr__(key, new_config)
         else:
