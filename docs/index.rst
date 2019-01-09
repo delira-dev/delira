@@ -31,7 +31,7 @@ delira - Deep Learning In RAdiology
 
    _api/_build/modules
 
-   GitLab <https://git.lfb.rwth-aachen.de/schock/Delira2.0>
+   GitHub <https://github.com/justusschock/delira>
 
 
 
