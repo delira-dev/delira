@@ -226,6 +226,17 @@ autodoc_mock_imports = [
     "batchgenerators",
     "psutil",
     "nested_lookup",
+    "colorlover",
+    "flask",
+    "graphviz",
+    "matplotlib",
+    "seaborn",
+    "scipy",
+    "telegram",
+    "portalocker",
+    "plotly",
+    "PIL",
+    "umap",
 ]
 
 # We use the following to automatically run sphinx-apidoc, whenever we run make html.
