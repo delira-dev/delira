@@ -1,4 +1,4 @@
-[![pipeline status](https://git.lfb.rwth-aachen.de/Radiology/Delira/badges/master/pipeline.svg)](https://git.lfb.rwth-aachen.de/Radiology/Delira/commits/master)
+[![Build Status](https://travis-ci.com/justusschock/delira.svg?branch=master)](https://travis-ci.com/justusschock/delira)
 
 ![logo](docs/_static/logo/delira.svg "delira - Deep Learning in Radiology")
 
