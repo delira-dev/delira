@@ -1,5 +1,4 @@
 sphinx==1.7.9
-nbsphinx
 sphinx-rtd-theme
 git+https://github.com/MIC-DKFZ/batchgenerators.git#egg=batchgenerators-0
 numpy>=1.15.0
