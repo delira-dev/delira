@@ -551,8 +551,7 @@ class Nii3DCacheDatset(BaseCacheDataset):
 
 
 try:
-    from torchvision.datasets import CIFAR10, CIFAR100, MNIST, FashionMNIST, \
-                                    EMNIST
+    from torchvision.datasets import CIFAR10, CIFAR100, MNIST, FashionMNIST
 
     class TorchvisionClassificationDataset(AbstractDataset):
         """
