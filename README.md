@@ -1,6 +1,6 @@
 [![pipeline status](https://git.lfb.rwth-aachen.de/Radiology/Delira/badges/master/pipeline.svg)](https://git.lfb.rwth-aachen.de/Radiology/Delira/commits/master)
 
-![logo](docs/_static/logo/delira_logo.png "delira - Deep Learning in Radiology")
+![logo](docs/_static/logo/delira.svg "delira - Deep Learning in Radiology")
 
 # Delira - Deep Learning in Radiology
 Authors: [Justus Schock, Christoph Haarburger, Oliver Rippel](AUTHORS.rst)
