@@ -16,8 +16,7 @@ tqdm
 visdom==0.1.8.5
 pyyaml
 trixi==0.1.1.1
-batchgenerators@git+https://github.com/MIC-DKFZ/batchgenerators.git@32372057d2122fee47209044645741b8a6b736a7#egg=batchgenerators-0
-apex@git+https://www.github.com/nvidia/apex.git#egg=apex
+batchgenerators@git+https://github.com/MIC-DKFZ/batchgenerators.git@91feb74747bfcfb9514d509fb13b854a37847b4d#egg=batchgenerators-0
 nested_lookup
 psutil
 
