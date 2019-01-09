@@ -1,15 +1,17 @@
+
 from delira.models import AbstractPyTorchNetwork, UNet2dPyTorch, \
     UNet3dPyTorch, ClassificationNetworkBasePyTorch, \
     VGG3DClassificationNetworkPyTorch, GenerativeAdversarialNetworkBasePyTorch
 from delira.training.train_utils import create_optims_default_pytorch, \
     create_optims_gan_default_pytorch
+from delira.utils.context_managers import DefaultOptimWrapperTorch
 import torch
-from apex import amp
 import numpy as np
 import pytest
 import time
 import gc
 import os
+import sys
 
 
 @pytest.mark.parametrize("model,input_shape,target_shape,loss_fn,"
@@ -81,12 +83,18 @@ def test_pytorch_model_default(model: AbstractPyTorchNetwork, input_shape,
                                target_shape, loss_fn, create_optim_fn,
                                max_range, half_precision):
 
-    amp_handle = amp.init(half_precision)
+    if "apex" in sys.modules:
+        from apex import amp
+        amp_handle = amp.init(half_precision)
+        wrapper_fn = amp_handle.wrap_optimizer
+    else:
+        wrapper_fn = DefaultOptimWrapperTorch
+    
     start_time = time.time()
 
     # test backward if optimizer fn is not None
     if create_optim_fn is not None:
-        optim = {k: amp_handle.wrap_optimizer(v, num_loss=len(loss_fn))
+        optim = {k: wrapper_fn(v, num_loss=len(loss_fn))
                  for k, v in create_optim_fn(model, torch.optim.Adam).items()}
 
     else:
