@@ -143,7 +143,7 @@ try:
                                             *mixed_precision_kwargs)
                 wrap_fn = self._amp_handle.wrap_optimizer
 
-            except ModuleNotFoundError:
+            except ImportError:
                 if mixed_precision:
                     logger.warning("Apex was not found found, trying to continue \
                                     in full precision instead")
@@ -621,5 +621,5 @@ try:
                 return {"module": model, "optimizers": optimizer,
                         "start_epoch": epoch}
 
-except ModuleNotFoundError as e:
+except ImportError as e:
     raise e

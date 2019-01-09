@@ -1,6 +1,10 @@
 
 
-
+from ..utils import now
+from ..data_loading import BaseDataManager, ConcatDataManager
+from .. import __version__ as delira_version
+from .parameters import Parameters
+from trixi.experiment import Experiment as TrixiExperiment
 import os
 import logging
 import yaml
@@ -18,12 +22,6 @@ from functools import partial
 
 logger = logging.getLogger(__name__)
 
-from trixi.experiment import Experiment as TrixiExperiment
-
-from .parameters import Parameters
-from .. import __version__ as delira_version
-from ..data_loading import BaseDataManager, ConcatDataManager
-from ..utils import now
 
 NOT_IMPLEMENTED_KEYS = []
 
@@ -211,6 +209,7 @@ try:
     from .train_utils import create_optims_default_pytorch
     from .pytorch_trainer import PyTorchNetworkTrainer as PTNetworkTrainer
     from ..models import AbstractPyTorchNetwork
+
     class PyTorchExperiment(AbstractExperiment):
         """
         Single Experiment for PyTorch Backend
@@ -222,15 +221,15 @@ try:
         """
 
         def __init__(self,
-                    params: typing.Union[Parameters, str],
-                    model_cls: AbstractPyTorchNetwork,
-                    name=None,
-                    save_path=None,
-                    val_score_key=None,
-                    optim_builder=create_optims_default_pytorch,
-                    checkpoint_freq=1,
-                    **kwargs
-                    ):
+                     params: typing.Union[Parameters, str],
+                     model_cls: AbstractPyTorchNetwork,
+                     name=None,
+                     save_path=None,
+                     val_score_key=None,
+                     optim_builder=create_optims_default_pytorch,
+                     checkpoint_freq=1,
+                     **kwargs
+                     ):
 
             if isinstance(params, str):
                 with open(params, "rb") as f:
@@ -247,8 +246,8 @@ try:
                 save_path = os.path.abspath(".")
 
             self.save_path = os.path.join(save_path, name,
-                                        str(datetime.now().strftime(
-                                            "%y-%m-%d_%H-%M-%S")))
+                                          str(datetime.now().strftime(
+                                              "%y-%m-%d_%H-%M-%S")))
 
             if os.path.isdir(self.save_path):
                 logger.warning("Save Path %s already exists")
@@ -269,8 +268,8 @@ try:
 
             # log HyperParameters
             logger.info({"text": {"text":
-                                str(params) + "\n\tmodel_class = %s"
-                                % model_cls.__class__.__name__}})
+                                  str(params) + "\n\tmodel_class = %s"
+                                  % model_cls.__class__.__name__}})
 
         def setup(self, params: Parameters, **kwargs):
             """
@@ -372,10 +371,10 @@ try:
             num_epochs = kwargs.get("num_epochs", training_params.nested_get(
                 "num_epochs"))
             return trainer.train(num_epochs, train_data, val_data,
-                                self.val_score_key,
-                                self.kwargs.get("val_score_mode",
-                                                "lowest")
-                                )
+                                 self.val_score_key,
+                                 self.kwargs.get("val_score_mode",
+                                                 "lowest")
+                                 )
 
         def save(self):
             """
@@ -383,7 +382,7 @@ try:
 
             """
             with open(os.path.join(self.save_path, "experiment.delira.pkl"),
-                    "wb") as f:
+                      "wb") as f:
                 pickle.dump(self, f)
 
             self.params.save(os.path.join(self.save_path, "parameters"))
@@ -408,5 +407,5 @@ try:
         def __setstate__(self, state):
             vars(self).update(state)
 
-except ModuleNotFoundError as e:
+except ImportError as e:
     raise e

@@ -164,5 +164,5 @@ try:
 
             return locals()['model'], optims, loaded_dict["state_dict"]["epoch"]
 
-except ModuleNotFoundError as e:
+except ImportError as e:
     raise e

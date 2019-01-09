@@ -6,7 +6,6 @@ try:
     from torchvision import models as t_models
     from delira.models.abstract_network import AbstractPyTorchNetwork
 
-
     class ClassificationNetworkBasePyTorch(AbstractPyTorchNetwork):
         """
         Implements basic classification with ResNet18
@@ -34,8 +33,8 @@ try:
             """
             # register params by passing them as kwargs to parent class __init__
             super().__init__(in_channels=in_channels,
-                            n_outputs=n_outputs,
-                            **kwargs)
+                             n_outputs=n_outputs,
+                             **kwargs)
 
             self.module = self._build_model(in_channels, n_outputs, **kwargs)
 
@@ -160,7 +159,7 @@ try:
                                         }})
 
             logging.info({'image_grid': {"images": inputs, "name": "input_images",
-                                        "env_appendix": "_%02d" % fold}})
+                                         "env_appendix": "_%02d" % fold}})
 
             return metric_vals, loss_vals, [preds]
 
@@ -188,7 +187,7 @@ try:
             _model = t_models.resnet18(
                 pretrained=False, num_classes=n_outputs, **kwargs)
             _model.conv1 = torch.nn.Conv2d(in_channels, 64, kernel_size=7,
-                                        stride=2, padding=3, bias=False)
+                                           stride=2, padding=3, bias=False)
 
             return _model
 
@@ -223,5 +222,5 @@ try:
 
             return return_dict
 
-except ModuleNotFoundError as e:
+except ImportError as e:
     raise e

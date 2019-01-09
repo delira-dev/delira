@@ -3,12 +3,12 @@ try:
     import torch
     import torch.nn.functional as F
 
-
     class BCEFocalLossPyTorch(torch.nn.Module):
         """
         Focal loss for binary case without(!) logit
 
         """
+
         def __init__(self, alpha=None, gamma=2, reduction='elementwise_mean'):
             """
             Implements Focal Loss for binary class case
@@ -44,9 +44,9 @@ try:
             if self.alpha is not None:
                 # create weights for alpha
                 alpha_weight = torch.ones(t.shape, device=p.device) * \
-                            self.alpha
+                    self.alpha
                 alpha_weight = torch.where(torch.eq(t, 1.),
-                                        alpha_weight, 1 - alpha_weight)
+                                           alpha_weight, 1 - alpha_weight)
             else:
                 alpha_weight = torch.Tensor([1]).to(p.device)
 
@@ -66,12 +66,12 @@ try:
                 return torch.sum(focal_loss)
             raise AttributeError('Reduction parameter unknown.')
 
-
     class BCEFocalLossLogitPyTorch(torch.nn.Module):
         """
         Focal loss for binary case WITH logit
 
         """
+
         def __init__(self, alpha=None, gamma=2, reduction='elementwise_mean'):
             """
             Implements Focal Loss for binary class case
@@ -102,16 +102,17 @@ try:
             self.reduction = reduction
 
         def forward(self, p, t):
-            bce_loss = F.binary_cross_entropy_with_logits(p, t, reduction='none')
+            bce_loss = F.binary_cross_entropy_with_logits(
+                p, t, reduction='none')
 
             p = torch.sigmoid(p)
 
             if self.alpha is not None:
                 # create weights for alpha
                 alpha_weight = torch.ones(t.shape, device=p.device) * \
-                            self.alpha
+                    self.alpha
                 alpha_weight = torch.where(torch.eq(t, 1.),
-                                        alpha_weight, 1 - alpha_weight)
+                                           alpha_weight, 1 - alpha_weight)
             else:
                 alpha_weight = torch.Tensor([1]).to(p.device)
 
@@ -131,5 +132,5 @@ try:
                 return torch.sum(focal_loss)
             raise AttributeError('Reduction parameter unknown.')
 
-except ModuleNotFoundError as e:
+except ImportError as e:
     raise e

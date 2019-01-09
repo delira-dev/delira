@@ -7,8 +7,6 @@ try:
     import torch.nn.functional as F
     from .classification_network import ClassificationNetworkBasePyTorch
 
-
-
     class VGG3DClassificationNetworkPyTorch(ClassificationNetworkBasePyTorch):
         """
         Exemplaric VGG Network for 3D Classification
@@ -26,6 +24,7 @@ try:
         :class:`ClassificationNetworkBasePyTorch`
 
         """
+
         def __init__(self, in_channels: int, n_outputs: int, **kwargs):
             """
 
@@ -63,7 +62,8 @@ try:
             class VGGlike3D(nn.Module):
                 def __init__(self, in_channels=3, n_outputs=2):
                     super().__init__()
-                    self.conv1 = nn.Conv3d(in_channels, 64, 3, stride=2, padding=0)
+                    self.conv1 = nn.Conv3d(
+                        in_channels, 64, 3, stride=2, padding=0)
                     self.conv2 = nn.Conv3d(64, 64, 3, stride=1, padding=0)
                     self.bn1 = nn.BatchNorm3d(64)
 
@@ -73,7 +73,7 @@ try:
 
                     self.conv5 = nn.Conv3d(128, 256, 3, stride=2, padding=0)
                     self.conv6 = nn.Conv3d(256, 256, (1, 3, 3), stride=1,
-                                        padding=0)
+                                           padding=0)
                     self.bn3 = nn.BatchNorm3d(256)
 
                     self.pool = nn.AdaptiveMaxPool3d((1, 16, 16))
@@ -109,5 +109,5 @@ try:
             _model = VGGlike3D(in_channels=in_channels, n_outputs=n_outputs)
             return _model
 
-except ModuleNotFoundError as e:
+except ImportError as e:
     raise e

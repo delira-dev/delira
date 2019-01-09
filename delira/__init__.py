@@ -35,5 +35,5 @@ try:
         'TorchvisionClassificationDataset'
     ]
 
-except ModuleNotFoundError as e:
+except ImportError as e:
     warnings.warn(ImportWarning(e.msg))

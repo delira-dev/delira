@@ -679,5 +679,5 @@ try:
             """
             return len(self.data)
 
-except ModuleNotFoundError as e:
+except ImportError as e:
     raise e

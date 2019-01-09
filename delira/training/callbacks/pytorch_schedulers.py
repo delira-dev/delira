@@ -4,13 +4,13 @@ try:
     from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingLR, \
         ExponentialLR, LambdaLR, MultiStepLR, StepLR
 
-
     class DefaultPyTorchSchedulerCallback(AbstractCallback):
         """
         Implements a Callback, which `at_epoch_end` function is suitable for most
         schedulers
 
         """
+
         def __init__(self, *args, **kwargs):
             """
 
@@ -46,15 +46,15 @@ try:
             self.scheduler.step(epoch=kwargs.get("curr_epoch", None))
             return trainer
 
-
     class ReduceLROnPlateauCallback(DefaultPyTorchSchedulerCallback):
         """
         Wraps PyTorch's `ReduceLROnPlateau` Scheduler as Callback
 
         """
+
         def __init__(self, optimizer, mode='min', factor=0.1, patience=10,
-                    verbose=False, threshold=1e-4, threshold_mode='rel',
-                    cooldown=0, min_lr=0, eps=1e-8):
+                     verbose=False, threshold=1e-4, threshold_mode='rel',
+                     cooldown=0, min_lr=0, eps=1e-8):
             """
 
             Parameters
@@ -103,11 +103,11 @@ try:
             """
             super().__init__()
             self.scheduler = ReduceLROnPlateau(optimizer, mode, factor, patience,
-                                            verbose, threshold, threshold_mode,
-                                            cooldown, min_lr, eps)
+                                               verbose, threshold, threshold_mode,
+                                               cooldown, min_lr, eps)
 
         def at_epoch_end(self, trainer,
-                        **kwargs):
+                         **kwargs):
             """
             Executes a single scheduling step
 
@@ -125,17 +125,17 @@ try:
 
             """
             metrics = kwargs.get("val_metrics", {}).get(kwargs.get("val_score_key",
-                                                                None))
+                                                                   None))
             self.scheduler.step(metrics=metrics)
 
             return trainer
-
 
     class CosineAnnealingLRCallback(DefaultPyTorchSchedulerCallback):
         """
         Wraps PyTorch's `CosineAnnealingLR` Scheduler as callback
 
         """
+
         def __init__(self, optimizer, T_max, eta_min=0, last_epoch=-1):
             """
 
@@ -154,14 +154,14 @@ try:
             super().__init__()
 
             self.scheduler = CosineAnnealingLR(optimizer, T_max, eta_min,
-                                            last_epoch)
-
+                                               last_epoch)
 
     class ExponentialLRCallback(DefaultPyTorchSchedulerCallback):
         """
         Wraps PyTorch's `ExponentialLR` Scheduler as callback
 
         """
+
         def __init__(self, optimizer, gamma, last_epoch=-1):
             """
 
@@ -179,12 +179,12 @@ try:
 
             self.scheduler = ExponentialLR(optimizer, gamma, last_epoch)
 
-
     class LambdaLRCallback(DefaultPyTorchSchedulerCallback):
         """
         Wraps PyTorch's `LambdaLR` Scheduler as callback
 
         """
+
         def __init__(self, optimizer, lr_lambda, last_epoch=-1):
             """
 
@@ -204,12 +204,12 @@ try:
 
             self.scheduler = LambdaLR(optimizer, lr_lambda, last_epoch)
 
-
     class MultiStepLRCallback(DefaultPyTorchSchedulerCallback):
         """
         Wraps PyTorch's `MultiStepLR` Scheduler as callback
 
         """
+
         def __init__(self, optimizer, milestones, gamma=0.1, last_epoch=-1):
             """
 
@@ -228,14 +228,15 @@ try:
             """
             super().__init__()
 
-            self.scheduler = MultiStepLR(optimizer, milestones, gamma, last_epoch)
-
+            self.scheduler = MultiStepLR(
+                optimizer, milestones, gamma, last_epoch)
 
     class StepLRCallback(DefaultPyTorchSchedulerCallback):
         """
         Wraps PyTorch's `StepLR` Scheduler as callback
 
         """
+
         def __init__(self, optimizer, step_size, gamma=0.1, last_epoch=-1):
             """
 
@@ -256,5 +257,5 @@ try:
 
             self.scheduler = StepLR(optimizer, step_size, gamma, last_epoch)
 
-except ModuleNotFoundError as e:
+except ImportError as e:
     raise e

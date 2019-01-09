@@ -20,7 +20,6 @@ try:
         ReduceLROnPlateauCallbackPyTorch
     from .pytorch_schedulers import StepLRCallback as StepLRCallbackPyTorch
 
-
     __all__ += [
         'DefaultPyTorchSchedulerCallback',
         'CosineAnnealingLRCallbackPyTorch',
@@ -31,6 +30,6 @@ try:
         'StepLRCallbackPyTorch'
     ]
 
-except ModuleNotFoundError as e:
+except ImportError as e:
     import warnings
     warnings.warn(ImportWarning(e.msg))
