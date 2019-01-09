@@ -9,7 +9,7 @@ pytest
 autopep8
 ipython
 joblib
-Pillow>=4.5.0
+Pillow>=5.4.0
 SimpleITK==1.1.0
 pylint
 tqdm
