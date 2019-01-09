@@ -14,7 +14,7 @@ def test_focalloss():
     p = torch.Tensor([[0, 0.2, 0.5, 1.0], [0, 0.2, 0.5, 1.0]])
     t = torch.Tensor([[0, 0, 0, 0], [1, 1, 1, 1]])
     p_l = torch.Tensor([[-2, -1, 0, 2],[-2, -1, 0, 1]])
-    
+
     ###########################################################################
     # params
     gamma = 2
@@ -68,24 +68,6 @@ def test_focalloss():
     focal = BCEFocalLossLogitPyTorch(gamma=gamma, alpha=alpha, reduction='none')
     focal_loss = focal(p_l, t)
     assert (torch.abs(fc_value_logit - focal_loss) < eps).all()
-
-    ###########################################################################
-    # test if loss function also works on gpu
-    focal = BCEFocalLossPyTorch(gamma=gamma, alpha=alpha, reduction='none')
-    if torch.cuda.is_available():
-        device = torch.device("cpu")
-        p_cuda = p.to(device)
-        t_cuda = t.to(device)
-        focal_loss = focal(p_cuda, t_cuda)
-    assert (torch.abs(fc_value - focal_loss.cpu()) < eps).all()
-
-    focal = BCEFocalLossLogitPyTorch(gamma=gamma, alpha=alpha, reduction='none')
-    if torch.cuda.is_available():
-        device = torch.device("cpu")
-        p_l_cuda = p_l.to(device)
-        t_cuda = t.to(device)
-        focal_loss = focal(p_l_cuda, t_cuda)
-    assert (torch.abs(fc_value_logit - focal_loss.cpu()) < eps).all()
 
     ###########################################################################
     # test if backward function works
