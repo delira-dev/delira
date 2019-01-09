@@ -50,9 +50,11 @@ class Parameters(LookupConfig):
             fixed = self.pop("fixed")
             variable = self.pop("variable")
 
-            model = {"fixed": fixed["model"], "variable": variable["model"]}
-            training = {"fixed": fixed["training"],
-                        "variable": variable["training"]}
+            model = {
+                "fixed": fixed.pop("model"),
+                "variable": variable.pop("model")}
+            training = {"fixed": fixed.pop("training"),
+                        "variable": variable.pop("training")}
 
             self.model = model
             self.training = training
@@ -61,10 +63,12 @@ class Parameters(LookupConfig):
             model = self.pop("model")
             training = self.pop("training")
 
-            fixed = {"model": model["fixed"],
-                     "training": training["fixed"]}
-            variable = {"model": model["variable"],
-                        "training": training["variable"]}
+            fixed = {
+                "model": model.pop("fixed"),
+                "training": training.pop("fixed")}
+            variable = {
+                "model": model.pop("variable"),
+                "training": training.pop("variable")}
 
             self.fixed = fixed
             self.variable = variable
