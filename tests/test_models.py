@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 import time
 import gc
+import os
 
 
 @pytest.mark.parametrize("model,input_shape,target_shape,loss_fn,"
@@ -74,6 +75,8 @@ import gc
                                      True  # half precision
                              )
                          ])
+@pytest.mark.skipif((os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+                    / 1024.**3) < 20, reason="Not enough RAM")
 def test_pytorch_model_default(model: AbstractPyTorchNetwork, input_shape,
                                target_shape, loss_fn, create_optim_fn,
                                max_range, half_precision):
