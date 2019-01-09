@@ -19,4 +19,5 @@ trixi==0.1.1.1
 batchgenerators@git+https://github.com/MIC-DKFZ/batchgenerators.git@32372057d2122fee47209044645741b8a6b736a7#egg=batchgenerators-0
 apex@git+https://www.github.com/nvidia/apex.git#egg=apex
 nested_lookup
+psutil
 
