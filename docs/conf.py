@@ -19,7 +19,7 @@ import os
 import re
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
-# import delira
+import delira
 
 # -- Project information -----------------------------------------------------
 
