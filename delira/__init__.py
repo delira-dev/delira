@@ -1,15 +1,15 @@
-__version__ = '0.1'
+__version__ = '0.1.0'
 
 import warnings
 warnings.simplefilter('default', DeprecationWarning)
+warnings.simplefilter('default', ModuleNotFoundError)
 
 from .data_loading import BaseCacheDataset, BaseLazyDataset, BaseDataManager, \
     RandomSampler, SequentialSampler
 
 from .logging import TrixiHandler, MultiStreamHandler
-from .io import torch_load_checkpoint, torch_save_checkpoint
 
-from .models import AbstractNetwork, AbstractPyTorchNetwork
+from .models import AbstractNetwork
 
 __all__ = [
     'BaseCacheDataset',
@@ -19,8 +19,21 @@ __all__ = [
     'SequentialSampler',
     'TrixiHandler',
     'MultiStreamHandler',
-    'torch_save_checkpoint',
-    'torch_load_checkpoint',
-    'AbstractNetwork',
-    'AbstractPyTorchNetwork'
+    'AbstractNetwork'
 ]
+
+try:
+    import torch
+    from torch.io import torch_load_checkpoint, torch_save_checkpoint
+    from .models import AbstractPyTorchNetwork
+    from .data_loading import TorchvisionClassificationDataset
+
+    __all__ += [
+        'torch_save_checkpoint',
+        'torch_load_checkpoint',
+        'AbstractPyTorchNetwork',
+        'TorchvisionClassificationDataset'
+    ]
+
+except ModuleNotFoundError as e:
+    warnings.warn(e)

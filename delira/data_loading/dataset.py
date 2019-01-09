@@ -2,7 +2,6 @@ import abc
 import os
 from tqdm import tqdm
 import numpy as np
-from torchvision.datasets import CIFAR10, CIFAR100, MNIST, FashionMNIST, EMNIST
 from skimage.transform import resize
 from sklearn.model_selection import train_test_split
 from ..utils import subdirs
@@ -551,127 +550,134 @@ class Nii3DCacheDatset(BaseCacheDataset):
         return data
 
 
-class TorchvisionClassificationDataset(AbstractDataset):
-    """
-    Wrapper for torchvision classification datasets to provide consistent API
+try:
+    from torchvision.datasets import CIFAR10, CIFAR100, MNIST, FashionMNIST, \
+                                    EMNIST
 
-    """
-
-    def __init__(self, dataset, root="/tmp/", train=True, download=True,
-                 img_shape=(28, 28), **kwargs):
+    class TorchvisionClassificationDataset(AbstractDataset):
         """
-
-        Parameters
-        ----------
-        dataset : str
-            Defines the dataset to use.
-            must be one of
-            ['mnist', 'emnist', 'fashion_mnist', 'cifar10', 'cifar100']
-        root : str
-            path dataset (If download is True: dataset will be extracted here;
-            else: path to extracted dataset)
-        train : bool
-            whether to use the train or the testset
-        download : bool
-            whether or not to download the dataset
-            (If already downloaded at specified path,
-            it won't be downloaded again)
-        img_shape : tuple
-            Height and width of output images (will be interpolated)
-        **kwargs :
-            Additional keyword arguments passed to the torchvision dataset
-            class for initialization
-
-        """
-        super().__init__("", None, [], [])
-
-        self.download = download
-        self.train = train
-        self.root = root
-        self.img_shape = img_shape
-        self.data = self._make_dataset(dataset, **kwargs)
-
-    def _make_dataset(self, dataset, **kwargs):
-        """
-        Create the actual dataset
-
-        Parameters
-        ----------
-        dataset: str
-            Defines the dataset to use.
-            must be one of
-            ['mnist', 'emnist', 'fashion_mnist', 'cifar10', 'cifar100']
-        **kwargs :
-            Additional keyword arguments passed to the torchvision dataset
-            class for initialization
-
-        Returns
-        -------
-        torchvision.Dataset
-            actual Dataset
-
-        Raises
-        ------
-        KeyError
-            Dataset string does not specify a valid dataset
-
-        """
-        if dataset.lower() == "mnist":
-            _dataset_cls = MNIST
-        elif dataset.lower() == "emnist":
-            _dataset_cls = EMNIST
-        elif dataset.lower() == "fashion_mnist":
-            _dataset_cls = FashionMNIST
-        elif dataset.lower() == "cifar10":
-            _dataset_cls = CIFAR10
-        elif dataset.lower() == "cifar100":
-            _dataset_cls = CIFAR100
-        else:
-            raise KeyError("Dataset %s not found!" % dataset.lower())
-
-        return _dataset_cls(root=self.root, train=self.train,
-                            download=self.download, **kwargs)
-
-    def __getitem__(self, index):
-        """
-        return data sample specified by index
-
-        Parameters
-        ----------
-        index : int
-            index to specifiy which data sample to return
-
-        Returns
-        -------
-        dict
-            data sample
+        Wrapper for torchvision classification datasets to provide consistent API
 
         """
 
-        data = self.data[index]
-        data_dict = {"data": np.array(data[0]),
-                     "label": data[1].numpy().reshape(1).astype(np.float32)}
+        def __init__(self, dataset, root="/tmp/", train=True, download=True,
+                    img_shape=(28, 28), **kwargs):
+            """
 
-        img = data_dict["data"]
+            Parameters
+            ----------
+            dataset : str
+                Defines the dataset to use.
+                must be one of
+                ['mnist', 'emnist', 'fashion_mnist', 'cifar10', 'cifar100']
+            root : str
+                path dataset (If download is True: dataset will be extracted here;
+                else: path to extracted dataset)
+            train : bool
+                whether to use the train or the testset
+            download : bool
+                whether or not to download the dataset
+                (If already downloaded at specified path,
+                it won't be downloaded again)
+            img_shape : tuple
+                Height and width of output images (will be interpolated)
+            **kwargs :
+                Additional keyword arguments passed to the torchvision dataset
+                class for initialization
 
-        img = resize(img, self.img_shape, mode='reflect', anti_aliasing=True)
-        if len(img.shape) <= 3:
-            img = img.reshape(
-                *img.shape, 1)
+            """
+            super().__init__("", None, [], [])
 
-        img = img.transpose((len(img.shape) - 1, *range(len(img.shape) - 1)))
+            self.download = download
+            self.train = train
+            self.root = root
+            self.img_shape = img_shape
+            self.data = self._make_dataset(dataset, **kwargs)
 
-        data_dict["data"] = img.astype(np.float32)
-        return data_dict
+        def _make_dataset(self, dataset, **kwargs):
+            """
+            Create the actual dataset
 
-    def __len__(self):
-        """
-        Return Number of samples
+            Parameters
+            ----------
+            dataset: str
+                Defines the dataset to use.
+                must be one of
+                ['mnist', 'emnist', 'fashion_mnist', 'cifar10', 'cifar100']
+            **kwargs :
+                Additional keyword arguments passed to the torchvision dataset
+                class for initialization
 
-        Returns
-        -------
-        int
-            number of samples
+            Returns
+            -------
+            torchvision.Dataset
+                actual Dataset
 
-        """
-        return len(self.data)
+            Raises
+            ------
+            KeyError
+                Dataset string does not specify a valid dataset
+
+            """
+            if dataset.lower() == "mnist":
+                _dataset_cls = MNIST
+            elif dataset.lower() == "emnist":
+                _dataset_cls = EMNIST
+            elif dataset.lower() == "fashion_mnist":
+                _dataset_cls = FashionMNIST
+            elif dataset.lower() == "cifar10":
+                _dataset_cls = CIFAR10
+            elif dataset.lower() == "cifar100":
+                _dataset_cls = CIFAR100
+            else:
+                raise KeyError("Dataset %s not found!" % dataset.lower())
+
+            return _dataset_cls(root=self.root, train=self.train,
+                                download=self.download, **kwargs)
+
+        def __getitem__(self, index):
+            """
+            return data sample specified by index
+
+            Parameters
+            ----------
+            index : int
+                index to specifiy which data sample to return
+
+            Returns
+            -------
+            dict
+                data sample
+
+            """
+
+            data = self.data[index]
+            data_dict = {"data": np.array(data[0]),
+                        "label": data[1].numpy().reshape(1).astype(np.float32)}
+
+            img = data_dict["data"]
+
+            img = resize(img, self.img_shape, mode='reflect', anti_aliasing=True)
+            if len(img.shape) <= 3:
+                img = img.reshape(
+                    *img.shape, 1)
+
+            img = img.transpose((len(img.shape) - 1, *range(len(img.shape) - 1)))
+
+            data_dict["data"] = img.astype(np.float32)
+            return data_dict
+
+        def __len__(self):
+            """
+            Return Number of samples
+
+            Returns
+            -------
+            int
+                number of samples
+
+            """
+            return len(self.data)
+
+except ModuleNotFoundError as e:
+    raise e
