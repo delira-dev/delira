@@ -1,4 +1,4 @@
 sphinx==1.7.9
 nbsphinx
 sphinx-rtd-theme
-batchgenerators@git+https://github.com/MIC-DKFZ/batchgenerators.git@91feb74747bfcfb9514d509fb13b854a37847b4d#egg=batchgenerators-0
+git+https://github.com/MIC-DKFZ/batchgenerators.git@91feb74747bfcfb9514d509fb13b854a37847b4d#egg=batchgenerators-0
