@@ -24,7 +24,7 @@ __all__ = [
 
 try:
     import torch
-    from torch.io import torch_load_checkpoint, torch_save_checkpoint
+    from .io import torch_load_checkpoint, torch_save_checkpoint
     from .models import AbstractPyTorchNetwork
     from .data_loading import TorchvisionClassificationDataset
 
