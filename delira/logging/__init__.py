@@ -5,7 +5,7 @@ try:
 
 except ModuleNotFoundError as e:
     import warnings
-    warnings.warn(e)
+    warnings.warn(ImportWarning(e.msg))
     raise e
 from .multistream_handler import MultiStreamHandler
 from .trixi_handler import TrixiHandler

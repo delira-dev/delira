@@ -10,5 +10,5 @@ try:
 
 except ModuleNotFoundError as e:
     import warnings
-    warnings.warn(e)
+    warnings.warn(ImportWarning(e.msg))
     raise e
