@@ -19,39 +19,6 @@ import re
 sys.path.insert(0, os.path.abspath('../..'))
 import delira
 
-MOCK_CLASSES = {'Dataset': 'torch.utils.data', 'Module': 'torch.nn',
-                'QtWidgets.QMainWindow': 'matplotlib.backends.qt_compat'}
-
-
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        if name in MOCK_CLASSES:
-            # return object  # Sphinx renders object in base classes
-            return type(name, (object,), {'__module__': MOCK_CLASSES[name]})
-        elif name == '__file__':  # Sphinx tries to find source code, but doesn't matter because it's mocked
-            return "FOO"
-        elif name == '__loader__':
-            return "BAR"
-        return MagicMock()
-
-
-MOCK_MODULES = ['torch', 'torch.nn', 'torch.utils', 'torch.optim',
-                'torch.utils.data', 'torch.utils.data.sampler',
-
-                'torchvision', 'torchvision.models',
-                'torchtext', 
-
-                'matplotlib', 'matplotlib.pyplot', 'matplotlib.figure', 'matplotlib.backends.qt_compat',
-                'matplotlib.backends.backend_qt5agg', 'matplotlib.backends.backend_qt4agg',
-                'matplotlib.backends.qt_compat.QtWidgets',
-
-                'tensorboardX', 
-                
-                'psutil', 'numpy', 'yaml', 'nltk', 'h5py', 'tqdm']
-
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
-
 # -- Project information -----------------------------------------------------
 
 project = 'delira'
@@ -267,6 +234,7 @@ autodoc_mock_imports = [
     "plotly",
     "PIL",
     "umap",
+    "PIL.Image",
 ]
 
 # We use the following to automatically run sphinx-apidoc, whenever we run make html.
