@@ -3,3 +3,4 @@ sphinx-rtd-theme
 git+https://github.com/MIC-DKFZ/batchgenerators.git#egg=batchgenerators-0
 torchvision==0.2.1
 pillow==5.4.1
+numpy==1.15.1
