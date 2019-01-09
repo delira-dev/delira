@@ -50,7 +50,6 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.inheritance_diagram',
     'sphinx.ext.autosectionlabel',
-    'nbsphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
