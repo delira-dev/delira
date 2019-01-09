@@ -1,19 +1,28 @@
-from .abstract_network import AbstractNetwork, AbstractPyTorchNetwork
-from .classification import VGG3DClassificationNetworkPyTorch, \
-    ClassificationNetworkBasePyTorch
+from .abstract_network import AbstractNetwork
 
-from .segmentation import UNet2dPyTorch, UNet3dPyTorch
+__all__ = ['AbstractNetwork']
+try:
+    from .abstract_network import AbstractPyTorchNetwork
+    from .classification import VGG3DClassificationNetworkPyTorch, \
+        ClassificationNetworkBasePyTorch
 
-from .gan import GenerativeAdversarialNetworkBasePyTorch
+    from .segmentation import UNet2dPyTorch, UNet3dPyTorch
 
+    from .gan import GenerativeAdversarialNetworkBasePyTorch
 
-from .classification import __all__ as __all_clf
-from .gan import __all__ as __all_gan
-from .segmentation import __all__ as __all_seg
+    __all__ += ["AbstractPyTorchNetwork"]
 
-__all__ = [
-    'AbstractNetwork',
-    'AbstractPyTorchNetwork',
+except ModuleNotFoundError as e:
+    import warnings
+    warnings.warn(e)
+    raise e
+
+finally:
+    from .classification import __all__ as __all_clf
+    from .gan import __all__ as __all_gan
+    from .segmentation import __all__ as __all_seg
+
+__all__ += [
     *__all_clf,
     *__all_gan,
     *__all_seg

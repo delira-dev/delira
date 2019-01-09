@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 from functools import wraps
 import warnings
@@ -100,6 +99,12 @@ def make_deprecated(new_func):
     return deprecation
 
 
-torch_tensor_func = dtype_func(torch.Tensor)
-torch_module_func = dtype_func(torch.nn.Module)
 numpy_array_func = dtype_func(np.ndarray)
+
+try:
+    import torch
+    torch_tensor_func = dtype_func(torch.Tensor)
+    torch_module_func = dtype_func(torch.nn.Module)
+
+except ModuleNotFoundError as e:
+    raise e

@@ -1,7 +1,15 @@
 """Module Containing Networks for Segmentation Tasks"""
-from .unet import UNet2dPyTorch, UNet3dPyTorch
+__all__ = []
 
-__all__ = [
-    'UNet2dPyTorch',
-    'UNet3dPyTorch'
-]
+try:
+    from .unet import UNet2dPyTorch, UNet3dPyTorch
+
+    __all__ += [
+        'UNet2dPyTorch',
+        'UNet3dPyTorch'
+    ]
+
+except ModuleNotFoundError as e:
+    import warnings
+    warnings.warn(e)
+    raise e

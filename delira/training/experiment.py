@@ -1,11 +1,13 @@
+
+
+
 import os
 import logging
 import yaml
 import typing
 import numpy as np
-import torch
+
 import pickle
-import ray
 
 from abc import abstractmethod
 from sklearn.model_selection import KFold
@@ -14,23 +16,14 @@ from datetime import datetime
 from inspect import signature
 from functools import partial
 
-from trixi.experiment import Experiment as TrixiExperiment
-from trixi.experiment import PytorchExperiment as TrixiPTExperiment
-from trixi.logger.experiment import PytorchExperimentLogger as ExpLogger
-
-from ray.tune.function_runner import StatusReporter
-from ray.tune import run_experiments, register_trainable
-from ray.tune.schedulers import TrialScheduler
-
-from .. import __version__ as delira_version
-from .parameters import Parameters
-from ..data_loading import BaseDataManager, ConcatDataManager
-from ..models import AbstractPyTorchNetwork
-from .pytorch_trainer import PyTorchNetworkTrainer as PTNetworkTrainer
-from .train_utils import create_optims_default_pytorch
-from ..utils import now
 logger = logging.getLogger(__name__)
 
+from trixi.experiment import Experiment as TrixiExperiment
+
+from .parameters import Parameters
+from .. import __version__ as delira_version
+from ..data_loading import BaseDataManager, ConcatDataManager
+from ..utils import now
 
 NOT_IMPLEMENTED_KEYS = []
 
@@ -212,199 +205,208 @@ class AbstractExperiment(TrixiExperiment):
         raise NotImplementedError()
 
 
-class PyTorchExperiment(AbstractExperiment):
-    """
-    Single Experiment for PyTorch Backend
+try:
 
-    See Also
-    --------
-    :class:`AbstractExperiment`
-
-    """
-
-    def __init__(self,
-                 params: typing.Union[Parameters, str],
-                 model_cls: AbstractPyTorchNetwork,
-                 name=None,
-                 save_path=None,
-                 val_score_key=None,
-                 optim_builder=create_optims_default_pytorch,
-                 checkpoint_freq=1,
-                 **kwargs
-                 ):
-
-        if isinstance(params, str):
-            with open(params, "rb") as f:
-                params = pickle.load(f)
-
-        n_epochs = params.nested_get("num_epochs")
-        AbstractExperiment.__init__(self, n_epochs)
-
-        if name is None:
-            name = "UnnamedExperiment"
-        self.name = name
-
-        if save_path is None:
-            save_path = os.path.abspath(".")
-
-        self.save_path = os.path.join(save_path, name,
-                                      str(datetime.now().strftime(
-                                          "%y-%m-%d_%H-%M-%S")))
-
-        if os.path.isdir(self.save_path):
-            logger.warning("Save Path %s already exists")
-
-        os.makedirs(self.save_path, exist_ok=True)
-
-        if val_score_key is None and params.nested_get("metrics"):
-            val_score_key = sorted(params.nested_get("metrics").keys())[0]
-
-        self.val_score_key = val_score_key
-
-        self.params = params
-        self.model_cls = model_cls
-        self.kwargs = kwargs
-        self._optim_builder = optim_builder
-        self.checkpoint_freq = checkpoint_freq
-        self._run = 0
-
-        # log HyperParameters
-        logger.info({"text": {"text":
-                              str(params) + "\n\tmodel_class = %s"
-                              % model_cls.__class__.__name__}})
-
-    def setup(self, params: Parameters, **kwargs):
+    import torch
+    from .train_utils import create_optims_default_pytorch
+    from .pytorch_trainer import PyTorchNetworkTrainer as PTNetworkTrainer
+    from ..models import AbstractPyTorchNetwork
+    class PyTorchExperiment(AbstractExperiment):
         """
-        Perform setup of Network Trainer
+        Single Experiment for PyTorch Backend
 
-        Parameters
-        ----------
-        params : :class:`Parameters`
-            the parameters to construct a model and network trainer
-        **kwargs :
-            keyword arguments
-
-        """
-        model_params = params.permute_training_on_top().model
-
-        model_kwargs = {}
-        for key in signature(self.model_cls.__init__).parameters.keys():
-            if key in ["self", "args", "kwargs"]:
-                continue
-            try:
-                model_kwargs[key] = model_params.nested_get(key)
-
-            except KeyError:
-                pass
-
-        model = self.model_cls(**model_kwargs)
-
-        training_params = params.permute_training_on_top().training
-        criterions = training_params.nested_get("criterions")
-        optimizer_cls = training_params.nested_get("optimizer_cls")
-        optimizer_params = training_params.nested_get("optimizer_params")
-        metrics = training_params.nested_get("metrics")
-        lr_scheduler_cls = training_params.nested_get("lr_sched_cls")
-        lr_scheduler_params = training_params.nested_get("lr_sched_params")
-        return PTNetworkTrainer(
-            network=model,
-            save_path=os.path.join(
-                self.save_path,
-                "checkpoints",
-                "run_%02d" % self._run),
-            criterions=criterions,
-            optimizer_cls=optimizer_cls,
-            optimizer_params=optimizer_params,
-            metrics=metrics,
-            lr_scheduler_cls=lr_scheduler_cls,
-            lr_scheduler_params=lr_scheduler_params,
-            optim_fn=self._optim_builder,
-            save_freq=self.checkpoint_freq,
-            **self.kwargs,
-            **kwargs
-        )
-
-    def run(self,
-            train_data: typing.Union[BaseDataManager, ConcatDataManager],
-            val_data: typing.Union[BaseDataManager, ConcatDataManager, None],
-            params: typing.Optional[Parameters] = None,
-            **kwargs):
-        """
-        trains single model
-
-        Parameters
-        ----------
-        train_data : BaseDataManager or ConcatDataManager
-            holds the trainset
-        val_data : BaseDataManager or ConcatDataManager or None
-            holds the validation set (if None: Model will not be validated)
-        params : :class:`Parameters`
-            the parameters to construct a model and network trainer
-        **kwargs :
-            holds additional keyword arguments 
-            (which are completly passed to the trainers init)
-
-        Returns
-        -------
-        :class:`AbstractNetworkTrainer`
-            trainer of trained network
-
-        Raises
-        ------
-        ValueError
-            Class has no Attribute ``params`` and no parameters were given as 
-            function argument
+        See Also
+        --------
+        :class:`AbstractExperiment`
 
         """
 
-        if params is None:
-            if hasattr(self, "params"):
-                params = self.params
-            else:
-                raise ValueError("No parameters given")
+        def __init__(self,
+                    params: typing.Union[Parameters, str],
+                    model_cls: AbstractPyTorchNetwork,
+                    name=None,
+                    save_path=None,
+                    val_score_key=None,
+                    optim_builder=create_optims_default_pytorch,
+                    checkpoint_freq=1,
+                    **kwargs
+                    ):
 
-        else:
+            if isinstance(params, str):
+                with open(params, "rb") as f:
+                    params = pickle.load(f)
+
+            n_epochs = params.nested_get("num_epochs")
+            AbstractExperiment.__init__(self, n_epochs)
+
+            if name is None:
+                name = "UnnamedExperiment"
+            self.name = name
+
+            if save_path is None:
+                save_path = os.path.abspath(".")
+
+            self.save_path = os.path.join(save_path, name,
+                                        str(datetime.now().strftime(
+                                            "%y-%m-%d_%H-%M-%S")))
+
+            if os.path.isdir(self.save_path):
+                logger.warning("Save Path %s already exists")
+
+            os.makedirs(self.save_path, exist_ok=True)
+
+            if val_score_key is None and params.nested_get("metrics"):
+                val_score_key = sorted(params.nested_get("metrics").keys())[0]
+
+            self.val_score_key = val_score_key
+
             self.params = params
+            self.model_cls = model_cls
+            self.kwargs = kwargs
+            self._optim_builder = optim_builder
+            self.checkpoint_freq = checkpoint_freq
+            self._run = 0
 
-        training_params = params.permute_training_on_top().training
+            # log HyperParameters
+            logger.info({"text": {"text":
+                                str(params) + "\n\tmodel_class = %s"
+                                % model_cls.__class__.__name__}})
 
-        trainer = self.setup(params, **kwargs)
-        self._run += 1
-        num_epochs = kwargs.get("num_epochs", training_params.nested_get(
-            "num_epochs"))
-        return trainer.train(num_epochs, train_data, val_data,
-                             self.val_score_key,
-                             self.kwargs.get("val_score_mode",
-                                             "lowest")
-                             )
+        def setup(self, params: Parameters, **kwargs):
+            """
+            Perform setup of Network Trainer
 
-    def save(self):
-        """
-        Saves the Whole experiments
+            Parameters
+            ----------
+            params : :class:`Parameters`
+                the parameters to construct a model and network trainer
+            **kwargs :
+                keyword arguments
 
-        """
-        with open(os.path.join(self.save_path, "experiment.delira.pkl"),
-                  "wb") as f:
-            pickle.dump(self, f)
+            """
+            model_params = params.permute_training_on_top().model
 
-        self.params.save(os.path.join(self.save_path, "parameters"))
+            model_kwargs = {}
+            for key in signature(self.model_cls.__init__).parameters.keys():
+                if key in ["self", "args", "kwargs"]:
+                    continue
+                try:
+                    model_kwargs[key] = model_params.nested_get(key)
 
-    @staticmethod
-    def load(file_name):
-        """
-        Loads whole experiment
+                except KeyError:
+                    pass
 
-        Parameters
-        ----------
-        file_name : str
-            file_name to load the experiment from
+            model = self.model_cls(**model_kwargs)
 
-        """
-        with open(file_name, "rb") as f:
-            return pickle.load(f)
+            training_params = params.permute_training_on_top().training
+            criterions = training_params.nested_get("criterions")
+            optimizer_cls = training_params.nested_get("optimizer_cls")
+            optimizer_params = training_params.nested_get("optimizer_params")
+            metrics = training_params.nested_get("metrics")
+            lr_scheduler_cls = training_params.nested_get("lr_sched_cls")
+            lr_scheduler_params = training_params.nested_get("lr_sched_params")
+            return PTNetworkTrainer(
+                network=model,
+                save_path=os.path.join(
+                    self.save_path,
+                    "checkpoints",
+                    "run_%02d" % self._run),
+                criterions=criterions,
+                optimizer_cls=optimizer_cls,
+                optimizer_params=optimizer_params,
+                metrics=metrics,
+                lr_scheduler_cls=lr_scheduler_cls,
+                lr_scheduler_params=lr_scheduler_params,
+                optim_fn=self._optim_builder,
+                save_freq=self.checkpoint_freq,
+                **self.kwargs,
+                **kwargs
+            )
 
-    def __getstate__(self):
-        return vars(self)
+        def run(self,
+                train_data: typing.Union[BaseDataManager, ConcatDataManager],
+                val_data: typing.Union[BaseDataManager, ConcatDataManager, None],
+                params: typing.Optional[Parameters] = None,
+                **kwargs):
+            """
+            trains single model
 
-    def __setstate__(self, state):
-        vars(self).update(state)
+            Parameters
+            ----------
+            train_data : BaseDataManager or ConcatDataManager
+                holds the trainset
+            val_data : BaseDataManager or ConcatDataManager or None
+                holds the validation set (if None: Model will not be validated)
+            params : :class:`Parameters`
+                the parameters to construct a model and network trainer
+            **kwargs :
+                holds additional keyword arguments 
+                (which are completly passed to the trainers init)
+
+            Returns
+            -------
+            :class:`AbstractNetworkTrainer`
+                trainer of trained network
+
+            Raises
+            ------
+            ValueError
+                Class has no Attribute ``params`` and no parameters were given as 
+                function argument
+
+            """
+
+            if params is None:
+                if hasattr(self, "params"):
+                    params = self.params
+                else:
+                    raise ValueError("No parameters given")
+
+            else:
+                self.params = params
+
+            training_params = params.permute_training_on_top().training
+
+            trainer = self.setup(params, **kwargs)
+            self._run += 1
+            num_epochs = kwargs.get("num_epochs", training_params.nested_get(
+                "num_epochs"))
+            return trainer.train(num_epochs, train_data, val_data,
+                                self.val_score_key,
+                                self.kwargs.get("val_score_mode",
+                                                "lowest")
+                                )
+
+        def save(self):
+            """
+            Saves the Whole experiments
+
+            """
+            with open(os.path.join(self.save_path, "experiment.delira.pkl"),
+                    "wb") as f:
+                pickle.dump(self, f)
+
+            self.params.save(os.path.join(self.save_path, "parameters"))
+
+        @staticmethod
+        def load(file_name):
+            """
+            Loads whole experiment
+
+            Parameters
+            ----------
+            file_name : str
+                file_name to load the experiment from
+
+            """
+            with open(file_name, "rb") as f:
+                return pickle.load(f)
+
+        def __getstate__(self):
+            return vars(self)
+
+        def __setstate__(self, state):
+            vars(self).update(state)
+
+except ModuleNotFoundError as e:
+    raise e
