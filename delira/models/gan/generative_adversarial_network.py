@@ -302,5 +302,5 @@ try:
 
             return gen, discr
 
-except ModuleNotFoundError as e:
+except ImportError as e:
     raise e

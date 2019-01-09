@@ -12,13 +12,47 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
 import os
-import re
 import sys
+import re
+
+from unittest.mock import MagicMock
+
+# source code directory, relative to this file, for sphinx-build
 sys.path.insert(0, os.path.abspath('../..'))
+
+
+MOCK_CLASSES = {'Dataset': 'torch.utils.data', 'Module': 'torch.nn',
+                'QtWidgets.QMainWindow': 'matplotlib.backends.qt_compat'}
+
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        if name in MOCK_CLASSES:
+            # return object  # Sphinx renders object in base classes
+            return type(name, (object,), {'__module__': MOCK_CLASSES[name]})
+        elif name == '__file__':  # Sphinx tries to find source code, but doesn't matter because it's mocked
+            return "FOO"
+        elif name == '__loader__':
+            return "BAR"
+        return MagicMock()
+
+
+MOCK_MODULES = ['torch', 'torch.nn', 'torch.utils', 'torch.optim',
+                'torch.utils.data', 'torch.utils.data.sampler',
+
+                'torchvision', 'torchvision.models',
+                'torchtext', 
+
+                'matplotlib', 'matplotlib.pyplot', 'matplotlib.figure', 'matplotlib.backends.qt_compat',
+                'matplotlib.backends.backend_qt5agg', 'matplotlib.backends.backend_qt4agg',
+                'matplotlib.backends.qt_compat.QtWidgets',
+
+                'tensorboardX', 
+                
+                'psutil', 'numpy', 'yaml', 'nltk', 'h5py', 'tqdm']
+
 import delira
 
 # -- Project information -----------------------------------------------------
@@ -52,7 +86,6 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.inheritance_diagram',
     'sphinx.ext.autosectionlabel',
-    'nbsphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -99,7 +132,7 @@ html_theme_options = {
     "logo_only": True
 }
 
-html_logo = "_static/logo/delira_logo.png"
+html_logo = "_static/logo/delira.svg"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -226,6 +259,18 @@ autodoc_mock_imports = [
     "batchgenerators",
     "psutil",
     "nested_lookup",
+    "colorlover",
+    "flask",
+    "graphviz",
+    "matplotlib",
+    "seaborn",
+    "scipy",
+    "telegram",
+    "portalocker",
+    "plotly",
+    "PIL",
+    "umap",
+    "PIL.Image",
 ]
 
 # We use the following to automatically run sphinx-apidoc, whenever we run make html.

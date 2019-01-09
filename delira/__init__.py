@@ -2,7 +2,7 @@ __version__ = '0.1.0'
 
 import warnings
 warnings.simplefilter('default', DeprecationWarning)
-warnings.simplefilter('default', ModuleNotFoundError)
+warnings.simplefilter('default', ImportWarning)
 
 from .data_loading import BaseCacheDataset, BaseLazyDataset, BaseDataManager, \
     RandomSampler, SequentialSampler
@@ -35,5 +35,5 @@ try:
         'TorchvisionClassificationDataset'
     ]
 
-except ModuleNotFoundError as e:
-    warnings.warn(e)
+except ImportError as e:
+    warnings.warn(ImportWarning(e.msg))

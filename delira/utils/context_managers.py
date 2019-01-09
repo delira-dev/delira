@@ -7,12 +7,12 @@ try:
         """
         Class wrapping a ``torch`` optimizer to mirror the behavior of ``apex`` 
         without depending on it
-        
+
         """
 
         def __init__(self, optimizer: torch.optim.Optimizer, *args, **kwargs):
             """
-            
+
             Parameters
             ----------
             optimizer : torch.optim.Optimizer
@@ -21,7 +21,7 @@ try:
                 additional positional arguments (unused)
             **kwargs : 
                 additional keyword arguments (unused)
-            
+
             """
 
             self._optimizer = optimizer
@@ -31,12 +31,12 @@ try:
             """
             Function which scales the loss in ``apex`` and yields the unscaled loss 
             here to mirror the API
-            
+
             Parameters
             ----------
             loss : torch.Tensor
                 the unscaled loss
-            
+
             """
 
             yield loss
@@ -46,13 +46,13 @@ try:
             """
             Wraps the step method of the optimizer and calls the original step 
             method
-            
+
             Parameters
             ----------
             closure : callable
                 A closure that reevaluates the model and returns the loss. 
                 Optional for most optimizers.
-            
+
             """
 
             return self._optimizer.step(closure=closure)
@@ -83,5 +83,5 @@ try:
         def add_param_group(self, param_group):
             return self._optimizer.add_param_group(param_group)
 
-except ModuleNotFoundError as e:
+except ImportError as e:
     raise e

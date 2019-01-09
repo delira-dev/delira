@@ -3,9 +3,9 @@ try:
     from .deprecated import VisdomStreamHandler, VisdomImageSaveStreamHandler, \
         VisdomImageSaveHandler, VisdomImageHandler, ImgSaveHandler
 
-except ModuleNotFoundError as e:
+except ImportError as e:
     import warnings
-    warnings.warn(e)
+    warnings.warn(ImportWarning(e.msg))
     raise e
 from .multistream_handler import MultiStreamHandler
 from .trixi_handler import TrixiHandler

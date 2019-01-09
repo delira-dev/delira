@@ -32,7 +32,7 @@ def dtype_func(class_object):
 
             assert isinstance(checked_object, class_object), assertion_str
             return func(checked_object, *args, **kwargs)
-        return  func_wrapper
+        return func_wrapper
     return instance_checker
 
 
@@ -106,5 +106,5 @@ try:
     torch_tensor_func = dtype_func(torch.Tensor)
     torch_module_func = dtype_func(torch.nn.Module)
 
-except ModuleNotFoundError as e:
+except ImportError as e:
     raise e
