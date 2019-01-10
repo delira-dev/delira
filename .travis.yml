@@ -4,8 +4,8 @@ services:
   - docker
 
 install:
-  - docker build -t delira-py36:latest docker/ --build-args python_version=3.6
-  - docker build -t delira-py37:latest docker/ --build-args python_version=3.7
+  - docker build -t delira-py36:latest docker/ --build-arg python_version=3.6
+  - docker build -t delira-py37:latest docker/ --build-arg python_version=3.7
 script:
   - docker run delira-py36:latest /bin/sh -c "pytest delira/"
   - docker run delira-py36:latest /bin/sh -c "pytest delira/"
