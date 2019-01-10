@@ -8,7 +8,7 @@ install:
   - docker build -t delira-py37:latest docker/ --build-arg python_version=3.7
 script:
   - docker run delira-py36:latest /bin/sh -c "pytest delira/"
-  - docker run delira-py36:latest /bin/sh -c "pytest delira/"
+  - docker run delira-py37:latest /bin/sh -c "pytest delira/"
 
 after_success:
   - docker login -e $DOCKER_MAIL -u $DOCKER_USER -p $DOCKER_PW
