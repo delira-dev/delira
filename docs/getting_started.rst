@@ -26,4 +26,5 @@ From Source
 To install``delira`` you can simply run
 
 * ``pip install git+https://github.com/justusschock/delira.git[suffix]``
- by replacing ``[suffix]`` with the suffix for your backend, i.e. installing ``delira`` with ``torch`` backend would become ``pip install git+https://github.com/justusschock/delira.git[torch]`` and installing without a backend at all would become ``pip install git+https://github.com/justusschock/delira.git``
+
+by replacing ``[suffix]`` with the suffix for your backend, i.e. installing ``delira`` with ``torch`` backend would become ``pip install git+https://github.com/justusschock/delira.git[torch]`` and installing without a backend at all would become ``pip install git+https://github.com/justusschock/delira.git``
