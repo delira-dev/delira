@@ -23,7 +23,7 @@ The currently supported backends are:
 
 From Source
 ~~~~~~~~~~~
-To install``delira`` you can simply run
+To install ``delira`` you can simply run
 
 * ``pip install git+https://github.com/justusschock/delira.git[suffix]``
 
