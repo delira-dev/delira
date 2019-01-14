@@ -19,6 +19,9 @@ Delira supports classification and regression problems as well as generative adv
 ## Installation
 * `pip install git+https://github.com/justusschock/delira.git`
 
+### Docker
+The easiest way to use `delira` is via docker (with the [nvidia-runtime](https://github.com/NVIDIA/nvidia-docker) for GPU-support) and using the [Dockerfile](docker/Dockerfile).
+
 ## Getting Started
 The best way to learn how to use is to have a look at the [tutorial notebook](https://github.com/justusschock/delira/blob/master/notebooks/tutorial_delira.ipynb).
 Example implementations for classification problems and GANs are also provided in the [notebooks](https://github.com/justusschock/delira/blob/master/notebooks) folder.
