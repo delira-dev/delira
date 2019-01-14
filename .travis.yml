@@ -27,7 +27,7 @@ script:
  
 after_success:
   # update latest docker image if on master branch, no pull request and latest python
-  - if [[ "$TRAVIS_BRANCH" = "master" ] && ["$TRAVIS_PULL_REQUEST" = "false"] && ["$TRAVIS_PYTHON_VERSION" = "3.7"]]; then
+  - if [ $TRAVIS_BRANCH = "master" ] && [$TRAVIS_PULL_REQUEST = "false"] && [$TRAVIS_PYTHON_VERSION = "3.7"]; then
       docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ;
       docker build -t delira-full:latest docker/;
       docker tag delira-full:latest chrisha/delira-full:latest;
@@ -35,7 +35,7 @@ after_success:
     fi
     
   # update tag image if on master, no pull request, latest python and valid tag
-  - if [[ "$TRAVIS_BRANCH" = "master" ] && ["$TRAVIS_PULL_REQUEST" = "false"] && ["$TRAVIS_PYTHON_VERSION" = "3.7"] && ["$TRAVIS_TAG"]]; then
+  - if [ $TRAVIS_BRANCH" = "master" ] && [ $TRAVIS_PULL_REQUEST" = "false" ] && [ $TRAVIS_PYTHON_VERSION = "3.7" ] && [ $TRAVIS_TAG ]; then
       docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD ;
       docker build -t delira-full:$TRAVIS_TAG docker/;
       docker tag delira-full:$TRAVIS_TAG chrisha/delira-full:$TRAVIS_TAG;
