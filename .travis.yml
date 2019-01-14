@@ -11,6 +11,8 @@ script:
   - docker run delira-py37:latest /bin/sh -c "pytest delira/"
 
 after_success:
+  - ci_env=`bash <(curl -s https://codecov.io/env)`
+  - docker run /bin/sh $ci_env
   - docker login -e $DOCKER_MAIL -u $DOCKER_USER -p $DOCKER_PW
   - docker tag delira-py36:latest chrisha/delira-py36:latest
   - docker tag delira-py37:latest chrisha/delira-py37:latest
