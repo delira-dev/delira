@@ -27,8 +27,19 @@ script:
  
 after_success:
 # only build docker if on master, not a pull request and latest python
-  - test $TRAVIS_BRANCH = "master" && test $TRAVIS_PULL_REQUEST = "false" && $TRAVIS_PYTHON_VERSION = "3.7"\
+  - test $TRAVIS_BRANCH = "master" && test $TRAVIS_PULL_REQUEST = "false" && $TRAVIS_PYTHON_VERSION = 3.7\
     docker build -t delira-full:latest docker/ && \
     docker login -e $DOCKER_MAIL -u $DOCKER_USER -p $DOCKER_PW && \
     docker tag delira-full:latest chrisha/delira-full:latest && \
     docker push chrisha/delira-full:latest
+
+deploy:
+  provider: script
+  script: test $TRAVIS_BRANCH = "master" && test $TRAVIS_PULL_REQUEST = "false" && $TRAVIS_PYTHON_VERSION = 3.7\
+    docker build -t delira-full:$TRAVIS_TAG/ && \
+    docker login -e $DOCKER_MAIL -u $DOCKER_USER -p $DOCKER_PW && \
+    docker tag delira-full:$TRAVIS_TAG chrisha/delira-full:$TRAVIS_TAG && \
+    docker push chrisha/delira-full:$TRAVIS_TAG
+  on:
+    branch: master
+    tag: true
