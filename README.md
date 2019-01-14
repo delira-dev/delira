@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/justusschock/delira.svg?branch=master)](https://travis-ci.com/justusschock/delira) [![Documentation Status](https://readthedocs.org/projects/delira/badge/?version=latest)](https://delira.readthedocs.io/en/latest/?badge=latest) 
+[![Build Status](https://travis-ci.com/justusschock/delira.svg?branch=master)](https://travis-ci.com/justusschock/delira) [![Documentation Status](https://readthedocs.org/projects/delira/badge/?version=latest)](https://delira.readthedocs.io/en/latest/?badge=latest) [![codecov](https://codecov.io/gh/justusschock/delira/branch/master/graph/badge.svg)](https://codecov.io/gh/justusschock/delira)
 
 ![logo](docs/_static/logo/delira.svg "delira - Deep Learning in Radiology")
 
