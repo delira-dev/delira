@@ -25,7 +25,7 @@ deploy:
   user: $PYPI_USERNAME
   password: $PYPI_PASSWORD
   skip_existing: true
-  distributions: "sdist bdist_wheel"
+  distributions: "sdist"
   on:
     branch: master
     tags: true
