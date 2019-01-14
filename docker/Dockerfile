@@ -23,8 +23,9 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
 ENV PATH /home/containeruser/conda/bin:$PATH
 RUN pip install --upgrade pip
 RUN git clone https://github.com/justusschock/delira.git && \
-    pip install pip wheel torch numpy && \
+    pip install pip wheel && \
     pip install -r delira/requirements.txt && \
+    pip install -r delira/requirements_extra_torch.txt && \
     pip install delira/
 ENV PYTHONPATH /home/containeruser/delira:$PYTHONPATH
 CMD ["/bin/bash"]
