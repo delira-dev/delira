@@ -34,8 +34,8 @@ after_success:
       docker push chrisha/delira-full:latest;
     fi
     
-  # update tag image if on master, no pull request, latest python and valid tag
-  - if [ "$TRAVIS_BRANCH" = "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_PYTHON_VERSION" = "3.7" ] && [ "$TRAVIS_TAG" ]; then
+  # update tag image if latest python and valid tag
+  - if [ "$TRAVIS_PYTHON_VERSION" = "3.7" ] && [ "$TRAVIS_TAG" ]; then
       docker login -e $DOCKER_MAIL -u $DOCKER_USER -p $DOCKER_PW;
       docker build -t delira-full:$TRAVIS_TAG docker/;
       docker tag delira-full:$TRAVIS_TAG chrisha/delira-full:$TRAVIS_TAG;
