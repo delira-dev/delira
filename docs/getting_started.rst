@@ -12,7 +12,11 @@ Before installing ``delira``, you have to choose a suitable backend.
 
 The currently supported backends are:
 
-* `torch<https://pytorch.org>` (recommended, since it is the most tested backend): Suuffix `torch`
+* `torch<https://pytorch.org>` (recommended, since it is the most tested backend): Suffix `torch`
+
+  .. note::
+    ``delira`` supports mixed-precision training via `apex<https://github.com/NVIDIA/apex>`, but ``apex`` must be installed separately
+
 * None: No Suffix
 
 .. note::
