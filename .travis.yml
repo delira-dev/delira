@@ -3,18 +3,38 @@ language: python
 services:
   - docker
 
+matrix:
+  include:
+    - python: 3.6
+    - python: 3.7
+      dist: xenial
+      sudo: true
+
+
+# command to install dependencies
+before_install:
+  - pip install -U pip wheel
+  - pip install torch
+  - pip install -r requirements.txt
+
 install:
-  - docker build -t delira-py36:latest docker/ --build-arg python_version=3.6
-  - docker build -t delira-py37:latest docker/ --build-arg python_version=3.7
+  - pip install .
+# command to run tests
 script:
-  - docker run delira-py36:latest /bin/sh -c "pytest delira/"
-  - docker run delira-py37:latest /bin/sh -c "pytest delira/"
+  - pytest
 
 after_success:
-  - ci_env=`bash <(curl -s https://codecov.io/env)`
-  - docker run /bin/sh $ci_env
+  - docker build -t delira-full:latest docker/
   - docker login -e $DOCKER_MAIL -u $DOCKER_USER -p $DOCKER_PW
-  - docker tag delira-py36:latest chrisha/delira-py36:latest
-  - docker tag delira-py37:latest chrisha/delira-py37:latest
-  - docker push chrisha/delira-py36:latest
-  - docker push chrisha/delira-py37:latest
+  - docker tag delira-full:latest chrisha/delira-full:latest
+  - docker push chrisha/delira-full:latest
+
+deploy:
+  provider: pypi
+  user: $PYPI_USERNAME
+  password: $PYPI_PASSWORD
+  skip_existing: true
+  distributions: "sdist"
+  on:
+    branch: master
+    tags: true
