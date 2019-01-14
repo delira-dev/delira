@@ -19,3 +19,13 @@ install:
 # command to run tests
 script:
   - pytest
+
+deploy:
+  provider: pypi
+  user: $PYPI_USERNAME
+  password: $PYPI_PASSWORD
+  skip_existing: true
+  distributions: "sdist bdist_wheel"
+  on:
+    branch: master
+    tags: true
