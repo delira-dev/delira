@@ -28,3 +28,8 @@ To install ``delira`` you can simply run
 * ``pip install git+https://github.com/justusschock/delira.git[suffix]``
 
 by replacing ``[suffix]`` with the suffix for your backend, i.e. installing ``delira`` with ``torch`` backend would become ``pip install git+https://github.com/justusschock/delira.git[torch]`` and installing without a backend at all would become ``pip install git+https://github.com/justusschock/delira.git``
+
+Prebuild Packages
+~~~~~~~~~~~~~~~~~
+Prebuild packages (via pip) will be available in the future, once all dependencies are registered on PyPi. This is a requirement because PyPi forbids packages that depend on non-pypi packages.
+Currently this requirement is not fullfilled by `batchgenerators<https://github.com/MIC-DKFZ/batchgenerators>`
