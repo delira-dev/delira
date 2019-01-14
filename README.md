@@ -6,7 +6,9 @@
 Authors: [Justus Schock, Christoph Haarburger, Oliver Rippel](AUTHORS.rst)
 
 ## Introduction
-Delira is deep learning framework for medical images such as CT or MRI. Based on [PyTorch](https://pytorch.org), [batchgenerators](https://github.com/MIC-DKFZ/batchgenerators) and [trixi](https://github.com/MIC-DKFZ/trixi) it provides a framework for
+Delira was developed as a deep learning framework for medical images such as CT or MRI. Currently, it works on arbitrary data (based on [NumPy](http://www.numpy.org/)). 
+
+Based on [PyTorch](https://pytorch.org), [batchgenerators](https://github.com/MIC-DKFZ/batchgenerators) and [trixi](https://github.com/MIC-DKFZ/trixi) it provides a framework for
 * Dataset loading
 * Dataset sampling
 * Augmentation (multi-threaded) including 3D images with any number of channels
