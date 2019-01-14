@@ -6,25 +6,31 @@ services:
 matrix:
   include:
     - python: 3.6
+      env: PYTHON_VERSION=36
     - python: 3.7
       dist: xenial
       sudo: true
+      env: PYTHON_VERSION=37
 
 
 # command to install dependencies
 before_install:
   - pip install -U pip wheel
-  - pip install torch
+  - pip install -r requirements_extra_torch.txt
   - pip install -r requirements.txt
+  - pip install codecov
 
 install:
   - pip install .
 # command to run tests
 script:
   - pytest
+  - codecov
  
 after_success:
-  - docker build -t delira-full:latest docker/
-  - docker login -e $DOCKER_MAIL -u $DOCKER_USER -p $DOCKER_PW
-  - docker tag delira-full:latest chrisha/delira-full:latest
-  - docker push chrisha/delira-full:latest
+# only build docker if on master, not a pull request and latest python
+  - test $TRAVIS_BRANCH = "master" && test $TRAVIS_PULL_REQUEST = "false" && $PYTHON_VERSION = "37"\
+    docker build -t delira-full:latest docker/ && \
+    docker login -e $DOCKER_MAIL -u $DOCKER_USER -p $DOCKER_PW && \
+    docker tag delira-full:latest chrisha/delira-full:latest && \
+    docker push chrisha/delira-full:latest
