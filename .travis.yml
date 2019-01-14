@@ -22,19 +22,9 @@ install:
 # command to run tests
 script:
   - pytest
-
+ 
 after_success:
   - docker build -t delira-full:latest docker/
   - docker login -e $DOCKER_MAIL -u $DOCKER_USER -p $DOCKER_PW
   - docker tag delira-full:latest chrisha/delira-full:latest
   - docker push chrisha/delira-full:latest
-
-deploy:
-  provider: pypi
-  user: $PYPI_USERNAME
-  password: $PYPI_PASSWORD
-  skip_existing: true
-  distributions: "sdist"
-  on:
-    branch: master
-    tags: true

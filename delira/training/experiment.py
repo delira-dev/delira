@@ -221,15 +221,51 @@ try:
         """
 
         def __init__(self,
-                     params: typing.Union[Parameters, str],
+                     params: Parameters,
                      model_cls: AbstractPyTorchNetwork,
                      name=None,
                      save_path=None,
                      val_score_key=None,
                      optim_builder=create_optims_default_pytorch,
                      checkpoint_freq=1,
+                     trainer_cls=PTNetworkTrainer,
                      **kwargs
                      ):
+            """
+            
+            Parameters
+            ----------
+            params : :class:`Parameters`
+                the training and model parameters
+            model_cls : 
+                the class to instantiate models
+            name : str
+                the experiment's name, 
+                default: None -> "UnnamedExperiment"
+            save_path : str
+                the path to save the experiment to 
+                (a date-time signature will be appended),
+                default: None -> Use current working dir
+            val_score_key : str or None
+                key to access the metric to monitor for model
+                selection and callbacks (often starts with "val_")
+            optim_builder : function
+                function returning a dictionary of optimizers
+                defaults to :function:`create_optims_default_pytorch`
+            checkpoint_freq : int
+                save checkpoint after each n epochs 
+                (if set to 1, checkpoints will be saved after each epoch,
+                if set to 2, checkpoints will be saved after each 
+                2 epochs etc.)
+            trainer_cls : 
+                class defining the actual trainer, 
+                defaults to :class:`PyTorchNetworkTrainer`, 
+                which should be suitable for most cases, 
+                but can easily be overwritten and exchanged if necessary
+            **kwargs :
+                additional keyword arguments
+                
+            """
 
             if isinstance(params, str):
                 with open(params, "rb") as f:
@@ -254,6 +290,8 @@ try:
 
             os.makedirs(self.save_path, exist_ok=True)
 
+            self.trainer_cls = trainer_cls
+            
             if val_score_key is None and params.nested_get("metrics"):
                 val_score_key = sorted(params.nested_get("metrics").keys())[0]
 
@@ -304,7 +342,7 @@ try:
             metrics = training_params.nested_get("metrics")
             lr_scheduler_cls = training_params.nested_get("lr_sched_cls")
             lr_scheduler_params = training_params.nested_get("lr_sched_params")
-            return PTNetworkTrainer(
+            return self.trainer_cls(
                 network=model,
                 save_path=os.path.join(
                     self.save_path,

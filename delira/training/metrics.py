@@ -50,6 +50,7 @@ class AurocMetricPyTorch(torch.nn.Module):
 class AccuracyMetricPyTorch(torch.nn.Module):
     """
     Metric to Calculate Accuracy
+    
     .. deprecated:: 0.1
         :class:`AccuracyMetricPyTorch` will be removed in next release and is
         deprecated in favor of ``trixi.logging`` Modules

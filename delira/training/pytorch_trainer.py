@@ -160,7 +160,8 @@ try:
                 for key, optim in self.optimizers.items():
                     if not issubclass(lr_scheduler_cls, AbstractCallback):
                         logger.warning("lr_scheduler_cls is not a callback.")
-                    self.register_callback(lr_scheduler_cls(optim,
+                    # access actual optimizer by calling wrapped optimizer from wrapper
+                    self.register_callback(lr_scheduler_cls(optim._optimizer,
                                                             **lr_scheduler_params))
 
             # asssign closure and prepare batch from network

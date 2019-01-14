@@ -12,5 +12,5 @@ Authors
 **Contributions:**
 
 - Nicolas Horst
-- Michaelbaumgartner
+- Michael Baumgartner
 - Alexander Moriz
