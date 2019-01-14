@@ -25,8 +25,9 @@ ARG python_version
 RUN conda install python=$python_version
 RUN pip install --upgrade pip
 RUN git clone https://github.com/justusschock/delira.git && \
-    pip install pip wheel torch numpy && \
+    pip install pip wheel && \
     pip install -r delira/requirements.txt && \
+    pip install -r delira/requirements_extra_torch.txt && \
     pip install delira/
 ENV PYTHONPATH /home/containeruser/delira:$PYTHONPATH
 CMD ["/bin/bash"]

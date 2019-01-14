@@ -1,7 +1,6 @@
 import os
 import re
-from distutils.core import setup
-from setuptools import find_packages
+from setuptools import find_packages, setup
 
 
 def resolve_requirements(file):
@@ -33,11 +32,17 @@ def find_version(file):
 
 requirements = resolve_requirements(os.path.join(os.path.dirname(__file__),
                                                  'requirements.txt'))
+
+requirements_extra_full = []
+
+requirements_extra_torch = resolve_requirements(os.path.join(
+    os.path.dirname(__file__), 'requirements_extra_torch.txt'))
+requirements_extra_full += requirements_extra_torch
+
 readme = read_file(os.path.join(os.path.dirname(__file__), "README.md"))
 license = read_file(os.path.join(os.path.dirname(__file__), "LICENSE"))
 delira_version = find_version(os.path.join(os.path.dirname(__file__), "delira",
                                            "__init__.py"))
-
 
 setup(
     name='delira',
@@ -49,5 +54,9 @@ setup(
     license=license,
     install_requires=requirements,
     tests_require=["pytest-cov"],
-    python_requires=">3.5"
+    python_requires=">3.5",
+    extras_require={
+        "full": requirements_extra_full,
+        "torch": requirements_extra_torch
+    }
 )
