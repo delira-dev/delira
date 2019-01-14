@@ -1,31 +1,30 @@
 language: python
 
+services:
+  - docker
+
 matrix:
   include:
     - python: 3.6
     - python: 3.7
       dist: xenial
       sudo: true
- 
- 
+
+
 # command to install dependencies
 before_install:
   - pip install -U pip wheel
   - pip install torch
   - pip install -r requirements.txt
-  
+
 install:
   - pip install .
 # command to run tests
 script:
   - pytest
-
-deploy:
-  provider: pypi
-  user: $PYPI_USERNAME
-  password: $PYPI_PASSWORD
-  skip_existing: true
-  distributions: "sdist"
-  on:
-    branch: master
-    tags: true
+ 
+after_success:
+  - docker build -t delira-full:latest docker/
+  - docker login -e $DOCKER_MAIL -u $DOCKER_USER -p $DOCKER_PW
+  - docker tag delira-full:latest chrisha/delira-full:latest
+  - docker push chrisha/delira-full:latest
