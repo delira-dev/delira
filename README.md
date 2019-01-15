@@ -17,7 +17,7 @@ Based on [PyTorch](https://pytorch.org), [batchgenerators](https://github.com/MI
 * Web-based monitoring using [Visdom](https://github.com/facebookresearch/visdom)
 * Model save and load functions
 
-Delira supports classification and regression problems as well as generative adversarial networks.
+Delira supports classification and regression problems as well as generative adversarial networks and segmentation tasks.
 
 ## Installation
 
