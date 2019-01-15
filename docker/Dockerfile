@@ -21,8 +21,7 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
     rm ~/miniconda.sh && \
     /home/containeruser/conda/bin/conda clean -ya
 ENV PATH /home/containeruser/conda/bin:$PATH
-ARG python_version
-RUN conda install python=$python_version
+RUN conda install python=3.7
 RUN pip install --upgrade pip
 RUN git clone https://github.com/justusschock/delira.git && \
     pip install pip wheel && \
