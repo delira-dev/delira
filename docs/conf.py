@@ -58,13 +58,13 @@ import delira
 # -- Project information -----------------------------------------------------
 
 project = 'delira'
-copyright = '2018, Justus Schock, Christoph Haarburger, Oliver Rippel'
-author = 'Justus Schock, Christoph Haarburger, Oliver Rippel'
+copyright = '2019, Justus Schock, Oliver Rippel, Christoph Haarburger'
+author = 'Justus Schock, Oliver Rippel, Christoph Haarburger'
 
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '0.1.0-beta'
+release = '0.2.0-beta.1'
 
 
 # -- General configuration ---------------------------------------------------
