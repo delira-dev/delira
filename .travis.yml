@@ -24,21 +24,4 @@ install:
 script:
   - pytest
   - codecov
- 
-after_success:
-  # update latest docker image if on master branch, no pull request and latest python
-  - if [ "$TRAVIS_BRANCH" = "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_PYTHON_VERSION" = "3.7" ]; then
-      docker login -e $DOCKER_MAIL -u $DOCKER_USER -p $DOCKER_PW;
-      docker build -t delira-full:latest docker/;
-      docker tag delira-full:latest chrisha/delira-full:latest;
-      docker push chrisha/delira-full:latest;
-    fi
-    
-  # update tag image if latest python and valid tag
-  - if [ "$TRAVIS_PYTHON_VERSION" = "3.7" ] && [ "$TRAVIS_TAG" ]; then
-      docker login -e $DOCKER_MAIL -u $DOCKER_USER -p $DOCKER_PW;
-      docker build -t delira-full:$TRAVIS_TAG docker/;
-      docker tag delira-full:$TRAVIS_TAG chrisha/delira-full:$TRAVIS_TAG;
-      docker push chrisha/delira-full:$TRAVIS_TAG;
-    fi
-  
+
