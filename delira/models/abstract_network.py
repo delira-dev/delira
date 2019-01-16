@@ -238,7 +238,7 @@ class AbstractTfNetwork(AbstractNetwork):
 
     """
     @abc.abstractmethod
-    def __init__(self, sess=tf.Session(), **kwargs):
+    def __init__(self, sess=tf.Session, **kwargs):
         """
 
         Parameters
@@ -249,17 +249,13 @@ class AbstractTfNetwork(AbstractNetwork):
 
         """
         AbstractNetwork.__init__(self, **kwargs)
-        self.sess = sess
+        self._sess = sess()
         self.inputs = None
         self.outputs_train = None
         self.outputs_eval = None
+        self._losses = None
+        self._optims = None
         self.training = True
-
-    def train(self):
-        self.training = True
-
-    def eval(self):
-        self.training = False
 
     def __call__(self, *args):
         """
@@ -276,8 +272,31 @@ class AbstractTfNetwork(AbstractNetwork):
             result: module results of arbitrary type and number
 
         """
-        self.eval()
+        self.training = False
         return self.run(*args)
+
+    def _add_losses(self, losses: dict):
+        """
+        Add losses to the model graph
+
+        Parameters
+        ----------
+        losses : dict
+            dictionary containing losses.
+
+        """
+        raise NotImplementedError()
+
+    def _add_optims(self, optims: dict):
+        """
+        Add optims to the model graph
+
+        Parameters
+        ----------
+        optims : dict
+            dictionary containing losses.
+        """
+        raise NotImplementedError()
 
     def run(self, *args):
         """
@@ -287,7 +306,7 @@ class AbstractTfNetwork(AbstractNetwork):
         Parameters
         ----------
         *args :
-            positional arguments passed to `self.sess.run` as feed dict
+            positional arguments passed to `self._sess.run` as feed dict
 
         Returns
         -------
@@ -300,6 +319,6 @@ class AbstractTfNetwork(AbstractNetwork):
         else:
             _feed_dict = dict(zip(self.inputs, args))
         if self.training:
-            return self.sess.run(self.outputs_train, feed_dict=_feed_dict)
+            return self._sess.run(self.outputs_train, feed_dict=_feed_dict)
         else:
-            return self.sess.run(self.outputs_eval, feed_dict=_feed_dict)
+            return self._sess.run(self.outputs_eval, feed_dict=_feed_dict)
