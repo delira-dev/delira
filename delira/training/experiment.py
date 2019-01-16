@@ -9,12 +9,10 @@ from .abstract_trainer import AbstractNetworkTrainer
 from trixi.experiment import Experiment as TrixiExperiment
 import os
 import logging
-import yaml
 import typing
 import numpy as np
 
 import pickle
-
 from abc import abstractmethod
 from sklearn.model_selection import KFold, StratifiedKFold
 from sklearn.model_selection import train_test_split
@@ -80,7 +78,7 @@ class AbstractExperiment(TrixiExperiment):
             data manager containing the validation data
         parameters : :class:`Parameters`, optional
             Class containing all parameters (defaults to None).
-            If not specified, the parameters fall back to the ones given during 
+            If not specified, the parameters fall back to the ones given during
             class initialization
 
         Raises
@@ -139,8 +137,8 @@ class AbstractExperiment(TrixiExperiment):
         Runs K-Fold Crossvalidation
         The supported scenario is:
 
-            * passing a single datamanager: the data within the single manager 
-            will be split and multiple datamanagers will be created holding 
+            * passing a single datamanager: the data within the single manager
+            will be split and multiple datamanagers will be created holding
             the subsets.
 
         Parameters
@@ -166,7 +164,7 @@ class AbstractExperiment(TrixiExperiment):
 
         See Also
         --------
-        :method:`BaseDataManager.update_state_from_dict` for valid keys in 
+        :method:`BaseDataManager.update_state_from_dict` for valid keys in
             ``train_kwargs`` and ``test_kwargs``
 
         """
@@ -176,7 +174,7 @@ class AbstractExperiment(TrixiExperiment):
             num_splits = 10
             logger.warning("num_splits not defined, using default value of \
                             10 splits instead ")
-                            
+
         # extract actual data to be split
         split_data = list(range(len(data.dataset)))
 
@@ -189,7 +187,7 @@ class AbstractExperiment(TrixiExperiment):
 
         # run folds
         for idx, (train_idxs, test_idxs) in enumerate(fold.split(split_data)):
-            
+
             # extract data from single manager
             train_data = data.get_subset(train_idxs)
             test_data = data.get_subset(test_idxs)
@@ -199,9 +197,9 @@ class AbstractExperiment(TrixiExperiment):
             test_data.update_state_from_dict(test_kwargs)
 
             self.run(train_data, test_data,
-                num_epochs=num_epochs,
-                fold=idx,
-                **kwargs)
+                     num_epochs=num_epochs,
+                     fold=idx,
+                     **kwargs)
 
     def stratified_kfold(self, num_epochs: int,
                          data: BaseDataManager,
@@ -232,7 +230,7 @@ class AbstractExperiment(TrixiExperiment):
             random seed used to seed the kfold (if shuffle is true),
             pytorch and numpy
         label_key : str (default: "label")
-            the key to extract the label for stratification from each data 
+            the key to extract the label for stratification from each data
             sample
         train_kwargs : dict
             keyword arguments to specify training behavior
@@ -243,7 +241,7 @@ class AbstractExperiment(TrixiExperiment):
 
         See Also
         --------
-        :method:`BaseDataManager.update_state_from_dict` for valid keys in 
+        :method:`BaseDataManager.update_state_from_dict` for valid keys in
             ``train_kwargs`` and ``test_kwargs``
 
         """
@@ -252,7 +250,7 @@ class AbstractExperiment(TrixiExperiment):
             num_splits = 10
             logger.warning("num_splits not defined, using default value of \
                                 10 splits instead ")
-                                
+
         if isinstance(data.dataset, BaseLazyDataset):
             logger.warning("A lazy dataset is given for stratified kfold. \
                             Iterating over the dataset to extract labels for \
@@ -260,7 +258,7 @@ class AbstractExperiment(TrixiExperiment):
 
         split_idxs = list(range(len(data.dataset)))
         split_labels = [data.dataset[_idx][label_key] for _idx in split_idxs]
-        
+
         fold = StratifiedKFold(n_splits=num_splits, shuffle=shuffle,
                                random_state=random_seed)
 
@@ -273,12 +271,11 @@ class AbstractExperiment(TrixiExperiment):
             # update manager behavior for train and test case
             train_data.update_state_from_dict(train_kwargs)
             test_data.update_state_from_dict(test_kwargs)
-            
+
             self.run(train_data, test_data,
                      num_epochs=num_epochs,
                      fold=idx,
                      **kwargs)
-
 
     def __str__(self):
         """
@@ -346,8 +343,6 @@ class AbstractExperiment(TrixiExperiment):
         """
         raise NotImplementedError()
 
-
-import os
 if "torch" in os.environ["DELIRA_BACKEND"]:
 
     import torch
@@ -377,18 +372,18 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                      **kwargs
                      ):
             """
-            
+
             Parameters
             ----------
             params : :class:`Parameters`
                 the training and model parameters
-            model_cls : 
+            model_cls :
                 the class to instantiate models
             name : str
                 the experiment's name, 
                 default: None -> "UnnamedExperiment"
             save_path : str
-                the path to save the experiment to 
+                the path to save the experiment to
                 (a date-time signature will be appended),
                 default: None -> Use current working dir
             val_score_key : str or None
@@ -398,18 +393,18 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                 function returning a dictionary of optimizers
                 defaults to :function:`create_optims_default_pytorch`
             checkpoint_freq : int
-                save checkpoint after each n epochs 
+                save checkpoint after each n epochs
                 (if set to 1, checkpoints will be saved after each epoch,
-                if set to 2, checkpoints will be saved after each 
+                if set to 2, checkpoints will be saved after each
                 2 epochs etc.)
-            trainer_cls : 
-                class defining the actual trainer, 
-                defaults to :class:`PyTorchNetworkTrainer`, 
-                which should be suitable for most cases, 
+            trainer_cls :
+                class defining the actual trainer,
+                defaults to :class:`PyTorchNetworkTrainer`,
+                which should be suitable for most cases,
                 but can easily be overwritten and exchanged if necessary
             **kwargs :
                 additional keyword arguments
-                
+
             """
 
             if isinstance(params, str):
@@ -436,7 +431,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             os.makedirs(self.save_path, exist_ok=True)
 
             self.trainer_cls = trainer_cls
-            
+
             if val_score_key is None and params.nested_get("metrics"):
                 val_score_key = sorted(params.nested_get("metrics").keys())[0]
 
@@ -522,7 +517,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             params : :class:`Parameters`
                 the parameters to construct a model and network trainer
             **kwargs :
-                holds additional keyword arguments 
+                holds additional keyword arguments
                 (which are completly passed to the trainers init)
 
             Returns
@@ -533,7 +528,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             Raises
             ------
             ValueError
-                Class has no Attribute ``params`` and no parameters were given as 
+                Class has no Attribute ``params`` and no parameters were given as
                 function argument
 
             """
@@ -645,10 +640,10 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
         def __setstate__(self, state):
             vars(self).update(state)
-        
+
         def kfold(self, num_epochs: int,
                   data: typing.Union[typing.List[BaseDataManager],
-                                    BaseDataManager],
+                                     BaseDataManager],
                   num_splits=None, shuffle=False, random_seed=None,
                   train_kwargs={}, test_kwargs={}, **kwargs):
 
@@ -656,7 +651,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                 torch.manual_seed(random_seed)
 
             super().kfold(num_epochs, data, num_splits, shuffle, random_seed,
-                        train_kwargs, test_kwargs, **kwargs)
+                          train_kwargs, test_kwargs, **kwargs)
 
         def stratified_kfold(self, num_epochs: int,
                              data: BaseDataManager,
@@ -671,3 +666,162 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                                      random_seed, label_key, train_kwargs,
                                      test_kwargs, **kwargs)
 
+if "tf" in os.environ["DELIRA_BACKEND"]:
+
+    class TfExperiment(AbstractExperiment):
+        """
+        Single Experiment for Tf Backend
+
+        See Also
+        --------
+        :class:`AbstractExperiment`
+
+        """
+        def __init__(self,
+                     hyper_params: typing.Union[Hyperparameters, str],
+                     model_cls: AbstractTfNetwork,
+                     model_kwargs: dict,
+                     name=None,
+                     save_path=None,
+                     val_score_key=None,
+                     optim_builder=create_optims_default_tf,
+                     checkpoint_freq=1,
+                     **kwargs
+                     ):
+
+            if isinstance(hyper_params, str):
+                hyper_params = Hyperparameters.from_file(hyper_params)
+
+            n_epochs = hyper_params.num_epochs
+            AbstractExperiment.__init__(self, n_epochs)
+
+            if name is None:
+                name = "UnnamedExperiment"
+            self.name = name
+
+            if save_path is None:
+                save_path = os.path.abspath(".")
+
+            self.save_path = os.path.join(save_path, name,
+                                        str(datetime.now().strftime(
+                                            "%y-%m-%d_%H-%M-%S")))
+
+            if os.path.isdir(self.save_path):
+                logger.warning("Save Path %s already exists")
+
+            os.makedirs(self.save_path, exist_ok=True)
+
+            if val_score_key is None and hyper_params.metrics:
+                val_score_key = sorted(hyper_params.metrics.keys())[0]
+
+            self.val_score_key = val_score_key
+
+            self.hyper_params = hyper_params
+            self.model_cls = model_cls
+            self.model_kwargs = model_kwargs
+            self.kwargs = kwargs
+            self._optim_builder = optim_builder
+            self.checkpoint_freq = checkpoint_freq
+            self._run = 0
+
+            # log HyperParameters
+            logger.info({"text": {"text":
+                                    str(hyper_params) + "\n\tmodel_class = %s"
+                                    % model_cls.__class__.__name__}})
+
+        def setup(self, **kwargs):
+            """
+            Perform setup of Network Trainer
+
+            Parameters
+            ----------
+            **kwargs :
+                keyword arguments
+
+            """
+
+            tf.reset_default_graph()
+
+            criterions = self.hyper_params.criterions
+            optimizer_cls = self.hyper_params.optimizer_cls
+            optimizer_params = self.hyper_params.optimizer_params
+
+            model = self.model_cls(**self.model_kwargs)
+            metrics = self.hyper_params.metrics
+            lr_scheduler_cls = self.hyper_params.lr_sched_cls
+            lr_scheduler_params = self.hyper_params.lr_sched_params
+            self.current_trainer = TFNetworkTrainer(
+                network=model,
+                save_path=os.path.join(
+                    self.save_path,
+                    "checkpoints",
+                    "run_%02d" % self._run),
+                losses=criterions,
+                optimizer_cls=optimizer_cls,
+                optimizer_params=optimizer_params,
+                metrics=metrics,
+                lr_scheduler_cls=lr_scheduler_cls,
+                lr_scheduler_params=lr_scheduler_params,
+                optim_fn=self._optim_builder,
+                save_freq=self.checkpoint_freq,
+                **self.kwargs,
+                **kwargs
+            )
+
+        def run(self,
+                train_data: typing.Union[BaseDataManager, ConcatDataManager],
+                val_data: typing.Union[BaseDataManager, ConcatDataManager, None],
+                **kwargs):
+            """
+            trains single model
+
+            Parameters
+            ----------
+            train_data : BaseDataManager or ConcatDataManager
+                holds the trainset
+            val_data : BaseDataManager or ConcatDataManager or None
+                holds the validation set (if None: Model will not be validated)
+            **kwargs :
+                holds additional keyword arguments
+                (which are completly passed to the trainers init)
+
+            Returns
+            -------
+            :class:`AbstractNetworkTrainer`
+                trainer of trained network
+
+            """
+
+            self.setup(**kwargs)
+            self._run += 1
+            num_epochs = kwargs.get("num_epochs", self.hyper_params.num_epochs)
+            return self.current_trainer.train(num_epochs, train_data, val_data,
+                                            self.val_score_key,
+                                            self.kwargs.get("val_score_mode",
+                                                            "lowest")
+                                            )
+
+        def save(self):
+            """
+            Saves the Whole experiments
+
+            """
+            with open(os.path.join(self.save_path, "experiment.delira.pkl"),
+                    "wb") as f:
+                pickle.dump(self, f)
+
+            self.hyper_params.export_to_files(self.save_path, True)
+
+        @staticmethod
+        def load(file_name):
+            """
+            Loads whole experiment
+
+            Parameters
+            ----------
+            file_name : str
+                file_name to load the experiment from
+
+            """
+            with open(file_name, "rb") as f:
+                return pickle.load(f)
