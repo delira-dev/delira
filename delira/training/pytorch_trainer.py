@@ -1,11 +1,8 @@
 import os
 import logging
-import shutil
 import numpy as np
-import typing
 from tqdm.auto import tqdm
 import torch
-from collections import OrderedDict
 from batchgenerators.dataloading import MultiThreadedAugmenter
 from .callbacks import AbstractCallback
 from .abstract_trainer import AbstractNetworkTrainer
@@ -425,7 +422,15 @@ class PyTorchNetworkTrainer(AbstractNetworkTrainer):
 
         batch_list = []
 
+        orig_batch_size = batch_size
+
         for i, batch in pbar:
+
+            if not batch_list and (n_batches - i) < batch_size:
+
+                batch_size = n_batches - i
+                logger.debug("Set Batchsize down to %d to avoid cutting "
+                             "of the last batches" % batch_size)
 
             data_dict = self._prepare_batch(batch, self.input_device,
                                             self.output_device)
@@ -434,11 +439,6 @@ class PyTorchNetworkTrainer(AbstractNetworkTrainer):
 
             # if queue is full process queue:
             if batch_size is None or len(batch_list) >= batch_size:
-
-                if not batch_list and (n_batches - i) < batch_size:
-                    batch_size = n_batches - i
-                    logger.debug("Set Batchsize down to %d to avoid cutting "
-                                 "of the last batches" % batch_size)
 
                 batch_dict = {}
                 for batch in batch_list:
@@ -501,7 +501,7 @@ class PyTorchNetworkTrainer(AbstractNetworkTrainer):
 
         # if virtual batchsize is given: calculate actual number of batches
         if batch_size is not None:
-            div = n_batches / batch_size
+            div = np.ceil(n_batches / orig_batch_size)
         else:
             div = n_batches
 
