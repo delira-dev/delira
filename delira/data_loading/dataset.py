@@ -448,7 +448,7 @@ class TorchvisionClassificationDataset(AbstractDataset):
 
     """
     def __init__(self, dataset, root="/tmp/", train=True, download=True,
-                 img_shape=(28, 28), **kwargs):
+                 img_shape=(28, 28), one_hot=False, **kwargs):
         """
 
         Parameters
@@ -479,7 +479,9 @@ class TorchvisionClassificationDataset(AbstractDataset):
         self.train = train
         self.root = root
         self.img_shape = img_shape
+        self.num_classes = None
         self.data = self._make_dataset(dataset, **kwargs)
+        self.one_hot = one_hot
 
     def _make_dataset(self, dataset, **kwargs):
         """
@@ -508,14 +510,19 @@ class TorchvisionClassificationDataset(AbstractDataset):
         """
         if dataset.lower() == "mnist":
             _dataset_cls = MNIST
+            self.num_classes = 10
         elif dataset.lower() == "emnist":
             _dataset_cls = EMNIST
+            self.num_classes = None
         elif dataset.lower() == "fashion_mnist":
             _dataset_cls = FashionMNIST
+            self.num_classes = 10
         elif dataset.lower() == "cifar10":
             _dataset_cls = CIFAR10
+            self.num_classes = 10
         elif dataset.lower() == "cifar100":
             _dataset_cls = CIFAR100
+            self.num_classes = 100
         else:
             raise KeyError("Dataset %s not found!" % dataset.lower())
 
@@ -541,6 +548,35 @@ class TorchvisionClassificationDataset(AbstractDataset):
         data = self.data[index]
         data_dict = {"data": np.array(data[0]),
                      "label": data[1].numpy().reshape(1).astype(np.float32)}
+
+        if self.one_hot:
+            def make_onehot(num_classes, labels):
+                """
+                Function that converts label-encoding to one-hot format.
+
+                params:
+                    - num_classes: number of classes present in the task.
+                    - labels: the labels in label-encoding format.
+                returns:
+                    - labels in one-hot format
+                """
+                if isinstance(labels, list) or isinstance(labels, int):
+                    labels = np.asarray(labels)
+                assert isinstance(labels, np.ndarray)
+                if len(labels.shape) > 1:
+                    one_hot = np.zeros(shape=(list(labels.shape) + [num_classes]),
+                                       dtype=labels.dtype)
+                    for i, c in enumerate(np.arange(num_classes)):
+                        one_hot[..., i][labels == c] = 1
+                else:
+                    one_hot = np.zeros(shape=([num_classes]),
+                                       dtype=labels.dtype)
+                    for i, c in enumerate(np.arange(num_classes)):
+                        if labels == c:
+                            one_hot[i] = 1
+                return one_hot
+
+            data_dict['label'] = make_onehot(self.num_classes, data_dict['label'])
 
         img = data_dict["data"]
 
