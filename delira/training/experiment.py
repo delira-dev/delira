@@ -1,25 +1,23 @@
 import os
 import logging
-import yaml
 import typing
 import numpy as np
 import torch
 import pickle
+import tensorflow as tf
 from abc import abstractmethod
 from sklearn.model_selection import KFold
 from datetime import datetime
 from trixi.experiment import Experiment as TrixiExperiment
-from trixi.experiment import PytorchExperiment as TrixiPTExperiment
-from trixi.logger.experiment import PytorchExperimentLogger as ExpLogger
-from .. import __version__ as delira_version
 from .hyper_params import Hyperparameters
 from ..data_loading import BaseDataManager, ConcatDataManager
 from ..models import AbstractPyTorchNetwork
+from ..models import AbstractTfNetwork
 from .pytorch_trainer import PyTorchNetworkTrainer as PTNetworkTrainer
-from .train_utils import create_optims_default_pytorch
-from ..utils import now
-logger = logging.getLogger(__name__)
+from .tf_trainer import TfNetworkTrainer as TFNetworkTrainer
+from .train_utils import create_optims_default_pytorch, create_optims_default_tf
 
+logger = logging.getLogger(__name__)
 
 NOT_IMPLEMENTED_KEYS = []
 
@@ -316,6 +314,164 @@ class PyTorchExperiment(AbstractExperiment):
             trainer of trained network
 
         """
+        self.setup(**kwargs)
+        self._run += 1
+        num_epochs = kwargs.get("num_epochs", self.hyper_params.num_epochs)
+        return self.current_trainer.train(num_epochs, train_data, val_data,
+                                          self.val_score_key,
+                                          self.kwargs.get("val_score_mode",
+                                                          "lowest")
+                                          )
+
+    def save(self):
+        """
+        Saves the Whole experiments
+
+        """
+        with open(os.path.join(self.save_path, "experiment.delira.pkl"),
+                  "wb") as f:
+            pickle.dump(self, f)
+
+        self.hyper_params.export_to_files(self.save_path, True)
+
+    @staticmethod
+    def load(file_name):
+        """
+        Loads whole experiment
+
+        Parameters
+        ----------
+        file_name : str
+            file_name to load the experiment from
+
+        """
+        with open(file_name, "rb") as f:
+            return pickle.load(f)
+
+class TfExperiment(AbstractExperiment):
+    """
+    Single Experiment for Tf Backend
+
+    See Also
+    --------
+    :class:`AbstractExperiment`
+
+    """
+    def __init__(self,
+                 hyper_params: typing.Union[Hyperparameters, str],
+                 model_cls: AbstractTfNetwork,
+                 model_kwargs: dict,
+                 name=None,
+                 save_path=None,
+                 val_score_key=None,
+                 optim_builder=create_optims_default_tf,
+                 checkpoint_freq=1,
+                 **kwargs
+                 ):
+
+        if isinstance(hyper_params, str):
+            hyper_params = Hyperparameters.from_file(hyper_params)
+
+        n_epochs = hyper_params.num_epochs
+        AbstractExperiment.__init__(self, n_epochs)
+
+        if name is None:
+            name = "UnnamedExperiment"
+        self.name = name
+
+        if save_path is None:
+            save_path = os.path.abspath(".")
+
+        self.save_path = os.path.join(save_path, name,
+                                      str(datetime.now().strftime(
+                                          "%y-%m-%d_%H-%M-%S")))
+
+        if os.path.isdir(self.save_path):
+            logger.warning("Save Path %s already exists")
+
+        os.makedirs(self.save_path, exist_ok=True)
+
+        if val_score_key is None and hyper_params.metrics:
+            val_score_key = sorted(hyper_params.metrics.keys())[0]
+
+        self.val_score_key = val_score_key
+
+        self.hyper_params = hyper_params
+        self.model_cls = model_cls
+        self.model_kwargs = model_kwargs
+        self.kwargs = kwargs
+        self._optim_builder = optim_builder
+        self.checkpoint_freq = checkpoint_freq
+        self._run = 0
+
+        # log HyperParameters
+        logger.info({"text": {"text":
+                                  str(hyper_params) + "\n\tmodel_class = %s"
+                                  % model_cls.__class__.__name__}})
+
+    def setup(self, **kwargs):
+        """
+        Perform setup of Network Trainer
+
+        Parameters
+        ----------
+        **kwargs :
+            keyword arguments
+
+        """
+
+        tf.reset_default_graph()
+
+        criterions = self.hyper_params.criterions
+        optimizer_cls = self.hyper_params.optimizer_cls
+        optimizer_params = self.hyper_params.optimizer_params
+
+        model = self.model_cls(**self.model_kwargs)
+        metrics = self.hyper_params.metrics
+        lr_scheduler_cls = self.hyper_params.lr_sched_cls
+        lr_scheduler_params = self.hyper_params.lr_sched_params
+        self.current_trainer = TFNetworkTrainer(
+            network=model,
+            save_path=os.path.join(
+                self.save_path,
+                "checkpoints",
+                "run_%02d" % self._run),
+            losses=criterions,
+            optimizer_cls=optimizer_cls,
+            optimizer_params=optimizer_params,
+            metrics=metrics,
+            lr_scheduler_cls=lr_scheduler_cls,
+            lr_scheduler_params=lr_scheduler_params,
+            optim_fn=self._optim_builder,
+            save_freq=self.checkpoint_freq,
+            **self.kwargs,
+            **kwargs
+        )
+
+    def run(self,
+            train_data: typing.Union[BaseDataManager, ConcatDataManager],
+            val_data: typing.Union[BaseDataManager, ConcatDataManager, None],
+            **kwargs):
+        """
+        trains single model
+
+        Parameters
+        ----------
+        train_data : BaseDataManager or ConcatDataManager
+            holds the trainset
+        val_data : BaseDataManager or ConcatDataManager or None
+            holds the validation set (if None: Model will not be validated)
+        **kwargs :
+            holds additional keyword arguments
+            (which are completly passed to the trainers init)
+
+        Returns
+        -------
+        :class:`AbstractNetworkTrainer`
+            trainer of trained network
+
+        """
+
         self.setup(**kwargs)
         self._run += 1
         num_epochs = kwargs.get("num_epochs", self.hyper_params.num_epochs)
