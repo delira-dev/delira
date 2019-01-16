@@ -242,7 +242,7 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
         """
 
         @abc.abstractmethod
-        def __init__(self, sess=tf.Session(), **kwargs):
+        def __init__(self, sess=tf.Session, **kwargs):
             """
 
             Parameters
@@ -253,17 +253,13 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
 
             """
             AbstractNetwork.__init__(self, **kwargs)
-            self.sess = sess
+            self._sess = sess()
             self.inputs = None
             self.outputs_train = None
             self.outputs_eval = None
+            self._losses = None
+            self._optims = None
             self.training = True
-
-        def train(self):
-            self.training = True
-
-        def eval(self):
-            self.training = False
 
         def __call__(self, *args):
             """
@@ -280,30 +276,38 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
                 result: module results of arbitrary type and number
 
             """
-            self.eval()
+            self.training = False
             return self.run(*args)
 
-        def run(self, *args):
+        def _add_losses(self, losses: dict):
             """
-            Based on state of self.train, runs either self.outputs_train or
-            self.outputs_eval
+            Add losses to the model graph
 
             Parameters
             ----------
-            *args :
-                positional arguments passed to `self.sess.run` as feed dict
+            losses : dict
+                dictionary containing losses.
 
-            Returns
-            -------
-            Any
-                result: module results of arbitrary type and number
             """
+            raise NotImplementedError()
 
+        def _add_optims(self, optims: dict):
+            """
+            Add optims to the model graph
+
+            Parameters
+            ----------
+            optims : dict
+                dictionary containing losses.
+            """
+            raise NotImplementedError()
+
+        def run(self, *args):
             if isinstance(self.inputs, tf.Tensor):
                 _feed_dict = dict(zip([self.inputs], args))
             else:
                 _feed_dict = dict(zip(self.inputs, args))
             if self.training:
-                return self.sess.run(self.outputs_train, feed_dict=_feed_dict)
+                return self._sess.run(self.outputs_train, feed_dict=_feed_dict)
             else:
-                return self.sess.run(self.outputs_eval, feed_dict=_feed_dict)
+                return self._sess.run(self.outputs_eval, feed_dict=_feed_dict)
