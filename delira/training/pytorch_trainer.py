@@ -399,6 +399,8 @@ try:
                 current epoch
             num_epochs : int
                 total number of epochs
+            is_best : bool
+                whether current model is best one so far
             **kwargs :
                 keyword arguments
 
@@ -413,6 +415,12 @@ try:
                 self.save_state(os.path.join(self.save_path,
                                             "checkpoint_epoch_%d.pth" % epoch),
                                 epoch, False)
+                
+            if is_best:
+                self.save_state(os.path.join(self.save_path,
+                                            "checkpoint_best.pth"),
+                                epoch, False)
+                
 
         def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch):
             """
