@@ -86,13 +86,13 @@ class AbstractDataset:
 
     def get_sample_from_index(self, index):
         """
-        Returns the data sample for a given index 
+        Returns the data sample for a given index
         (without any loading if it would be necessary)
         This implements the base case and can be subclassed
         for index mappings.
-        The actual loading behaviour (lazy or cached) should be 
+        The actual loading behaviour (lazy or cached) should be
         implemented in ``__getitem__``
- 
+
         See Also
         --------
         :method:ConcatDataset.get_sample_from_index
@@ -148,12 +148,12 @@ class AbstractDataset:
         """
         split dataset into train and test data
 
-        .. deprecated:: 0.3 
+        .. deprecated:: 0.3
             method will be removed in next major release
 
         Parameters
         ----------
-        *args : 
+        *args :
             positional arguments of ``train_test_split``
         **kwargs :
             keyword arguments of ``train_test_split``
@@ -179,7 +179,7 @@ class AbstractDataset:
 
 class BlankDataset(AbstractDataset):
     """
-    Blank Dataset loading the data, which has been passed 
+    Blank Dataset loading the data, which has been passed
     in it's ``__init__`` by it's ``load_fn``
 
     """
@@ -346,7 +346,7 @@ class BaseLazyDataset(AbstractDataset):
         dict
             loaded data sample
         """
-        data_dict = self._load_fn(*self.get_sample_from_index(index), 
+        data_dict = self._load_fn(*self.get_sample_from_index(index),
                                   **self._load_kwargs)
 
         return data_dict
@@ -485,13 +485,13 @@ class ConcatDataset(AbstractDataset):
 
     def get_sample_from_index(self, index):
         """
-        Returns the data sample for a given index 
+        Returns the data sample for a given index
         (without any loading if it would be necessary)
-        This method implements the index mapping of a global index to 
+        This method implements the index mapping of a global index to
         the subindices for each dataset.
-        The actual loading behaviour (lazy or cached) should be 
+        The actual loading behaviour (lazy or cached) should be
         implemented in ``__getitem__``
- 
+
         See Also
         --------
         :method:AbstractDataset.get_sample_from_index
@@ -668,7 +668,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
         """
 
         def __init__(self, dataset, root="/tmp/", train=True, download=True,
-                     img_shape=(28, 28), **kwargs):
+                     img_shape=(28, 28), one_hot=False, **kwargs):
             """
 
             Parameters
@@ -699,6 +699,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             self.train = train
             self.root = root
             self.img_shape = img_shape
+            self.num_classes = None
             self.data = self._make_dataset(dataset, **kwargs)
 
         def _make_dataset(self, dataset, **kwargs):
@@ -728,14 +729,22 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             """
             if dataset.lower() == "mnist":
                 _dataset_cls = MNIST
+                self.num_classes = 10
             elif dataset.lower() == "emnist":
                 _dataset_cls = EMNIST
+                #TODO: EMNIST requires split as kwarg. Search for 'split' in kwargs and
+                # update self.num_classes accordingly
+                # https://pytorch.org/docs/stable/torchvision/datasets.html#torchvision.datasets.EMNIST
+                self.num_classes = None
             elif dataset.lower() == "fashion_mnist":
                 _dataset_cls = FashionMNIST
+                self.num_classes = 10
             elif dataset.lower() == "cifar10":
                 _dataset_cls = CIFAR10
+                self.num_classes = 10
             elif dataset.lower() == "cifar100":
                 _dataset_cls = CIFAR100
+                self.num_classes = 100
             else:
                 raise KeyError("Dataset %s not found!" % dataset.lower())
 
@@ -761,6 +770,44 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             data = self.data[index]
             data_dict = {"data": np.array(data[0]),
                          "label": data[1].numpy().reshape(1).astype(np.float32)}
+
+            if self.one_hot:
+                #TODO: Remove and refer to batchgenerators transform:
+                # https://github.com/MIC-DKFZ/batchgenerators/blob/master/batchgenerators/transforms/utility_transforms.py#L97
+                def make_onehot(num_classes, labels):
+                    """
+                    Function that converts label-encoding to one-hot format.
+
+                    Parameters
+                    ----------
+                    num_classes : int
+                        number of classes present in the dataset
+                    
+                    labels : np.ndarray
+                        labels in label-encoding format
+                    
+                    Returns
+                    -------
+                    np.ndarray
+                        labels in one-hot format
+                    """
+                    if isinstance(labels, list) or isinstance(labels, int):
+                        labels = np.asarray(labels)
+                    assert isinstance(labels, np.ndarray)
+                    if len(labels.shape) > 1:
+                        one_hot = np.zeros(shape=(list(labels.shape) + [num_classes]),
+                                        dtype=labels.dtype)
+                        for i, c in enumerate(np.arange(num_classes)):
+                            one_hot[..., i][labels == c] = 1
+                    else:
+                        one_hot = np.zeros(shape=([num_classes]),
+                                        dtype=labels.dtype)
+                        for i, c in enumerate(np.arange(num_classes)):
+                            if labels == c:
+                                one_hot[i] = 1
+                    return one_hot
+
+                data_dict['label'] = make_onehot(self.num_classes, data_dict['label'])
 
             img = data_dict["data"]
 
