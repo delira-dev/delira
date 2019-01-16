@@ -4,14 +4,13 @@ import tensorflow as tf
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score as acc
 from typing import Type
-from torchvision import models as t_models
 from delira.models.abstract_network import AbstractTfNetwork
-from ResNet18 import ResNet18
+from delira.models.classification.ResNet18 import ResNet18
 
 tf.keras.backend.set_image_data_format('channels_first')
 
 
-file_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class ClassificationNetworkBaseTf(AbstractTfNetwork):
@@ -24,12 +23,10 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
     """
 
-    def __init__(self, in_channels: int, n_outputs: int, losses: dict,
-                 optim: Type[tf.train.Optimizer], **kwargs):
+    def __init__(self, in_channels: int, n_outputs: int, **kwargs):
         """
 
-        Constructs graph containing model definition, forward pass,
-        loss functions and optimizers.
+        Constructs graph containing mode definition and forward pass behavior
 
         Parameters
         ----------
@@ -39,47 +36,71 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             number of outputs (usually same as number of classes)
         losses : dict
             dictionary containing all losses. Individual losses are averaged
-        optim: tf.train.Optimizer
-            single optimizer, called on total_loss
+        optim: dict
+            dictionary containing all optimizers, optimizers should be of Type[tf.train.Optimizer]
         """
         # register params by passing them as kwargs to parent class __init__
         super().__init__(in_channels=in_channels,
                          n_outputs=n_outputs,
                          **kwargs)
 
-        #with tf.device('CPU:0'):
-        #    self.module = self._build_model(n_outputs, **kwargs)
-        #self.module = tf.keras.utils.multi_gpu_model(self.module, 1)
-
-        self.module = self._build_model(n_outputs, **kwargs)
+        # build on CPU for tf.keras.utils.multi_gpu_model() in tf_trainer.py
+        # with tf.device('/cpu:0'):
+        self.model = self._build_model(n_outputs, **kwargs)
 
         images = tf.placeholder(shape=[None, in_channels, None, None],
                                 dtype=tf.float32)
         labels = tf.placeholder(shape=[None, n_outputs], dtype=tf.float32)
 
-        preds_train = self.module(images, training=True)
-        preds_eval = self.module(images, training=False)
-
-        loss = []
-        for name, _loss in losses.items():
-            losses[name] = _loss(labels, preds_train)
-            loss.append(losses[name])
-
-        total_loss = tf.reduce_mean(loss, axis=0)
-
-        losses['total'] = total_loss
-
-        _optim = optim()
-        grads = _optim.compute_gradients(total_loss)
-        step = _optim.apply_gradients(grads)
+        preds_train = self.model(images, training=True)
+        preds_eval = self.model(images, training=False)
 
         self.inputs = [images, labels]
-        self.outputs_train = [preds_train, losses, step]
-        self.outputs_eval = [preds_eval, losses]
-        self.sess.run(tf.initializers.global_variables())
+        self.outputs_train = [preds_train]
+        self.outputs_eval = [preds_eval]
 
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    def _add_losses(self, losses: dict):
+        """
+        Adds losses to model that are to be used by optimizers or during evaluation
+
+        Parameters
+        ----------
+        losses : dict
+            dictionary containing all losses. Individual losses are averaged
+        """
+        if self._losses is not None:
+            logging.warning('Change of losses is not yet supported')
+            raise NotImplementedError()
+        self._losses = {}
+        for name, _loss in losses.items():
+            self._losses[name] = _loss(self.inputs[-1], self.outputs_train[0])
+
+        total_loss = tf.reduce_mean(list(self._losses.values()), axis=0)
+
+        self._losses['total'] = total_loss
+        self.outputs_train.append(self._losses)
+        self.outputs_eval.append(self._losses)
+
+    def _add_optims(self, optims: dict):
+        """
+        Adds optims to model that are to be used by optimizers or during training
+
+        Parameters
+        ----------
+        optim: dict
+            dictionary containing all optimizers, optimizers should be of Type[tf.train.Optimizer]
+        """
+        if self._optims is not None:
+            logging.warning('Change of optims is not yet supported')
+            raise NotImplementedError()
+
+        self._optims = optims['default']
+        grads = self._optims.compute_gradients(self._losses['total'])
+        step = self._optims.apply_gradients(grads)
+        self.outputs_train.append(step)
 
     @staticmethod
     def _build_model(n_outputs: int):
@@ -135,8 +156,9 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
         loss_vals = {}
         metric_vals = {}
+        image_names = "input_images"
 
-        inputs = data.pop('data')
+        inputs = data_dict.pop('data')
 
         preds, losses, *_ = model.run(inputs, data_dict['label'])
 
@@ -147,7 +169,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             metric_vals[key] = metric_fn(
                 preds, *data_dict.values())
 
-        if not model.training:
+        if model.training == False:
             # add prefix "val" in validation mode
             eval_loss_vals, eval_metrics_vals = {}, {}
             for key in loss_vals.keys():
@@ -159,40 +181,14 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             loss_vals = eval_loss_vals
             metric_vals = eval_metrics_vals
 
+            image_names = "val_" + str(image_names)
+
         for key, val in {**metric_vals, **loss_vals}.items():
-            logging.info({"value": {"value"[0]: val.item(), "name": key,
+            logging.info({"value": {"value": val.item(), "name": key,
                                     "env_appendix": "_%02d" % fold
                                     }})
 
-        logging.info({'image_grid': {"images": inputs, "name": "input_images",
-                                     "env_appendix": "_%02d" % fold}})
+        #logging.info({'image_grid': {"image_array": inputs, "name": image_names,
+        #                             "title": "input_images", "env_appendix": "_%02d" % fold}})
 
         return metric_vals, loss_vals, [preds]
-
-if __name__ == '__main__':
-    l = {}
-    l['softCE'] = tf.losses.softmax_cross_entropy
-    l['sigCE'] = tf.losses.sigmoid_cross_entropy
-    asd = ClassificationNetworkBaseTf(3, 7, losses=l, optim=tf.train.AdamOptimizer)
-
-    def accuracy_score(y_true, y_pred):
-        y_true = np.argmax(y_true, axis=0)
-        y_pred = np.argmax(y_pred, axis=0)
-        return acc(y_true, y_pred)
-    for i, _ in enumerate(tqdm(range(1000))):
-        data = {}
-        data['data'] = np.random.rand(10, 3, 224, 224)
-        data['label'] = np.random.random_integers(0, 1, size=(10, 7))
-
-        metrics = {}
-        metrics['Accuracy'] = accuracy_score
-
-        asd.train()
-        asd.closure(asd, data, metrics)
-
-        data = {}
-        data['data'] = np.random.rand(100, 3, 224, 224)
-        data['label'] = np.random.random_integers(0, 1, size=(100, 7))
-
-        asd.eval()
-        asd.closure(asd, data, metrics)
