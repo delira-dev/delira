@@ -7,7 +7,7 @@ from itertools import islice
 
 logger = logging.getLogger(__name__)
 
-try:
+if "torch" in os.environ["DELIRA_BACKEND"]:
 
     import torch
 
@@ -163,6 +163,3 @@ try:
                     loaded_dict["state_dict"]["optimizer"][key])
 
             return locals()['model'], optims, loaded_dict["state_dict"]["epoch"]
-
-except ImportError as e:
-    raise e

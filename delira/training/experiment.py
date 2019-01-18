@@ -23,9 +23,6 @@ from functools import partial
 logger = logging.getLogger(__name__)
 
 
-NOT_IMPLEMENTED_KEYS = []
-
-
 class AbstractExperiment(TrixiExperiment):
     """
     Abstract Class Representing a single Experiment (must be subclassed for
@@ -316,7 +313,8 @@ class AbstractExperiment(TrixiExperiment):
         raise NotImplementedError()
 
 
-try:
+import os
+if "torch" in os.environ["DELIRA_BACKEND"]:
 
     import torch
     from .train_utils import create_optims_default_pytorch
@@ -579,6 +577,3 @@ try:
             super().stratified_kfold(num_epochs, data, num_splits, shuffle,
                                      random_seed, label_key, **kwargs)
 
-
-except ImportError as e:
-    raise e

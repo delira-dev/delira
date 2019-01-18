@@ -1,4 +1,3 @@
-import torch
 import abc
 import logging
 
@@ -134,96 +133,99 @@ class AbstractNetwork(object):
         """
         return self._init_kwargs
 
-
-class AbstractPyTorchNetwork(AbstractNetwork, torch.nn.Module):
-    """
-    Abstract Class for PyTorch Networks
-
-    See Also
-    --------
-    `torch.nn.Module`
-    :class:`AbstractNetwork`
-
-    """
-    @abc.abstractmethod
-    def __init__(self, **kwargs):
+import os
+if "torch" in os.environ["DELIRA_BACKEND"]:
+    import torch
+        
+    class AbstractPyTorchNetwork(AbstractNetwork, torch.nn.Module):
         """
+        Abstract Class for PyTorch Networks
 
-        Parameters
-        ----------
-        **kwargs :
-            keyword arguments (are passed to :class:`AbstractNetwork`'s `
-            __init__ to register them as init kwargs
+        See Also
+        --------
+        `torch.nn.Module`
+        :class:`AbstractNetwork`
 
         """
-        torch.nn.Module.__init__(self)
-        AbstractNetwork.__init__(self, **kwargs)
+        @abc.abstractmethod
+        def __init__(self, **kwargs):
+            """
 
-    @abc.abstractmethod
-    def forward(self, *inputs):
-        """
-        Forward inputs through module (defines module behavior)
-        Parameters
-        ----------
-        inputs : list
-            inputs of arbitrary type and number
+            Parameters
+            ----------
+            **kwargs :
+                keyword arguments (are passed to :class:`AbstractNetwork`'s `
+                __init__ to register them as init kwargs
 
-        Returns
-        -------
-        Any
-            result: module results of arbitrary type and number
+            """
+            torch.nn.Module.__init__(self)
+            AbstractNetwork.__init__(self, **kwargs)
 
-        """
-        raise NotImplementedError()
+        @abc.abstractmethod
+        def forward(self, *inputs):
+            """
+            Forward inputs through module (defines module behavior)
+            Parameters
+            ----------
+            inputs : list
+                inputs of arbitrary type and number
 
-    def __call__(self, *args, **kwargs):
-        """
-        Calls Forward method
+            Returns
+            -------
+            Any
+                result: module results of arbitrary type and number
 
-        Parameters
-        ----------
-        *args :
-            positional arguments (passed to `forward`)
-        **kwargs :
-            keyword arguments (passed to `forward`)
+            """
+            raise NotImplementedError()
 
-        Returns
-        -------
-        Any
-            result: module results of arbitrary type and number
+        def __call__(self, *args, **kwargs):
+            """
+            Calls Forward method
 
-        """
-        return torch.nn.Module.__call__(self, *args, **kwargs)
+            Parameters
+            ----------
+            *args :
+                positional arguments (passed to `forward`)
+            **kwargs :
+                keyword arguments (passed to `forward`)
 
-    @staticmethod
-    def prepare_batch(batch: dict, input_device, output_device):
-        """
-        Helper Function to prepare Network Inputs and Labels (convert them to
-        correct type and shape and push them to correct devices)
+            Returns
+            -------
+            Any
+                result: module results of arbitrary type and number
 
-        Parameters
-        ----------
-        batch : dict
-            dictionary containing all the data
-        input_device : torch.device
-            device for network inputs
-        output_device : torch.device
-            device for network outputs
+            """
+            return torch.nn.Module.__call__(self, *args, **kwargs)
 
-        Returns
-        -------
-        dict
-            dictionary containing data in correct type and shape and on correct
-            device
+        @staticmethod
+        def prepare_batch(batch: dict, input_device, output_device):
+            """
+            Helper Function to prepare Network Inputs and Labels (convert them to
+            correct type and shape and push them to correct devices)
 
-        """
-        return_dict = {"data": torch.from_numpy(batch.pop("data")).to(
-            input_device).to(torch.float)}
+            Parameters
+            ----------
+            batch : dict
+                dictionary containing all the data
+            input_device : torch.device
+                device for network inputs
+            output_device : torch.device
+                device for network outputs
 
-        for key, vals in batch.items():
-            return_dict[key] = torch.from_numpy(vals).to(output_device).to(
-                torch.float)
+            Returns
+            -------
+            dict
+                dictionary containing data in correct type and shape and on correct
+                device
 
-        return return_dict
+            """
+            return_dict = {"data": torch.from_numpy(batch.pop("data")).to(
+                input_device).to(torch.float)}
+
+            for key, vals in batch.items():
+                return_dict[key] = torch.from_numpy(vals).to(output_device).to(
+                    torch.float)
+
+            return return_dict
 
 

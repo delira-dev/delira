@@ -3,7 +3,6 @@ import numpy as np
 import typing
 from batchgenerators.dataloading import SlimDataLoaderBase, \
     MultiThreadedAugmenter
-from torch.utils.data import ConcatDataset
 from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset
 from .data_loader import BaseDataLoader
 from .load_utils import default_load_fn_2d
@@ -245,108 +244,111 @@ class BaseDataManager(object):
             raise ValueError('Invalid value for n_process_augmentation')
         return n_batches
 
+import os
+if "torch" in os.environ["DELIRA_BACKEND"]:
 
-class ConcatDataManager(object):
-    """
-    Class to concatenate DataManagers
-
-    """
-
-    def __init__(self, datamanager=typing.List[BaseDataManager]):
+    from torch.utils.data import ConcatDataset
+    class ConcatDataManager(object):
         """
-
-        Parameters
-        ----------
-        datamanager : list
-            the datamanagers which should be concatenated
-            (All attributes except the dataset are extracted 
-            from the first manager inside the list)
+        Class to concatenate DataManagers
 
         """
 
-        self.dataset = ConcatDataset(
-            [tmp.dataset for tmp in datamanager])
+        def __init__(self, datamanager=typing.List[BaseDataManager]):
+            """
 
-        self.data_loader_cls = datamanager[0].data_loader_cls
+            Parameters
+            ----------
+            datamanager : list
+                the datamanagers which should be concatenated
+                (All attributes except the dataset are extracted 
+                from the first manager inside the list)
 
-        self.batch_size = datamanager[0].batch_size
-        self.n_process_augmentation = datamanager[0].n_process_augmentation
-        self.transforms = datamanager[0].transforms
-        self.sampler = datamanager[0].sampler.__class__.from_dataset(
-            self.dataset
-        )
+            """
 
-    def get_batchgen(self, seed=1):
-        """
-        Create DataLoader and Batchgenerator
+            self.dataset = ConcatDataset(
+                [tmp.dataset for tmp in datamanager])
 
-        Parameters
-        ----------
-        seed : int
-            seed for Random Number Generator
+            self.data_loader_cls = datamanager[0].data_loader_cls
 
-        Returns
-        -------
-        MultiThreadedAugmenter
-            Batchgenerator
+            self.batch_size = datamanager[0].batch_size
+            self.n_process_augmentation = datamanager[0].n_process_augmentation
+            self.transforms = datamanager[0].transforms
+            self.sampler = datamanager[0].sampler.__class__.from_dataset(
+                self.dataset
+            )
 
-        Raises
-        ------
-        AssertionError
-            :attr:`ConcatDataManager.n_batches` is smaller than or equal to zero
+        def get_batchgen(self, seed=1):
+            """
+            Create DataLoader and Batchgenerator
 
-        """
-        assert self.n_batches > 0
+            Parameters
+            ----------
+            seed : int
+                seed for Random Number Generator
 
-        data_loader = self.data_loader_cls(self.dataset,
-                                           batch_size=self.batch_size,
-                                           num_batches=self.n_batches,
-                                           seed=seed,
-                                           sampler=self.sampler
-                                           )
+            Returns
+            -------
+            MultiThreadedAugmenter
+                Batchgenerator
 
-        return MultiThreadedAugmenter(data_loader, self.transforms,
-                                      self.n_process_augmentation,
-                                      num_cached_per_queue=2,
-                                      seeds=self.n_process_augmentation*[seed])
+            Raises
+            ------
+            AssertionError
+                :attr:`ConcatDataManager.n_batches` is smaller than or equal to zero
 
-    @property
-    def n_samples(self):
-        """
-        Number of Samples
+            """
+            assert self.n_batches > 0
 
-        Returns
-        -------
-        int
+            data_loader = self.data_loader_cls(self.dataset,
+                                            batch_size=self.batch_size,
+                                            num_batches=self.n_batches,
+                                            seed=seed,
+                                            sampler=self.sampler
+                                            )
+
+            return MultiThreadedAugmenter(data_loader, self.transforms,
+                                        self.n_process_augmentation,
+                                        num_cached_per_queue=2,
+                                        seeds=self.n_process_augmentation*[seed])
+
+        @property
+        def n_samples(self):
+            """
             Number of Samples
 
-        """
-        return len(self.sampler)
+            Returns
+            -------
+            int
+                Number of Samples
 
-    @property
-    def n_batches(self):
-        """
-        Returns Number of Batches based on batchsize,
-        number of samples and number of processes
+            """
+            return len(self.sampler)
 
-        Returns
-        -------
-        int
-            Number of Batches
+        @property
+        def n_batches(self):
+            """
+            Returns Number of Batches based on batchsize,
+            number of samples and number of processes
 
-        Raises
-        ------
-        AssertionError
-            :attr:`ConcatDataManager.n_samples` is smaller than or equal to zero
+            Returns
+            -------
+            int
+                Number of Batches
 
-        """
-        assert self.n_samples > 0
+            Raises
+            ------
+            AssertionError
+                :attr:`ConcatDataManager.n_samples` is smaller than or equal to zero
 
-        if self.n_process_augmentation == 1:
-            n_batches = int(np.floor(self.n_samples / self.batch_size))
-        elif self.n_process_augmentation > 1:
-            n_batches = int(np.floor(
-                self.n_samples / self.batch_size / self.n_process_augmentation))
-        else:
-            raise ValueError('Invalid value for n_process')
-        return n_batches
+            """
+            assert self.n_samples > 0
+
+            if self.n_process_augmentation == 1:
+                n_batches = int(np.floor(self.n_samples / self.batch_size))
+            elif self.n_process_augmentation > 1:
+                n_batches = int(np.floor(
+                    self.n_samples / self.batch_size / self.n_process_augmentation))
+            else:
+                raise ValueError('Invalid value for n_process')
+            return n_batches

@@ -2,7 +2,8 @@ import logging
 
 file_logger = logging.getLogger(__name__)
 
-try:
+import os
+if "torch" in os.environ["DELIRA_BACKEND"]:
     import torch.nn as nn
     import torch.nn.functional as F
     from .classification_network import ClassificationNetworkBasePyTorch
@@ -108,6 +109,3 @@ try:
 
             _model = VGGlike3D(in_channels=in_channels, n_outputs=n_outputs)
             return _model
-
-except ImportError as e:
-    raise e

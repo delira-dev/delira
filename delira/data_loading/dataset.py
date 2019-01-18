@@ -570,7 +570,7 @@ class Nii3DCacheDatset(BaseCacheDataset):
         return data
 
 
-try:
+if "torch" in os.environ["DELIRA_BACKEND"]:
     from torchvision.datasets import CIFAR10, CIFAR100, EMNIST, MNIST, FashionMNIST
 
     class TorchvisionClassificationDataset(AbstractDataset):
@@ -698,5 +698,3 @@ try:
             """
             return len(self.data)
 
-except ImportError as e:
-    raise e
