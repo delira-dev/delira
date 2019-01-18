@@ -50,8 +50,8 @@ pip uninstall delira # run this command twice
 2. Clone a copy of `delira` from source:
 
 ```
-git clone https://git.lfb.rwth-aachen.de/schock/Delira2.0
-cd Delira2.0
+git clone https://github.com/justusschock/delira.git
+cd delira
 ```
 
 3. Install `delira` in `build develop` mode:
