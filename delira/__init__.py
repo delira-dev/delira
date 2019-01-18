@@ -11,7 +11,6 @@ _config_file = __file__.replace("__init__.py", ".delira")
 # if file exists: load config into environment variables
 
 if not os.path.isfile(_config_file):
-    print("Test1")
     _backends = {}
     # try to import backends to determine valid backends
     try:
@@ -31,9 +30,8 @@ if not os.path.isfile(_config_file):
         json.dump({ "version": __version__, "backend": _backends}, f, sort_keys=True, indent=4)
 
     del _backends
-else:
-    print("Test2")
-    
+
+# set values from config file to environment variables
 with open(_config_file) as f:
     _config_dict = json.load(f)
 _backend_str = ""
@@ -57,6 +55,13 @@ from .data_loading import BaseCacheDataset, BaseLazyDataset, BaseDataManager, \
 from .logging import TrixiHandler, MultiStreamHandler
 
 from .models import AbstractNetwork
+
+def get_backends():
+    """
+    Return List of current backends
+
+    """
+    return os.environ["DELIRA_BACKEND"].split(",")[:-1]
 
 if "torch" in os.environ["DELIRA_BACKEND"]:
     from .io import torch_load_checkpoint, torch_save_checkpoint
