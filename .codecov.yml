@@ -1,17 +1,13 @@
 comment: off
 
 coverage:
-  precision: 0
-  round: down
   status:
-    patch:
-      default:
-        target: 90
     project:
       default:
-        threshold: 1%
-    changes: false
-
+        target: auto
+        threshold: 0.50
+        base: auto
+    patch: off
 ignore:
   - "tests/"
   - "notebooks/"
