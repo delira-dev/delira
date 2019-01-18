@@ -5,6 +5,7 @@ import numpy as np
 from skimage.transform import resize
 from sklearn.model_selection import train_test_split
 from ..utils import subdirs
+from ..utils.decorators import make_deprecated
 
 
 class AbstractDataset:
@@ -82,9 +83,41 @@ class AbstractDataset:
         """
         return len(self.data)
 
+    def get_subset(self, indices):
+        """
+        Returns a Subset of the current dataset based on given indices
+        
+        Parameters
+        ----------
+        indices : iterable
+            valid indices to extract subset from current dataset
+
+        Returns
+        -------
+        :class:`BlankDataset`
+            the subset
+        
+        """
+
+        # extract other important attributes from current dataset
+        kwargs = {}
+
+        for key, val in vars(self).items():
+            if not (key.startswith("__") and key.endswith("__")):
+                kwargs[key] = val
+
+        kwargs["__getitem__"] = self.__getitem__
+        subset_data = [self.data[idx] for idx in indices]
+
+        return BlankDataset(subset_data, **kwargs)
+
+    @make_deprecated("Dataset.get_subset")
     def train_test_split(self, *args, **kwargs):
         """
         split dataset into train and test data
+
+        .. deprecated:: 0.3 
+            method will be removed in next major release
 
         Parameters
         ----------
@@ -109,20 +142,7 @@ class AbstractDataset:
         train_idxs, test_idxs = train_test_split(
             np.arange(len(self)), *args, **kwargs)
 
-        train_data = [self.data[idx] for idx in train_idxs]
-        test_data = [self.data[idx] for idx in test_idxs]
-
-        kwargs = {}
-
-        for key, val in vars(self).items():
-            if not (key.startswith("__") and key.endswith("__")):
-                kwargs[key] = val
-
-        kwargs["__getitem__"] = self.__getitem__
-        train_dset = BlankDataset(train_data, **kwargs)
-        test_dset = BlankDataset(test_data, **kwargs)
-
-        return train_dset, test_dset
+        return self.get_subset(train_idxs), self.get_subset(test_idxs)
 
 
 class BlankDataset(AbstractDataset):

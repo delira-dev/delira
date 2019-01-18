@@ -8,6 +8,7 @@ from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset
 from .data_loader import BaseDataLoader
 from .load_utils import default_load_fn_2d
 from .sampler import SequentialSampler
+from ..utils.decorators import make_deprecated
 
 logger = logging.getLogger(__name__)
 
@@ -132,11 +133,46 @@ class BaseDataManager(object):
                                       num_cached_per_queue=2,
                                       seeds=self.n_process_augmentation*[seed])
 
+    def get_subset(self, indices):
+        """
+        Returns a Subset of the current datamanager based on given indices
+        
+        Parameters
+        ----------
+        indices : iterable
+            valid indices to extract subset from current dataset
+
+        Returns
+        -------
+        :class:`BaseDataManager`
+            manager containing the subset
+        
+        """
+
+        subset_kwargs = {
+            "batch_size": self.batch_size,
+            "n_process_augmentation": self.n_process_augmentation,
+            "transforms": self.transforms,
+            "sampler_cls": self.sampler.__class__,
+            "data_loader_cls": self.data_loader_cls,
+            "dataset_cls": None,
+            "load_fn": None,
+            "from_disc": True
+        }
+
+        return self.__class__(self.dataset.get_subset(indices), **subset_kwargs)
+
+    @make_deprecated("BaseDataManager.get_subset")
     def train_test_split(self, *args, **kwargs):
         """
         Calls :method:`AbstractDataset.train_test_split` and returns 
         a manager for each subset with same configuration as current manager
 
+        .. deprecation:: 0.3
+            method will be removed in next major release
+
+        Parameters
+        ----------
         *args : 
             positional arguments for 
             ``sklearn.model_selection.train_test_split``
@@ -161,6 +197,8 @@ class BaseDataManager(object):
 
         train_mgr = self.__class__(trainset, **subset_kwargs)
         val_mgr = self.__class__(valset, **subset_kwargs)
+
+        return train_mgr, val_mgr
 
     @property
     def n_samples(self):
