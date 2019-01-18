@@ -104,6 +104,10 @@ class AbstractDataset:
 
         for key, val in vars(self).items():
             if not (key.startswith("__") and key.endswith("__")):
+                if key == "_load_fn":
+                    key = "load_fn"
+                elif key == "data":
+                    continue
                 kwargs[key] = val
 
         kwargs["__getitem__"] = self.__getitem__
