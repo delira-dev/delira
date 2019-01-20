@@ -527,6 +527,51 @@ try:
                                                  "lowest")
                                  )
 
+        @staticmethod
+        def test(network: AbstractPyTorchNetwork,
+                 datamgr_test: typing.Union[BaseDataManager, ConcatDataManager],
+                 trainer_cls = PTNetworkTrainer,
+                 **kwargs):
+            """
+            trains single model
+
+            Parameters
+            ----------
+            network : :class:`AbstractPyTorchNetwork`
+                the network to train
+            datamgr_test : BaseDataManager or ConcatDataManager
+                holds the testset
+            trainer_cls :
+                class defining the actual trainer,
+                defaults to :class:`PyTorchNetworkTrainer`,
+                which should be suitable for most cases,
+                but can easily be overwritten and exchanged if necessary
+            **kwargs :
+                holds additional keyword arguments
+                (which are completly passed to the trainers init)
+            """
+            criterions = kwargs.pop('criterions', {})
+            trainer = trainer_cls(network=network,
+                                  save_path='',
+                                  criterions=criterions,
+                                  optimizer_cls=None)
+
+            # testing with batchsize 1 and 1 augmentation processs to
+            # avoid dropping of last elements
+            orig_num_aug_processes = datamgr_test.n_process_augmentation
+            orig_batch_size = datamgr_test.batch_size
+
+            datamgr_test.batch_size = 1
+            datamgr_test.n_process_augmentation = 1
+
+            outputs, labels, metrics_val = trainer.predict(
+                datamgr_test.get_batchgen(), batch_size=orig_batch_size)
+
+            # reset old values
+            datamgr_test.batch_size = orig_batch_size
+            datamgr_test.n_process_augmentation = orig_num_aug_processes
+            return outputs, labels, metrics_val
+
         def save(self):
             """
             Saves the Whole experiments
