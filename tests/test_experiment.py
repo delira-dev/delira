@@ -62,7 +62,13 @@ def test_experiment(params, dataset_length_train, dataset_length_test):
     dmgr_train = BaseDataManager(dset_train, 16, 4, None)
     dmgr_test = BaseDataManager(dset_test, 16, 1, None)
 
-    exp.run(dmgr_train, dmgr_test)
+    net = exp.run(dmgr_train, dmgr_test)
+    exp.test(params=params,
+             network=net,
+             datamgr_test=dmgr_test,)
+
 
 if __name__ == '__main__':
     test_experiment()
+
+

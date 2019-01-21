@@ -527,17 +527,18 @@ try:
                                                  "lowest")
                                  )
 
-        @staticmethod
-        def test(network: AbstractPyTorchNetwork,
+        def test(self,
+                 params: Parameters,
+                 network: AbstractPyTorchNetwork,
                  datamgr_test: typing.Union[BaseDataManager, ConcatDataManager],
-                 trainer_cls = PTNetworkTrainer,
+                 trainer_cls=PTNetworkTrainer,
                  **kwargs):
             """
-            trains single model
+            executes prediction for all items in datamgr_test with network
 
             Parameters
             ----------
-            network : :class:`AbstractPyTorchNetwork`
+            network : AbstractPyTorchNetwork
                 the network to train
             datamgr_test : BaseDataManager or ConcatDataManager
                 holds the testset
@@ -550,11 +551,18 @@ try:
                 holds additional keyword arguments
                 (which are completly passed to the trainers init)
             """
-            criterions = kwargs.pop('criterions', {})
+            # setup trainer with dummy optimization which won't be used!
             trainer = trainer_cls(network=network,
-                                  save_path='',
-                                  criterions=criterions,
-                                  optimizer_cls=None)
+                                  save_path=
+                                  os.path.join(self.save_path, 'test'),
+                                  optimizer_cls=torch.optim.SGD,
+                                  # params.nested_get('optimizer_cls'),
+                                  optim_fn=create_optims_default_pytorch,
+                                  criterions=
+                                  params.nested_get('criterions'),
+                                  optimizer_params=
+                                  params.nested_get('optimizer_params'),
+                                  )
 
             # testing with batchsize 1 and 1 augmentation processs to
             # avoid dropping of last elements
