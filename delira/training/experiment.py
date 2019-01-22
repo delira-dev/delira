@@ -4,6 +4,8 @@ from ..utils import now
 from ..data_loading import BaseDataManager, ConcatDataManager, BaseLazyDataset
 from .. import __version__ as delira_version
 from .parameters import Parameters
+from ..models import AbstractNetwork
+from .abstract_trainer import AbstractNetworkTrainer
 from trixi.experiment import Experiment as TrixiExperiment
 import os
 import logging
@@ -92,6 +94,45 @@ class AbstractExperiment(TrixiExperiment):
 
         """
 
+        raise NotImplementedError()
+
+    @abstractmethod
+    def test(self,
+             params: Parameters,
+             network: AbstractNetwork,
+             datamgr_test: BaseDataManager,
+             trainer_cls=AbstractNetworkTrainer,
+             **kwargs):
+        """
+        Executes prediction for all items in datamgr_test with network
+
+        Parameters
+        ----------
+        params : :class:`Parameters`
+            the parameters to construct a model
+        network : :class: 'AbstractNetwork'
+            the network to train
+        datamgr_test : :class: 'BaseDataManager'
+            holds the test data
+        trainer_cls :
+            class defining the actual trainer,
+            defaults to :class:`AbstractNetworkTrainer`,
+            which should be suitable for most cases,
+            but can easily be overwritten and exchanged if necessary
+        **kwargs :
+            holds additional keyword arguments
+            (which are completly passed to the trainers init)
+
+        Returns
+        -------
+        np.ndarray
+            predictions from batches
+        list of np.ndarray
+            labels from batches
+        dict
+            dictionary containing the mean validation metrics and
+            the mean loss values
+        """
         raise NotImplementedError()
 
     def kfold(self, num_epochs: int,
