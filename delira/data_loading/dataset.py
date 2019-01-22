@@ -123,6 +123,7 @@ class AbstractDataset:
 
         for key, val in vars(self).items():
             if not (key.startswith("__") and key.endswith("__")):
+
                 if key == "data":
                     continue
                 kwargs[key] = val
