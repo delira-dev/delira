@@ -530,7 +530,7 @@ try:
         def test(self,
                  params: Parameters,
                  network: AbstractPyTorchNetwork,
-                 datamgr_test: typing.Union[BaseDataManager, ConcatDataManager],
+                 datamgr_test: BaseDataManager,
                  trainer_cls=PTNetworkTrainer,
                  **kwargs):
             """
@@ -538,10 +538,12 @@ try:
 
             Parameters
             ----------
-            network : AbstractPyTorchNetwork
+            params : :class:`Parameters`
+                the parameters to construct a model
+            network : :class: 'AbstractPyTorchNetwork'
                 the network to train
-            datamgr_test : BaseDataManager or ConcatDataManager
-                holds the testset
+            datamgr_test : :class: 'BaseDataManager'
+                holds the test data
             trainer_cls :
                 class defining the actual trainer,
                 defaults to :class:`PyTorchNetworkTrainer`,
