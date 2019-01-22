@@ -13,7 +13,7 @@ pylint
 tqdm
 visdom>=0.1.8.5
 pyyaml
-trixi
+trixi-slim
 batchgenerators@git+https://github.com/MIC-DKFZ/batchgenerators.git@91feb74747bfcfb9514d509fb13b854a37847b4d#egg=batchgenerators-0
 psutil
 nested_lookup
