@@ -22,6 +22,7 @@ class BaseDataManager(object):
 
     def __init__(self, data, batch_size, n_process_augmentation,
                  transforms, sampler_cls=SequentialSampler,
+                 sampler_kwargs={},
                  data_loader_cls=None, dataset_cls=None,
                  load_fn=default_load_fn_2d, from_disc=True, **kwargs):
         """
@@ -39,6 +40,8 @@ class BaseDataManager(object):
             Data transformations for augmentation
         sampler_cls : AbstractSampler
             class defining the sampling strategy
+        sampler_kwargs : dict
+            keyword arguments for sampling
         data_loader_cls : subclass of SlimDataLoaderBase
             DataLoader class
         dataset_cls : subclass of AbstractDataset
@@ -97,7 +100,7 @@ class BaseDataManager(object):
 
             self.dataset = dataset_cls(data, load_fn, **kwargs)
 
-        self.sampler = sampler_cls.from_dataset(self.dataset)
+        self.sampler = sampler_cls.from_dataset(self.dataset, **sampler_kwargs)
 
     def get_batchgen(self, seed=1):
         """

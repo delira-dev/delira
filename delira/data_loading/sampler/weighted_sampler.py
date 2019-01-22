@@ -31,7 +31,7 @@ class WeightedRandomSampler(AbstractSampler):
         self._global_index = 0
 
     @classmethod
-    def from_dataset(cls, dataset: AbstractDataset):
+    def from_dataset(cls, dataset: AbstractDataset, **kwargs):
         """
 
         Classmethod to initialize the sampler from a given dataset
@@ -50,7 +50,7 @@ class WeightedRandomSampler(AbstractSampler):
 
         indices = list(range(len(dataset)))
         labels = [d['label'] for d in dataset.data]
-        return cls(labels)
+        return cls(labels, **kwargs)
 
     def _get_indices(self, n_indices):
         """

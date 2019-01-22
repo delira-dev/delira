@@ -11,7 +11,7 @@ class AbstractSampler(object):
         pass
 
     @classmethod
-    def from_dataset(cls, dataset: AbstractDataset):
+    def from_dataset(cls, dataset: AbstractDataset, **kwargs):
         """
         Classmethod to initialize the sampler from a given dataset
 
@@ -27,7 +27,7 @@ class AbstractSampler(object):
 
         """
         indices = list(range(len(dataset)))
-        return cls(indices)
+        return cls(indices, **kwargs)
 
     @abstractmethod
     def _get_indices(self, n_indices):
