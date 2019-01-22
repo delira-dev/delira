@@ -257,7 +257,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                     datamgr_valid.batch_size = 1
                     datamgr_valid.n_process_augmentation = 1
 
-                    labels_val, pred_val, metrics_val = self.predict(
+                    pred_val, labels_val, metrics_val = self.predict(
                         datamgr_valid.get_batchgen(), batch_size=orig_batch_size)
 
                     # reset old values
