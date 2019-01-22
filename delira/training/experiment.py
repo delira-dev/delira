@@ -534,7 +534,7 @@ try:
                  trainer_cls=PTNetworkTrainer,
                  **kwargs):
             """
-            executes prediction for all items in datamgr_test with network
+            Executes prediction for all items in datamgr_test with network
 
             Parameters
             ----------
@@ -550,6 +550,16 @@ try:
             **kwargs :
                 holds additional keyword arguments
                 (which are completly passed to the trainers init)
+
+            Returns
+            -------
+            np.ndarray
+                predictions from batches
+            list of np.ndarray
+                labels from batches
+            dict
+                dictionary containing the mean validation metrics and
+                the mean loss values
             """
             # setup trainer with dummy optimization which won't be used!
             trainer = trainer_cls(network=network,
