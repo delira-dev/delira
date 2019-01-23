@@ -468,7 +468,7 @@ class BaseCacheDataset(AbstractDataset):
             data sample
 
         """
-        data_dict = self.get_item_from_index(index)
+        data_dict = self.get_sample_from_index(index)
 
         return data_dict
 
