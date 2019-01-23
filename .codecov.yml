@@ -11,4 +11,5 @@ coverage:
 ignore:
   - "tests/"
   - "notebooks/"
+  - "*/__init.py"
   

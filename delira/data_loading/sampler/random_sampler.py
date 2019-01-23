@@ -111,10 +111,10 @@ class PrevalenceRandomSampler(AbstractSampler):
         self._global_index = 0
 
     @classmethod
-    def from_dataset(cls, dataset: AbstractDataset):
+    def from_dataset(cls, dataset: AbstractDataset, **kwargs):
         indices = range(len(dataset))
         labels = [dataset[idx]['label'] for idx in indices]
-        return cls(labels)
+        return cls(labels, **kwargs)
 
     def _get_indices(self, n_indices):
         """
@@ -219,10 +219,10 @@ class StoppingPrevalenceRandomSampler(AbstractSampler):
         self._shuffle = shuffle_batch
 
     @classmethod
-    def from_dataset(cls, dataset: AbstractDataset):
+    def from_dataset(cls, dataset: AbstractDataset, **kwargs):
         indices = range(len(dataset))
         labels = [dataset[idx]['label'] for idx in indices]
-        return cls(labels)
+        return cls(labels, **kwargs)
 
     def _get_indices(self, n_indices):
         """
