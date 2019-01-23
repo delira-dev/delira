@@ -88,6 +88,16 @@ class AbstractDataset:
         """
         Returns the data sample for a given index 
         (without any loading if it would be necessary)
+        This implements the base case and can be subclassed
+        for index mappings.
+        The actual loading behaviour (lazy or cached) should be 
+        implemented in ``__getitem__``
+ 
+        See Also
+        --------
+        :method:ConcatDataset.get_sample_from_index
+        :method:BaseLazyDataset.__getitem__
+        :method:BaseCacheDataset.__getitem__
 
         Parameters
         ----------
@@ -336,7 +346,8 @@ class BaseLazyDataset(AbstractDataset):
         dict
             loaded data sample
         """
-        data_dict = self._load_fn(*self.data[index], **self._load_kwargs)
+        data_dict = self._load_fn(*self.get_sample_from_index(index), 
+                                  **self._load_kwargs)
 
         return data_dict
 
@@ -457,7 +468,7 @@ class BaseCacheDataset(AbstractDataset):
             data sample
 
         """
-        data_dict = self.data[index]
+        data_dict = self.get_item_from_index(index)
 
         return data_dict
 
@@ -475,6 +486,17 @@ class ConcatDataset(AbstractDataset):
     def get_sample_from_index(self, index):
         """
         Returns the data sample for a given index 
+        (without any loading if it would be necessary)
+        This method implements the index mapping of a global index to 
+        the subindices for each dataset.
+        The actual loading behaviour (lazy or cached) should be 
+        implemented in ``__getitem__``
+ 
+        See Also
+        --------
+        :method:AbstractDataset.get_sample_from_index
+        :method:BaseLazyDataset.__getitem__
+        :method:BaseCacheDataset.__getitem__
 
         Parameters
         ----------
