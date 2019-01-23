@@ -493,7 +493,7 @@ class ConcatDataset(AbstractDataset):
             curr_max_index += len(dset)
 
             if prev_max_index <= index < curr_max_index:
-                return dset[index % curr_max_index]
+                return dset[index - prev_max_index]
 
             else:
                 continue
