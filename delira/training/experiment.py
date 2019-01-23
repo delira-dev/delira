@@ -572,7 +572,6 @@ try:
                  params: Parameters,
                  network: AbstractPyTorchNetwork,
                  datamgr_test: BaseDataManager,
-                 trainer_cls=PTNetworkTrainer,
                  **kwargs):
             """
             Executes prediction for all items in datamgr_test with network
@@ -585,11 +584,6 @@ try:
                 the network to train
             datamgr_test : :class: 'BaseDataManager'
                 holds the test data
-            trainer_cls :
-                class defining the actual trainer,
-                defaults to :class:`PyTorchNetworkTrainer`,
-                which should be suitable for most cases,
-                but can easily be overwritten and exchanged if necessary
             **kwargs :
                 holds additional keyword arguments
                 (which are completly passed to the trainers init)
@@ -605,17 +599,14 @@ try:
                 the mean loss values
             """
             # setup trainer with dummy optimization which won't be used!
-            trainer = trainer_cls(network=network,
-                                  save_path=
-                                  os.path.join(self.save_path, 'test'),
-                                  optimizer_cls=torch.optim.SGD,
-                                  # params.nested_get('optimizer_cls'),
-                                  optim_fn=create_optims_default_pytorch,
-                                  criterions=
-                                  params.nested_get('criterions'),
-                                  optimizer_params=
-                                  params.nested_get('optimizer_params'),
-                                  )
+            trainer = self.trainer_cls(
+                network=network,
+                save_path=os.path.join(self.save_path, 'test'),
+                optimizer_cls=torch.optim.SGD,
+                optim_fn=create_optims_default_pytorch,
+                criterions=params.nested_get('criterions'),
+                optimizer_params=params.nested_get('optimizer_params'),
+                **kwargs)
 
             # testing with batchsize 1 and 1 augmentation processs to
             # avoid dropping of last elements
