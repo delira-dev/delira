@@ -1,14 +1,4 @@
-__all__ = []
-
-try:
+import os
+if "torch" in os.environ["DELIRA_BACKEND"]:
     from .generative_adversarial_network import \
         GenerativeAdversarialNetworkBasePyTorch
-
-    __all__ += [
-        'GenerativeAdversarialNetworkBasePyTorch'
-    ]
-
-except ImportError as e:
-    import warnings
-    warnings.warn(ImportWarning(e.msg))
-    raise e

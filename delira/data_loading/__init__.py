@@ -1,7 +1,8 @@
 
 from .data_loader import BaseDataLoader
 from .data_manager import BaseDataManager, ConcatDataManager
-from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset
+from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset, \
+                     ConcatDataset
 from .load_utils import default_load_fn_2d
 from .sampler import LambdaSampler, \
     WeightedRandomSampler, \
@@ -11,24 +12,6 @@ from .sampler import LambdaSampler, \
     SequentialSampler
 from .sampler import __all__ as __all_sampling
 
-__all__ = [
-    'BaseDataLoader',
-    'BaseDataManager',
-    'ConcatDataManager',
-    'AbstractDataset',
-    'BaseLazyDataset',
-    'BaseCacheDataset',
-    'TorchvisionClassificationDataset',
-    'default_load_fn_2d',
-    *__all_sampling
-]
-
-try:
+import os
+if "torch" in os.environ["DELIRA_BACKEND"]:
     from .dataset import TorchvisionClassificationDataset
-
-    __all__ += ['TorchvisionClassificationDataset']
-
-except ImportError as e:
-    import warnings
-    warnings.warn(ImportWarning(e.msg))
-    raise e

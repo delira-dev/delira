@@ -101,10 +101,8 @@ def make_deprecated(new_func):
 
 numpy_array_func = dtype_func(np.ndarray)
 
-try:
+import os
+if "torch" in os.environ["DELIRA_BACKEND"]:
     import torch
     torch_tensor_func = dtype_func(torch.Tensor)
     torch_module_func = dtype_func(torch.nn.Module)
-
-except ImportError as e:
-    raise e

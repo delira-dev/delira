@@ -4,6 +4,7 @@ from tqdm import tqdm
 import numpy as np
 from skimage.transform import resize
 from sklearn.model_selection import train_test_split
+import typing
 from ..utils import subdirs
 from ..utils.decorators import make_deprecated
 
@@ -83,10 +84,38 @@ class AbstractDataset:
         """
         return len(self.data)
 
+    def get_sample_from_index(self, index):
+        """
+        Returns the data sample for a given index 
+        (without any loading if it would be necessary)
+        This implements the base case and can be subclassed
+        for index mappings.
+        The actual loading behaviour (lazy or cached) should be 
+        implemented in ``__getitem__``
+ 
+        See Also
+        --------
+        :method:ConcatDataset.get_sample_from_index
+        :method:BaseLazyDataset.__getitem__
+        :method:BaseCacheDataset.__getitem__
+
+        Parameters
+        ----------
+        index : int
+            index corresponding to targeted sample
+
+        Returns
+        -------
+        Any
+            sample corresponding to given index
+        """
+
+        return self.data[index]
+
     def get_subset(self, indices):
         """
         Returns a Subset of the current dataset based on given indices
-        
+
         Parameters
         ----------
         indices : iterable
@@ -96,7 +125,7 @@ class AbstractDataset:
         -------
         :class:`BlankDataset`
             the subset
-        
+
         """
 
         # extract other important attributes from current dataset
@@ -104,14 +133,13 @@ class AbstractDataset:
 
         for key, val in vars(self).items():
             if not (key.startswith("__") and key.endswith("__")):
-                if key == "_load_fn":
-                    key = "load_fn"
-                elif key == "data":
+
+                if key == "data":
                     continue
                 kwargs[key] = val
 
-        kwargs["__getitem__"] = self.__getitem__
-        subset_data = [self.data[idx] for idx in indices]
+        kwargs["old_getitem"] = self.__getitem__
+        subset_data = [self.get_sample_from_index(idx) for idx in indices]
 
         return BlankDataset(subset_data, **kwargs)
 
@@ -156,25 +184,23 @@ class BlankDataset(AbstractDataset):
 
     """
 
-    def __init__(self, data, load_fn, load_kwargs={}, **kwargs):
+    def __init__(self, data, old_getitem, **kwargs):
         """
 
         Parameters
         ----------
         data : iterable
             data to load
-        load_fn : function
-            function to load the ``data``
-        load_kwargs : dict
-            dictionary containing all keyword arguments passed to the ``load_fn``
+        old_getitem : function
+            get item method of previous dataset
         **kwargs :
             additional keyword arguments (are set as class attribute)
 
         """
-        super().__init__(None, load_fn, None, None)
+        super().__init__(None, None, None, None)
 
         self.data = data
-        self.load_kwargs = load_kwargs
+        self._old_getitem = old_getitem
 
         for key, val in kwargs.items():
             setattr(self, key, val)
@@ -194,7 +220,7 @@ class BlankDataset(AbstractDataset):
             dictionary containing a single sample
 
         """
-        return self._load_fn(self.data[index], **self.load_kwargs)
+        return self._old_getitem(index)
 
     def __len__(self):
         """
@@ -320,7 +346,8 @@ class BaseLazyDataset(AbstractDataset):
         dict
             loaded data sample
         """
-        data_dict = self._load_fn(*self.data[index], **self._load_kwargs)
+        data_dict = self._load_fn(*self.get_sample_from_index(index), 
+                                  **self._load_kwargs)
 
         return data_dict
 
@@ -441,9 +468,66 @@ class BaseCacheDataset(AbstractDataset):
             data sample
 
         """
-        data_dict = self.data[index]
+        data_dict = self.get_sample_from_index(index)
 
         return data_dict
+
+
+class ConcatDataset(AbstractDataset):
+    def __init__(self, *datasets):
+        super().__init__(None, None, None, None)
+
+        # check if first item in datasets is list and datasets is of length 1
+        if (len(datasets) == 1) and isinstance(datasets[0], list):
+            datasets = datasets[0]
+
+        self.data = datasets
+
+    def get_sample_from_index(self, index):
+        """
+        Returns the data sample for a given index 
+        (without any loading if it would be necessary)
+        This method implements the index mapping of a global index to 
+        the subindices for each dataset.
+        The actual loading behaviour (lazy or cached) should be 
+        implemented in ``__getitem__``
+ 
+        See Also
+        --------
+        :method:AbstractDataset.get_sample_from_index
+        :method:BaseLazyDataset.__getitem__
+        :method:BaseCacheDataset.__getitem__
+
+        Parameters
+        ----------
+        index : int
+            index corresponding to targeted sample
+
+        Returns
+        -------
+        Any
+            sample corresponding to given index
+        """
+
+        curr_max_index = 0
+        for dset in self.data:
+            prev_max_index = curr_max_index
+            curr_max_index += len(dset)
+
+            if prev_max_index <= index < curr_max_index:
+                return dset[index - prev_max_index]
+
+            else:
+                continue
+
+        raise IndexError("Index %d is out of range for %d items in datasets" %
+                         (index, len(self)))
+
+    def __getitem__(self, index):
+        return self.get_sample_from_index(index)
+
+    def __len__(self):
+        return sum([len(dset) for dset in self.data])
 
 
 class Nii3DLazyDataset(BaseLazyDataset):
@@ -574,7 +658,7 @@ class Nii3DCacheDatset(BaseCacheDataset):
         return data
 
 
-try:
+if "torch" in os.environ["DELIRA_BACKEND"]:
     from torchvision.datasets import CIFAR10, CIFAR100, EMNIST, MNIST, FashionMNIST
 
     class TorchvisionClassificationDataset(AbstractDataset):
@@ -584,7 +668,7 @@ try:
         """
 
         def __init__(self, dataset, root="/tmp/", train=True, download=True,
-                    img_shape=(28, 28), **kwargs):
+                     img_shape=(28, 28), **kwargs):
             """
 
             Parameters
@@ -676,16 +760,18 @@ try:
 
             data = self.data[index]
             data_dict = {"data": np.array(data[0]),
-                        "label": data[1].numpy().reshape(1).astype(np.float32)}
+                         "label": data[1].numpy().reshape(1).astype(np.float32)}
 
             img = data_dict["data"]
 
-            img = resize(img, self.img_shape, mode='reflect', anti_aliasing=True)
+            img = resize(img, self.img_shape,
+                         mode='reflect', anti_aliasing=True)
             if len(img.shape) <= 3:
                 img = img.reshape(
                     *img.shape, 1)
 
-            img = img.transpose((len(img.shape) - 1, *range(len(img.shape) - 1)))
+            img = img.transpose(
+                (len(img.shape) - 1, *range(len(img.shape) - 1)))
 
             data_dict["data"] = img.astype(np.float32)
             return data_dict
@@ -701,6 +787,3 @@ try:
 
             """
             return len(self.data)
-
-except ImportError as e:
-    raise e

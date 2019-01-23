@@ -3,8 +3,8 @@ import numpy as np
 import typing
 from batchgenerators.dataloading import SlimDataLoaderBase, \
     MultiThreadedAugmenter
-from torch.utils.data import ConcatDataset
-from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset
+from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset, \
+    ConcatDataset
 from .data_loader import BaseDataLoader
 from .load_utils import default_load_fn_2d
 from .sampler import SequentialSampler
@@ -248,108 +248,81 @@ class BaseDataManager(object):
             raise ValueError('Invalid value for n_process_augmentation')
         return n_batches
 
-
-class ConcatDataManager(object):
+class ConcatDataManager(BaseDataManager):
     """
-    Class to concatenate DataManagers
+    Class to concatenate DataManagers 
+    (instantiates a new manager with concatenated datasets)
+
+    See Also
+    --------
+    :class:`ConcatDataset`
 
     """
 
-    def __init__(self, datamanager=typing.List[BaseDataManager]):
+    def __init__(self, datamanager: typing.List[BaseDataManager],
+                 batch_size=None, n_process_augmentation=None,
+                 transforms=None, sampler_cls=None,
+                 data_loader_cls=None):
         """
 
         Parameters
         ----------
         datamanager : list
             the datamanagers which should be concatenated
-            (All attributes except the dataset are extracted 
-            from the first manager inside the list)
+        batch_size : int
+            Number of samples per batch (default: None)
+            if None: the ``batch_size`` attribute from the first element of the 
+                ``datamanager`` list will be used
+        n_process_augmentation : int
+            Number of processes for augmentations (default: None)
+            if None: the ``n_process_augmentation`` attribute from the first 
+                element of the ``datamanager`` list will be used
+        transforms :
+            Data transformations for augmentation (default: None)
+            if None: the ``transforms`` attribute from the first element of the
+                ``datamanager`` list will be used
+        sampler_cls : AbstractSampler
+            class defining the sampling strategy (default: None)
+            if None: the ``sampler_cls`` attribute from the first element of the
+                ``datamanager`` list will be used
+        data_loader_cls : subclass of SlimDataLoaderBase
+            DataLoader class (default: None)
+            if None: the ``data_loader_cls`` attribute from the first element of
+                the ``datamanager`` list will be used
+     
+        Raises
+        ------
+        AssertionError
+            * `data_loader_cls` is not :obj:`None` and not a subclass of
+            `SlimDataLoaderBase`
 
         """
 
-        self.dataset = ConcatDataset(
+        # concatenate datasets
+        dataset = ConcatDataset(
             [tmp.dataset for tmp in datamanager])
 
-        self.data_loader_cls = datamanager[0].data_loader_cls
+        # use attributes from first list element if not specified
+        first_man = datamanager[0]
 
-        self.batch_size = datamanager[0].batch_size
-        self.n_process_augmentation = datamanager[0].n_process_augmentation
-        self.transforms = datamanager[0].transforms
-        self.sampler = datamanager[0].sampler.__class__.from_dataset(
-            self.dataset
-        )
+        if batch_size is None:
+            batch_size = first_man.batch_size
 
-    def get_batchgen(self, seed=1):
-        """
-        Create DataLoader and Batchgenerator
+        if n_process_augmentation is None:
+            n_process_augmentation = first_man.n_process_augmentation
 
-        Parameters
-        ----------
-        seed : int
-            seed for Random Number Generator
+        if transforms is None:
+            transforms = first_man.transforms
 
-        Returns
-        -------
-        MultiThreadedAugmenter
-            Batchgenerator
+        if sampler_cls is None:
+            sampler_cls = first_man.sampler.__class__
 
-        Raises
-        ------
-        AssertionError
-            :attr:`ConcatDataManager.n_batches` is smaller than or equal to zero
+        if data_loader_cls is None:
+            data_loader_cls = first_man.data_loader_cls
 
-        """
-        assert self.n_batches > 0
-
-        data_loader = self.data_loader_cls(self.dataset,
-                                           batch_size=self.batch_size,
-                                           num_batches=self.n_batches,
-                                           seed=seed,
-                                           sampler=self.sampler
-                                           )
-
-        return MultiThreadedAugmenter(data_loader, self.transforms,
-                                      self.n_process_augmentation,
-                                      num_cached_per_queue=2,
-                                      seeds=self.n_process_augmentation*[seed])
-
-    @property
-    def n_samples(self):
-        """
-        Number of Samples
-
-        Returns
-        -------
-        int
-            Number of Samples
-
-        """
-        return len(self.sampler)
-
-    @property
-    def n_batches(self):
-        """
-        Returns Number of Batches based on batchsize,
-        number of samples and number of processes
-
-        Returns
-        -------
-        int
-            Number of Batches
-
-        Raises
-        ------
-        AssertionError
-            :attr:`ConcatDataManager.n_samples` is smaller than or equal to zero
-
-        """
-        assert self.n_samples > 0
-
-        if self.n_process_augmentation == 1:
-            n_batches = int(np.floor(self.n_samples / self.batch_size))
-        elif self.n_process_augmentation > 1:
-            n_batches = int(np.floor(
-                self.n_samples / self.batch_size / self.n_process_augmentation))
-        else:
-            raise ValueError('Invalid value for n_process')
-        return n_batches
+        super().__init__(data=dataset, batch_size=batch_size,
+                         n_process_augmentation=n_process_augmentation,
+                         transforms=transforms, sampler_cls=sampler_cls,
+                         data_loader_cls=data_loader_cls, dataset_cls=None,
+                         load_fn=None, from_disc=None)
+    

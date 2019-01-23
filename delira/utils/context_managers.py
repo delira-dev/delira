@@ -1,6 +1,7 @@
 import contextlib
 
-try:
+import os
+if "torch" in os.environ["DELIRA_BACKEND"]:
     import torch
 
     class DefaultOptimWrapperTorch(object):
@@ -82,6 +83,3 @@ try:
 
         def add_param_group(self, param_group):
             return self._optimizer.add_param_group(param_group)
-
-except ImportError as e:
-    raise e

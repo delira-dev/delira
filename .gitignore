@@ -111,3 +111,5 @@ venv.bak/
 .vscode
 .pytest_cache
 
+# delira config
+*/.delira

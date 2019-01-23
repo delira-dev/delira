@@ -1,5 +1,5 @@
-
-try:
+import os
+if "torch" in os.environ["DELIRA_BACKEND"]:
     import torch
     import torch.nn.functional as F
 
@@ -131,6 +131,3 @@ try:
             if self.reduction == 'sum':
                 return torch.sum(focal_loss)
             raise AttributeError('Reduction parameter unknown.')
-
-except ImportError as e:
-    raise e

@@ -1,7 +1,8 @@
 import logging
 logger = logging.getLogger(__name__)
 
-try:
+import os
+if "torch" in os.environ["DELIRA_BACKEND"]:
     import torch
     from torchvision import models as t_models
 
@@ -301,6 +302,3 @@ try:
                     )
 
             return gen, discr
-
-except ImportError as e:
-    raise e

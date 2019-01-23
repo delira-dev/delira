@@ -11,7 +11,7 @@ from .abstract_trainer import AbstractNetworkTrainer
 
 logger = logging.getLogger(__name__)
 
-try:
+if "torch" in os.environ["DELIRA_BACKEND"]:
     import torch
     from .train_utils import pytorch_batch_to_numpy
     from .train_utils import create_optims_default_pytorch as create_optims_default
@@ -257,7 +257,7 @@ try:
                     datamgr_valid.batch_size = 1
                     datamgr_valid.n_process_augmentation = 1
 
-                    labels_val, pred_val, metrics_val = self.predict(
+                    pred_val, labels_val, metrics_val = self.predict(
                         datamgr_valid.get_batchgen(), batch_size=orig_batch_size)
 
                     # reset old values
@@ -629,6 +629,3 @@ try:
                                                         **kwargs)
                 return {"module": model, "optimizers": optimizer,
                         "start_epoch": epoch}
-
-except ImportError as e:
-    raise e

@@ -1,7 +1,8 @@
 import logging
 file_logger = logging.getLogger(__name__)
 
-try:
+import os
+if "torch" in os.environ["DELIRA_BACKEND"]:
     import torch
     from torchvision import models as t_models
     from delira.models.abstract_network import AbstractPyTorchNetwork
@@ -221,6 +222,3 @@ try:
                     output_device).squeeze(-1).to(torch.long)
 
             return return_dict
-
-except ImportError as e:
-    raise e

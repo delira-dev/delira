@@ -1,7 +1,8 @@
 import numpy as np
 from ..utils.decorators import dtype_func
 
-try:
+import os
+if "torch" in os.environ["DELIRA_BACKEND"]:
     import torch
 
     from ..utils.decorators import torch_tensor_func, torch_module_func
@@ -105,6 +106,3 @@ try:
         """
         return {"gen": optim_cls(model.gen.parameters(), **optim_params),
                 "discr": optim_cls(model.discr.parameters(), **optim_params)}
-
-except ImportError as e:
-    raise e
