@@ -1,6 +1,6 @@
 
 from .data_loader import BaseDataLoader
-from .data_manager import BaseDataManager, ConcatDataManager
+from .data_manager import BaseDataManager
 from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset, \
                      ConcatDataset
 from .load_utils import default_load_fn_2d
