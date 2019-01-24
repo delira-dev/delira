@@ -92,17 +92,12 @@ class AbstractExperiment(TrixiExperiment):
         raise NotImplementedError()
 
     def kfold(self, num_epochs: int,
-              data: typing.Union[typing.List[BaseDataManager], BaseDataManager],
-              num_splits=None, shuffle=False, random_seed=None, **kwargs):
+              data: BaseDataManager,
+              num_splits=None, shuffle=False, random_seed=None, train_kwargs={},
+              test_kwargs={}, **kwargs):
         """
         Runs K-Fold Crossvalidation
-        The two supported scenarios are:
-
-            * passing a list of datamanagers: the list will be split and 
-            multiple datamanagers will be combinded into a single one 
-            (if necessary); No subsets will be created from a datamanager but 
-            each train and validation set consists of a integer number of full 
-            datamanagers
+        The supported scenario is:
 
             * passing a single datamanager: the data within the single manager 
             will be split and multiple datamanagers will be created holding 
@@ -112,44 +107,38 @@ class AbstractExperiment(TrixiExperiment):
         ----------
         num_epochs : int
             number of epochs to train the model
-        data : list of :class:`BaseDataManager` or single 
-               :class:`BaseDataManager`
-            list of datamanagers or single datamanager 
-            (will be split for crossvalidation)
+        data : single :class:`BaseDataManager`
+            single datamanager (will be split for crossvalidation)
         num_splits : None or int
             number of splits for kfold
-            if None: 
-                - len(data) splits will be validated if list of managers is given
-                - 10 splits will be validated else
+            if None: 10 splits will be validated per default
         shuffle : bool
             whether or not to shuffle indices for kfold
         random_seed : None or int
             random seed used to seed the kfold (if shuffle is true),
             pytorch and numpy
+        train_kwargs : dict
+            keyword arguments to specify training behavior
+        test_kwargs : dict
+            keyword arguments to specify testing behavior
         **kwargs :
             additional keyword arguments (completely passed to self.run())
 
-        """
+        See Also
+        --------
+        :method:`BaseDataManager.update_state_from_dict` for valid keys in 
+            ``train_kwargs`` and ``test_kwargs``
 
-        if isinstance(data, list) and (len(data) == 1):
-            data = data[0]
+        """
 
         # set number of splits if not specified
         if num_splits is None:
-            if isinstance(data, BaseDataManager):
-                num_splits = 10
-                logger.warning("num_splits not defined, using default value of \
-                                10 splits instead")
-            else:
-                num_splits = len(data)
-        
+            num_splits = 10
+            logger.warning("num_splits not defined, using default value of \
+                            10 splits instead ")
+                            
         # extract actual data to be split
-        if isinstance(data, BaseDataManager):
-            split_data = list(range(len(data.dataset)))
-            split_mgr = True
-        else:
-            split_data = data
-            split_mgr = False
+        split_data = list(range(len(data.dataset)))
 
         # instantiate the actual kfold
         fold = KFold(n_splits=num_splits, shuffle=shuffle,
@@ -160,18 +149,14 @@ class AbstractExperiment(TrixiExperiment):
 
         # run folds
         for idx, (train_idxs, test_idxs) in enumerate(fold.split(split_data)):
+            
             # extract data from single manager
-            if split_mgr:
-                train_data = data.get_subset(train_idxs)
-                test_data = data.get_subset(test_idxs)
-            # combine multiple managers to single manager
-            else:
-                train_data = ConcatDataManager(
-                    [data[_idx] for _idx in train_idxs]
-                )
-                test_data = ConcatDataManager(
-                    [data[_idx] for _idx in test_idxs]
-                )
+            train_data = data.get_subset(train_idxs)
+            test_data = data.get_subset(test_idxs)
+
+            # update manager behavior for train and test case
+            train_data.update_state_from_dict(train_kwargs)
+            test_data.update_state_from_dict(test_kwargs)
 
             self.run(train_data, test_data,
                 num_epochs=num_epochs,
@@ -181,7 +166,8 @@ class AbstractExperiment(TrixiExperiment):
     def stratified_kfold(self, num_epochs: int,
                          data: BaseDataManager,
                          num_splits=None, shuffle=False, random_seed=None,
-                         label_key="label", **kwargs):
+                         label_key="label", train_kwargs={}, test_kwargs={},
+                         **kwargs):
         """
         Runs stratified K-Fold Crossvalidation
         The supported supported scenario is:
@@ -189,11 +175,6 @@ class AbstractExperiment(TrixiExperiment):
             * passing a single datamanager: the data within the single manager
               will be split and multiple datamanagers will be created holding
               the subsets.
-
-        .. note:: 
-            In opposite to :method:`AbstractExperiment.kfold` this method does 
-            not support passing multiple managers, since stratification would 
-            be hard to implement
 
         Parameters
         ----------
@@ -213,8 +194,17 @@ class AbstractExperiment(TrixiExperiment):
         label_key : str (default: "label")
             the key to extract the label for stratification from each data 
             sample
+        train_kwargs : dict
+            keyword arguments to specify training behavior
+        test_kwargs : dict
+            keyword arguments to specify testing behavior
         **kwargs :
             additional keyword arguments (completely passed to self.run())
+
+        See Also
+        --------
+        :method:`BaseDataManager.update_state_from_dict` for valid keys in 
+            ``train_kwargs`` and ``test_kwargs``
 
         """
 
@@ -239,6 +229,10 @@ class AbstractExperiment(TrixiExperiment):
             # extract data from single manager
             train_data = data.get_subset(train_idxs)
             test_data = data.get_subset(test_idxs)
+
+            # update manager behavior for train and test case
+            train_data.update_state_from_dict(train_kwargs)
+            test_data.update_state_from_dict(test_kwargs)
             
             self.run(train_data, test_data,
                      num_epochs=num_epochs,
@@ -559,21 +553,25 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
         def kfold(self, num_epochs: int,
                   data: typing.Union[typing.List[BaseDataManager],
                                     BaseDataManager],
-                  num_splits=None, shuffle=False, random_seed=None, **kwargs):
+                  num_splits=None, shuffle=False, random_seed=None,
+                  train_kwargs={}, test_kwargs={}, **kwargs):
+
             if random_seed is not None:
                 torch.manual_seed(random_seed)
 
             super().kfold(num_epochs, data, num_splits, shuffle, random_seed,
-                        **kwargs)
+                        train_kwargs, test_kwargs, **kwargs)
 
         def stratified_kfold(self, num_epochs: int,
                              data: BaseDataManager,
                              num_splits=None, shuffle=False, random_seed=None,
-                             label_key="label", **kwargs):
+                             label_key="label", train_kwargs={}, test_kwargs={},
+                             **kwargs):
 
             if random_seed is not None:
                 torch.manual_seed(random_seed)
 
             super().stratified_kfold(num_epochs, data, num_splits, shuffle,
-                                     random_seed, label_key, **kwargs)
+                                     random_seed, label_key, train_kwargs,
+                                     test_kwargs, **kwargs)
 
