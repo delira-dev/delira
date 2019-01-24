@@ -1,7 +1,7 @@
 
 
 from ..utils import now
-from ..data_loading import BaseDataManager, ConcatDataManager, BaseLazyDataset
+from ..data_loading import BaseDataManager, BaseLazyDataset
 from .. import __version__ as delira_version
 from .parameters import Parameters
 from trixi.experiment import Experiment as TrixiExperiment
@@ -63,9 +63,8 @@ class AbstractExperiment(TrixiExperiment):
         raise NotImplementedError()
 
     @abstractmethod
-    def run(self, train_data: typing.Union[BaseDataManager, ConcatDataManager],
-            val_data: typing.Optional[typing.Union[BaseDataManager,
-                                                   ConcatDataManager]] = None,
+    def run(self, train_data: BaseDataManager
+            val_data: typing.Optional[BaseDataManager] = None,
             params: typing.Optional[Parameters] = None,
             **kwargs):
         """
@@ -73,9 +72,9 @@ class AbstractExperiment(TrixiExperiment):
 
         Parameters
         ----------
-        train_data : :class:`BaseDataManager` or :class:`ConcatDataManager`
+        train_data : :class:`BaseDataManager`
             data manager containing the training data
-        val_data : :class:`BaseDataManager` or :class:`ConcatDataManager`
+        val_data : :class:`BaseDataManager`
             data manager containing the validation data
         parameters : :class:`Parameters`, optional
             Class containing all parameters (defaults to None).
@@ -466,8 +465,8 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             )
 
         def run(self,
-                train_data: typing.Union[BaseDataManager, ConcatDataManager],
-                val_data: typing.Union[BaseDataManager, ConcatDataManager, None],
+                train_data: BaseDataManager,
+                val_data: typing.Union[BaseDataManager, None],
                 params: typing.Optional[Parameters] = None,
                 **kwargs):
             """
@@ -475,9 +474,9 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
             Parameters
             ----------
-            train_data : BaseDataManager or ConcatDataManager
+            train_data : BaseDataManager
                 holds the trainset
-            val_data : BaseDataManager or ConcatDataManager or None
+            val_data : BaseDataManager or None
                 holds the validation set (if None: Model will not be validated)
             params : :class:`Parameters`
                 the parameters to construct a model and network trainer
