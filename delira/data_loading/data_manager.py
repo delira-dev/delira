@@ -219,7 +219,7 @@ class BaseDataManager(object):
                                                 self.data_loader_cls)
         # update
         new_sampler = new_state.pop("sampler", None)
-        if new sampler is not None:
+        if new_sampler is not None:
             self.sampler = new_sampler.from_dataset(
                 self.dataset,
                 **new_state.pop("sampling_kwargs", {}))
