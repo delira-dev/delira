@@ -1,13 +1,15 @@
 import logging
 import numpy as np
 import typing
+import inspect
 from batchgenerators.dataloading import SlimDataLoaderBase, \
     MultiThreadedAugmenter
+from batchgenerators.transforms import AbstractTransform
 from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset, \
     ConcatDataset
 from .data_loader import BaseDataLoader
 from .load_utils import default_load_fn_2d
-from .sampler import SequentialSampler
+from .sampler import SequentialSampler, AbstractSampler
 from ..utils.decorators import make_deprecated
 
 logger = logging.getLogger(__name__)
@@ -67,6 +69,16 @@ class BaseDataManager(object):
         :class:`AbstractDataset`
 
         """
+        
+        # Instantiate Hidden variables for property access
+        self._batch_size = None
+        self._n_process_augmentation = None
+        self._transforms = None
+        self._data_loader_cls = None
+        self._dataset = None
+        self._sampler = None
+
+        # set actual values to properties
         self.batch_size = batch_size
 
         self.n_process_augmentation = n_process_augmentation
@@ -76,6 +88,8 @@ class BaseDataManager(object):
             logger.info("No DataLoader Class specified. Using BaseDataLoader")
             data_loader_cls = BaseDataLoader
         else:
+            assert inspect.isclass(data_loader_cls), \
+                "data_loader_cls must be class not instance of class"
             assert issubclass(data_loader_cls, SlimDataLoaderBase), \
                 "dater_loader_cls must be subclass of SlimDataLoaderBase"
 
@@ -99,7 +113,9 @@ class BaseDataManager(object):
                     "dataset_cls must be subclass of AbstractDataset"
 
             self.dataset = dataset_cls(data, load_fn, **kwargs)
-
+        
+        assert inspect.isclass(sampler_cls) and issubclass(sampler_cls,
+                                                            AbstractSampler)
         self.sampler = sampler_cls.from_dataset(self.dataset, **sampler_kwargs)
 
     def get_batchgen(self, seed=1):
@@ -165,6 +181,54 @@ class BaseDataManager(object):
 
         return self.__class__(self.dataset.get_subset(indices), **subset_kwargs)
 
+    def update_state_from_dict(self, new_state: dict):
+        """
+        Updates internal state and therfore the behavior from dict.
+        If a key is not specified, the old attribute value will be used
+        
+        Parameters
+        ----------
+        new_state : dict
+            The dict to update the state from.
+            Valid keys are:
+
+                * ``batch_size``
+                * ``n_process_augmentation``
+                * ``data_loader_cls``
+                * ``sampler``
+                * ``sampling_kwargs``
+                * ``transforms``
+
+            If a key is not specified, the old value of the corresponding 
+            attribute will be used
+
+        Raises
+        ------
+        KeyError
+            Invalid keys are specified
+        
+        """
+
+        # update batch_size if specified
+        self.batch_size = new_state.pop("batch_size", self.batch_size)
+        # update n_process_augmentation if specified
+        self.n_process_augmentation = new_state.pop("n_process_augmentation",
+                                                    self.n_process_augmentation)
+        # update data_loader_cls if specified
+        self.data_loader_cls = new_state.pop("data_loader_cls",
+                                                self.data_loader_cls)
+        # update
+        new_sampler = new_state.pop("sampler", None)
+        if new sampler is not None:
+            self.sampler = new_sampler.from_dataset(
+                self.dataset,
+                **new_state.pop("sampling_kwargs", {}))
+        self.transforms = new_state.pop("transforms", self.transforms)
+
+        if new_state:
+            raise KeyError("Invalid Keys in new_state given: %s"
+                            % (','.join(map(str, new_state.keys())))
+
     @make_deprecated("BaseDataManager.get_subset")
     def train_test_split(self, *args, **kwargs):
         """
@@ -203,6 +267,197 @@ class BaseDataManager(object):
 
         return train_mgr, val_mgr
 
+    @property
+    def batch_size(self):
+        """
+        Property to access the batchsize
+        
+        Returns
+        -------
+        int
+            the batchsize
+        """
+
+        return self._batch_size
+
+    @batch_size.setter
+    def batch_size(self, new_batch_size):
+        """
+        Setter for current batchsize, casts to int before setting the attribute
+        
+        Parameters
+        ----------
+        new_batch_size : int, Any
+            the new batchsize; should be int but can be of any type that can be 
+            casted to an int
+        
+        """
+
+        self._batch_size = int(new_batch_size)
+       
+    @property
+    def n_process_augmentation(self):
+        """
+        Property to access the number of augmentation processes
+        
+        Returns
+        -------
+        int
+            number of augmentation processes
+        """
+
+        return self._n_process_augmentation
+
+    @n_process_augmentation.setter
+    def n_process_augmentation(self, new_process_number):
+        """
+        Setter for number of augmentation processes, casts to int before setting
+        the attribute
+        
+        Parameters
+        ----------
+        new_process_number : int, Any
+            new number of augmentation processes; should be int but can be of 
+            any type that can be casted to an int
+        
+        """
+
+        self._n_process_augmentation = int(new_process_number)
+
+    @property
+    def transforms(self):
+        """
+        Property to access the current data transforms
+        
+        Returns
+        -------
+        None, ``AbstractTransform``
+            The transformation, can either be None or an instance of 
+            ``AbstractTransform``
+        """
+
+        return self._transforms
+    
+    @transforms.setter
+    def transforms(self, new_transforms):
+        """
+        Setter for data transforms, assert if transforms are of valid type 
+        (either None or instance of ``AbstractTransform``)
+        
+        Parameters
+        ----------
+        new_transforms : None, ``AbstractTransform``
+            the new transforms
+        
+        """
+
+        assert new_transforms is None or isinstance(new_transforms,
+                                                    AbstractTransform)
+
+        self._transforms = transforms
+
+    @property
+    def data_loader_cls(self):
+        """
+        Property to access the current data loader class
+        
+        Returns
+        -------
+        type
+            Subclass of ``SlimDataLoaderBase``
+        """
+
+        return self._data_loader_cls
+
+    @data_loader_cls.setter
+    def data_loader_cls(self, new_loader_cls):
+        """
+        Setter for current data loader class, asserts if class is of valid type
+        (must be a class and a subclass of ``SlimDataLoaderBase``)
+        
+        Parameters
+        ----------
+        new_loader_cls : type
+            the new data loader class
+        
+        """
+
+        assert inspect.isclass(new_loader_cls) and issubclass(new_loader_cls,
+                                                        SlimDataLoaderBase)
+        self._data_loader_cls = data_loader_cls
+
+    @property
+    def dataset(self):
+        """
+        Property to access the current dataset
+        
+        Returns
+        -------
+        :class:`AbstractDataset`
+            the current dataset
+
+        """
+
+        return self._dataset
+
+    @dataset.setter
+    def dataset(self, new_dataset):
+        """
+        Setter for new dataset
+        
+        Parameters
+        ----------
+        new_dataset : :class:`AbstractDataset`
+            
+        """
+
+        assert isinstance(new_dataset, AbstractDataset)
+        self._dataset = new_dataset
+
+    @property
+    def sampler(self):
+        """
+        Property to access the current sampler
+
+        Returns
+        -------
+
+        :class:`AbstractSampler`
+            the current sampler
+        """
+
+        return self._sampler
+
+    @sampler.setter
+    def sampler(self, new_sampler):
+        """
+        Setter for current sampler.
+        If a valid class instance is passed, the sampler is simply assigned, if 
+        a valid class type is passed, the sampler is created from the dataset
+        
+        Parameters
+        ----------
+        new_sampler : :class:`AbstractSampler`, type
+            instance or class object of new sampler
+        
+        Raises
+        ------
+        ValueError
+            Neither a valid class instance nor a valid class type is given
+        
+        """
+
+        if inspect.isclass(new_sampler) and issubclass(new_sampler,
+                                                        AbstractSampler):
+            self.sampler = new_sampler.from_dataset(self.dataset)
+
+        elif isinstance(new_sampler, AbstractSampler):
+            self.sampler = new_sampler
+
+        else:
+            raise ValueError("Given Sampler is neither a subclass of \
+                            AbstractSampler, nor an instance of a sampler ")
+                            
     @property
     def n_samples(self):
         """
