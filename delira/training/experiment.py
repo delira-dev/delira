@@ -63,7 +63,7 @@ class AbstractExperiment(TrixiExperiment):
         raise NotImplementedError()
 
     @abstractmethod
-    def run(self, train_data: BaseDataManager
+    def run(self, train_data: BaseDataManager,
             val_data: typing.Optional[BaseDataManager] = None,
             params: typing.Optional[Parameters] = None,
             **kwargs):

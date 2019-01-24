@@ -354,7 +354,7 @@ class BaseDataManager(object):
         assert new_transforms is None or isinstance(new_transforms,
                                                     AbstractTransform)
 
-        self._transforms = transforms
+        self._transforms = new_transforms
 
     @property
     def data_loader_cls(self):
@@ -384,7 +384,7 @@ class BaseDataManager(object):
 
         assert inspect.isclass(new_loader_cls) and issubclass(new_loader_cls,
                                                         SlimDataLoaderBase)
-        self._data_loader_cls = data_loader_cls
+        self._data_loader_cls = new_loader_cls
 
     @property
     def dataset(self):
@@ -449,10 +449,10 @@ class BaseDataManager(object):
 
         if inspect.isclass(new_sampler) and issubclass(new_sampler,
                                                         AbstractSampler):
-            self.sampler = new_sampler.from_dataset(self.dataset)
+            self._sampler = new_sampler.from_dataset(self.dataset)
 
         elif isinstance(new_sampler, AbstractSampler):
-            self.sampler = new_sampler
+            self._sampler = new_sampler
 
         else:
             raise ValueError("Given Sampler is neither a subclass of \
