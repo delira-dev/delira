@@ -227,7 +227,7 @@ class BaseDataManager(object):
 
         if new_state:
             raise KeyError("Invalid Keys in new_state given: %s"
-                            % (','.join(map(str, new_state.keys())))
+                            % (','.join(map(str, new_state.keys()))))
 
     @make_deprecated("BaseDataManager.get_subset")
     def train_test_split(self, *args, **kwargs):
