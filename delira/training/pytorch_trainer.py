@@ -310,33 +310,35 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             """
 
             # Load latest epoch file if available
+            # Load latest epoch file if available
             if os.path.isdir(self.save_path):
-                try:
-                    files = [x for x in os.listdir(self.save_path)
-                            if os.path.isfile(os.path.join(self.save_path, x))
-                            and x.startswith("checkpoint")]
+                # check all files in directory starting with "checkpoint" and not
+                # ending with "_best.pth"
+                files = [x for x in os.listdir(self.save_path)
+                         if os.path.isfile(os.path.join(self.save_path, x))
+                         and x.startswith("checkpoint")
+                         and not x.endswith("_best.pth")]
+
+                # if list is not empty: load previous state
+                if files:
 
                     latest_epoch = max([int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
                                         for x in files])
 
                     latest_state_path = os.path.join(self.save_path,
-                                    "checkpoint_epoch_%d.pth" % latest_epoch)
+                                                     "checkpoint_epoch_%d.pth" % latest_epoch)
 
                     latest_state = torch.load(latest_state_path)
 
                     self.module.load_state_dict(latest_state["state_dict"]["model"])
 
-                    self.start_epoch = latest_epoch
+                    self.start_epoch = max(latest_epoch, self.start_epoch)
 
                     for k, state in latest_state["state_dict"]["optimizer"].items():
                         self.optimizers[k].load_state_dict(state)
 
                     logger.info("Loaded previous training from %s" %
                                 latest_state_path)
-
-                except Exception as e:
-                    pass
-
         def _at_training_end(self):
             """
             Defines Behaviour at end of training: Loads best model if available
