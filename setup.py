@@ -62,11 +62,12 @@ class bdist_egg_date(bdist_egg):
     def run(self):
         suffix = self.get_datetime_suffix()
         self.distribution.metadata.version += "_%s" % suffix
-        sdist.run(self)
+        bdist_egg.run(self)
 
     def get_datetime_suffix(self):
         import datetime
         return datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+
 
 
 setup(
