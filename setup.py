@@ -1,6 +1,8 @@
 import os
 import re
 from setuptools import find_packages, setup
+from setuptools.command.sdist import sdist
+from setuptools.command.bdist_egg import bdist_egg
 
 
 def resolve_requirements(file):
@@ -44,6 +46,29 @@ license = read_file(os.path.join(os.path.dirname(__file__), "LICENSE"))
 delira_version = find_version(os.path.join(os.path.dirname(__file__), "delira",
                                            "__init__.py"))
 
+
+class sdist_date(sdist):
+
+    def run(self):
+        suffix = self.get_datetime_suffix()
+        self.distribution.metadata.version += "_%s" % suffix
+        sdist.run(self)
+
+    def get_datetime_suffix(self):
+        import datetime
+        return datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+
+class bdist_egg_date(bdist_egg):
+    def run(self):
+        suffix = self.get_datetime_suffix()
+        self.distribution.metadata.version += "_%s" % suffix
+        sdist.run(self)
+
+    def get_datetime_suffix(self):
+        import datetime
+        return datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+
+
 setup(
     name='delira',
     version=delira_version,
@@ -58,5 +83,6 @@ setup(
     extras_require={
         "full": requirements_extra_full,
         "torch": requirements_extra_torch
-    }
+    },
+    cmdclass={"bdist_egg": bdist_egg_date, "sdist": sdist_date}
 )
