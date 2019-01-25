@@ -107,9 +107,9 @@ class AbstractExperiment(TrixiExperiment):
         ----------
         params : :class:`Parameters`
             the parameters to construct a model
-        network : :class: 'AbstractNetwork'
+        network : :class:'AbstractNetwork'
             the network to train
-        datamgr_test : :class: 'BaseDataManager'
+        datamgr_test : :class:'BaseDataManager'
             holds the test data
         trainer_cls :
             class defining the actual trainer,
@@ -578,9 +578,9 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             ----------
             params : :class:`Parameters`
                 the parameters to construct a model
-            network : :class: 'AbstractPyTorchNetwork'
+            network : :class:'AbstractPyTorchNetwork'
                 the network to train
-            datamgr_test : :class: 'BaseDataManager'
+            datamgr_test : :class:'BaseDataManager'
                 holds the test data
             **kwargs :
                 holds additional keyword arguments
