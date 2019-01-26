@@ -41,6 +41,10 @@ requirements_extra_torch = resolve_requirements(os.path.join(
     os.path.dirname(__file__), 'requirements_extra_torch.txt'))
 requirements_extra_full += requirements_extra_torch
 
+requirements_extra_tf = resolve_requirements(os.path.join(
+    os.path.dirname(__file__), 'requirements_extra_tf.txt'))
+requirements_extra_full += requirements_extra_tf
+
 readme = read_file(os.path.join(os.path.dirname(__file__), "README.md"))
 license = read_file(os.path.join(os.path.dirname(__file__), "LICENSE"))
 delira_version = find_version(os.path.join(os.path.dirname(__file__), "delira",
@@ -83,7 +87,8 @@ setup(
     python_requires=">3.5",
     extras_require={
         "full": requirements_extra_full,
-        "torch": requirements_extra_torch
+        "torch": requirements_extra_torch,
+        "tf": requirements_extra_tf
     },
     cmdclass={"bdist_egg": bdist_egg_date, "sdist": sdist_date}
 )
