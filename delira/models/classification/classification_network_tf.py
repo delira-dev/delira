@@ -188,7 +188,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
                                     "env_appendix": "_%02d" % fold
                                     }})
 
-        #logging.info({'image_grid': {"image_array": inputs, "name": image_names,
-        #                             "title": "input_images", "env_appendix": "_%02d" % fold}})
+        logging.info({'image_grid': {"image_array": inputs, "name": image_names,
+                                     "title": "input_images", "env_appendix": "_%02d" % fold}})
 
         return metric_vals, loss_vals, [preds]
