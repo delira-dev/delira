@@ -12,3 +12,4 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
 if "tf" in os.environ["DELIRA_BACKEND"]:
     from .abstract_network import AbstractTfNetwork
+    from .classification import ClassificationNetworkBaseTf

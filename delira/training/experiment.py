@@ -668,6 +668,9 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
 if "tf" in os.environ["DELIRA_BACKEND"]:
 
+    from .tf_trainer import TfNetworkTrainer
+    from ..models import AbstractTfNetwork
+
     class TfExperiment(AbstractExperiment):
         """
         Single Experiment for Tf Backend
@@ -750,7 +753,7 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
             metrics = self.hyper_params.metrics
             lr_scheduler_cls = self.hyper_params.lr_sched_cls
             lr_scheduler_params = self.hyper_params.lr_sched_params
-            self.current_trainer = TFNetworkTrainer(
+            self.current_trainer = TfNetworkTrainer(
                 network=model,
                 save_path=os.path.join(
                     self.save_path,
