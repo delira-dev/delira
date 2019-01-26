@@ -106,3 +106,23 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
         """
         return {"gen": optim_cls(model.gen.parameters(), **optim_params),
                 "discr": optim_cls(model.discr.parameters(), **optim_params)}
+
+if "tf" in os.environ["DELIRA_BACKEND"]:
+    def create_optims_default_tf(optim_cls, **optim_params):
+        """
+        Function to create a optimizer dictionary
+        (in this case only one optimizer)
+
+        Parameters
+        ----------
+        optim_cls :
+            Class implementing an optimization algorithm
+        **optim_params :
+            Additional keyword arguments (passed to the optimizer class)
+
+        Returns
+        -------
+        dict
+            dictionary containing all created optimizers
+        """
+        return {"default": optim_cls(**optim_params)}
