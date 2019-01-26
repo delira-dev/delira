@@ -700,6 +700,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             self.root = root
             self.img_shape = img_shape
             self.num_classes = None
+            self.one_hot = one_hot
             self.data = self._make_dataset(dataset, **kwargs)
 
         def _make_dataset(self, dataset, **kwargs):
