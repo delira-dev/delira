@@ -669,7 +669,10 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 if "tf" in os.environ["DELIRA_BACKEND"]:
 
     from .tf_trainer import TfNetworkTrainer
+    from .train_utils import create_optims_default_tf
     from ..models import AbstractTfNetwork
+    from .parameters import Parameters
+    import tensorflow as tf
 
     class TfExperiment(AbstractExperiment):
         """
@@ -681,21 +684,22 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
 
         """
         def __init__(self,
-                     hyper_params: typing.Union[Hyperparameters, str],
+                     params: typing.Union[Parameters, str],
                      model_cls: AbstractTfNetwork,
-                     model_kwargs: dict,
                      name=None,
                      save_path=None,
                      val_score_key=None,
                      optim_builder=create_optims_default_tf,
                      checkpoint_freq=1,
+                     trainer_cls=TfNetworkTrainer,
                      **kwargs
                      ):
 
-            if isinstance(hyper_params, str):
-                hyper_params = Hyperparameters.from_file(hyper_params)
+            if isinstance(params, str):
+                with open(params, "rb") as f:
+                    params = pickle.load(f)
 
-            n_epochs = hyper_params.num_epochs
+            n_epochs = params.nested_get("num_epochs")
             AbstractExperiment.__init__(self, n_epochs)
 
             if name is None:
@@ -714,14 +718,15 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
 
             os.makedirs(self.save_path, exist_ok=True)
 
-            if val_score_key is None and hyper_params.metrics:
-                val_score_key = sorted(hyper_params.metrics.keys())[0]
+            self.trainer_cls = trainer_cls
+
+            if val_score_key is None and params.nested_get("metrics"):
+                val_score_key = sorted(params.nested_get("metrics").keys())[0]
 
             self.val_score_key = val_score_key
 
-            self.hyper_params = hyper_params
+            self.params = params
             self.model_cls = model_cls
-            self.model_kwargs = model_kwargs
             self.kwargs = kwargs
             self._optim_builder = optim_builder
             self.checkpoint_freq = checkpoint_freq
@@ -729,31 +734,47 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
 
             # log HyperParameters
             logger.info({"text": {"text":
-                                    str(hyper_params) + "\n\tmodel_class = %s"
+                                    str(params) + "\n\tmodel_class = %s"
                                     % model_cls.__class__.__name__}})
 
-        def setup(self, **kwargs):
+        def setup(self, params: Parameters, **kwargs):
             """
             Perform setup of Network Trainer
 
             Parameters
             ----------
+            params : :class:`Parameters`
+                the parameters to construct a model and network trainer
             **kwargs :
                 keyword arguments
 
             """
 
+            model_params = params.permute_training_on_top().model
+
+            model_kwargs = {}
+            for key in signature(self.model_cls.__init__).parameters.keys():
+                if key in ["self", "args", "kwargs"]:
+                    continue
+                try:
+                    model_kwargs[key] = model_params.nested_get(key)
+
+                except KeyError:
+                    pass
+
             tf.reset_default_graph()
 
-            criterions = self.hyper_params.criterions
-            optimizer_cls = self.hyper_params.optimizer_cls
-            optimizer_params = self.hyper_params.optimizer_params
+            model = self.model_cls(**model_kwargs)
 
-            model = self.model_cls(**self.model_kwargs)
-            metrics = self.hyper_params.metrics
-            lr_scheduler_cls = self.hyper_params.lr_sched_cls
-            lr_scheduler_params = self.hyper_params.lr_sched_params
-            self.current_trainer = TfNetworkTrainer(
+            training_params = params.permute_training_on_top().training
+            criterions = training_params.nested_get("criterions")
+            optimizer_cls = training_params.nested_get("optimizer_cls")
+            optimizer_params = training_params.nested_get("optimizer_params")
+            metrics = training_params.nested_get("metrics")
+            lr_scheduler_cls = training_params.nested_get("lr_sched_cls")
+            lr_scheduler_params = training_params.nested_get("lr_sched_params")
+
+            return self.trainer_cls(
                 network=model,
                 save_path=os.path.join(
                     self.save_path,
@@ -772,18 +793,21 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
             )
 
         def run(self,
-                train_data: typing.Union[BaseDataManager, ConcatDataManager],
-                val_data: typing.Union[BaseDataManager, ConcatDataManager, None],
+                train_data: BaseDataManager,
+                val_data: typing.Union[BaseDataManager, None],
+                params: typing.Optional[Parameters] = None,
                 **kwargs):
             """
             trains single model
 
             Parameters
             ----------
-            train_data : BaseDataManager or ConcatDataManager
+            train_data : BaseDataManager
                 holds the trainset
-            val_data : BaseDataManager or ConcatDataManager or None
+            val_data : BaseDataManager or None
                 holds the validation set (if None: Model will not be validated)
+            params : :class:`Parameters`
+                the parameters to construct a model and network trainer
             **kwargs :
                 holds additional keyword arguments
                 (which are completly passed to the trainers init)
@@ -793,16 +817,33 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
             :class:`AbstractNetworkTrainer`
                 trainer of trained network
 
+            Raises
+            ------
+            ValueError
+                Class has no Attribute ``params`` and no parameters were given as
+                function argument
             """
 
-            self.setup(**kwargs)
+            if params is None:
+                if hasattr(self, "params"):
+                    params = self.params
+                else:
+                    raise ValueError("No parameters given")
+
+            else:
+                self.params = params
+
+            training_params = params.permute_training_on_top().training
+
+            trainer = self.setup(params, **kwargs)
             self._run += 1
-            num_epochs = kwargs.get("num_epochs", self.hyper_params.num_epochs)
-            return self.current_trainer.train(num_epochs, train_data, val_data,
-                                            self.val_score_key,
-                                            self.kwargs.get("val_score_mode",
-                                                            "lowest")
-                                            )
+            num_epochs = kwargs.get("num_epochs", training_params.nested_get(
+                "num_epochs"))
+            return trainer.train(num_epochs, train_data, val_data,
+                                 self.val_score_key,
+                                 self.kwargs.get("val_score_mode",
+                                                 "lowest")
+                                 )
 
         def save(self):
             """
@@ -813,7 +854,7 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
                     "wb") as f:
                 pickle.dump(self, f)
 
-            self.hyper_params.export_to_files(self.save_path, True)
+            self.params.export_to_files(self.save_path, True)
 
         @staticmethod
         def load(file_name):
@@ -828,3 +869,34 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
             """
             with open(file_name, "rb") as f:
                 return pickle.load(f)
+
+        def __getstate__(self):
+            return vars(self)
+
+        def __setstate__(self, state):
+            vars(self).update(state)
+
+        def kfold(self, num_epochs: int,
+                  data: typing.Union[typing.List[BaseDataManager],
+                                     BaseDataManager],
+                  num_splits=None, shuffle=False, random_seed=None,
+                  train_kwargs={}, test_kwargs={}, **kwargs):
+
+            if random_seed is not None:
+                tf.set_random_seed(random_seed)
+
+            super().kfold(num_epochs, data, num_splits, shuffle, random_seed,
+                          train_kwargs, test_kwargs, **kwargs)
+
+        def stratified_kfold(self, num_epochs: int,
+                             data: BaseDataManager,
+                             num_splits=None, shuffle=False, random_seed=None,
+                             label_key="label", train_kwargs={}, test_kwargs={},
+                             **kwargs):
+
+            if random_seed is not None:
+                tf.set_random_seed(random_seed)
+
+            super().stratified_kfold(num_epochs, data, num_splits, shuffle,
+                                     random_seed, label_key, train_kwargs,
+                                     test_kwargs, **kwargs)
