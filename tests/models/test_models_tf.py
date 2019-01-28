@@ -1,3 +1,4 @@
+import os
 if "tf" in os.environ["DELIRA_BACKEND"]:
     from delira.models import ClassificationNetworkBaseTf
     from delira.training.train_utils import create_optims_default_tf

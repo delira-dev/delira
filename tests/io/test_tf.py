@@ -1,3 +1,4 @@
+import os
 if "tf" in os.environ["DELIRA_BACKEND"]:
     from delira.io import tf_load_checkpoint, tf_save_checkpoint
     from delira.models import AbstractTfNetwork
