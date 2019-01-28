@@ -108,6 +108,8 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                 "discr": optim_cls(model.discr.parameters(), **optim_params)}
 
 if "tf" in os.environ["DELIRA_BACKEND"]:
+    import tensorflow as tf
+
     def create_optims_default_tf(optim_cls, **optim_params):
         """
         Function to create a optimizer dictionary
@@ -126,3 +128,21 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
             dictionary containing all created optimizers
         """
         return {"default": optim_cls(**optim_params)}
+
+
+    def initialize_uninitialized(sess):
+        """
+        Function to initialize only uninitialized variables in a session graph
+
+        Parameters
+        ----------
+
+        sess : tf.Session()
+        """
+
+        global_vars = tf.global_variables()
+        is_not_initialized = sess.run([tf.is_variable_initialized(var) for var in global_vars])
+        not_initialized_vars = [v for (v, f) in zip(global_vars, is_not_initialized) if not f]
+
+        if not_initialized_vars:
+            sess.run(tf.variables_initializer(not_initialized_vars))

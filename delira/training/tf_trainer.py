@@ -6,7 +6,8 @@ import tensorflow as tf
 from batchgenerators.dataloading import MultiThreadedAugmenter
 from .callbacks import AbstractCallback
 from .abstract_trainer import AbstractNetworkTrainer
-from .train_utils import create_optims_default_pytorch as create_optims_default
+from .train_utils import create_optims_default_tf as create_optims_default
+from .train_utils import initialize_uninitialized
 from ..io.tf import load_checkpoint, save_checkpoint
 from delira.logging import TrixiHandler
 from trixi.logger import TensorboardXLogger
@@ -80,6 +81,8 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
             os.makedirs(save_path)
 
         # remove prior Trixihandlers and ensure logging of training results to self.save_path
+        # This facilitates visualization of multiple splits/fold inside one tensorboard-instance by means of
+        # different tf.Summary.FileWriters()
         root_logger = logging.getLogger()
         for handler in root_logger.handlers:
             handler.close()
@@ -124,7 +127,6 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
             keyword arguments passed to lr scheduler during construction
         gpu_ids : list
             list containing ids of GPUs to use; if empty: use cpu instead
-
         """
 
         self.optimizers = optim_fn(optimizer_cls, **optimizer_params)
@@ -140,11 +142,12 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         # asssign closure and prepare batch from network
         self.closure_fn = network.closure
 
-        """
         # TODO: implement multi-GPU and single GPU training with help of
         #  https://www.tensorflow.org/api_docs/python/tf/keras/utils/multi_gpu_model
         #  note: might be bugged in combination with sess.run https://github.com/tensorflow/tensorflow/issues/21788
         #  and https://www.tensorflow.org/api_docs/python/tf/keras/models/clone_model
+
+        """
         if gpu_ids and tf.test.is_gpu_available():
             assert len(gpu_ids) <= len(get_available_gpus()), "more GPUs specified than available"
             self.use_gpu = True
@@ -168,7 +171,8 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         # TODO: Beautify
         self.module._add_losses(self.losses)
         self.module._add_optims(self.optimizers)
-        self.module._sess.run(tf.initializers.global_variables())
+        # check for unitialized variables
+        initialize_uninitialized(self.module._sess)
 
     def train(self, num_epochs, datamgr_train, datamgr_valid=None,
               val_score_key=None, val_score_mode='highest'):
