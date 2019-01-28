@@ -293,7 +293,7 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
 
         def _add_optims(self, optims: dict):
             """
-            Add optims to the model graph
+            Add optimizers to the model graph
 
             Parameters
             ----------
@@ -303,6 +303,20 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
             raise NotImplementedError()
 
         def run(self, *args):
+            """
+            Evaluates `self.outputs_train` or `self.outputs_eval` based on `self.training`
+
+            Parameters
+            ----------
+            *args :
+                arguments to feed as `self.inputs`. Must have same length as `self.inputs`
+
+            Returns
+            -------
+            np.ndarray or list
+                based on len(self.outputs*), returns either list or np.ndarray
+
+            """
             if isinstance(self.inputs, tf.Tensor):
                 _feed_dict = dict(zip([self.inputs], args))
             else:
