@@ -10,7 +10,7 @@ from .train_utils import create_optims_default_tf as create_optims_default
 from .train_utils import initialize_uninitialized
 from ..io import tf_load_checkpoint, tf_save_checkpoint
 from delira.logging import TrixiHandler
-from trixi.logger import TensorboardXLogger
+from trixi.logger.tensorboard.tensorboardxlogger import TensorboardXLogger
 
 logger = logging.getLogger(__name__)
 
