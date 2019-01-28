@@ -40,7 +40,7 @@ class ResNet18(tf.keras.Model):
         self.dense2 = dense(num_classes)
         self.relu = relu()
 
-    def call(self, inputs, training=False):
+    def call(self, inputs, training=None):
         x = self.conv1(inputs)
         x = self.batchnorm1(x)
         x = self.relu(x)

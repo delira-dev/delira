@@ -1,9 +1,6 @@
 import logging
-import numpy as np
 import tensorflow as tf
-from tqdm import tqdm
-from sklearn.metrics import accuracy_score as acc
-from typing import Type
+import typing
 from delira.models.abstract_network import AbstractTfNetwork
 from delira.models.classification.ResNet18 import ResNet18
 
@@ -26,7 +23,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
     def __init__(self, in_channels: int, n_outputs: int, **kwargs):
         """
 
-        Constructs graph containing mode definition and forward pass behavior
+        Constructs graph containing model definition and forward pass behavior
 
         Parameters
         ----------
@@ -34,10 +31,6 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             number of input_channels
         n_outputs : int
             number of outputs (usually same as number of classes)
-        losses : dict
-            dictionary containing all losses. Individual losses are averaged
-        optim: dict
-            dictionary containing all optimizers, optimizers should be of Type[tf.train.Optimizer]
         """
         # register params by passing them as kwargs to parent class __init__
         super().__init__(in_channels=in_channels,
@@ -103,7 +96,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         self.outputs_train.append(step)
 
     @staticmethod
-    def _build_model(n_outputs: int):
+    def _build_model(n_outputs: int, **kwargs):
         """
         builds actual model (resnet 18)
 
@@ -111,7 +104,8 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         ----------
         n_outputs : int
             number of outputs (usually same as number of classes)
-
+        **kwargs :
+            additional keyword arguments
         Returns
         -------
         tf.keras.Model
@@ -122,7 +116,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         return model
 
     @staticmethod
-    def closure(model: Type[AbstractTfNetwork], data_dict: dict,
+    def closure(model: typing.Type[AbstractTfNetwork], data_dict: dict,
                 metrics={}, fold=0, **kwargs):
         """
                 closure method to do a single prediction.
