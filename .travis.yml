@@ -15,9 +15,12 @@ matrix:
 before_install:
   - pip install -U pip wheel
   - pip install -r requirements_extra_torch.txt
-  - pip install -r requirements_extra_tf.txt
-  - pip uninstall tensorflow-gpu
-  - pip install tensorflow==1.12.0
+  # install tensorflow only in python 3.6, since lacking support for python 3.7
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
+      pip install -r requirements_extra_tf.txt;
+      pip uninstall -y tensorflow-gpu;
+      pip install tensorflow==1.12.0;
+    fi
   - pip install -r requirements.txt
   - pip install codecov
 
