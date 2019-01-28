@@ -8,7 +8,7 @@ from .callbacks import AbstractCallback
 from .abstract_trainer import AbstractNetworkTrainer
 from .train_utils import create_optims_default_tf as create_optims_default
 from .train_utils import initialize_uninitialized
-from ..io.tf import load_checkpoint, save_checkpoint
+from ..io import tf_load_checkpoint, tf_save_checkpoint
 from delira.logging import TrixiHandler
 from trixi.logger import TensorboardXLogger
 
@@ -533,7 +533,7 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         file_name : str
             filename to save the state to
         """
-        save_checkpoint(file_name, self.module)
+        tf_save_checkpoint(file_name, self.module)
 
 
     def load_state(self, file_name):
@@ -548,4 +548,4 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         -------
 
         """
-        return load_checkpoint(file_name, self.module)
+        return tf_load_checkpoint(file_name, self.module)
