@@ -19,6 +19,8 @@ The currently supported backends are:
 
 * None: No Suffix
 
+* All (installs all registered backends and their dependencies; not recommended, since this will install many large packages): Suffix ``full``
+
 .. note::
   Depending on the backend, some functionalities may not be available for you. If you want to ensure, you can use each functionality, please use the ``full`` option, since it installs all backends
   
@@ -33,9 +35,12 @@ To install ``delira`` you can simply run
 
 * `` cd delira && pip install .[suffix]``
 
-by replacing ``[suffix]`` with the suffix for your backend, i.e. installing ``delira`` with ``torch`` backend would become ``git clone https://github.com/justusschock/delira.git && cd delira && pip install.[torch]`` and installing without a backend at all would become ``pip install git+https://github.com/justusschock/delira.git``
+by replacing ``[suffix]`` with the suffix for your backend, i.e. installing ``delira`` with ``torch`` backend would become ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[torch]`` and installing without a backend at all would become ``pip install git+https://github.com/justusschock/delira.git``
 
 Prebuild Packages
 ~~~~~~~~~~~~~~~~~
-Prebuild packages (via pip) will be available in the future, once all dependencies are registered on PyPi. This is a requirement because PyPi forbids packages that depend on non-pypi packages.
-Currently this requirement is not fullfilled by `batchgenerators <https://github.com/MIC-DKFZ/batchgenerators>`_
+To install a prebuild ``delira`` you can simply run 
+
+``pip install delira[suffix]`` 
+
+by replacing ``[suffix]`` with the suffix for your backend, i.e. installing ``delira`` with ``torch`` backend would become ``pip install delira[torch]`` and inszalling without a backend at all would become ``pip install delira``
