@@ -82,11 +82,11 @@ def test_pytorch_model_default(model: AbstractPyTorchNetwork, input_shape,
                                target_shape, loss_fn, create_optim_fn,
                                max_range, half_precision):
 
-    if "apex" in sys.modules:
+    try:
         from apex import amp
         amp_handle = amp.init(half_precision)
         wrapper_fn = amp_handle.wrap_optimizer
-    else:
+    except ImportError:
         wrapper_fn = DefaultOptimWrapperTorch
     
     start_time = time.time()
@@ -133,7 +133,10 @@ def test_pytorch_model_default(model: AbstractPyTorchNetwork, input_shape,
     del closure
     del prepare_batch
     del model
-    del amp_handle
+    try:
+        del amp_handle
+    except NameError:
+        pass
     gc.collect()
 
 
