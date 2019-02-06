@@ -31,3 +31,11 @@ script:
   - pytest
   - codecov
 
+deploy:
+  provider: pypi
+  user: $PYPI_USERNAME
+  password: $PYPI_PASSWORD
+  on:
+    tags: true
+  distributions: "sdist bdist_wheel"
+  skip_existing: true
