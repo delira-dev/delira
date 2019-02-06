@@ -16,6 +16,11 @@ The currently supported backends are:
 
   .. note::
     ``delira`` supports mixed-precision training via `apex <https://github.com/NVIDIA/apex>`_, but ``apex`` must be installed separately
+    
+* `tf <https://tensorflow.org>`_ (very experimental): Suffix ``tf``
+
+  .. note::
+    the ``tf`` backend is still very experimental and may be unstable.
 
 * None: No Suffix
 
@@ -32,8 +37,11 @@ Backend  Binary Installation           Source Installation                      
 ======== ============================= ============================================================================================= ======================================================================================================================
 None     ``pip install delira``        ``pip install git+https://github.com/justusschock/delira.git``                                Training not possible if backend is not installed separately
 `torch`_ ``pip install delira[torch]`` ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[torch]`` ``delira`` with ``torch`` backend supports mixed-precision training via `NVIDIA/apex`_ (must be installed separately).
+`tf`_               --                 ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[tf]``    The tensorflow backend is still very experimental and lacks some `features`_
 Full     ``pip install delira[full]``  ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[full]``  All backends are getting installed.
 ======== ============================= ============================================================================================= ======================================================================================================================
 
 .. _torch: https://pytorch.org
 .. _NVIDIA/apex: https://github.com/NVIDIA/apex.git
+.. _tf: https://tensorflow.org
+.. _features: https://github.com/justusschock/delira/issues/47

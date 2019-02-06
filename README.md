@@ -9,11 +9,11 @@ Authors: [Justus Schock, Oliver Rippel, Christoph Haarburger](AUTHORS.rst)
 ## Introduction
 Delira was developed as a deep learning framework for medical images such as CT or MRI. Currently, it works on arbitrary data (based on [NumPy](http://www.numpy.org/)). 
 
-Based on [PyTorch](https://pytorch.org), [batchgenerators](https://github.com/MIC-DKFZ/batchgenerators) and [trixi](https://github.com/MIC-DKFZ/trixi) it provides a framework for
+Based on [batchgenerators](https://github.com/MIC-DKFZ/batchgenerators) and [trixi](https://github.com/MIC-DKFZ/trixi) it provides a framework for
 * Dataset loading
 * Dataset sampling
 * Augmentation (multi-threaded) including 3D images with any number of channels
-* A generic trainer class that implements the training process
+* A generic trainer class that implements the training process for all [backends](#choose-backend)
 * Already implemented [models](delira/models) used in medical image processing and exemplaric implementations of most used models in general (like Resnet)
 * Web-based monitoring using [Visdom](https://github.com/facebookresearch/visdom)
 * Model save and load functions
@@ -24,13 +24,14 @@ Delira supports classification and regression problems as well as generative adv
 
 ### Choose Backend
 
-Currently the only available backend is [PyTorch](https://pytorch.org) (or no backend at all) but we are working on support for [TensorFlow](https://tensorflow.org) as well.  If you want to add another backend, please open an issue (it should not be hard at all) and we will guide you during the process of doing so.
+Currently the only available backends are [PyTorch](https://pytorch.org) and [TensorFlow](https://tensorflow.org)(or no backend at all). If you want to add another backend, please open an issue (it should not be hard at all) and we will guide you during the process of doing so.
 
 | Backend                        | Binary Installation         | Source Installation                                                                         | Notes                                                                                                                                                 |
 |--------------------------------|-----------------------------|---------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
 | None                           | `pip install delira`        | `pip install git+https://github.com/justusschock/delira.git`                                | Training not possible if backend is not installed separately                                                                                          |
-| [`torch`](https://pytorch.org) | `pip install delira[torch]` | `git clone https://github.com/justusschock/delira.git && cd delira && pip install .[torch]` | `delira` with `torch` backend supports mixed-precision training via [NVIDIA/apex](https://github.com/NVIDIA/apex.git) (must be installed separately). |
-| Full                           | `pip install delira[full]`  | `git clone https://github.com/justusschock/delira.git && cd delira && pip install .[full]`  | All backends are getting installed.                                                                                                                   |
+| [`torch`](https://pytorch.org) | `pip install delira[torch]` | `git clone https://github.com/justusschock/delira.git && cd delira && pip install .[torch]` | `delira` with `torch` backend supports mixed-precision training via [NVIDIA/apex](https://github.com/NVIDIA/apex.git) (must be installed separately). | 
+| [`tf`](https://www.tensorflow.org/) | - | `git clone https://github.com/justusschock/delira.git && cd delira && pip install .[tf]` | the `tf` backend is still very experimental and lacks some [features](https://github.com/justusschock/delira/issues/47) |
+| Full                           | `pip install delira[full]`  | `git clone https://github.com/justusschock/delira.git && cd delira && pip install .[full]`  | All backends will be installed.                                                                                                                   |
 
 ### Docker
 The easiest way to use `delira` is via docker (with the [nvidia-runtime](https://github.com/NVIDIA/nvidia-docker) for GPU-support) and using the [Dockerfile](docker/Dockerfile) or the [prebuild-images](https://cloud.docker.com/u/justusschock/repository/docker/justusschock/delira).
