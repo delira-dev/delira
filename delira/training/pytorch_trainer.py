@@ -1,8 +1,6 @@
 import os
 import logging
-import shutil
 import numpy as np
-import typing
 from tqdm.auto import tqdm
 from collections import OrderedDict
 from batchgenerators.dataloading import MultiThreadedAugmenter
@@ -493,9 +491,15 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             pbar = tqdm(enumerate(batchgen), unit=' sample',
                         total=n_batches, desc='Test')
 
+            orig_batch_size = batch_size
             batch_list = []
 
             for i, batch in pbar:
+
+                if not batch_list and (n_batches - i) < batch_size:
+                    batch_size = n_batches - i
+                    logger.debug("Set Batchsize down to %d to avoid cutting "
+                                "of the last batches" % batch_size)
 
                 data_dict = self._prepare_batch(batch, self.input_device,
                                                 self.output_device)
@@ -504,12 +508,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
                 # if queue is full process queue:
                 if batch_size is None or len(batch_list) >= batch_size:
-
-                    if not batch_list and (n_batches - i) < batch_size:
-                        batch_size = n_batches - i
-                        logger.debug("Set Batchsize down to %d to avoid cutting "
-                                    "of the last batches" % batch_size)
-
+                    
                     batch_dict = {}
                     for batch in batch_list:
                         for key, val in batch.items():
@@ -544,8 +543,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
                     outputs_all.append([pytorch_batch_to_numpy(tmp) for tmp in preds])
 
-                    label_dict = {
-                    }
+                    label_dict = {}
 
                     for key, val in batch_dict.items():
                         if "data" not in key and "img" not in key:
@@ -571,7 +569,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
             # if virtual batchsize is given: calculate actual number of batches
             if batch_size is not None:
-                div = n_batches / batch_size
+                div = np.ceil(n_batches / orig_batch_size)
             else:
                 div = n_batches
 
