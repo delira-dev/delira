@@ -27,14 +27,13 @@ The currently supported backends are:
 .. note:: 
   Currently the only other planned backend is TensorFlow (which is coming soon). If you want to add a backend like `CNTK <https://www.microsoft.com/en-us/cognitive-toolkit/>`_, `Chainer <https://chainer.org/>`_, `MXNET <https://mxnet.apache.org/>`_ or something similar, please open an issue for that and we will guide you during that process (don't worry, it is not much effort at all).
 
-============ ============================= ============================================================================================= ======================================================================================================================
-Backend      Binary Installation           Source Installation                                                                           Notes
-============ ============================= ============================================================================================= ======================================================================================================================
-None         ``pip install delira``        ``pip install git+https://github.com/justusschock/delira.git``                                Training not possible if backend is not installed separately
+======== ============================= ============================================================================================= ======================================================================================================================
+Backend  Binary Installation           Source Installation                                                                           Notes
+======== ============================= ============================================================================================= ======================================================================================================================
+None     ``pip install delira``        ``pip install git+https://github.com/justusschock/delira.git``                                Training not possible if backend is not installed separately
 `torch`_ ``pip install delira[torch]`` ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[torch]`` ``delira`` with ``torch`` backend supports mixed-precision training via `NVIDIA/apex`_ (must be installed separately).
-Full         ``pip install delira[full]``  ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[full]``  All backends are getting installed.
-============ ============================= ============================================================================================= ======================================================================================================================
+Full     ``pip install delira[full]``  ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[full]``  All backends are getting installed.
+======== ============================= ============================================================================================= ======================================================================================================================
 
 .. _torch: https://pytorch.org
 .. _NVIDIA/apex: https://github.com/NVIDIA/apex.git
-
