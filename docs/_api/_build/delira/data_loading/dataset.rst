@@ -39,3 +39,11 @@ To implement custom datasets you should derive the :class:`AbstractDataset`
     :members:
     :undoc-members:
     :show-inheritance:
+    
+:hidden:`ConcatDataset`
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: ConcatDataset
+    :members:
+    :undoc-members:
+    :show-inheritance:

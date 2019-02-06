@@ -21,3 +21,10 @@ Classification
     :undoc-members:
     :show-inheritance:
 
+:hidden:`ClassificationNetworkBaseTf`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: ClassificationNetworkBaseTf
+    :members:
+    :undoc-members:
+    :show-inheritance:

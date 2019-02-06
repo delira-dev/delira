@@ -10,3 +10,4 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
 if "tf" in os.environ["DELIRA_BACKEND"]:
     from .experiment import TfExperiment
+    from .tf_trainer import TfNetworkTrainer

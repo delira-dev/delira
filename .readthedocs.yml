@@ -1,12 +1,20 @@
 # .readthedocs.yml
+version: 2
+
+formats: 
+    - epub
+    - pdf
+    - htmlzip
+
+# python:
+#     version: 3.7
+#     install:
+#         - requirements: docs/requirements.txt
+#         - method: setuptools
+#     system_packages: false
 
 build:
   image: latest
-
-python:
-  version: 3.6
-  setup_py_install: true
-  use_system_site_packages: true
-  
-requirements_file: docs/requirements.txt
-
+ 
+conda:
+    environment: docs/conda.yml

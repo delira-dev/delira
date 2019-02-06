@@ -16,44 +16,11 @@ import os
 import sys
 import re
 
-from unittest.mock import MagicMock
+os.environ["DELIRA_BACKEND"] = "torch,tf,"
 
 # source code directory, relative to this file, for sphinx-build
-sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('../.'))
 
-
-MOCK_CLASSES = {'Dataset': 'torch.utils.data', 'Module': 'torch.nn',
-                'QtWidgets.QMainWindow': 'matplotlib.backends.qt_compat'}
-
-
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        if name in MOCK_CLASSES:
-            # return object  # Sphinx renders object in base classes
-            return type(name, (object,), {'__module__': MOCK_CLASSES[name]})
-        elif name == '__file__':  # Sphinx tries to find source code, but doesn't matter because it's mocked
-            return "FOO"
-        elif name == '__loader__':
-            return "BAR"
-        return MagicMock()
-
-
-MOCK_MODULES = ['torch', 'torch.nn', 'torch.utils', 'torch.optim',
-                'torch.utils.data', 'torch.utils.data.sampler',
-
-                'torchvision', 'torchvision.models',
-                'torchtext', 
-
-                'matplotlib', 'matplotlib.pyplot', 'matplotlib.figure', 'matplotlib.backends.qt_compat',
-                'matplotlib.backends.backend_qt5agg', 'matplotlib.backends.backend_qt4agg',
-                'matplotlib.backends.qt_compat.QtWidgets',
-
-                'tensorboardX', 
-                
-                'psutil', 'numpy', 'yaml', 'nltk', 'h5py', 'tqdm']
-
-import delira
 
 # -- Project information -----------------------------------------------------
 
@@ -61,10 +28,23 @@ project = 'delira'
 copyright = '2019, Justus Schock, Oliver Rippel, Christoph Haarburger'
 author = 'Justus Schock, Oliver Rippel, Christoph Haarburger'
 
+
+def read_file(file):
+    with open(file) as f:
+        content = f.read()
+    return content
+
+def find_version(file):
+    content = read_file(file)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", content,
+                              re.M)
+    if version_match:
+        return version_match.group(1)
+
 # The short X.Y version
-version = ''
+version = find_version("../delira/__init__.py") #delira.__version__
 # The full version, including alpha/beta/rc tags
-release = '0.2.0-beta.1'
+release = version #delira.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -189,7 +169,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'delira.tex', 'delira Documentation',
-     'Justus Schock, Christoph Haarburger', 'manual'),
+     'Justus Schock, Oliver Rippel, Christoph Haarburger', 'manual'),
 ]
 
 
@@ -220,7 +200,9 @@ texinfo_documents = [
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {'https://docs.python.org/': None,
+                      'trixi': ('https://trixi.readthedocs.io/en/latest/', None),
+                      'torch': ('https://pytorch.org/docs/stable/', None)}
 
 # -- Options for todo extension ----------------------------------------------
 
@@ -238,57 +220,96 @@ autodoc_default_flags = ['members',
 autodoc_inherit_docstrings = True
 
 autodoc_mock_imports = [
-    "numpy",
-    "torchvision",
-    "torch",
-    "skimage",
-    "sklearn",
-    "jupyter",
-    "flake8"
-    "pytest-cov",
-    "autopep8",
-    "ipython",
-    "joblib",
-    "pillow",
-    "SimpleITK",
-    "pylint",
-    "tqdm",
-    "visdom",
-    "pyyaml",
-    "trixi",
-    "batchgenerators",
-    "psutil",
-    "nested_lookup",
-    "colorlover",
-    "flask",
-    "graphviz",
-    "matplotlib",
-    "seaborn",
-    "scipy",
-    "telegram",
-    "portalocker",
-    "plotly",
-    "PIL",
-    "umap",
-    "PIL.Image",
-]
+        "numpy",
+        "torchvision",
+        "torch",
+        "skimage",
+        "sklearn",
+        "jupyter",
+        "flake8"
+        "pytest-cov",
+        "autopep8",
+        "ipython",
+        "joblib",
+        "pillow",
+        "SimpleITK",
+        "pylint",
+        "tqdm",
+        "visdom",
+        "pyyaml",
+        "trixi",
+        "batchgenerators",
+        "psutil",
+        "nested_lookup",
+        "colorlover",
+        "flask",
+        "graphviz",
+        "matplotlib",
+        "seaborn",
+        "scipy",
+        "scipy.ndimage",
+        "telegram",
+        "portalocker",
+        "plotly",
+        "PIL",
+        "umap",
+        "tensorflow",
+        "yaml"
+    ]
 
-# We use the following to automatically run sphinx-apidoc, whenever we run make html.
-# The output is ignored (see exclude_patterns above) and just created for convenience,
-# so that we can compare _build with the existing rst files and see what we need to update.
-
-# def run_apidoc(_):
-#     from sphinx.apidoc import main
-#     parentFolder = os.path.join(os.path.dirname(__file__), '..')
-#     cur_dir = os.path.abspath(os.path.dirname(__file__))
-#     sys.path.append(parentFolder)
-#     # change "backend" to your module name
-#     module = os.path.join(parentFolder, 'delira')
-#     output_path = os.path.join(cur_dir, '_api/_build')
-#     os.system("jupyter nbconvert ../notebooks/*.ipynb --to rst")
-#     os.system("mv ../notebooks/*.rst .")
-#     main(['-e', '-f', '-o', output_path, module, "-d", "1"])
-#
-# def setup(app):
-#     # trigger the run_apidoc
-#     app.connect('builder-inited', run_apidoc)
+# autodoc_mock_imports = [
+#         "torch.optim",
+#         "torch.optim.lr_scheduler",
+#         "yaml",
+#         "numpy",
+#         "torchvision",
+#         "torchvision.datasets",
+#         "torch",
+#         "torch.nn",
+#         "torch.nn.functional",
+#         "skimage",
+#         "skimage.io",
+#         "skimage.transform",
+#         "sklearn",
+#         "sklearn.model_selection",
+#         "jupyter",
+#         "flake8"
+#         "pytest-cov",
+#         "autopep8",
+#         "ipython",
+#         "joblib",
+#         "pillow",
+#         "SimpleITK",
+#         "pylint",
+#         "tqdm",
+#         "visdom",
+#         "pyyaml",
+#         "trixi",
+#         "trixi.experiment",
+#         "trixi.logger",
+#         "trixi.util",
+#         "batchgenerators",
+#         "batchgenerators.dataloading",
+#         "batchgenerators.dataloading.data_loader",
+#         "batchgenerators.transforms",
+#         "psutil",
+#         "nested_lookup",
+#         "colorlover",
+#         "flask",
+#         "graphviz",
+#         "matplotlib",
+#         "seaborn",
+#         "scipy",
+#         "scipy.ndimage",
+#         "telegram",
+#         "portalocker",
+#         "plotly",
+#         "PIL",
+#         "umap",
+#         "PIL.Image",
+#         "tensorflow",
+#         "tqdm.auto",
+#         "trixi.logger.tensorboard",
+#         "trixi.logger.tensorboard.tensorboardxlogger",
+#         "sklearn.metrics",
+# ]

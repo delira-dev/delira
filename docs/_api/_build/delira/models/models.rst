@@ -15,7 +15,7 @@ Tensorflow Integration is planned.
 :hidden:`AbstractNetwork`
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: AbstractNetwork
+.. autoclass:: AbstractNetwork(type)
     :members:
     :undoc-members:
     :show-inheritance:
@@ -23,7 +23,15 @@ Tensorflow Integration is planned.
 :hidden:`AbstractPyTorchNetwork`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: AbstractPyTorchNetwork
+.. autoclass:: AbstractPyTorchNetwork(type)
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    
+:hidden:`AbstractTfNetwork`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: AbstractTfNetwork
     :members:
     :undoc-members:
     :show-inheritance:

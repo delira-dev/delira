@@ -6,48 +6,50 @@ warnings.simplefilter('ignore', ImportWarning)
 
 import os
 import json
-_config_file = __file__.replace("__init__.py", ".delira")
-# look for config file to determine backend
-# if file exists: load config into environment variables
 
-if not os.path.isfile(_config_file):
-    _backends = {}
-    # try to import backends to determine valid backends
-    try:
-        import torch
-        _backends["torch"] = True
-        del torch
-    except ImportError:
-        _backends["torch"] = False
-    try:
-        import tensorflow
-        _backends["tf"] = True
-        del tensorflow
-    except ImportError:
-        _backends["tf"] = False
+if "DELIRA_BACKEND" not in os.environ:
+    _config_file = __file__.replace("__init__.py", ".delira")
+    # look for config file to determine backend
+    # if file exists: load config into environment variables
 
-    with open(_config_file, "w") as f:
-        json.dump({ "version": __version__, "backend": _backends}, f, sort_keys=True, indent=4)
+    if not os.path.isfile(_config_file):
+        _backends = {}
+        # try to import backends to determine valid backends
+        try:
+            import torch
+            _backends["torch"] = True
+            del torch
+        except ImportError:
+            _backends["torch"] = False
+        try:
+            import tensorflow
+            _backends["tf"] = True
+            del tensorflow
+        except ImportError:
+            _backends["tf"] = False
 
-    del _backends
+        with open(_config_file, "w") as f:
+            json.dump({ "version": __version__, "backend": _backends}, f, sort_keys=True, indent=4)
 
-# set values from config file to environment variables
-with open(_config_file) as f:
-    _config_dict = json.load(f)
-_backend_str = ""
-for key, val in _config_dict.pop("backend").items():
-    if val:
-        _backend_str += "%s," % key
-_config_dict["backend"] = _backend_str
-for key, val in _config_dict.items():
-    if isinstance(val, str):
-        val = val.lower()
-    os.environ["DELIRA_%s" % key.upper()] = val
+        del _backends
 
-del _backend_str
-del _config_dict
+    # set values from config file to environment variables
+    with open(_config_file) as f:
+        _config_dict = json.load(f)
+    _backend_str = ""
+    for key, val in _config_dict.pop("backend").items():
+        if val:
+            _backend_str += "%s," % key
+    _config_dict["backend"] = _backend_str
+    for key, val in _config_dict.items():
+        if isinstance(val, str):
+            val = val.lower()
+        os.environ["DELIRA_%s" % key.upper()] = val
 
-del _config_file
+    del _backend_str
+    del _config_dict
+
+    del _config_file
 
 from .data_loading import BaseCacheDataset, BaseLazyDataset, BaseDataManager, \
     RandomSampler, SequentialSampler
