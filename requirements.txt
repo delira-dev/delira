@@ -1,5 +1,5 @@
-numpy>=1.15.0,<1.16.0
-scikit-image==0.14.0
+numpy>=1.15.0
+scikit-image>=0.14.0
 scikit-learn>=0.20.0
 jupyter>=1.0.0
 flake8
@@ -14,6 +14,6 @@ tqdm
 visdom>=0.1.8.5
 pyyaml
 trixi-slim
-batchgenerators@git+https://github.com/MIC-DKFZ/batchgenerators.git@91feb74747bfcfb9514d509fb13b854a37847b4d#egg=batchgenerators-0
+batchgenerator>=0.18
 psutil
 nested_lookup
