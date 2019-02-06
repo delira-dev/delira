@@ -26,11 +26,11 @@ Delira supports classification and regression problems as well as generative adv
 
 Currently the only available backend is [PyTorch](https://pytorch.org) (or no backend at all) but we are working on support for [TensorFlow](https://tensorflow.org) as well.  If you want to add another backend, please open an issue (it should not be hard at all) and we will guide you during the process of doing so.
 
-For instructions to install `delira` with a specific backend, please have a look at [the corresponding docs](https://delira.readthedocs.io/en/latest/getting_started.html#installation)
-
-### Installation without a backend (from source)
-To install `delira` without a backend (not all functionalities may be work due to a missing backend) you can simply run:
-* `pip install git+https://github.com/justusschock/delira.git`
+| Backend                        | Binary Installation         | Source Installation                                                                         | Notes                                                                                                                                                 |
+|--------------------------------|-----------------------------|---------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| None                           | `pip install delira`        | `pip install git+https://github.com/justusschock/delira.git`                                | Training not possible if backend is not installed separately                                                                                          |
+| [`torch`](https://pytorch.org) | `pip install delira[torch]` | `git clone https://github.com/justusschock/delira.git && cd delira && pip install .[torch]` | `delira` with `torch` backend supports mixed-precision training via [NVIDIA/apex](https://github.com/NVIDIA/apex.git) (must be installed separately). |
+| Full                           | `pip install delira[full]`  | `git clone https://github.com/justusschock/delira.git && cd delira && pip install .[full]`  | All backends are getting installed.                                                                                                                   |
 
 ### Docker
 The easiest way to use `delira` is via docker (with the [nvidia-runtime](https://github.com/NVIDIA/nvidia-docker) for GPU-support) and using the [Dockerfile](docker/Dockerfile) or the [prebuild-images](https://cloud.docker.com/u/justusschock/repository/docker/justusschock/delira).
