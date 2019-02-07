@@ -1,8 +1,6 @@
 import os
 import re
 from setuptools import find_packages, setup
-from setuptools.command.sdist import sdist
-from setuptools.command.bdist_egg import bdist_egg
 
 
 def resolve_requirements(file):
