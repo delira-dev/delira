@@ -582,7 +582,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
             return outputs_all, labels_all, val_dict
 
-        def save_state(self, file_name, epoch, weights_only=False, **kwargs):
+        def save_state(self, file_name, epoch, weights_only=True, **kwargs):
             """
             saves the current state via :func:`delira.io.torch.save_checkpoint`
 
@@ -593,7 +593,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             epoch : int
                 current epoch (will be saved for mapping back)
             weights_only : bool
-                whether to store only weights (default: False)
+                whether to store only weights (default: True)
             *args :
                 positional arguments
             **kwargs :
@@ -613,7 +613,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             file_name : str
                 the file to load the state from
             weights_only : bool
-                whether file contains stored weights only (default: False)
+                whether file contains stored weights only (default: True)
             **kwargs : keyword arguments
 
             Returns
