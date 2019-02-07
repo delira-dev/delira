@@ -64,18 +64,21 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         losses : dict
             dictionary containing all losses. Individual losses are averaged
         """
-        if self._losses is not None:
+        if self._losses is not None and len(losses) != 0:
             logging.warning('Change of losses is not yet supported')
             raise NotImplementedError()
-        self._losses = {}
-        for name, _loss in losses.items():
-            self._losses[name] = _loss(self.inputs[-1], self.outputs_train[0])
+        elif self._losses is not None and len(losses) == 0:
+            pass
+        else:
+            self._losses = {}
+            for name, _loss in losses.items():
+                self._losses[name] = _loss(self.inputs[-1], self.outputs_train[0])
 
-        total_loss = tf.reduce_mean(list(self._losses.values()), axis=0)
+            total_loss = tf.reduce_mean(list(self._losses.values()), axis=0)
 
-        self._losses['total'] = total_loss
-        self.outputs_train.append(self._losses)
-        self.outputs_eval.append(self._losses)
+            self._losses['total'] = total_loss
+            self.outputs_train.append(self._losses)
+            self.outputs_eval.append(self._losses)
 
     def _add_optims(self, optims: dict):
         """
@@ -86,14 +89,17 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         optim: dict
             dictionary containing all optimizers, optimizers should be of Type[tf.train.Optimizer]
         """
-        if self._optims is not None:
+        if self._optims is not None and len(optims) != 0:
             logging.warning('Change of optims is not yet supported')
-            raise NotImplementedError()
-
-        self._optims = optims['default']
-        grads = self._optims.compute_gradients(self._losses['total'])
-        step = self._optims.apply_gradients(grads)
-        self.outputs_train.append(step)
+            pass
+            #raise NotImplementedError()
+        elif self._optims is not None and len(optims) == 0:
+            pass
+        else:
+            self._optims = optims['default']
+            grads = self._optims.compute_gradients(self._losses['total'])
+            step = self._optims.apply_gradients(grads)
+            self.outputs_train.append(step)
 
     @staticmethod
     def _build_model(n_outputs: int, **kwargs):
@@ -182,7 +188,6 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
                                     "env_appendix": "_%02d" % fold
                                     }})
 
-        logging.info({'image_grid': {"image_array": inputs, "name": image_names,
-                                     "title": "input_images", "env_appendix": "_%02d" % fold}})
-
+        #logging.info({'image_grid': {"image_array": inputs, "name": image_names,
+        #                             "title": "input_images", "env_appendix": "_%02d" % fold}})
         return metric_vals, loss_vals, [preds]

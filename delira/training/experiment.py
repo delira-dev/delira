@@ -14,7 +14,7 @@ import numpy as np
 
 import pickle
 from abc import abstractmethod
-from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.model_selection import KFold, StratifiedKFold, StratifiedShuffleSplit
 from sklearn.model_selection import train_test_split
 from datetime import datetime
 from inspect import signature
@@ -271,11 +271,110 @@ class AbstractExperiment(TrixiExperiment):
             # update manager behavior for train and test case
             train_data.update_state_from_dict(train_kwargs)
             test_data.update_state_from_dict(test_kwargs)
-
             self.run(train_data, test_data,
                      num_epochs=num_epochs,
                      fold=idx,
                      **kwargs)
+
+    def stratified_kfold_predict(self, num_epochs: int,
+                                 data: BaseDataManager,
+                                 split_val=0.2,
+                                 num_splits=None, shuffle=False, random_seed=None,
+                                 label_key="label", train_kwargs={}, test_kwargs={},
+                                 **kwargs):
+        """
+        Runs stratified K-Fold Crossvalidation
+        The supported supported scenario is:
+
+            * passing a single datamanager: the data within the single manager
+              will be split and multiple datamanagers will be created holding
+              the subsets.
+
+        Parameters
+        ----------
+        num_epochs : int
+            number of epochs to train the model
+        data : :class:`BaseDataManager`
+            single datamanager
+            (will be split for crossvalidation)
+        num_splits : None or int
+            number of splits for kfold
+            if None: 10 splits will be validated
+        shuffle : bool
+            whether or not to shuffle indices for kfold
+        random_seed : None or int
+            random seed used to seed the kfold (if shuffle is true),
+            pytorch and numpy
+        label_key : str (default: "label")
+            the key to extract the label for stratification from each data
+            sample
+        train_kwargs : dict
+            keyword arguments to specify training behavior
+        test_kwargs : dict
+            keyword arguments to specify testing behavior
+        **kwargs :
+            additional keyword arguments (completely passed to self.run())
+
+        See Also
+        --------
+        :method:`BaseDataManager.update_state_from_dict` for valid keys in
+            ``train_kwargs`` and ``test_kwargs``
+
+        """
+
+        metrics_val = {}
+        outputs = {}
+        labels = {}
+
+        if num_splits is None:
+            num_splits = 10
+            logger.warning("num_splits not defined, using default value of \
+                                10 splits instead ")
+
+        if isinstance(data.dataset, BaseLazyDataset):
+            logger.warning("A lazy dataset is given for stratified kfold. \
+                            Iterating over the dataset to extract labels for \
+                            stratification may be a massive overhead")
+
+        split_idxs = list(range(len(data.dataset)))
+        split_labels = [data.dataset[_idx][label_key] for _idx in split_idxs]
+
+        fold = StratifiedKFold(n_splits=num_splits, shuffle=shuffle,
+                               random_state=random_seed)
+
+        for idx, (_train_idxs, test_idxs) in enumerate(fold.split(split_idxs,
+                                                                 split_labels)):
+            # extract data from single manager
+            _train_data = data.get_subset(_train_idxs)
+            _split_idxs = list(range(len(_train_data.dataset)))
+            _split_labels = [_train_data.dataset[_idx][label_key] for _idx in _split_idxs]
+
+            val_fold = StratifiedShuffleSplit(n_splits=1,
+                                              test_size=split_val,
+                                              random_state=random_seed)
+
+            for train_idxs, val_idx in val_fold.split(_split_idxs, _split_labels):
+                train_data = _train_data.get_subset(train_idxs)
+                val_data = _train_data.get_subset(val_idx)
+
+            test_data = data.get_subset(test_idxs)
+
+            # update manager behavior for train and test case
+            train_data.update_state_from_dict(train_kwargs)
+            val_data.update_state_from_dict(test_kwargs)
+            test_data.update_state_from_dict(test_kwargs)
+            model = self.run(train_data, val_data,
+                             num_epochs=num_epochs,
+                             fold=idx,
+                             **kwargs)
+
+            _outputs, _labels, _metrics_val = self.test(self.params, model, test_data)
+
+            outputs[str(idx)] = _outputs
+            labels[str(idx)] = _labels
+            metrics_val[str(idx)] = _metrics_val
+
+        return outputs, labels, metrics_val
 
     def __str__(self):
         """
@@ -854,7 +953,7 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
                     "wb") as f:
                 pickle.dump(self, f)
 
-            self.params.export_to_files(self.save_path, True)
+                self.params.save(os.path.join(self.save_path, "parameters"))
 
         @staticmethod
         def load(file_name):
@@ -900,3 +999,83 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
             super().stratified_kfold(num_epochs, data, num_splits, shuffle,
                                      random_seed, label_key, train_kwargs,
                                      test_kwargs, **kwargs)
+
+        def stratified_kfold_predict(self, num_epochs: int,
+                                     data: BaseDataManager,
+                                     split_val=0.2,
+                                     num_splits=None,
+                                     shuffle=False, 
+                                     random_seed=None,
+                                     label_key="label",
+                                     train_kwargs={}, test_kwargs={},
+                                     **kwargs):
+
+            if random_seed is not None:
+                tf.set_random_seed(random_seed)
+
+            return super().stratified_kfold_predict(num_epochs, data, split_val, num_splits, shuffle,
+                                                    random_seed, label_key, train_kwargs,
+                                                    test_kwargs, **kwargs)
+
+        def test(self,
+                 params: Parameters,
+                 network: AbstractNetwork,
+                 datamgr_test: BaseDataManager,
+                 **kwargs):
+            """
+            Executes prediction for all items in datamgr_test with network
+
+            Parameters
+            ----------
+            params : :class:`Parameters`
+                the parameters to construct a model
+            network : :class:'AbstractPyTorchNetwork'
+                the network to train
+            datamgr_test : :class:'BaseDataManager'
+                holds the test data
+            **kwargs :
+                holds additional keyword arguments
+                (which are completly passed to the trainers init)
+
+            Returns
+            -------
+            np.ndarray
+                predictions from batches
+            list of np.ndarray
+                labels from batches
+            dict
+                dictionary containing the mean validation metrics and
+                the mean loss values
+            """
+
+            # setup trainer with dummy optimization which won't be used!
+
+            training_params = params.permute_training_on_top().training
+            metrics = training_params.nested_get("metrics")
+
+
+            trainer = self.trainer_cls(
+                network=network,
+                save_path=os.path.join(self.save_path, 'test'),
+                optimizer_cls=training_params.nested_get("optimizer_cls"),
+                optim_fn=create_optims_default_tf,
+                optimizer_params={},
+                metrics = metrics,
+                losses = {},
+                **kwargs)
+
+            # testing with batchsize 1 and 1 augmentation processs to
+            # avoid dropping of last elements
+            orig_num_aug_processes = datamgr_test.n_process_augmentation
+            orig_batch_size = datamgr_test.batch_size
+
+            datamgr_test.batch_size = 1
+            datamgr_test.n_process_augmentation = 1
+
+            outputs, labels, metrics_val = trainer.predict(
+                datamgr_test.get_batchgen(), batch_size=orig_batch_size)
+
+            # reset old values
+            datamgr_test.batch_size = orig_batch_size
+            datamgr_test.n_process_augmentation = orig_num_aug_processes
+            return outputs, labels, metrics_val
