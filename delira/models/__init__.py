@@ -9,3 +9,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
     from .segmentation import UNet2dPyTorch, UNet3dPyTorch
 
     from .gan import GenerativeAdversarialNetworkBasePyTorch
+
+if "tf" in os.environ["DELIRA_BACKEND"]:
+    from .abstract_network import AbstractTfNetwork
+    from .classification import ClassificationNetworkBaseTf

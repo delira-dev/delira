@@ -1,0 +1,6 @@
+name: delira-docs
+dependencies:
+  - python=3.7
+  - pip:
+    - sphinx==1.8.4
+    - sphinx-rtd-theme

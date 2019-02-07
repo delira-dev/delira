@@ -25,3 +25,11 @@ cross-validation.
     :members:
     :undoc-members:
     :show-inheritance:
+    
+:hidden:`TfExperiment`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TfExperiment
+    :members:
+    :undoc-members:
+    :show-inheritance:

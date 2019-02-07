@@ -45,3 +45,8 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: create_optims_gan_default_pytorch
+
+:hidden:`create_optims_default_tf`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: create_optims_default_tf

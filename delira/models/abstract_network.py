@@ -1,5 +1,6 @@
 import abc
 import logging
+import os
 
 file_logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class AbstractNetwork(object):
     @abc.abstractmethod
     def __init__(self, **kwargs):
         """
-        Init function to register init kwargs (should be called from all 
+        Init function to register init kwargs (should be called from all
         subclasses)
 
         Parameters
@@ -133,10 +134,9 @@ class AbstractNetwork(object):
         """
         return self._init_kwargs
 
-import os
 if "torch" in os.environ["DELIRA_BACKEND"]:
     import torch
-        
+
     class AbstractPyTorchNetwork(AbstractNetwork, torch.nn.Module):
         """
         Abstract Class for PyTorch Networks
@@ -228,4 +228,100 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
             return return_dict
 
+if "tf" in os.environ["DELIRA_BACKEND"]:
+    import tensorflow as tf
 
+    class AbstractTfNetwork(AbstractNetwork):
+        """
+        Abstract Class for Tf Networks
+
+        See Also
+        --------
+        :class:`AbstractNetwork`
+
+        """
+
+        @abc.abstractmethod
+        def __init__(self, sess=tf.Session, **kwargs):
+            """
+
+            Parameters
+            ----------
+            **kwargs :
+                keyword arguments (are passed to :class:`AbstractNetwork`'s `
+                __init__ to register them as init kwargs
+
+            """
+            AbstractNetwork.__init__(self, **kwargs)
+            self._sess = sess()
+            self.inputs = None
+            self.outputs_train = None
+            self.outputs_eval = None
+            self._losses = None
+            self._optims = None
+            self.training = True
+
+        def __call__(self, *args):
+            """
+            Wrapper for calling self.run in eval setting
+
+            Parameters
+            ----------
+            *args :
+                positional arguments (passed to `self.run`)
+
+            Returns
+            -------
+            Any
+                result: module results of arbitrary type and number
+
+            """
+            self.training = False
+            return self.run(*args)
+
+        def _add_losses(self, losses: dict):
+            """
+            Add losses to the model graph
+
+            Parameters
+            ----------
+            losses : dict
+                dictionary containing losses.
+
+            """
+            raise NotImplementedError()
+
+        def _add_optims(self, optims: dict):
+            """
+            Add optimizers to the model graph
+
+            Parameters
+            ----------
+            optims : dict
+                dictionary containing losses.
+            """
+            raise NotImplementedError()
+
+        def run(self, *args):
+            """
+            Evaluates `self.outputs_train` or `self.outputs_eval` based on `self.training`
+
+            Parameters
+            ----------
+            *args :
+                arguments to feed as `self.inputs`. Must have same length as `self.inputs`
+
+            Returns
+            -------
+            np.ndarray or list
+                based on len(self.outputs*), returns either list or np.ndarray
+
+            """
+            if isinstance(self.inputs, tf.Tensor):
+                _feed_dict = dict(zip([self.inputs], args))
+            else:
+                _feed_dict = dict(zip(self.inputs, args))
+            if self.training:
+                return self._sess.run(self.outputs_train, feed_dict=_feed_dict)
+            else:
+                return self._sess.run(self.outputs_eval, feed_dict=_feed_dict)

@@ -1,0 +1,3 @@
+tensorflow-gpu==1.12.0
+# remove tensorboardX once it is moved from trixi to trixi-slim
+tensorboardX>=1.6
