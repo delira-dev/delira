@@ -15,8 +15,6 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
     from .train_utils import create_optims_default_pytorch as create_optims_default
     from ..io.torch import load_checkpoint, save_checkpoint
 
-
-
     class PyTorchNetworkTrainer(AbstractNetworkTrainer):
         """
         Train and Validate a Network
@@ -28,16 +26,15 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
         """
 
         def __init__(self, network, save_path,
-                    criterions: dict, optimizer_cls,
-                    optimizer_params={}, metrics={}, lr_scheduler_cls=None,
-                    lr_scheduler_params={}, gpu_ids=[], save_freq=1,
-                    optim_fn=create_optims_default,
-                    fold=0, callbacks=[], start_epoch=1, mixed_precision=False,
-                    mixed_precision_kwargs={"enable_caching": True,
-                                            "verbose": False,
-                                            "allow_banned": False},
-                    **kwargs):
-
+                     criterions: dict, optimizer_cls,
+                     optimizer_params={}, metrics={}, lr_scheduler_cls=None,
+                     lr_scheduler_params={}, gpu_ids=[], save_freq=1,
+                     optim_fn=create_optims_default,
+                     fold=0, callbacks=[], start_epoch=1, mixed_precision=False,
+                     mixed_precision_kwargs={"enable_caching": True,
+                                             "verbose": False,
+                                             "allow_banned": False},
+                     **kwargs):
             """
 
             Parameters
@@ -108,8 +105,8 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                 setattr(self, key, val)
 
         def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
-                lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-                mixed_precision, mixed_precision_kwargs):
+                   lr_scheduler_cls, lr_scheduler_params, gpu_ids,
+                   mixed_precision, mixed_precision_kwargs):
             """
             Defines the Trainers Setup
 
@@ -134,7 +131,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                 additional keyword arguments for mixed precision
 
             """
-            
+
             try:
                 from apex import amp
                 self._amp_handle = amp.init(mixed_precision,
@@ -194,7 +191,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                 self.module = network.to(self.input_device)
 
         def train(self, num_epochs, datamgr_train, datamgr_valid=None,
-                val_score_key=None, val_score_mode='highest'):
+                  val_score_key=None, val_score_mode='highest'):
             """
             train network
 
@@ -220,8 +217,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
             """
 
-            self._at_training_begin(),
-                                version=version
+            self._at_training_begin()
 
             self.module.train()
 
@@ -241,7 +237,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             for epoch in range(self.start_epoch, num_epochs+1):
 
                 self._at_epoch_begin(metrics_val, val_score_key, epoch,
-                                    num_epochs)
+                                     num_epochs)
 
                 batch_gen_train = datamgr_train.get_batchgen(seed=epoch)
 
@@ -267,8 +263,8 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                     if val_score_key in metrics_val.keys():
                         curr_val_score = metrics_val[val_score_key]
                         is_best = self._is_better_val_scores(best_val_score,
-                                                            curr_val_score,
-                                                            val_score_mode)
+                                                             curr_val_score,
+                                                             val_score_mode)
 
                     else:
                         logger.warning(
@@ -328,18 +324,18 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                                                      "checkpoint_epoch_%d.pth" % latest_epoch)
 
                     latest_state = torch.load(latest_state_path)
-                    try:
-                        self.module.load_state_dict(latest_state["state_dict"]["model"])
-                        for k, state in latest_state["state_dict"]["optimizer"].items():
-                            self.optimizers[k].load_state_dict(state)
 
-                    except KeyError:
-                        self.module.load_state_dict(latest_state)
+                    self.module.load_state_dict(
+                        latest_state["state_dict"]["model"])
 
                     self.start_epoch = max(latest_epoch, self.start_epoch)
 
+                    for k, state in latest_state["state_dict"]["optimizer"].items():
+                        self.optimizers[k].load_state_dict(state)
+
                     logger.info("Loaded previous training from %s" %
                                 latest_state_path)
+
         def _at_training_end(self):
             """
             Defines Behaviour at end of training: Loads best model if available
@@ -354,8 +350,8 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
                 # load best model and return it
                 self.update_state(os.path.join(self.save_path,
-                                            'checkpoint_best.pth')
-                                )
+                                               'checkpoint_best.pth')
+                                  )
 
             return self.module
 
@@ -383,11 +379,11 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             # execute all callbacks
             for cb in self._callbacks:
                 self._update_state(cb.at_epoch_begin(self, val_metrics=metrics_val,
-                                                    val_score_key=val_score_key,
-                                                    curr_epoch=epoch))
+                                                     val_score_key=val_score_key,
+                                                     curr_epoch=epoch))
 
         def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
-                        **kwargs):
+                          **kwargs):
             """
             Defines behaviour at beginning of each epoch: Executes all callbacks's
             `at_epoch_end` method and saves current state if necessary
@@ -411,19 +407,18 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
             for cb in self._callbacks:
                 self._update_state(cb.at_epoch_end(self, val_metrics=metrics_val,
-                                                val_score_key=val_score_key,
-                                                curr_epoch=epoch))
+                                                   val_score_key=val_score_key,
+                                                   curr_epoch=epoch))
 
             if epoch % self.save_freq == 0:
                 self.save_state(os.path.join(self.save_path,
-                                            "checkpoint_epoch_%d.pth" % epoch),
+                                             "checkpoint_epoch_%d.pth" % epoch),
                                 epoch, False)
-                
+
             if is_best:
                 self.save_state(os.path.join(self.save_path,
-                                            "checkpoint_best.pth"),
+                                             "checkpoint_best.pth"),
                                 epoch, False)
-                
 
         def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch):
             """
@@ -450,11 +445,11 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                                                 self.output_device)
 
                 _, _, _ = self.closure_fn(self.module, data_dict,
-                                        optimizers=self.optimizers,
-                                        criterions=self.criterions,
-                                        metrics=self.metrics,
-                                        fold=self.fold,
-                                        batch_nr=batch_nr)
+                                          optimizers=self.optimizers,
+                                          criterions=self.criterions,
+                                          metrics=self.metrics,
+                                          fold=self.fold,
+                                          batch_nr=batch_nr)
 
             batchgen._finish()
 
@@ -502,7 +497,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                 if not batch_list and (n_batches - i) < batch_size:
                     batch_size = n_batches - i
                     logger.debug("Set Batchsize down to %d to avoid cutting "
-                                "of the last batches" % batch_size)
+                                 "of the last batches" % batch_size)
 
                 data_dict = self._prepare_batch(batch, self.input_device,
                                                 self.output_device)
@@ -511,7 +506,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
                 # if queue is full process queue:
                 if batch_size is None or len(batch_list) >= batch_size:
-                    
+
                     batch_dict = {}
                     for batch in batch_list:
                         for key, val in batch.items():
@@ -544,7 +539,8 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                         else:
                             loss_mean_vals[key] = val.detach()
 
-                    outputs_all.append([pytorch_batch_to_numpy(tmp) for tmp in preds])
+                    outputs_all.append(
+                        [pytorch_batch_to_numpy(tmp) for tmp in preds])
 
                     label_dict = {}
 
@@ -553,7 +549,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                             label_dict[key] = pytorch_batch_to_numpy(val)
 
                     labels_all.append([label_dict[key]
-                                    for key in sorted(label_dict.keys())])
+                                       for key in sorted(label_dict.keys())])
 
                     batch_list = []
 
@@ -585,7 +581,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
             return outputs_all, labels_all, val_dict
 
-        def save_state(self, file_name, epoch, weights_only=True, **kwargs):
+        def save_state(self, file_name, epoch, weights_only=False, **kwargs):
             """
             saves the current state via :func:`delira.io.torch.save_checkpoint`
 
@@ -596,7 +592,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             epoch : int
                 current epoch (will be saved for mapping back)
             weights_only : bool
-                whether to store only weights (default: True)
+                whether to store only weights (default: False)
             *args :
                 positional arguments
             **kwargs :
@@ -616,7 +612,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             file_name : str
                 the file to load the state from
             weights_only : bool
-                whether file contains stored weights only (default: True)
+                whether file contains stored weights only (default: False)
             **kwargs : keyword arguments
 
             Returns
@@ -629,6 +625,56 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                 return load_checkpoint(file_name, weights_only, **kwargs)
             else:
                 model, optimizer, epoch = load_checkpoint(file_name, weights_only,
-                                                        **kwargs)
+                                                          **kwargs)
                 return {"module": model, "optimizers": optimizer,
                         "start_epoch": epoch}
+
+        def update_state(self, file_name, weights_only=True, *args, **kwargs):
+            """
+            Update internal state from a loaded state
+
+            Parameters
+            ----------
+            file_name : str
+                file containing the new state to load
+            weights_only : bool
+                whether to update only weights or notS
+            *args :
+                positional arguments
+            **kwargs :
+                keyword arguments
+
+            Returns
+            -------
+            :class:`AbstractNetworkTrainer`
+                the trainer with a modified state
+
+            """
+            self._update_state(self.load_state(file_name, weights_only,
+                                               *args, **kwargs), weights_only)
+
+        def _update_state(self, new_state, weights_only=True):
+            """
+            Update the state from a given new state
+
+            Parameters
+            ----------
+            new_state : dict
+                new state to update internal state from
+            weights_only : bool
+                whether to update weights only from statedict or update 
+                everything
+
+            Returns
+            -------
+            :class:`PyTorchNetworkTrainer`
+                the trainer with a modified state
+
+            """
+
+            if weights_only:
+                self.module.load_state_dict(new_state)
+                return self
+
+            else:
+                return super()._update_state(new_state)
