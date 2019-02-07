@@ -503,8 +503,8 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         labels_all = zip(*labels_all)
         outputs_all = zip(*outputs_all)
 
-        labels_all = [np.asarray(_labels) for _labels in labels_all]
-        outputs_all = [np.asarray(_outputs) for _outputs in outputs_all]
+        labels_all = [np.vstack(_labels) for _labels in labels_all]
+        outputs_all = [np.vstack(_outputs) for _outputs in outputs_all]
 
         # metric_mean_vals contains sums of metrics so far.
         # Dividing by number of batches to get mean values
