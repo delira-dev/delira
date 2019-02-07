@@ -22,7 +22,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
 
     def save_checkpoint(file: str, model=None, optimizers={},
-                        epoch=None, weights_only=False, **kwargs):
+                        epoch=None, weights_only=True, **kwargs):
         """
         Save model's parameters
 
@@ -91,7 +91,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             torch.save(state, file)
 
 
-    def load_checkpoint(file, weights_only=False, **kwargs):
+    def load_checkpoint(file, weights_only=True, **kwargs):
         """
         Loads a saved model
 
