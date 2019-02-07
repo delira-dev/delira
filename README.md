@@ -40,5 +40,9 @@ The easiest way to use `delira` is via docker (with the [nvidia-runtime](https:/
 The best way to learn how to use is to have a look at the [tutorial notebook](notebooks/tutorial_delira.ipynb).
 Example implementations for classification problems, segmentation approaches and GANs are also provided in the [notebooks](notebooks) folder.
 
+## Documentation
+The docs are hosted on [ReadTheDocs/Delira](https://delira.rtfd.io).
+The documentation of the latest master branch can always be found at the project's [github page](https://justusschock.github.io/delira/).
+
 ## Contributing
 If you find a bug or have an idea for an improvement, please have a look at our [contribution guideline](CONTRIBUTING.md).
