@@ -1,11 +1,8 @@
 Getting started
 ===============
 
-Installation
-------------
-
 Backends
-~~~~~~~~~~~
+--------
 
 Before installing ``delira``, you have to choose a suitable backend.
 ``delira`` handles backends as optional dependencies and tries to escape all uses of a not-installed backend.
@@ -30,7 +27,10 @@ The currently supported backends are:
   Depending on the backend, some functionalities may not be available for you. If you want to ensure, you can use each functionality, please use the ``full`` option, since it installs all backends
   
 .. note:: 
-  Currently the only other planned backend is TensorFlow (which is coming soon). If you want to add a backend like `CNTK <https://www.microsoft.com/en-us/cognitive-toolkit/>`_, `Chainer <https://chainer.org/>`_, `MXNET <https://mxnet.apache.org/>`_ or something similar, please open an issue for that and we will guide you during that process (don't worry, it is not much effort at all).
+  If you want to add a backend like `CNTK <https://www.microsoft.com/en-us/cognitive-toolkit/>`_, `Chainer <https://chainer.org/>`_, `MXNET <https://mxnet.apache.org/>`_ or something similar, please open an issue for that and we will guide you during that process (don't worry, it is not much effort at all).
+
+Installation
+------------
 
 ======== ============================= ============================================================================================= ======================================================================================================================
 Backend  Binary Installation           Source Installation                                                                           Notes
