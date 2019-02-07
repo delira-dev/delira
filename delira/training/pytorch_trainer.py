@@ -220,7 +220,8 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
             """
 
-            self._at_training_begin()
+            self._at_training_begin(),
+                                version=version
 
             self.module.train()
 
@@ -327,13 +328,15 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                                                      "checkpoint_epoch_%d.pth" % latest_epoch)
 
                     latest_state = torch.load(latest_state_path)
+                    try:
+                        self.module.load_state_dict(latest_state["state_dict"]["model"])
+                        for k, state in latest_state["state_dict"]["optimizer"].items():
+                            self.optimizers[k].load_state_dict(state)
 
-                    self.module.load_state_dict(latest_state["state_dict"]["model"])
+                    except KeyError:
+                        self.module.load_state_dict(latest_state)
 
                     self.start_epoch = max(latest_epoch, self.start_epoch)
-
-                    for k, state in latest_state["state_dict"]["optimizer"].items():
-                        self.optimizers[k].load_state_dict(state)
 
                     logger.info("Loaded previous training from %s" %
                                 latest_state_path)
