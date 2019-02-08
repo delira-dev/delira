@@ -1,4 +1,5 @@
 import os
+import delira
 if "tf" in os.environ["DELIRA_BACKEND"]:
     import pytest
 
@@ -63,10 +64,13 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
 
             def __getitem__(self, index):
                 return {"data": np.random.rand(32),
-                        "label": np.random.rand(1)}
+                        "label": np.random.randint(0, 1, 1)}
 
             def __len__(self):
                 return self.length
+
+            def get_sample_from_index(self, index):
+                return self.__getitem__(index)
 
         exp = TfExperiment(params, DummyNetwork)
         dset_train = DummyDataset(dataset_length_train)
@@ -76,8 +80,13 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
         dmgr_test = BaseDataManager(dset_test, 16, 1, None)
 
         net = exp.run(dmgr_train, dmgr_test)
+        exp.test(params=params,
+                 network=net,
+                 datamgr_test=dmgr_test, )
+
+        exp.kfold(2, dmgr_train, num_splits=2)
+        exp.stratified_kfold(2, dmgr_train, num_splits=2)
+        exp.stratified_kfold_predict(2, dmgr_train, num_splits=2)
 
     if __name__ == '__main__':
         test_experiment()
-
-

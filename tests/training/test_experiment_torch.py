@@ -50,10 +50,13 @@ def test_experiment(params, dataset_length_train, dataset_length_test):
 
         def __getitem__(self, index):
             return {"data": np.random.rand(1, 32),
-                    "label": np.random.rand(1, 1)}
+                    "label": np.random.randint(0, 1, size=1)[np.newaxis,:]}
 
         def __len__(self):
             return self.length
+
+        def get_sample_from_index(self, index):
+            return self.__getitem__(index)
 
     exp = PyTorchExperiment(params, DummyNetwork)
     dset_train = DummyDataset(dataset_length_train)
