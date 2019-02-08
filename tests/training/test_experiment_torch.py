@@ -66,6 +66,11 @@ def test_experiment(params, dataset_length_train, dataset_length_test):
     exp.test(params=params,
              network=net,
              datamgr_test=dmgr_test,)
+    
+    exp.kfold(2, dmgr_train, num_splits=2)
+    exp.stratified_kfold(2, dmgr_train, num_splits=2)
+    exp.stratified_kfold_predict(2, dmgr_train, num_splits=2)
+    
 
 
 if __name__ == '__main__':
