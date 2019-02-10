@@ -138,7 +138,7 @@ class AbstractDataset:
                     continue
                 kwargs[key] = val
 
-        kwargs["old_getitem"] = self.__getitem__
+        kwargs["old_getitem"] = self.__class__.__getitem__
         subset_data = [self.get_sample_from_index(idx) for idx in indices]
 
         return BlankDataset(subset_data, **kwargs)
@@ -220,7 +220,7 @@ class BlankDataset(AbstractDataset):
             dictionary containing a single sample
 
         """
-        return self._old_getitem(index)
+        return self._old_getitem(self, index)
 
     def __len__(self):
         """
