@@ -43,6 +43,13 @@ def test_experiment(params, dataset_length_train, dataset_length_test):
                 torch.nn.Linear(64, n_outputs)
             )
 
+        @staticmethod
+        def prepare_batch(batch_dict, input_device, output_device):
+            return {"data": torch.from_numpy(batch_dict["data"]
+                    ).to(input_device, torch.float),
+                    "label": torch.from_numpy(batch_dict["label"]
+                    ).to(output_device, torch.long)}
+
     class DummyDataset(AbstractDataset):
         def __init__(self, length):
             super().__init__(None, None, None, None)
@@ -50,7 +57,7 @@ def test_experiment(params, dataset_length_train, dataset_length_test):
 
         def __getitem__(self, index):
             return {"data": np.random.rand(1, 32),
-                    "label": np.random.randint(0, 1, size=1)[np.newaxis,:]}
+                    "label": np.random.randint(0, 1, size=1)}
 
         def __len__(self):
             return self.length
