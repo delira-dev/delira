@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 KEYS_TO_GUARD = ["use_gpu",
                  "input_device",
                  "output_device",
-                 "module",
                  "_callbacks"]
 
 
