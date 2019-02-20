@@ -158,6 +158,11 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                     # access actual optimizer by calling wrapped optimizer from wrapper
                     self.register_callback(lr_scheduler_cls(optim._optimizer,
                                                             **lr_scheduler_params))
+                    
+            # store network in self.module to load previous state
+            # (will be overwritten later)
+            self.module = network
+
 
             # Load latest epoch file if available
             if os.path.isdir(self.save_path):
@@ -207,7 +212,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                     self.input_device = torch.device("cuda:%d" % gpu_ids[0])
 
                     # Train on multiple GPUs and use GPU 0 as output device
-                    self.module = torch.nn.DataParallel(network.to(
+                    self.module = torch.nn.DataParallel(self.module.to(
                         self.input_device),
                         device_ids=gpu_ids,
                         output_device=gpu_ids[1])
@@ -217,7 +222,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                 else:
                     # use the only available GPU as input device
                     self.input_device = torch.device("cuda:%d" % gpu_ids[0])
-                    self.module = network.to(self.input_device)
+                    self.module = self.module.to(self.input_device)
 
                     # use GPU 0 as output device as output device
                     self.output_device = torch.device("cuda:%d" % gpu_ids[0])
@@ -225,7 +230,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                 self.use_gpu = False
                 self.input_device = torch.device("cpu")
                 self.output_device = torch.device("cpu")
-                self.module = network.to(self.input_device)
+                self.module = self.module.to(self.input_device)
 
         def train(self, num_epochs, datamgr_train, datamgr_valid=None,
                   val_score_key=None, val_score_mode='highest'):
