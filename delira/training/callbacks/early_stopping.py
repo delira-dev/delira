@@ -10,6 +10,7 @@ class EarlyStopping(AbstractCallback):
     :class:`AbstractCallback`
 
     """
+
     def __init__(self, monitor_key,
                  min_delta=0,
                  patience=0,
@@ -92,6 +93,8 @@ class EarlyStopping(AbstractCallback):
         self.epochs_waited += 1 - int(self._is_better(metric))
 
         if self.epochs_waited >= self.patience:
-            trainer.stop_training = True
+            stop_training = True
+        else:
+            stop_training = False
 
-        return trainer
+        return {"stop_training": stop_training}

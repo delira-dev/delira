@@ -8,6 +8,7 @@ class AbstractCallback(object):
     :class:`AbstractNetworkTrainer`
 
     """
+
     def __init__(self, *args, **kwargs):
         """
 
@@ -33,11 +34,12 @@ class AbstractCallback(object):
 
         Returns
         -------
-        :class:`AbstractNetworkTrainer`
-            modified trainer
+        dict
+            modified trainer attributes, where the name must correspond to the 
+            trainer's attribute name
 
         """
-        return trainer
+        return {}
 
     def at_epoch_end(self, trainer, **kwargs):
         """
@@ -51,8 +53,9 @@ class AbstractCallback(object):
 
         Returns
         -------
-        :class:`AbstractNetworkTrainer`
-            modified trainer
+        dict
+            modified trainer attributes, where the name must correspond to the 
+            trainer's attribute name
 
         """
-        return trainer
+        return {}
