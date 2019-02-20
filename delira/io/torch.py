@@ -4,10 +4,11 @@ import os
 import importlib
 from collections import OrderedDict
 from itertools import islice
+from delira import get_backends
 
 logger = logging.getLogger(__name__)
 
-if "torch" in os.environ["DELIRA_BACKEND"]:
+if "TORCH" in get_backends():
 
     import torch
 
@@ -17,9 +18,6 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
     from torch import optim
 
     from ..models import AbstractPyTorchNetwork
-
-
-
 
     def save_checkpoint(file: str, model=None, optimizers={},
                         epoch=None, weights_only=True, **kwargs):
@@ -65,8 +63,8 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             epoch = 0
 
         state = {"optimizer": optim_state,
-                "model": model_state,
-                "epoch": epoch}
+                 "model": model_state,
+                 "epoch": epoch}
 
         if not weights_only:
 
@@ -85,11 +83,10 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             torch.save({'source': source, 'cls_name_model': class_name_model,
                         'parent_class': parent_class, 'init_kwargs': init_kwargs,
                         'state_dict': state, 'cls_name_optim': class_names_optim},
-                    file)
+                       file)
 
         else:
             torch.save(state, file)
-
 
     def load_checkpoint(file, weights_only=True, **kwargs):
         """
@@ -128,7 +125,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
             # create class instance (default device: CPU)
             exec("model = " + loaded_dict["cls_name_model"] +
-                "(**loaded_dict['init_kwargs'])")
+                 "(**loaded_dict['init_kwargs'])")
 
             # check for "map_location" kwarg and use device of first weight tensor
             # as default argument (weight tensors should be all on same device)
@@ -141,20 +138,21 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                 default_device = torch.device("cpu")
 
             map_location = kwargs.get("map_location",
-                                    # use slicing instead of converting to list
-                                    # to avoid memory overhead
-                                    default_device)
+                                      # use slicing instead of converting to list
+                                      # to avoid memory overhead
+                                      default_device)
 
             # push created class from CPU to suitable device
             locals()['model'].to(map_location)
 
-            locals()['model'].load_state_dict(loaded_dict["state_dict"]["model"])
+            locals()['model'].load_state_dict(
+                loaded_dict["state_dict"]["model"])
 
             optims = OrderedDict()
 
             for key in loaded_dict["cls_name_optim"].keys():
                 exec("_optim = optim.%s(models.parameters())" %
-                loaded_dict["cls_name_optim"][key])
+                     loaded_dict["cls_name_optim"][key])
 
                 optims[key] = locals()['_optim']
 

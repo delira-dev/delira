@@ -2,8 +2,9 @@ import logging
 
 file_logger = logging.getLogger(__name__)
 
-import os
-if "torch" in os.environ["DELIRA_BACKEND"]:
+from delira import get_backends
+
+if "TORCH" in get_backends():
     import torch.nn as nn
     import torch.nn.functional as F
     from .classification_network import ClassificationNetworkBasePyTorch

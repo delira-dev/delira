@@ -1,6 +1,6 @@
 import os
 import delira
-if "tf" in os.environ["DELIRA_BACKEND"]:
+if "TF" in delira.get_backends():
     import pytest
 
     import numpy as np
@@ -10,27 +10,26 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
     from delira.data_loading import AbstractDataset, BaseDataManager
     import tensorflow as tf
 
-
     @pytest.mark.parametrize("params,dataset_length_train,dataset_length_test",
-                            [
-                                (
-                                Parameters(fixed_params={
-                                    "model": {'in_channels': 32,
-                                            'n_outputs': 1},
-                                    "training": {
-                                        "criterions": {"CE":
-                                                        tf.losses.softmax_cross_entropy},
-                                        "optimizer_cls": tf.train.AdamOptimizer,
-                                        "optimizer_params": {"learning_rate": 1e-3},
-                                        "num_epochs": 2,
-                                        "metrics": {},
-                                        "lr_sched_cls": None,
-                                        "lr_sched_params": {}}
-                                }
-                                ),
-                                500,
-                                50)
-                            ])
+                             [
+                                 (
+                                     Parameters(fixed_params={
+                                         "model": {'in_channels': 32,
+                                                   'n_outputs': 1},
+                                         "training": {
+                                             "criterions": {"CE":
+                                                            tf.losses.softmax_cross_entropy},
+                                             "optimizer_cls": tf.train.AdamOptimizer,
+                                             "optimizer_params": {"learning_rate": 1e-3},
+                                             "num_epochs": 2,
+                                             "metrics": {},
+                                             "lr_sched_cls": None,
+                                             "lr_sched_params": {}}
+                                     }
+                                     ),
+                                     500,
+                                     50)
+                             ])
     def test_experiment(params, dataset_length_train, dataset_length_test):
         class DummyNetwork(ClassificationNetworkBaseTf):
             def __init__(self):
@@ -52,7 +51,8 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
             def _build_model(n_outputs):
                 return tf.keras.models.Sequential(
                     layers=[
-                        tf.keras.layers.Dense(64, input_shape=(32,), bias_initializer='glorot_uniform'),
+                        tf.keras.layers.Dense(64, input_shape=(
+                            32,), bias_initializer='glorot_uniform'),
                         tf.keras.layers.ReLU(),
                         tf.keras.layers.Dense(n_outputs, bias_initializer='glorot_uniform')]
                 )

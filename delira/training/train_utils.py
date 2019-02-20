@@ -1,8 +1,9 @@
 import numpy as np
 from ..utils.decorators import dtype_func
 
-import os
-if "torch" in os.environ["DELIRA_BACKEND"]:
+from delira import get_backends
+
+if "TORCH" in get_backends():
     import torch
 
     from ..utils.decorators import torch_tensor_func, torch_module_func
@@ -107,7 +108,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
         return {"gen": optim_cls(model.gen.parameters(), **optim_params),
                 "discr": optim_cls(model.discr.parameters(), **optim_params)}
 
-if "tf" in os.environ["DELIRA_BACKEND"]:
+if "TF" in get_backends():
     import tensorflow as tf
 
     def create_optims_default_tf(optim_cls, **optim_params):

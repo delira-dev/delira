@@ -2,7 +2,7 @@
 
 from ..utils import now
 from ..data_loading import BaseDataManager, BaseLazyDataset
-from .. import __version__ as delira_version
+from delira import __version__ as delira_version
 from .parameters import Parameters
 from ..models import AbstractNetwork
 from .abstract_trainer import AbstractNetworkTrainer
@@ -19,6 +19,8 @@ from sklearn.model_selection import train_test_split
 from datetime import datetime
 from inspect import signature
 from functools import partial
+
+from delira import get_backends
 
 logger = logging.getLogger(__name__)
 
@@ -442,7 +444,7 @@ class AbstractExperiment(TrixiExperiment):
         """
         raise NotImplementedError()
 
-if "torch" in os.environ["DELIRA_BACKEND"]:
+if "TORCH" in get_backends():
 
     import torch
     from .train_utils import create_optims_default_pytorch
@@ -765,7 +767,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                                      random_seed, label_key, train_kwargs,
                                      test_kwargs, **kwargs)
 
-if "tf" in os.environ["DELIRA_BACKEND"]:
+if "TF" in get_backends():
 
     from .tf_trainer import TfNetworkTrainer
     from .train_utils import create_optims_default_tf

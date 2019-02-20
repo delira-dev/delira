@@ -1,6 +1,6 @@
 import abc
 import logging
-import os
+from delira import get_backends
 
 file_logger = logging.getLogger(__name__)
 
@@ -134,7 +134,7 @@ class AbstractNetwork(object):
         """
         return self._init_kwargs
 
-if "torch" in os.environ["DELIRA_BACKEND"]:
+if "TORCH" in get_backends():
     import torch
 
     class AbstractPyTorchNetwork(AbstractNetwork, torch.nn.Module):
@@ -228,7 +228,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
             return return_dict
 
-if "tf" in os.environ["DELIRA_BACKEND"]:
+if "TF" in get_backends():
     import tensorflow as tf
 
     class AbstractTfNetwork(AbstractNetwork):

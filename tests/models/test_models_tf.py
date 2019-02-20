@@ -1,5 +1,6 @@
-import os
-if "tf" in os.environ["DELIRA_BACKEND"]:
+from delira import get_backends
+
+if "TF" in get_backends():
     from delira.models import ClassificationNetworkBaseTf
     from delira.training.train_utils import create_optims_default_tf
     import numpy as np
