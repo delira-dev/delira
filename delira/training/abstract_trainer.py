@@ -295,8 +295,8 @@ class AbstractNetworkTrainer(object):
                         "'at_epoch_begin' and 'at_epoch_end'"
 
         assert isinstance(callback, AbstractCallback) or \
-               (hasattr(callback, "at_epoch_begin")
-                and hasattr(callback, "at_epoch_end")), assertion_str
+            (hasattr(callback, "at_epoch_begin")
+             and hasattr(callback, "at_epoch_end")), assertion_str
 
         self._callbacks.append(callback)
 
@@ -356,16 +356,16 @@ class AbstractNetworkTrainer(object):
             the trainer with a modified state
 
         """
-        for attr in dir(new_state):
-            if (attr.startswith("__") and attr.endswith("__")):
+        for key, val in new_state.items():
+            if (key.startswith("__") and key.endswith("__")):
                 continue
 
             try:
-                setattr(self, attr, getattr(new_state, attr))
+                setattr(self, key, val)
 
             except PermissionError:
                 logger.error("Trying to overwrite attribute %s of "
-                             "NetworkTrainer, which is not allowed!" % attr)
+                             "NetworkTrainer, which is not allowed!" % key)
 
         return self
 

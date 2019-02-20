@@ -3,6 +3,7 @@ import pytest
 import numpy as np
 
 from delira.training import PyTorchExperiment, Parameters
+from delira.training.callbacks import ReduceLROnPlateauCallbackPyTorch
 from delira.models.classification import ClassificationNetworkBasePyTorch
 from delira.data_loading import AbstractDataset, BaseDataManager
 import torch
@@ -10,22 +11,23 @@ import torch
 
 @pytest.mark.parametrize("params,dataset_length_train,dataset_length_test",
                          [
-                            (
-                            Parameters(fixed_params={
-                                "model": {},
-                                "training": {
-                                    "criterions": {"CE":
-                                        torch.nn.CrossEntropyLoss()},
-                                    "optimizer_cls": torch.optim.Adam,
-                                    "optimizer_params": {"lr": 1e-3},
-                                    "num_epochs": 2,
-                                    "metrics": {},
-                                    "lr_sched_cls": None,
-                                    "lr_sched_params": {}}
-                            }
-                            ),
-                            500,
-                            50)
+                             (
+                                 Parameters(fixed_params={
+                                     "model": {},
+                                     "training": {
+                                         "criterions": {"CE":
+                                                        torch.nn.CrossEntropyLoss()},
+                                         "optimizer_cls": torch.optim.Adam,
+                                         "optimizer_params": {"lr": 1e-3},
+                                         "num_epochs": 2,
+                                         "metrics": {},
+                                         "lr_sched_cls": ReduceLROnPlateauCallbackPyTorch,
+                                         "lr_sched_params": {}
+                                        }
+                                 }
+                                 ),
+                                 500,
+                                 50)
                          ])
 def test_experiment(params, dataset_length_train, dataset_length_test):
     class DummyNetwork(ClassificationNetworkBasePyTorch):
@@ -46,9 +48,9 @@ def test_experiment(params, dataset_length_train, dataset_length_test):
         @staticmethod
         def prepare_batch(batch_dict, input_device, output_device):
             return {"data": torch.from_numpy(batch_dict["data"]
-                    ).to(input_device, torch.float),
+                                             ).to(input_device, torch.float),
                     "label": torch.from_numpy(batch_dict["label"]
-                    ).to(output_device, torch.long)}
+                                              ).to(output_device, torch.long)}
 
     class DummyDataset(AbstractDataset):
         def __init__(self, length):
@@ -65,7 +67,7 @@ def test_experiment(params, dataset_length_train, dataset_length_test):
         def get_sample_from_index(self, index):
             return self.__getitem__(index)
 
-    exp = PyTorchExperiment(params, DummyNetwork)
+    exp = PyTorchExperiment(params, DummyNetwork, val_score_key="val_CE")
     dset_train = DummyDataset(dataset_length_train)
     dset_test = DummyDataset(dataset_length_test)
 
@@ -76,14 +78,11 @@ def test_experiment(params, dataset_length_train, dataset_length_test):
     exp.test(params=params,
              network=net,
              datamgr_test=dmgr_test,)
-    
+
     exp.kfold(2, dmgr_train, num_splits=2)
     exp.stratified_kfold(2, dmgr_train, num_splits=2)
     exp.stratified_kfold_predict(2, dmgr_train, num_splits=2)
-    
 
 
 if __name__ == '__main__':
     test_experiment()
-
-

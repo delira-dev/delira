@@ -159,6 +159,43 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                     self.register_callback(lr_scheduler_cls(optim._optimizer,
                                                             **lr_scheduler_params))
 
+            # Load latest epoch file if available
+            if os.path.isdir(self.save_path):
+                # check all files in directory starting with "checkpoint" and not
+                # ending with "_best.pth"
+                files = [x for x in os.listdir(self.save_path)
+                         if os.path.isfile(os.path.join(self.save_path, x))
+                         and x.startswith("checkpoint")
+                         and not x.endswith("_best.pth")]
+
+                # if list is not empty: load previous state
+                if files:
+
+                    latest_epoch = max([int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
+                                        for x in files])
+
+                    latest_state_path = os.path.join(self.save_path,
+                                                     "checkpoint_epoch_%d.pth"
+                                                     % latest_epoch)
+
+                    logger.info("Attempting to load state from previous \
+                                training from %s" % latest_state_path)
+
+                    try:
+                        self.update_state(latest_state_path,
+                                          weights_only=False)
+                    except KeyError:
+                        try:
+                            self.update_state(latest_state_path,
+                                              weights_only=True)
+                            self.start_epoch = max(
+                                latest_epoch, self.start_epoch)
+
+                        except KeyError:
+                            logger.warn("Previous State could not be loaded, \
+                                        although it exists.Training will be \
+                                        restarted")
+
             # asssign closure and prepare batch from network
             self.closure_fn = network.closure
             self._prepare_batch = network.prepare_batch
@@ -303,38 +340,7 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
                 keyword arguments
 
             """
-
-            # Load latest epoch file if available
-            # Load latest epoch file if available
-            if os.path.isdir(self.save_path):
-                # check all files in directory starting with "checkpoint" and not
-                # ending with "_best.pth"
-                files = [x for x in os.listdir(self.save_path)
-                         if os.path.isfile(os.path.join(self.save_path, x))
-                         and x.startswith("checkpoint")
-                         and not x.endswith("_best.pth")]
-
-                # if list is not empty: load previous state
-                if files:
-
-                    latest_epoch = max([int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
-                                        for x in files])
-
-                    latest_state_path = os.path.join(self.save_path,
-                                                     "checkpoint_epoch_%d.pth" % latest_epoch)
-
-                    latest_state = torch.load(latest_state_path)
-
-                    self.module.load_state_dict(
-                        latest_state["state_dict"]["model"])
-
-                    self.start_epoch = max(latest_epoch, self.start_epoch)
-
-                    for k, state in latest_state["state_dict"]["optimizer"].items():
-                        self.optimizers[k].load_state_dict(state)
-
-                    logger.info("Loaded previous training from %s" %
-                                latest_state_path)
+            pass
 
         def _at_training_end(self):
             """
@@ -350,7 +356,8 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
                 # load best model and return it
                 self.update_state(os.path.join(self.save_path,
-                                               'checkpoint_best.pth')
+                                               'checkpoint_best.pth'),
+                                  weights_only=True
                                   )
 
             return self.module
@@ -380,7 +387,8 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             for cb in self._callbacks:
                 self._update_state(cb.at_epoch_begin(self, val_metrics=metrics_val,
                                                      val_score_key=val_score_key,
-                                                     curr_epoch=epoch))
+                                                     curr_epoch=epoch),
+                                   weights_only=False)
 
         def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
                           **kwargs):
@@ -408,7 +416,8 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             for cb in self._callbacks:
                 self._update_state(cb.at_epoch_end(self, val_metrics=metrics_val,
                                                    val_score_key=val_score_key,
-                                                   curr_epoch=epoch))
+                                                   curr_epoch=epoch),
+                                   weights_only=False)
 
             if epoch % self.save_freq == 0:
                 self.save_state(os.path.join(self.save_path,
@@ -670,10 +679,25 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
             :class:`PyTorchNetworkTrainer`
                 the trainer with a modified state
 
-            """
+            # """
+            # print(",".join(new_state.keys()))
 
             if weights_only:
-                self.module.load_state_dict(new_state)
+                if "model" in new_state:
+                    model_state = new_state["model"]
+                else:
+                    model_state = new_state
+
+                self.module.load_state_dict(model_state)
+
+                if "optimizer" in new_state and new_state["optimizer"]:
+                    for key in self.optimizers.keys():
+                        self.optimizers[key].load_state_dict(
+                            new_state["optimizer"][key])
+
+                if "epoch" in new_state:
+                    self.start_epoch = new_state["epoch"]
+
                 return self
 
             else:
