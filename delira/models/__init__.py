@@ -1,7 +1,8 @@
 from .abstract_network import AbstractNetwork
 
-import os
-if "torch" in os.environ["DELIRA_BACKEND"]:
+from delira import get_backends
+
+if "TORCH" in get_backends():
     from .abstract_network import AbstractPyTorchNetwork
     from .classification import VGG3DClassificationNetworkPyTorch, \
         ClassificationNetworkBasePyTorch
@@ -10,6 +11,6 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
 
     from .gan import GenerativeAdversarialNetworkBasePyTorch
 
-if "tf" in os.environ["DELIRA_BACKEND"]:
+if "TF" in get_backends():
     from .abstract_network import AbstractTfNetwork
     from .classification import ClassificationNetworkBaseTf

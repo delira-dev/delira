@@ -1,7 +1,8 @@
 # Adapted from https://github.com/jaxony/unet-pytorch/blob/master/model.py
 
-import os
-if "torch" in os.environ["DELIRA_BACKEND"]:
+from delira import get_backends
+
+if "TORCH" in get_backends():
     import torch
     import torch.nn.functional as F
     from torch.nn import init

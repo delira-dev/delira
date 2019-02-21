@@ -1,5 +1,9 @@
-import os
-if "tf" in os.environ["DELIRA_BACKEND"]:
+from delira import get_backends
+import pytest
+
+@pytest.mark.skipif("TF" not in get_backends(),
+                    reason="No TF Backend Installed")
+def test_load_save():
     from delira.io import tf_load_checkpoint, tf_save_checkpoint
     from delira.models import AbstractTfNetwork
     from delira.training.train_utils import initialize_uninitialized
@@ -15,33 +19,32 @@ if "tf" in os.environ["DELIRA_BACKEND"]:
         def _build_model(in_channels, n_outputs):
             return tf.keras.models.Sequential(
                 layers=[
-                    tf.keras.layers.Dense(64, input_shape=in_channels, bias_initializer='glorot_uniform'),
+                    tf.keras.layers.Dense(
+                        64, input_shape=in_channels, bias_initializer='glorot_uniform'),
                     tf.keras.layers.ReLU(),
                     tf.keras.layers.Dense(n_outputs, bias_initializer='glorot_uniform')]
             )
 
-    def test_load_save():
-        
-        net = DummyNetwork((32,), 1)
-        initialize_uninitialized(net._sess)
+    net = DummyNetwork((32,), 1)
+    initialize_uninitialized(net._sess)
 
-        vars_1 = net._sess.run(tf.global_variables())
+    vars_1 = net._sess.run(tf.global_variables())
 
-        tf_save_checkpoint("./model", model=net)
+    tf_save_checkpoint("./model", model=net)
 
-        net._sess.run(tf.initializers.global_variables())
+    net._sess.run(tf.initializers.global_variables())
 
-        vars_2 = net._sess.run(tf.global_variables())
+    vars_2 = net._sess.run(tf.global_variables())
 
-        tf_load_checkpoint("./model", model=net)
+    tf_load_checkpoint("./model", model=net)
 
-        vars_3 = net._sess.run(tf.global_variables())
+    vars_3 = net._sess.run(tf.global_variables())
 
-        for var_1, var_2 in zip(vars_1, vars_2):
-            assert np.all(var_1 != var_2)
+    for var_1, var_2 in zip(vars_1, vars_2):
+        assert np.all(var_1 != var_2)
 
-        for var_1, var_3 in zip(vars_1, vars_3):
-            assert np.all(var_1 == var_3)
+    for var_1, var_3 in zip(vars_1, vars_3):
+        assert np.all(var_1 == var_3)
 
     if __name__ == '__main__':
         test_load_save()

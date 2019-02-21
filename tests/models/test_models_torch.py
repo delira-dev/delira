@@ -1,11 +1,4 @@
-
-from delira.models import AbstractPyTorchNetwork, UNet2dPyTorch, \
-    UNet3dPyTorch, ClassificationNetworkBasePyTorch, \
-    VGG3DClassificationNetworkPyTorch, GenerativeAdversarialNetworkBasePyTorch
-from delira.training.train_utils import create_optims_default_pytorch, \
-    create_optims_gan_default_pytorch
-from delira.utils.context_managers import DefaultOptimWrapperTorch
-import torch
+from delira import get_backends
 import numpy as np
 import pytest
 import time
@@ -13,72 +6,89 @@ import gc
 import sys
 from psutil import virtual_memory
 
+if "TORCH" in get_backends():
+    from delira.models import AbstractPyTorchNetwork, UNet2dPyTorch, \
+        UNet3dPyTorch, ClassificationNetworkBasePyTorch, \
+        VGG3DClassificationNetworkPyTorch, GenerativeAdversarialNetworkBasePyTorch
+    from delira.training.train_utils import create_optims_default_pytorch, \
+        create_optims_gan_default_pytorch
+    from delira.utils.context_managers import DefaultOptimWrapperTorch
+    import torch
+
+    test_cases = [
+        # UNet 2D
+        (
+            UNet2dPyTorch(5, in_channels=1),  # model
+            (1, 32, 32),  # input shape
+            (32, 32),  # output shape
+            {"loss_fn": torch.nn.CrossEntropyLoss()
+             },  # loss function
+            create_optims_default_pytorch,  # optim_fn
+            4,  # output range (num_classes -1)
+            True  # half precision
+        ),
+        # UNet 3D
+        (
+            UNet3dPyTorch(5, in_channels=1),  # model
+            (1, 32, 32, 32),  # input shape
+            (32, 32, 32),  # output shape
+            {"loss_fn": torch.nn.CrossEntropyLoss()
+             },  # loss function
+            create_optims_default_pytorch,  # optim_fn
+            4,  # output range (num_classes) - 1
+            True  # half precision
+        ),
+        # Base Classifier (Resnet 18)
+        (
+            ClassificationNetworkBasePyTorch(1, 10),
+            # model
+            (1, 224, 224),  # input shape
+            9,  # output shape (num_classes - 1)
+            {"loss_fn": torch.nn.CrossEntropyLoss()
+             },  # loss function
+            create_optims_default_pytorch,  # optim_fn
+            None,  # no max_range needed
+            True  # half precision
+        ),
+        # 3D VGG
+        (
+            VGG3DClassificationNetworkPyTorch(1, 10),
+            # model
+            (1, 32, 224, 224),  # input shape
+            9,  # output shape (num_classes - 1)
+            {"loss_fn": torch.nn.CrossEntropyLoss()
+             },  # loss function
+            create_optims_default_pytorch,  # optim fn
+            None,  # no max_range needed
+            True  # half precision
+        ),
+        # DCGAN
+        (
+            GenerativeAdversarialNetworkBasePyTorch(
+                1, 100),
+            # model
+            (1, 64, 64),  # input shape
+            (1, 1),  # arbitrary shape (not needed)
+            {"loss_fn": torch.nn.MSELoss()},  # loss
+            create_optims_gan_default_pytorch,
+            # optimizer function
+            1,  # standard max range
+            True  # half precision
+        )
+    ]
+else:
+    # tests will be skipped anyway, arguments don't matter
+    test_cases = [[None] * 7]
+
+
 @pytest.mark.parametrize("model,input_shape,target_shape,loss_fn,"
                          "create_optim_fn,max_range,half_precision",
-                         [
-                             # UNet 2D
-                             (
-                                     UNet2dPyTorch(5, in_channels=1),  # model
-                                     (1, 32, 32),  # input shape
-                                     (32, 32),  # output shape
-                                     {"loss_fn": torch.nn.CrossEntropyLoss()
-                                      },  # loss function
-                                     create_optims_default_pytorch,  # optim_fn
-                                     4,  # output range (num_classes -1)
-                                     True  # half precision
-                             ),
-                             # UNet 3D
-                             (
-                                     UNet3dPyTorch(5, in_channels=1),  # model
-                                     (1, 32, 32, 32),  # input shape
-                                     (32, 32, 32),  # output shape
-                                     {"loss_fn": torch.nn.CrossEntropyLoss()
-                                      },  # loss function
-                                     create_optims_default_pytorch,  # optim_fn
-                                     4,  # output range (num_classes) - 1
-                                     True  # half precision
-                             ),
-                             # Base Classifier (Resnet 18)
-                             (
-                                     ClassificationNetworkBasePyTorch(1, 10),
-                                     # model
-                                     (1, 224, 224),  # input shape
-                                     9,  # output shape (num_classes - 1)
-                                     {"loss_fn": torch.nn.CrossEntropyLoss()
-                                      },  # loss function
-                                     create_optims_default_pytorch,  # optim_fn
-                                     None,  # no max_range needed
-                                     True  # half precision
-                             ),
-                             # 3D VGG
-                             (
-                                     VGG3DClassificationNetworkPyTorch(1, 10),
-                                     # model
-                                     (1, 32, 224, 224),  # input shape
-                                     9,  # output shape (num_classes - 1)
-                                     {"loss_fn": torch.nn.CrossEntropyLoss()
-                                      },  # loss function
-                                     create_optims_default_pytorch,  # optim fn
-                                     None,  # no max_range needed
-                                     True  # half precision
-                             ),
-                             # DCGAN
-                             (
-                                     GenerativeAdversarialNetworkBasePyTorch(
-                                         1, 100),
-                                     # model
-                                     (1, 64, 64),  # input shape
-                                     (1, 1),  # arbitrary shape (not needed)
-                                     {"loss_fn": torch.nn.MSELoss()},  # loss
-                                     create_optims_gan_default_pytorch,
-                                     # optimizer function
-                                     1,  # standard max range
-                                     True  # half precision
-                             )
-                         ])
+                         test_cases)
 @pytest.mark.skipif((virtual_memory().total / 1024.**3) < 20,
                     reason="Less than 20GB of memory")
-def test_pytorch_model_default(model: AbstractPyTorchNetwork, input_shape,
+@pytest.mark.skipif("TORCH" not in get_backends(),
+                    reason="torch backend not installed")
+def test_pytorch_model_default(model, input_shape,
                                target_shape, loss_fn, create_optim_fn,
                                max_range, half_precision):
 
@@ -88,7 +98,7 @@ def test_pytorch_model_default(model: AbstractPyTorchNetwork, input_shape,
         wrapper_fn = amp_handle.wrap_optimizer
     except ImportError:
         wrapper_fn = DefaultOptimWrapperTorch
-    
+
     start_time = time.time()
 
     # test backward if optimizer fn is not None

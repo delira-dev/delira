@@ -7,9 +7,11 @@ from batchgenerators.dataloading import MultiThreadedAugmenter
 from .callbacks import AbstractCallback
 from .abstract_trainer import AbstractNetworkTrainer
 
+from delira import get_backends
+
 logger = logging.getLogger(__name__)
 
-if "torch" in os.environ["DELIRA_BACKEND"]:
+if "TORCH" in get_backends():
     import torch
     from .train_utils import pytorch_batch_to_numpy
     from .train_utils import create_optims_default_pytorch as create_optims_default

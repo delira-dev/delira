@@ -1,3 +1,4 @@
+from delira import get_backends
 import numpy as np
 from functools import wraps
 import warnings
@@ -101,8 +102,8 @@ def make_deprecated(new_func):
 
 numpy_array_func = dtype_func(np.ndarray)
 
-import os
-if "torch" in os.environ["DELIRA_BACKEND"]:
+
+if "TORCH" in get_backends():
     import torch
     torch_tensor_func = dtype_func(torch.Tensor)
     torch_module_func = dtype_func(torch.nn.Module)

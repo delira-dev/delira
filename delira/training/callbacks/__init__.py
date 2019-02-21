@@ -1,8 +1,9 @@
 from .abstract_callback import AbstractCallback
 from .early_stopping import EarlyStopping
 
-import os
-if "torch" in os.environ["DELIRA_BACKEND"]:
+from delira import get_backends
+
+if "TORCH" in get_backends():
     from .pytorch_schedulers import DefaultPyTorchSchedulerCallback
     from .pytorch_schedulers import CosineAnnealingLRCallback as \
         CosineAnnealingLRCallbackPyTorch
