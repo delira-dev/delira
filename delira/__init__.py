@@ -28,7 +28,8 @@ def _determine_backends():
     if not os.path.isfile(_config_file):
         _backends = {}
         # try to import all possible backends to determine valid backends
-        import sys
+
+        import importlib
         for curr_backend in __POSSIBLE_BACKENDS:
             try:
                 assert len(curr_backend) == 2
@@ -36,13 +37,16 @@ def _determine_backends():
                     "All entries in current backend must be strings"
 
                 # check if backend can be imported
-                bcknd = __import__(curr_backend[0])
-                _backends[curr_backend[1]] = True
+                bcknd = importlib.util.find_spec(curr_backend[0])
+
+                if bcknd is not None:
+                    _backends[curr_backend[1]] = True
+                else:
+                    _backends[curr_backend[1]] = False
                 del bcknd
-                del sys.modules[curr_backend[0]]
-            except ImportError:
+
+            except ValueError:
                 _backends[curr_backend[1]] = False
-        del sys
 
         with open(_config_file, "w") as f:
             json.dump({"version": __version__, "backend": _backends},
