@@ -18,7 +18,9 @@ warnings.simplefilter('ignore', ImportWarning)
 __POSSIBLE_BACKENDS = [("torch", "torch"), ("tensorflow", "tf")]
 __BACKENDS = []
 
-if not __BACKENDS:
+
+def _determine_backends():
+
     _config_file = __file__.replace("__init__.py", ".delira")
     # look for config file to determine backend
     # if file exists: load config into environment variables
@@ -26,7 +28,6 @@ if not __BACKENDS:
     if not os.path.isfile(_config_file):
         _backends = {}
         # try to import all possible backends to determine valid backends
-        import importlib
         import sys
         for curr_backend in __POSSIBLE_BACKENDS:
             try:
@@ -35,14 +36,13 @@ if not __BACKENDS:
                     "All entries in current backend must be strings"
 
                 # check if backend can be imported
-                bcknd = importlib.import_module(curr_backend[0])
+                bcknd = __import__(curr_backend[0])
                 _backends[curr_backend[1]] = True
                 del bcknd
                 del sys.modules[curr_backend[0]]
             except ImportError:
                 _backends[curr_backend[1]] = False
         del sys
-        del importlib
 
         with open(_config_file, "w") as f:
             json.dump({"version": __version__, "backend": _backends},
@@ -66,6 +66,9 @@ def get_backends():
     Return List of currently available backends
 
     """
+
+    if not __BACKENDS:
+        _determine_backends()
     return __BACKENDS
 
 
