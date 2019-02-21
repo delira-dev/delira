@@ -345,11 +345,12 @@ class AbstractExperiment(TrixiExperiment):
                                random_state=random_seed)
 
         for idx, (_train_idxs, test_idxs) in enumerate(fold.split(split_idxs,
-                                                                 split_labels)):
+                                                                  split_labels)):
             # extract data from single manager
             _train_data = data.get_subset(_train_idxs)
             _split_idxs = list(range(len(_train_data.dataset)))
-            _split_labels = [_train_data.dataset[_idx][label_key] for _idx in _split_idxs]
+            _split_labels = [_train_data.dataset[_idx][label_key]
+                             for _idx in _split_idxs]
 
             val_fold = StratifiedShuffleSplit(n_splits=1,
                                               test_size=split_val,
@@ -370,7 +371,8 @@ class AbstractExperiment(TrixiExperiment):
                              fold=idx,
                              **kwargs)
 
-            _outputs, _labels, _metrics_val = self.test(self.params, model, test_data)
+            _outputs, _labels, _metrics_val = self.test(
+                self.params, model, test_data)
 
             outputs[str(idx)] = _outputs
             labels[str(idx)] = _labels
@@ -564,15 +566,7 @@ if "TORCH" in get_backends():
             """
             model_params = params.permute_training_on_top().model
 
-            model_kwargs = {}
-            for key in signature(self.model_cls.__init__).parameters.keys():
-                if key in ["self", "args", "kwargs"]:
-                    continue
-                try:
-                    model_kwargs[key] = model_params.nested_get(key)
-
-                except KeyError:
-                    pass
+            model_kwargs = {**model_params.fixed, **model_params.variable}
 
             model = self.model_cls(**model_kwargs)
 
@@ -784,6 +778,7 @@ if "TF" in get_backends():
         :class:`AbstractExperiment`
 
         """
+
         def __init__(self,
                      params: typing.Union[Parameters, str],
                      model_cls: AbstractTfNetwork,
@@ -811,8 +806,8 @@ if "TF" in get_backends():
                 save_path = os.path.abspath(".")
 
             self.save_path = os.path.join(save_path, name,
-                                        str(datetime.now().strftime(
-                                            "%y-%m-%d_%H-%M-%S")))
+                                          str(datetime.now().strftime(
+                                              "%y-%m-%d_%H-%M-%S")))
 
             if os.path.isdir(self.save_path):
                 logger.warning("Save Path %s already exists")
@@ -835,8 +830,8 @@ if "TF" in get_backends():
 
             # log HyperParameters
             logger.info({"text": {"text":
-                                    str(params) + "\n\tmodel_class = %s"
-                                    % model_cls.__class__.__name__}})
+                                  str(params) + "\n\tmodel_class = %s"
+                                  % model_cls.__class__.__name__}})
 
         def setup(self, params: Parameters, **kwargs):
             """
@@ -853,15 +848,7 @@ if "TF" in get_backends():
 
             model_params = params.permute_training_on_top().model
 
-            model_kwargs = {}
-            for key in signature(self.model_cls.__init__).parameters.keys():
-                if key in ["self", "args", "kwargs"]:
-                    continue
-                try:
-                    model_kwargs[key] = model_params.nested_get(key)
-
-                except KeyError:
-                    pass
+            model_kwargs = {**model_params.fixed, **model_params.variable}
 
             tf.reset_default_graph()
 
@@ -952,7 +939,7 @@ if "TF" in get_backends():
 
             """
             with open(os.path.join(self.save_path, "experiment.delira.pkl"),
-                    "wb") as f:
+                      "wb") as f:
                 pickle.dump(self, f)
 
                 self.params.save(os.path.join(self.save_path, "parameters"))
@@ -1006,7 +993,7 @@ if "TF" in get_backends():
                                      data: BaseDataManager,
                                      split_val=0.2,
                                      num_splits=None,
-                                     shuffle=False, 
+                                     shuffle=False,
                                      random_seed=None,
                                      label_key="label",
                                      train_kwargs={}, test_kwargs={},
@@ -1055,15 +1042,14 @@ if "TF" in get_backends():
             training_params = params.permute_training_on_top().training
             metrics = training_params.nested_get("metrics")
 
-
             trainer = self.trainer_cls(
                 network=network,
                 save_path=os.path.join(self.save_path, 'test'),
                 optimizer_cls=training_params.nested_get("optimizer_cls"),
                 optim_fn=create_optims_default_tf,
                 optimizer_params={},
-                metrics = metrics,
-                losses = {},
+                metrics=metrics,
+                losses={},
                 **kwargs)
 
             # testing with batchsize 1 and 1 augmentation processs to
