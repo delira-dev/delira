@@ -1,19 +1,25 @@
-from delira.training.losses import BCEFocalLossLogitPyTorch, BCEFocalLossPyTorch
-import torch.nn as nn
-import torch
-import torch.nn.functional as F
+from delira import get_backends
+import pytest
 
 
+@pytest.mark.skipif("TORCH" not in get_backends(),
+                    reason="No torch backend installed")
 def test_focalloss():
     """
     Test some predefines focal loss values
     """
+
+    from delira.training.losses import BCEFocalLossLogitPyTorch, BCEFocalLossPyTorch
+    import torch.nn as nn
+    import torch
+    import torch.nn.functional as F
+
     # examples
     ###########################################################################
     # binary values
     p = torch.Tensor([[0, 0.2, 0.5, 1.0], [0, 0.2, 0.5, 1.0]])
     t = torch.Tensor([[0, 0, 0, 0], [1, 1, 1, 1]])
-    p_l = torch.Tensor([[-2, -1, 0, 2],[-2, -1, 0, 1]])
+    p_l = torch.Tensor([[-2, -1, 0, 2], [-2, -1, 0, 1]])
 
     ###########################################################################
     # params
@@ -26,7 +32,7 @@ def test_focalloss():
     # target for focal loss
     p_t = p * t + (1 - p) * (1 - t)
     alpha_t = torch.Tensor([alpha]).expand_as(t) * t + \
-              (1 - t) * (1 - torch.Tensor([alpha]).expand_as(t))
+        (1 - t) * (1 - torch.Tensor([alpha]).expand_as(t))
     w = alpha_t * (1 - p_t).pow(torch.Tensor([gamma]))
     fc_value = F.binary_cross_entropy(p, t, w, reduction='none')
 
@@ -34,7 +40,7 @@ def test_focalloss():
     p_tmp = torch.sigmoid(p_l)
     p_t = p_tmp * t + (1 - p_tmp) * (1 - t)
     alpha_t = torch.Tensor([alpha]).expand_as(t) * t + \
-              (1 - t) * (1 - torch.Tensor([alpha]).expand_as(t))
+        (1 - t) * (1 - torch.Tensor([alpha]).expand_as(t))
     w = alpha_t * (1 - p_t).pow(torch.Tensor([gamma]))
 
     fc_value_logit = \
@@ -65,7 +71,8 @@ def test_focalloss():
 
     # test focal loss binary with logit (values manually pre computed)
     # Note that now p_l is used as prediction
-    focal = BCEFocalLossLogitPyTorch(gamma=gamma, alpha=alpha, reduction='none')
+    focal = BCEFocalLossLogitPyTorch(
+        gamma=gamma, alpha=alpha, reduction='none')
     focal_loss = focal(p_l, t)
     assert (torch.abs(fc_value_logit - focal_loss) < eps).all()
 

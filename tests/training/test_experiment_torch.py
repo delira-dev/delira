@@ -2,33 +2,45 @@ import pytest
 
 import numpy as np
 
-from delira.training import PyTorchExperiment, Parameters
-from delira.training.callbacks import ReduceLROnPlateauCallbackPyTorch
-from delira.models.classification import ClassificationNetworkBasePyTorch
-from delira.data_loading import AbstractDataset, BaseDataManager
-import torch
+from delira import get_backends
+
+if "TORCH" in get_backends():
+    from delira.training import PyTorchExperiment, Parameters
+    from delira.training.callbacks import ReduceLROnPlateauCallbackPyTorch
+    from delira.models.classification import ClassificationNetworkBasePyTorch
+    from delira.data_loading import AbstractDataset, BaseDataManager
+    import torch
+
+    test_cases = [
+        (
+            Parameters(fixed_params={
+                "model": {},
+                "training": {
+                    "criterions": {"CE":
+                                   torch.nn.CrossEntropyLoss()},
+                    "optimizer_cls": torch.optim.Adam,
+                    "optimizer_params": {"lr": 1e-3},
+                    "num_epochs": 2,
+                    "metrics": {},
+                    "lr_sched_cls": ReduceLROnPlateauCallbackPyTorch,
+                    "lr_sched_params": {}
+                }
+            }
+            ),
+            500,
+            50)
+    ]
+
+else:
+    # test will be skipped, arguments don't matter
+    test_cases = [[None] * 3]
 
 
 @pytest.mark.parametrize("params,dataset_length_train,dataset_length_test",
-                         [
-                             (
-                                 Parameters(fixed_params={
-                                     "model": {},
-                                     "training": {
-                                         "criterions": {"CE":
-                                                        torch.nn.CrossEntropyLoss()},
-                                         "optimizer_cls": torch.optim.Adam,
-                                         "optimizer_params": {"lr": 1e-3},
-                                         "num_epochs": 2,
-                                         "metrics": {},
-                                         "lr_sched_cls": ReduceLROnPlateauCallbackPyTorch,
-                                         "lr_sched_params": {}
-                                        }
-                                 }
-                                 ),
-                                 500,
-                                 50)
-                         ])
+                        test_cases
+                         )
+@pytest.mark.skipif("TORCH" not in get_backends(),
+                    reason="No torch backend installed")
 def test_experiment(params, dataset_length_train, dataset_length_test):
     class DummyNetwork(ClassificationNetworkBasePyTorch):
         def __init__(self):
