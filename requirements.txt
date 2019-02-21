@@ -13,7 +13,7 @@ pylint
 tqdm
 visdom>=0.1.8.5
 pyyaml
-trixi-slim
+trixi-slim==0.1.1.1
 batchgenerators>=0.18
 psutil
 nested_lookup
