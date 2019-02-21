@@ -16,8 +16,6 @@ import os
 import sys
 import re
 
-os.environ["DELIRA_BACKEND"] = "torch,tf,"
-
 # source code directory, relative to this file, for sphinx-build
 sys.path.insert(0, os.path.abspath('../.'))
 

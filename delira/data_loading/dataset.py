@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 import typing
 from ..utils import subdirs
 from ..utils.decorators import make_deprecated
+from delira import get_backends
 
 
 class AbstractDataset:
@@ -658,7 +659,7 @@ class Nii3DCacheDatset(BaseCacheDataset):
         return data
 
 
-if "torch" in os.environ["DELIRA_BACKEND"]:
+if "TORCH" in get_backends():
     from torchvision.datasets import CIFAR10, CIFAR100, EMNIST, MNIST, FashionMNIST
 
     class TorchvisionClassificationDataset(AbstractDataset):

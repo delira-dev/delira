@@ -1,6 +1,7 @@
 from .abstract_callback import AbstractCallback
+from delira import get_backends
 
-try:
+if 'TORCH' in get_backends():
     from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingLR, \
         ExponentialLR, LambdaLR, MultiStepLR, StepLR
 
@@ -44,7 +45,7 @@ try:
 
             """
             self.scheduler.step(epoch=kwargs.get("curr_epoch", None))
-            return trainer
+            return {}
 
     class ReduceLROnPlateauCallback(DefaultPyTorchSchedulerCallback):
         """
@@ -128,7 +129,7 @@ try:
                                                                    None))
             self.scheduler.step(metrics=metrics)
 
-            return trainer
+            return {}
 
     class CosineAnnealingLRCallback(DefaultPyTorchSchedulerCallback):
         """
@@ -256,6 +257,3 @@ try:
             super().__init__()
 
             self.scheduler = StepLR(optimizer, step_size, gamma, last_epoch)
-
-except ImportError as e:
-    raise e

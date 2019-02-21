@@ -1,8 +1,9 @@
 import logging
 file_logger = logging.getLogger(__name__)
 
-import os
-if "torch" in os.environ["DELIRA_BACKEND"]:
+from delira import get_backends
+
+if "TORCH" in get_backends():
     import torch
     from torchvision import models as t_models
     from delira.models.abstract_network import AbstractPyTorchNetwork

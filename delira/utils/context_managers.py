@@ -1,7 +1,8 @@
 import contextlib
 
-import os
-if "torch" in os.environ["DELIRA_BACKEND"]:
+from delira import get_backends
+
+if "TORCH" in get_backends():
     import torch
 
     class DefaultOptimWrapperTorch(object):
@@ -66,8 +67,8 @@ if "torch" in os.environ["DELIRA_BACKEND"]:
         def __getstate__(self):
             return self._optimizer.__getstate__()
 
-        def __setstate__(self):
-            return self._optimizer.__setstate__()
+        def __setstate__(self, *args, **kwargs):
+            return self._optimizer.__setstate__(*args, **kwargs)
 
         def __repr__(self):
             return self._optimizer.__repr__()

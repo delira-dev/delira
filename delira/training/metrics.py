@@ -4,8 +4,9 @@ from ..utils.decorators import make_deprecated
 
 import trixi
 
-import os
-if "torch" in os.environ["DELIRA_BACKEND"]:
+from delira import get_backends
+
+if "TORCH" in get_backends():
     import torch
 
     from .train_utils import pytorch_tensor_to_numpy, float_to_pytorch_tensor 

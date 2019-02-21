@@ -1,7 +1,6 @@
 import numpy as np
 
-from delira.data_loading import TorchvisionClassificationDataset, \
-    ConcatDataset, BaseCacheDataset
+from delira.data_loading import ConcatDataset, BaseCacheDataset
 
 def test_data_subset_concat():
     def load_dummy_sample(path, label_load_fct):
