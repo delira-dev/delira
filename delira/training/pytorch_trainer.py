@@ -187,21 +187,12 @@ if "TORCH" in get_backends():
 
                     logger.info("Attempting to load state from previous \
                                 training from %s" % latest_state_path)
-
                     try:
-                        self.update_state(latest_state_path,
-                                          weights_only=False)
+                        self.update_state(latest_state_path)
                     except KeyError:
-                        try:
-                            self.update_state(latest_state_path,
-                                              weights_only=True)
-                            self.start_epoch = max(
-                                latest_epoch, self.start_epoch)
-
-                        except KeyError:
-                            logger.warn("Previous State could not be loaded, \
-                                        although it exists.Training will be \
-                                        restarted")
+                        logger.warn("Previous State could not be loaded, \
+                                    although it exists.Training will be \
+                                    restarted")
 
             # asssign closure and prepare batch from network
             self.closure_fn = network.closure
@@ -363,8 +354,7 @@ if "TORCH" in get_backends():
 
                 # load best model and return it
                 self.update_state(os.path.join(self.save_path,
-                                               'checkpoint_best.pth'),
-                                  weights_only=True
+                                               'checkpoint_best.pth')
                                   )
 
             return self.module
@@ -394,8 +384,7 @@ if "TORCH" in get_backends():
             for cb in self._callbacks:
                 self._update_state(cb.at_epoch_begin(self, val_metrics=metrics_val,
                                                      val_score_key=val_score_key,
-                                                     curr_epoch=epoch),
-                                   weights_only=False)
+                                                     curr_epoch=epoch))
 
         def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
                           **kwargs):
@@ -423,18 +412,17 @@ if "TORCH" in get_backends():
             for cb in self._callbacks:
                 self._update_state(cb.at_epoch_end(self, val_metrics=metrics_val,
                                                    val_score_key=val_score_key,
-                                                   curr_epoch=epoch),
-                                   weights_only=False)
+                                                   curr_epoch=epoch))
 
             if epoch % self.save_freq == 0:
                 self.save_state(os.path.join(self.save_path,
                                              "checkpoint_epoch_%d.pth" % epoch),
-                                epoch, False)
+                                epoch)
 
             if is_best:
                 self.save_state(os.path.join(self.save_path,
                                              "checkpoint_best.pth"),
-                                epoch, False)
+                                epoch)
 
         def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch):
             """
@@ -597,7 +585,7 @@ if "TORCH" in get_backends():
 
             return outputs_all, labels_all, val_dict
 
-        def save_state(self, file_name, epoch, weights_only=False, **kwargs):
+        def save_state(self, file_name, epoch, **kwargs):
             """
             saves the current state via :func:`delira.io.torch.save_checkpoint`
 
@@ -607,19 +595,17 @@ if "TORCH" in get_backends():
                 filename to save the state to
             epoch : int
                 current epoch (will be saved for mapping back)
-            weights_only : bool
-                whether to store only weights (default: False)
             *args :
                 positional arguments
             **kwargs :
                 keyword arguments
 
             """
-            save_checkpoint(file_name, self.module, self.optimizers, weights_only,
-                            **kwargs)
+            save_checkpoint(file_name, self.module, self.optimizers,
+                            epoch=epoch, **kwargs)
 
         @staticmethod
-        def load_state(file_name, weights_only=True, **kwargs):
+        def load_state(file_name, **kwargs):
             """
             Loads the new state from file via :func:`delira.io.torch.load_checkpoint`
 
@@ -627,8 +613,6 @@ if "TORCH" in get_backends():
             ----------
             file_name : str
                 the file to load the state from
-            weights_only : bool
-                whether file contains stored weights only (default: False)
             **kwargs : keyword arguments
 
             Returns
@@ -637,15 +621,9 @@ if "TORCH" in get_backends():
                 new state
 
             """
-            if weights_only:
-                return load_checkpoint(file_name, weights_only, **kwargs)
-            else:
-                model, optimizer, epoch = load_checkpoint(file_name, weights_only,
-                                                          **kwargs)
-                return {"module": model, "optimizers": optimizer,
-                        "start_epoch": epoch}
+            return load_checkpoint(file_name, **kwargs)
 
-        def update_state(self, file_name, weights_only=True, *args, **kwargs):
+        def update_state(self, file_name, *args, **kwargs):
             """
             Update internal state from a loaded state
 
@@ -653,8 +631,6 @@ if "TORCH" in get_backends():
             ----------
             file_name : str
                 file containing the new state to load
-            weights_only : bool
-                whether to update only weights or notS
             *args :
                 positional arguments
             **kwargs :
@@ -666,10 +642,9 @@ if "TORCH" in get_backends():
                 the trainer with a modified state
 
             """
-            self._update_state(self.load_state(file_name, weights_only,
-                                               *args, **kwargs), weights_only)
+            self._update_state(self.load_state(file_name, *args, **kwargs))
 
-        def _update_state(self, new_state, weights_only=True):
+        def _update_state(self, new_state):
             """
             Update the state from a given new state
 
@@ -677,35 +652,25 @@ if "TORCH" in get_backends():
             ----------
             new_state : dict
                 new state to update internal state from
-            weights_only : bool
-                whether to update weights only from statedict or update 
-                everything
 
             Returns
             -------
             :class:`PyTorchNetworkTrainer`
                 the trainer with a modified state
 
-            # """
+            """
             # print(",".join(new_state.keys()))
 
-            if weights_only:
-                if "model" in new_state:
-                    model_state = new_state["model"]
-                else:
-                    model_state = new_state
+            if "model" in new_state:
+                self.module.load_state_dict(new_state.pop("model"))
 
-                self.module.load_state_dict(model_state)
+            if "optimizer" in new_state and new_state["optimizer"]:
+                optim_state = new_state.pop("optimizer")
+                for key in self.optimizers.keys():
+                    self.optimizers[key].load_state_dict(
+                        optim_state[key])
 
-                if "optimizer" in new_state and new_state["optimizer"]:
-                    for key in self.optimizers.keys():
-                        self.optimizers[key].load_state_dict(
-                            new_state["optimizer"][key])
+            if "epoch" in new_state:
+                self.start_epoch = new_state.pop("epoch")
 
-                if "epoch" in new_state:
-                    self.start_epoch = new_state["epoch"]
-
-                return self
-
-            else:
-                return super()._update_state(new_state)
+            return super()._update_state(new_state)
