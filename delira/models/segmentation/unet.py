@@ -172,7 +172,7 @@ if "TORCH" in get_backends():
             return x
 
         @staticmethod
-        def closure(model, data_dict: dict, optimizers: dict, criterions={},
+        def closure(model, data_dict: dict, optimizers: dict, losses={},
                     metrics={}, fold=0, **kwargs):
             """
             closure method to do a single backpropagation step
@@ -186,9 +186,9 @@ if "TORCH" in get_backends():
                 dictionary containing the data
             optimizers : dict
                 dictionary of optimizers to optimize model's parameters
-            criterions : dict
-                dict holding the criterions to calculate errors
-                (gradients from different criterions will be accumulated)
+            losses : dict
+                dict holding the losses to calculate errors
+                (gradients from different losses will be accumulated)
             metrics : dict
                 dict holding the metrics to calculate
             fold : int
@@ -201,20 +201,20 @@ if "TORCH" in get_backends():
             dict
                 Metric values (with same keys as input dict metrics)
             dict
-                Loss values (with same keys as input dict criterions)
+                Loss values (with same keys as input dict losses)
             list
                 Arbitrary number of predictions as torch.Tensor
 
             Raises
             ------
             AssertionError
-                if optimizers or criterions are empty or the optimizers are not
+                if optimizers or losses are empty or the optimizers are not
                 specified
 
             """
 
-            assert (optimizers and criterions) or not optimizers, \
-                "Criterion dict cannot be emtpy, if optimizers are passed"
+            assert (optimizers and losses) or not optimizers, \
+                "Loss dict cannot be emtpy, if optimizers are passed"
 
             loss_vals = {}
             metric_vals = {}
@@ -234,7 +234,7 @@ if "TORCH" in get_backends():
 
                 if data_dict:
 
-                    for key, crit_fn in criterions.items():
+                    for key, crit_fn in losses.items():
                         _loss_val = crit_fn(preds, *data_dict.values())
                         loss_vals[key] = _loss_val.detach()
                         total_loss += _loss_val
@@ -263,11 +263,6 @@ if "TORCH" in get_backends():
 
                 loss_vals = eval_loss_vals
                 metric_vals = eval_metrics_vals
-
-            for key, val in {**metric_vals, **loss_vals}.items():
-                logging.info({"value": {"value": val.item(), "name": key,
-                                        "env_appendix": "_%02d" % fold
-                                        }})
 
             logging.info({'image_grid': {"images": inputs, "name": "input_images",
                                         "env_appendix": "_%02d" % fold}})
@@ -624,7 +619,7 @@ if "TORCH" in get_backends():
             return x
 
         @staticmethod
-        def closure(model, data_dict: dict, optimizers: dict, criterions={},
+        def closure(model, data_dict: dict, optimizers: dict, losses={},
                     metrics={}, fold=0, **kwargs):
             """
             closure method to do a single backpropagation step
@@ -638,9 +633,9 @@ if "TORCH" in get_backends():
                 dictionary containing the data
             optimizers : dict
                 dictionary of optimizers to optimize model's parameters
-            criterions : dict
-                dict holding the criterions to calculate errors
-                (gradients from different criterions will be accumulated)
+            losses : dict
+                dict holding the losses to calculate errors
+                (gradients from different losses will be accumulated)
             metrics : dict
                 dict holding the metrics to calculate
             fold : int
@@ -653,20 +648,20 @@ if "TORCH" in get_backends():
             dict
                 Metric values (with same keys as input dict metrics)
             dict
-                Loss values (with same keys as input dict criterions)
+                Loss values (with same keys as input dict losses)
             list
                 Arbitrary number of predictions as torch.Tensor
 
             Raises
             ------
             AssertionError
-                if optimizers or criterions are empty or the optimizers are not
+                if optimizers or losses are empty or the optimizers are not
                 specified
 
             """
 
-            assert (optimizers and criterions) or not optimizers, \
-                "Criterion dict cannot be emtpy, if optimizers are passed"
+            assert (optimizers and losses) or not optimizers, \
+                "Loss dict cannot be emtpy, if optimizers are passed"
 
             loss_vals = {}
             metric_vals = {}
@@ -686,7 +681,7 @@ if "TORCH" in get_backends():
 
                 if data_dict:
 
-                    for key, crit_fn in criterions.items():
+                    for key, crit_fn in losses.items():
                         _loss_val = crit_fn(preds, *data_dict.values())
                         loss_vals[key] = _loss_val.detach()
                         total_loss += _loss_val
@@ -715,11 +710,6 @@ if "TORCH" in get_backends():
 
                 loss_vals = eval_loss_vals
                 metric_vals = eval_metrics_vals
-
-            for key, val in {**metric_vals, **loss_vals}.items():
-                logging.info({"value": {"value": val.item(), "name": key,
-                                        "env_appendix": "_%02d" % fold
-                                        }})
 
             slicing_dim = inputs.size(2) // 2  # visualize slice in mid of volume
 

@@ -17,7 +17,7 @@ if "TF" in delira.get_backends():
                 "model": {'in_channels': 32,
                           'n_outputs': 1},
                 "training": {
-                    "criterions": {"CE":
+                    "losses": {"CE":
                                    tf.losses.softmax_cross_entropy},
                     "optimizer_cls": tf.train.AdamOptimizer,
                     "optimizer_params": {"learning_rate": 1e-3},

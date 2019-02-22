@@ -1,106 +1,37 @@
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, \
+    fbeta_score, hamming_loss, jaccard_similarity_score, log_loss, \
+    matthews_corrcoef, precision_score, recall_score, zero_one_loss
 from ..utils.decorators import make_deprecated
 
 import trixi
+import numpy as np
 
 from delira import get_backends
 
-if "TORCH" in get_backends():
-    import torch
 
-    from .train_utils import pytorch_tensor_to_numpy, float_to_pytorch_tensor 
-    @make_deprecated(trixi)
-    class AurocMetricPyTorch(torch.nn.Module):
-        """
-        Metric to Calculate AuROC
+class SklearnClassificationMetric(object):
+    def __init__(self, score_fn):
+        self._score_fn = score_fn
 
-        .. deprecated:: 0.1
-            :class:`AurocMetricPyTorch` will be removed in next release and is
-            deprecated in favor of ``trixi.logging`` Modules
+    def __call__(self, y_true, y_pred, **kwargs):
+        arrays = {"y_true": y_true, "y_pred": y_pred}
 
-        .. warning::
-            :class:`AurocMetricPyTorch` will be removed in next release
+        for k, v in arrays.items():
+            arrays[k] = v.reshape(v.shape[0], -1).astype(np.uint8)
 
-        """
-        def __init__(self):
-            super().__init__()
-
-        def forward(self, outputs: torch.Tensor, targets: torch.Tensor):
-            """
-            Actual AuROC calculation
-
-            Parameters
-            ----------
-            outputs : torch.Tensor
-                predictions from network
-            targets : torch.Tensor
-                training targets
-
-            Returns
-            -------
-            torch.Tensor
-                auroc value
-
-            """
-            if outputs.dim() == 2:
-                outputs = torch.argmax(outputs, dim=1)
-            score = roc_auc_score(pytorch_tensor_to_numpy(targets),
-                                pytorch_tensor_to_numpy(outputs))
-            return float_to_pytorch_tensor(score)
+        return self._score_fn(**arrays, **kwargs)
 
 
-    @make_deprecated(trixi)
-    class AccuracyMetricPyTorch(torch.nn.Module):
-        """
-        Metric to Calculate Accuracy
-        
-        .. deprecated:: 0.1
-            :class:`AccuracyMetricPyTorch` will be removed in next release and is
-            deprecated in favor of ``trixi.logging`` Modules
-
-        .. warning::
-            class:`AccuracyMetricPyTorch` will be removed in next release
-
-        """
-        def __init__(self, normalize=True, sample_weight=None):
-            """
-
-            Parameters
-            ----------
-            normalize : bool, optional (default=True)
-            If ``False``, return the number of correctly classified samples.
-            Otherwise, return the fraction of correctly classified samples.
-
-            sample_weight : array-like of shape = [n_samples], optional
-                Sample weights.
-
-            """
-            super().__init__()
-            self.normalize = normalize
-            self.sample_weight = sample_weight
-
-        def forward(self, outputs: torch.Tensor, targets: torch.Tensor):
-            """
-            Actual accuracy calcuation
-
-            Parameters
-            ----------
-            outputs : torch.Tensor
-                predictions from network
-            targets : torch.Tensor
-                training targets
-
-            Returns
-            -------
-            torch.Tensor
-                accuracy value
-
-            """
-            outputs = outputs > 0.5
-            if outputs.dim() == 2:
-                outputs = torch.argmax(outputs, dim=1)
-            score = accuracy_score(pytorch_tensor_to_numpy(targets),
-                                pytorch_tensor_to_numpy(outputs),
-                                self.normalize, self.sample_weight)
-            return float_to_pytorch_tensor(score)
+SklearnAccuracyScore = SklearnClassificationMetric(accuracy_score)
+SklearnBalancedAccuracyScore = SklearnClassificationMetric(
+    balanced_accuracy_score)
+SklearnF1Score = SklearnClassificationMetric(f1_score)
+SklearnFBetaScore = SklearnClassificationMetric(fbeta_score)
+SklearnHammingLoss = SklearnClassificationMetric(hamming_loss)
+SklearnJaccardSimilarityScore = SklearnClassificationMetric(
+    jaccard_similarity_score)
+SklearnLogLoss = SklearnClassificationMetric(log_loss)
+SklearnMatthewsCorrCoeff = SklearnClassificationMetric(matthews_corrcoef)
+SklearnPrecisionScore = SklearnClassificationMetric(precision_score)
+SklearnRecallScore = SklearnClassificationMetric(recall_score)
+SklearnZeroOneLoss = SklearnClassificationMetric(zero_one_loss)

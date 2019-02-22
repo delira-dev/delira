@@ -6,6 +6,7 @@ from delira import __version__ as delira_version
 from .parameters import Parameters
 from ..models import AbstractNetwork
 from .abstract_trainer import AbstractNetworkTrainer
+from .predictor import Predictor
 from trixi.experiment import Experiment as TrixiExperiment
 import os
 import logging
@@ -92,13 +93,15 @@ class AbstractExperiment(TrixiExperiment):
 
         raise NotImplementedError()
 
-    @abstractmethod
     def test(self,
              params: Parameters,
              network: AbstractNetwork,
              datamgr_test: BaseDataManager,
-             trainer_cls=AbstractNetworkTrainer,
-             **kwargs):
+             metrics: dict,
+             prepare_batch,
+             convert_fn,
+             verbose=False,
+             ** kwargs):
         """
         Executes prediction for all items in datamgr_test with network
 
@@ -106,15 +109,10 @@ class AbstractExperiment(TrixiExperiment):
         ----------
         params : :class:`Parameters`
             the parameters to construct a model
-        network : :class:'AbstractNetwork'
+        network : :class:'AbstractPyTorchNetwork'
             the network to train
         datamgr_test : :class:'BaseDataManager'
             holds the test data
-        trainer_cls :
-            class defining the actual trainer,
-            defaults to :class:`AbstractNetworkTrainer`,
-            which should be suitable for most cases,
-            but can easily be overwritten and exchanged if necessary
         **kwargs :
             holds additional keyword arguments
             (which are completly passed to the trainers init)
@@ -129,7 +127,19 @@ class AbstractExperiment(TrixiExperiment):
             dictionary containing the mean validation metrics and
             the mean loss values
         """
-        raise NotImplementedError()
+        predictor = Predictor(
+            network, convert_fn, prepare_batch)
+
+        val_predictions, val_inputs = predictor.predict_data_mgr(
+            datamgr_test, 1, verbose=verbose)
+
+        metrics_val = predictor.calc_metrics(
+            {k: v for k,
+             v in val_inputs.items() if k != "data"},
+            *val_predictions,
+            metrics=metrics)
+
+        return val_predictions, val_inputs, metrics_val
 
     def kfold(self, num_epochs: int,
               data: BaseDataManager,
@@ -446,10 +456,12 @@ class AbstractExperiment(TrixiExperiment):
         """
         raise NotImplementedError()
 
+
 if "TORCH" in get_backends():
 
     import torch
-    from .train_utils import create_optims_default_pytorch
+    from .train_utils import create_optims_default_pytorch, \
+        torch_convert_to_numpy
     from .pytorch_trainer import PyTorchNetworkTrainer as PTNetworkTrainer
     from ..models import AbstractPyTorchNetwork
 
@@ -483,7 +495,7 @@ if "TORCH" in get_backends():
             model_cls :
                 the class to instantiate models
             name : str
-                the experiment's name, 
+                the experiment's name,
                 default: None -> "UnnamedExperiment"
             save_path : str
                 the path to save the experiment to
@@ -535,8 +547,13 @@ if "TORCH" in get_backends():
 
             self.trainer_cls = trainer_cls
 
-            if val_score_key is None and params.nested_get("metrics"):
-                val_score_key = sorted(params.nested_get("metrics").keys())[0]
+            if val_score_key is None:
+                if params.nested_get("val_dataset_metrics", False):
+                    val_score_key = sorted(
+                        params.nested_get("val_dataset_metrics").keys())[0]
+                elif params.nested_get("val_metrics", False):
+                    val_score_key = sorted(
+                        params.nested_get("val_metrics").keys())[0]
 
             self.val_score_key = val_score_key
 
@@ -571,22 +588,29 @@ if "TORCH" in get_backends():
             model = self.model_cls(**model_kwargs)
 
             training_params = params.permute_training_on_top().training
-            criterions = training_params.nested_get("criterions")
+            losses = training_params.nested_get("losses")
             optimizer_cls = training_params.nested_get("optimizer_cls")
             optimizer_params = training_params.nested_get("optimizer_params")
-            metrics = training_params.nested_get("metrics")
-            lr_scheduler_cls = training_params.nested_get("lr_sched_cls")
-            lr_scheduler_params = training_params.nested_get("lr_sched_params")
+            train_metrics = training_params.nested_get("train_metrics", {})
+            lr_scheduler_cls = training_params.nested_get("lr_sched_cls", None)
+            lr_scheduler_params = training_params.nested_get("lr_sched_params",
+                                                             {})
+            val_metrics = training_params.nested_get("val_metrics", {})
+            val_dataset_metrics = training_params.nested_get(
+                "val_dataset_metrics", {})
+
             return self.trainer_cls(
                 network=model,
                 save_path=os.path.join(
                     self.save_path,
                     "checkpoints",
                     "run_%02d" % self._run),
-                criterions=criterions,
+                losses=losses,
                 optimizer_cls=optimizer_cls,
                 optimizer_params=optimizer_params,
-                metrics=metrics,
+                train_metrics=train_metrics,
+                val_metrics=val_metrics,
+                val_dataset_metrics=val_dataset_metrics,
                 lr_scheduler_cls=lr_scheduler_cls,
                 lr_scheduler_params=lr_scheduler_params,
                 optim_fn=self._optim_builder,
@@ -653,7 +677,10 @@ if "TORCH" in get_backends():
                  params: Parameters,
                  network: AbstractPyTorchNetwork,
                  datamgr_test: BaseDataManager,
-                 **kwargs):
+                 metrics: dict,
+                 prepare_batch=None,
+                 verbose=False,
+                 ** kwargs):
             """
             Executes prediction for all items in datamgr_test with network
 
@@ -679,31 +706,15 @@ if "TORCH" in get_backends():
                 dictionary containing the mean validation metrics and
                 the mean loss values
             """
-            # setup trainer with dummy optimization which won't be used!
-            trainer = self.trainer_cls(
-                network=network,
-                save_path=os.path.join(self.save_path, 'test'),
-                optimizer_cls=torch.optim.SGD,
-                optim_fn=create_optims_default_pytorch,
-                criterions=params.nested_get('criterions'),
-                optimizer_params=params.nested_get('optimizer_params'),
-                **kwargs)
 
-            # testing with batchsize 1 and 1 augmentation processs to
-            # avoid dropping of last elements
-            orig_num_aug_processes = datamgr_test.n_process_augmentation
-            orig_batch_size = datamgr_test.batch_size
+            if prepare_batch is None:
+                prepare_batch = partial(network.prepare_batch,
+                                        input_device=torch.device("cpu"),
+                                        output_device=torch.device("cpu"))
 
-            datamgr_test.batch_size = 1
-            datamgr_test.n_process_augmentation = 1
-
-            outputs, labels, metrics_val = trainer.predict(
-                datamgr_test.get_batchgen(), batch_size=orig_batch_size)
-
-            # reset old values
-            datamgr_test.batch_size = orig_batch_size
-            datamgr_test.n_process_augmentation = orig_num_aug_processes
-            return outputs, labels, metrics_val
+            return super().test(params, network, datamgr_test, metrics,
+                                prepare_batch, torch_convert_to_numpy, verbose,
+                                **kwargs)
 
         def save(self):
             """
@@ -816,9 +827,13 @@ if "TF" in get_backends():
 
             self.trainer_cls = trainer_cls
 
-            if val_score_key is None and params.nested_get("metrics"):
-                val_score_key = sorted(params.nested_get("metrics").keys())[0]
-
+            if val_score_key is None:
+                if params.nested_get("val_dataset_metrics", False):
+                    val_score_key = sorted(
+                        params.nested_get("val_dataset_metrics").keys())[0]
+                elif params.nested_get("val_metrics", False):
+                    val_score_key = sorted(
+                        params.nested_get("val_metrics").keys())[0]
             self.val_score_key = val_score_key
 
             self.params = params
@@ -855,12 +870,16 @@ if "TF" in get_backends():
             model = self.model_cls(**model_kwargs)
 
             training_params = params.permute_training_on_top().training
-            criterions = training_params.nested_get("criterions")
+            losses = training_params.nested_get("losses")
             optimizer_cls = training_params.nested_get("optimizer_cls")
             optimizer_params = training_params.nested_get("optimizer_params")
-            metrics = training_params.nested_get("metrics")
-            lr_scheduler_cls = training_params.nested_get("lr_sched_cls")
-            lr_scheduler_params = training_params.nested_get("lr_sched_params")
+            train_metrics = training_params.nested_get("train_metrics", {})
+            lr_scheduler_cls = training_params.nested_get("lr_sched_cls", None)
+            lr_scheduler_params = training_params.nested_get("lr_sched_params",
+                                                             {})
+            val_metrics = training_params.nested_get("val_metrics", {})
+            val_dataset_metrics = training_params.nested_get(
+                "val_dataset_metrics", {})
 
             return self.trainer_cls(
                 network=model,
@@ -868,10 +887,12 @@ if "TF" in get_backends():
                     self.save_path,
                     "checkpoints",
                     "run_%02d" % self._run),
-                losses=criterions,
+                losses=losses,
                 optimizer_cls=optimizer_cls,
                 optimizer_params=optimizer_params,
-                metrics=metrics,
+                train_metrics=train_metrics,
+                val_metrics=val_metrics,
+                val_dataset_metrics=val_dataset_metrics,
                 lr_scheduler_cls=lr_scheduler_cls,
                 lr_scheduler_params=lr_scheduler_params,
                 optim_fn=self._optim_builder,

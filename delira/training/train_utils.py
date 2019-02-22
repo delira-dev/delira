@@ -8,41 +8,8 @@ if "TORCH" in get_backends():
 
     from ..utils.decorators import torch_tensor_func, torch_module_func
 
-    @torch_tensor_func
-    def pytorch_batch_to_numpy(tensor: torch.Tensor):
-        """
-        Utility Function to cast a whole PyTorch batch to numpy
-
-        Parameters
-        ----------
-        tensor : torch.Tensor
-            the batch to convert
-
-        Returns
-        -------
-        np.ndarray
-            the converted batch
-
-        """
-        return np.array([pytorch_tensor_to_numpy(tmp[0]) for tmp in tensor.split(1)])
-
-    @torch_tensor_func
-    def pytorch_tensor_to_numpy(tensor: torch.Tensor):
-        """
-        Utility Function to cast a single PyTorch Tensor to numpy
-
-        Parameters
-        ----------
-        tensor : torch.Tensor
-            the tensor to convert
-
-        Returns
-        -------
-        np.ndarray
-            the converted tensor
-
-        """
-        return tensor.detach().cpu().numpy()
+    def torch_convert_to_numpy(*args):
+        return tuple(_x.detach().cpu().numpy() for _x in args)
 
     @dtype_func(float)
     def float_to_pytorch_tensor(f: float):
@@ -111,6 +78,9 @@ if "TORCH" in get_backends():
 if "TF" in get_backends():
     import tensorflow as tf
 
+    def tf_convert_to_numpy(*args):
+        return tuple(_x for _x in args)
+
     def create_optims_default_tf(optim_cls, **optim_params):
         """
         Function to create a optimizer dictionary
@@ -130,7 +100,6 @@ if "TF" in get_backends():
         """
         return {"default": optim_cls(**optim_params)}
 
-
     def initialize_uninitialized(sess):
         """
         Function to initialize only uninitialized variables in a session graph
@@ -142,8 +111,10 @@ if "TF" in get_backends():
         """
 
         global_vars = tf.global_variables()
-        is_not_initialized = sess.run([tf.is_variable_initialized(var) for var in global_vars])
-        not_initialized_vars = [v for (v, f) in zip(global_vars, is_not_initialized) if not f]
+        is_not_initialized = sess.run(
+            [tf.is_variable_initialized(var) for var in global_vars])
+        not_initialized_vars = [v for (v, f) in zip(
+            global_vars, is_not_initialized) if not f]
 
         if not_initialized_vars:
             sess.run(tf.variables_initializer(not_initialized_vars))
