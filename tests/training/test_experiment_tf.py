@@ -3,6 +3,7 @@ import delira
 import pytest
 
 import numpy as np
+from delira.training.metrics import SklearnAccuracyScore
 
 if "TF" in delira.get_backends():
 
@@ -18,11 +19,11 @@ if "TF" in delira.get_backends():
                           'n_outputs': 1},
                 "training": {
                     "losses": {"CE":
-                                   tf.losses.softmax_cross_entropy},
+                               tf.losses.softmax_cross_entropy},
                     "optimizer_cls": tf.train.AdamOptimizer,
                     "optimizer_params": {"learning_rate": 1e-3},
                     "num_epochs": 2,
-                    "metrics": {},
+                    "val_metrics": {"accuracy": SklearnAccuracyScore},
                     "lr_sched_cls": None,
                     "lr_sched_params": {}}
             }
@@ -42,13 +43,13 @@ else:
                     reason="No TF Backend installed")
 def test_experiment(params, dataset_length_train, dataset_length_test):
     class DummyNetwork(ClassificationNetworkBaseTf):
-        def __init__(self):
-            super().__init__(32, 1)
-            self.model = self._build_model(1)
+        def __init__(self, in_channels, n_outputs):
+            super().__init__(in_channels, n_outputs)
+            self.model = self._build_model(n_outputs)
 
-            images = tf.placeholder(shape=[None, 32],
+            images = tf.placeholder(shape=[None, in_channels],
                                     dtype=tf.float32)
-            labels = tf.placeholder(shape=[None, 1], dtype=tf.float32)
+            labels = tf.placeholder(shape=[None, n_outputs], dtype=tf.float32)
 
             preds_train = self.model(images, training=True)
             preds_eval = self.model(images, training=False)

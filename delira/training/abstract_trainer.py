@@ -97,16 +97,15 @@ class AbstractNetworkTrainer(Predictor):
         for cbck in callbacks:
             self.register_callback(cbck)
 
-    def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
-               lr_scheduler_cls, lr_scheduler_params, gpu_ids,
+    def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                convert_batch_to_npy_fn, prepare_batch_fn):
 
         super()._setup(network, convert_batch_to_npy_fn,
                        prepare_batch_fn)
 
         self.closure_fn = network.closure
-        self.optimizers = optim_fn(network, optimizer_cls, **optimizer_params)
-
+        
+        # optimizers must exist before calling _setup()
         if lr_scheduler_cls is not None:
             for key, optim in self.optimizers.items():
                 if not issubclass(lr_scheduler_cls, AbstractCallback):
@@ -352,20 +351,21 @@ class AbstractNetworkTrainer(Predictor):
                         new_val_score = best_val_score
 
                     else:
-                        new_val_score = total_metrics["val_" + total_metrics]
+                        new_val_score = total_metrics["val_" + val_score_key]
                 else:
-                    new_val_score = metrics_val.get(val_score_key)
+                    new_val_score = total_metrics.get(val_score_key)
 
-                    is_best = self._is_better_val_scores(
-                        best_val_score, new_val_score, val_score_mode)
+            if new_val_score != best_val_score:
+                is_best = self._is_better_val_scores(
+                    best_val_score, new_val_score, val_score_mode)
 
-                    # set best_val_score to new_val_score if is_best
-                    best_val_score = int(is_best) * new_val_score + \
-                        (1 - int(is_best)) * best_val_score
+                # set best_val_score to new_val_score if is_best
+                best_val_score = int(is_best) * new_val_score + \
+                    (1 - int(is_best)) * best_val_score
 
-                    if is_best and verbose:
-                        logging.info("New Best Value at Epoch %03d : %03.3f" %
-                                     (epoch, best_val_score))
+                if is_best and verbose:
+                    logging.info("New Best Value at Epoch %03d : %03.3f" %
+                                 (epoch, best_val_score))
 
             for key, val in total_metrics.items():
                 logging.info({"value": {"value": reduce_fn(val), "name": key,
@@ -373,6 +373,8 @@ class AbstractNetworkTrainer(Predictor):
                                         }})
 
             self._at_epoch_end(metrics_val, val_score_key, epoch, is_best)
+
+            is_best = False
 
             # stop training (might be caused by early stopping)
             if self.stop_training:

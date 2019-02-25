@@ -157,9 +157,12 @@ if "TORCH" in get_backends():
 
             """
 
-            super()._setup(network, optim_fn, optimizer_cls, optimizer_params,
-                           lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-                           convert_batch_to_npy_fn, network.prepare_batch)
+            self.optimizers = optim_fn(network, optimizer_cls,
+                                       **optimizer_params)
+
+            super()._setup(network, lr_scheduler_cls, lr_scheduler_params,
+                           gpu_ids, convert_batch_to_npy_fn,
+                           network.prepare_batch)
 
             try:
                 from apex import amp

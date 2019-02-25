@@ -338,6 +338,9 @@ class AbstractExperiment(TrixiExperiment):
         outputs = {}
         labels = {}
 
+        metrics = {**self.params.nested_get("val_metrics", {}),
+                   **self.params.nested_get("val_dataset_metrics", {})}
+
         if num_splits is None:
             num_splits = 10
             logger.warning("num_splits not defined, using default value of \
@@ -382,7 +385,7 @@ class AbstractExperiment(TrixiExperiment):
                              **kwargs)
 
             _outputs, _labels, _metrics_val = self.test(
-                self.params, model, test_data)
+                self.params, model, test_data, metrics=metrics)
 
             outputs[str(idx)] = _outputs
             labels[str(idx)] = _labels
@@ -992,7 +995,7 @@ if "TF" in get_backends():
                   train_kwargs={}, test_kwargs={}, **kwargs):
 
             if random_seed is not None:
-                tf.set_random_seed(random_seed)
+                torch.manual_seed(random_seed)
 
             super().kfold(num_epochs, data, num_splits, shuffle, random_seed,
                           train_kwargs, test_kwargs, **kwargs)
@@ -1004,11 +1007,12 @@ if "TF" in get_backends():
                              **kwargs):
 
             if random_seed is not None:
-                tf.set_random_seed(random_seed)
+                torch.manual_seed(random_seed)
 
             super().stratified_kfold(num_epochs, data, num_splits, shuffle,
                                      random_seed, label_key, train_kwargs,
                                      test_kwargs, **kwargs)
+
 
         def stratified_kfold_predict(self, num_epochs: int,
                                      data: BaseDataManager,

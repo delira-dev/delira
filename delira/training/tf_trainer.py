@@ -151,8 +151,9 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
             self.use_gpu = False
         """
 
-        super()._setup(network, optim_fn, optimizer_cls, optimizer_params,
-                       lr_scheduler_cls, lr_scheduler_params, gpu_ids,
+        self.optimizers = optim_fn(optimizer_cls, **optimizer_params)
+
+        super()._setup(network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                        lambda x: x, lambda x: x)
 
         self.use_gpu = True
@@ -182,7 +183,8 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
 
         return self.module
 
-    def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch):
+    def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch,
+                            verbose=False):
         """
         Trains the network a single epoch
 
@@ -196,7 +198,7 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         """
         self.module.training = True
 
-        return super()._train_single_epoch(batchgen, epoch)
+        return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
 
     def predict_data_mgr(self, datamgr, batch_size=None, verbose=False):
         """
