@@ -25,14 +25,10 @@ def test_load_save():
                 torch.nn.Linear(64, n_outputs)
             )
 
-
     net = DummyNetwork(32, 1)
     torch_save_checkpoint("./model.pt", model=net)
-    # fails with weights_only=False only in pytest-mode not in normal execution
-    torch_load_checkpoint("./model.pt", weights_only=True)
+    assert torch_load_checkpoint("./model.pt")
 
-    torch_save_checkpoint("./model.pt", net, weights_only=True)
-    assert torch_load_checkpoint("./model.pt", weights_only=True)
 
 if __name__ == '__main__':
     test_load_save()
