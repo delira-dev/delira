@@ -260,7 +260,7 @@ if "TORCH" in get_backends():
 
             """
             self.save_state(os.path.join(
-                self.save_path, "checkpoint_epoch_0.pt"), 0, weights_only=False)
+                self.save_path, "checkpoint_epoch_0.pt"), 0)
 
         def _at_training_end(self):
             """
