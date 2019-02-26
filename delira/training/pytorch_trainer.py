@@ -276,7 +276,7 @@ if "TORCH" in get_backends():
 
                 # load best model and return it
                 self.update_state(os.path.join(self.save_path,
-                                               'checkpoint_best.pt'),
+                                               'checkpoint_best.pt'))
 
             return self.module
 
