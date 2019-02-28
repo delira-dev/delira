@@ -835,19 +835,3 @@ if "TORCH" in get_backends():
 
             """
             return len(self.data)
-                (len(img.shape) - 1, *range(len(img.shape) - 1)))
-
-            data_dict["data"] = img.astype(np.float32)
-            return data_dict
-
-        def __len__(self):
-            """
-            Return Number of samples
-
-            Returns
-            -------
-            int
-                number of samples
-
-            """
-            return len(self.data)
