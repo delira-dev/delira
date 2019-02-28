@@ -3,6 +3,7 @@ from tqdm import tqdm
 import numpy as np
 from skimage.transform import resize
 from sklearn.model_selection import train_test_split
+import abc
 import typing
 from ..utils import subdirs
 from ..utils.decorators import make_deprecated
@@ -362,7 +363,7 @@ class BaseCacheDataset(AbstractDataset):
 
     """
 
-    def __init__(self, data_path, load_fn, img_extensions=[], gt_extensions,
+    def __init__(self, data_path, load_fn, img_extensions, gt_extensions=[],
                  **load_kwargs):
         """
 
