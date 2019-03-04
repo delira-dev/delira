@@ -1,6 +1,7 @@
-from random import choices
 from ..dataset import AbstractDataset
 from .abstract_sampler import AbstractSampler
+
+from numpy.random import choice
 
 
 class WeightedRandomSampler(AbstractSampler):
@@ -8,7 +9,7 @@ class WeightedRandomSampler(AbstractSampler):
     Implements Weighted Random Sampling
 
     """
-    def __init__(self, indices, weights=None, cum_weights=None):
+    def __init__(self, indices, weights=None):
         """
 
         Parameters
@@ -18,16 +19,13 @@ class WeightedRandomSampler(AbstractSampler):
             data index and the value at a certain index indicates the
              corresponding class
         weights : Any or None
-            sampling weights; for more details see random.choices
-        cum_weights : Any or None
-            cumulative sampling weights; for more details see random.choices
+            sampling weights; for more details see numpy.random.choice (parameter ``p``
 
         """
         super().__init__()
 
         self._indices = list(range(len(indices)))
-        self._weights = weights
-        self._cum_weights = cum_weights
+        self._weights = weight
         self._global_index = 0
 
     @classmethod
@@ -86,10 +84,10 @@ class WeightedRandomSampler(AbstractSampler):
         if new_global_idx >= len(self._indices):
             new_global_idx = len(self._indices)
 
-        samples = choices(self._indices, weights=self._weights,
-                          cum_weights=self._cum_weights,
-                          k=new_global_idx-self._global_index)
-
+        samples = choice(self._indices,
+                         size=new_global_idx - self._global_index,
+                         p=self._weights)
+        
         self._global_index = new_global_idx
         return samples
 

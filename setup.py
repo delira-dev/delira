@@ -59,7 +59,7 @@ setup(
     license=license,
     install_requires=requirements,
     tests_require=["pytest-cov"],
-    python_requires=">3.5",
+    python_requires=">=3.5",
     extras_require={
         "full": requirements_extra_full,
         "torch": requirements_extra_torch,
