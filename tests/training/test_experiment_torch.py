@@ -1,6 +1,7 @@
 import pytest
 
 import numpy as np
+from delira.training.metrics import SklearnAccuracyScore
 
 from delira import get_backends
 
@@ -16,14 +17,49 @@ if "TORCH" in get_backends():
             Parameters(fixed_params={
                 "model": {},
                 "training": {
-                    "criterions": {"CE":
-                                   torch.nn.CrossEntropyLoss()},
+                    "losses": {"CE":
+                               torch.nn.CrossEntropyLoss()},
                     "optimizer_cls": torch.optim.Adam,
                     "optimizer_params": {"lr": 1e-3},
                     "num_epochs": 2,
-                    "metrics": {},
                     "lr_sched_cls": ReduceLROnPlateauCallbackPyTorch,
-                    "lr_sched_params": {}
+                    "lr_sched_params": {},
+                    "val_metrics": {"accuracy": SklearnAccuracyScore}
+                }
+            }
+            ),
+            500,
+            50),
+
+        (
+            Parameters(fixed_params={
+                "model": {},
+                "training": {
+                    "losses": {"CE":
+                               torch.nn.CrossEntropyLoss()},
+                    "optimizer_cls": torch.optim.Adam,
+                    "optimizer_params": {"lr": 1e-3},
+                    "num_epochs": 2,
+                    "lr_sched_cls": ReduceLROnPlateauCallbackPyTorch,
+                    "lr_sched_params": {},
+                    "val_dataset_metrics": {"accuracy": SklearnAccuracyScore}
+                }
+            }
+            ),
+            500,
+            50),
+
+        (
+            Parameters(fixed_params={
+                "model": {},
+                "training": {
+                    "losses": {"CE":
+                               torch.nn.CrossEntropyLoss()},
+                    "optimizer_cls": torch.optim.Adam,
+                    "optimizer_params": {"lr": 1e-3},
+                    "num_epochs": 2,
+                    "lr_sched_cls": None,
+                    "lr_sched_params": {},
                 }
             }
             ),
@@ -37,7 +73,7 @@ else:
 
 
 @pytest.mark.parametrize("params,dataset_length_train,dataset_length_test",
-                        test_cases
+                         test_cases
                          )
 @pytest.mark.skipif("TORCH" not in get_backends(),
                     reason="No torch backend installed")
@@ -79,17 +115,18 @@ def test_experiment(params, dataset_length_train, dataset_length_test):
         def get_sample_from_index(self, index):
             return self.__getitem__(index)
 
-    exp = PyTorchExperiment(params, DummyNetwork, val_score_key="val_CE")
+    exp = PyTorchExperiment(params, DummyNetwork)
     dset_train = DummyDataset(dataset_length_train)
     dset_test = DummyDataset(dataset_length_test)
 
     dmgr_train = BaseDataManager(dset_train, 16, 4, None)
     dmgr_test = BaseDataManager(dset_test, 16, 1, None)
 
-    net = exp.run(dmgr_train, dmgr_test)
+    net = exp.run(dmgr_train, dmgr_test, )
     exp.test(params=params,
              network=net,
-             datamgr_test=dmgr_test,)
+             datamgr_test=dmgr_test,
+             metrics={"accuracy": SklearnAccuracyScore})
 
     exp.kfold(2, dmgr_train, num_splits=2)
     exp.stratified_kfold(2, dmgr_train, num_splits=2)

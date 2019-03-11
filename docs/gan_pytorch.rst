@@ -29,7 +29,7 @@ Let's first setup the essential hyperparameters. We will use
             "num_epochs": 10, # number of epochs to train
             "optimizer_cls": torch.optim.Adam, # optimization algorithm to use
             "optimizer_params": {'lr': 1e-3}, # initialization parameters for this algorithm
-            "criterions": {"L1": torch.nn.L1Loss()}, # the loss function
+            "losses": {"L1": torch.nn.L1Loss()}, # the loss function
             "lr_sched_cls": None,  # the learning rate scheduling algorithm to use
             "lr_sched_params": {}, # the corresponding initialization parameters
             "metrics": {} # and some evaluation metrics

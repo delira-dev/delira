@@ -89,7 +89,7 @@ if "TORCH" in get_backends():
 
         @staticmethod
         def closure(model, data_dict: dict,
-                    optimizers: dict, criterions={}, metrics={},
+                    optimizers: dict, losses={}, metrics={},
                     fold=0, **kwargs):
             """
             closure method to do a single backpropagation step
@@ -102,9 +102,9 @@ if "TORCH" in get_backends():
                 dictionary containing data
             optimizers : dict
                 dictionary of optimizers to optimize model's parameters
-            criterions : dict
-                dict holding the criterions to calculate errors
-                (gradients from different criterions will be accumulated)
+            losses : dict
+                dict holding the losses to calculate errors
+                (gradients from different losses will be accumulated)
             metrics : dict
                 dict holding the metrics to calculate
             fold : int
@@ -117,14 +117,14 @@ if "TORCH" in get_backends():
             dict
                 Metric values (with same keys as input dict metrics)
             dict
-                Loss values (with same keys as input dict criterions)
+                Loss values (with same keys as input dict losses)
             list
                 Arbitrary number of predictions as torch.Tensor
 
             Raises
             ------
             AssertionError
-                if optimizers or criterions are empty or the optimizers are not
+                if optimizers or losses are empty or the optimizers are not
                 specified
 
             """
@@ -149,14 +149,14 @@ if "TORCH" in get_backends():
                 fake_image_batch, discr_pred_fake, discr_pred_real = model(batch)
 
                 # train discr with prediction from real image
-                for key, crit_fn in criterions.items():
+                for key, crit_fn in losses.items():
                     _loss_val = crit_fn(discr_pred_real,
                                         torch.ones_like(discr_pred_real))
                     loss_vals[key + "_discr_real"] = _loss_val.detach()
                     total_loss_discr_real += _loss_val
 
                 # train discr with prediction from fake image
-                for key, crit_fn in criterions.items():
+                for key, crit_fn in losses.items():
                     _loss_val = crit_fn(discr_pred_fake,
                                         torch.zeros_like(discr_pred_fake))
                     loss_vals[key + "_discr_fake"] = _loss_val.detach()
@@ -175,7 +175,7 @@ if "TORCH" in get_backends():
                     optimizers["discr"].step()
 
                 # calculate adversarial loss for generator update
-                for key, crit_fn in criterions.items():
+                for key, crit_fn in losses.items():
                     _loss_val = crit_fn(discr_pred_fake,
                                         torch.ones_like(discr_pred_fake))
                     loss_vals[key + "_adversarial"] = _loss_val.detach().cpu()

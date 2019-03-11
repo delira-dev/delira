@@ -7,7 +7,6 @@ from delira import get_backends
 if "TORCH" in get_backends():
     from .experiment import PyTorchExperiment
     from .pytorch_trainer import PyTorchNetworkTrainer
-    from .metrics import AccuracyMetricPyTorch, AurocMetricPyTorch
 
 if "TF" in get_backends():
     from .experiment import TfExperiment

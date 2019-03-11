@@ -63,7 +63,7 @@ if "TORCH" in get_backends():
 
         @staticmethod
         def closure(model: AbstractPyTorchNetwork, data_dict: dict,
-                    optimizers: dict, criterions={}, metrics={},
+                    optimizers: dict, losses={}, metrics={},
                     fold=0, **kwargs):
             """
             closure method to do a single backpropagation step
@@ -77,9 +77,9 @@ if "TORCH" in get_backends():
                 dictionary containing the data
             optimizers : dict
                 dictionary of optimizers to optimize model's parameters
-            criterions : dict
-                dict holding the criterions to calculate errors
-                (gradients from different criterions will be accumulated)
+            losses : dict
+                dict holding the losses to calculate errors
+                (gradients from different losses will be accumulated)
             metrics : dict
                 dict holding the metrics to calculate
             fold : int
@@ -92,19 +92,19 @@ if "TORCH" in get_backends():
             dict
                 Metric values (with same keys as input dict metrics)
             dict
-                Loss values (with same keys as input dict criterions)
+                Loss values (with same keys as input dict losses)
             list
                 Arbitrary number of predictions as torch.Tensor
 
             Raises
             ------
             AssertionError
-                if optimizers or criterions are empty or the optimizers are not
+                if optimizers or losses are empty or the optimizers are not
                 specified
 
             """
 
-            assert (optimizers and criterions) or not optimizers, \
+            assert (optimizers and losses) or not optimizers, \
                 "Criterion dict cannot be emtpy, if optimizers are passed"
 
             loss_vals = {}
@@ -125,7 +125,7 @@ if "TORCH" in get_backends():
 
                 if data_dict:
 
-                    for key, crit_fn in criterions.items():
+                    for key, crit_fn in losses.items():
                         _loss_val = crit_fn(preds, *data_dict.values())
                         loss_vals[key] = _loss_val.detach()
                         total_loss += _loss_val
