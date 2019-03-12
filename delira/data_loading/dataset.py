@@ -661,6 +661,7 @@ class Nii3DCacheDatset(BaseCacheDataset):
 
 if "TORCH" in get_backends():
     from torchvision.datasets import CIFAR10, CIFAR100, EMNIST, MNIST, FashionMNIST
+    import torch
 
     class TorchvisionClassificationDataset(AbstractDataset):
         """
@@ -734,7 +735,7 @@ if "TORCH" in get_backends():
                 self.num_classes = 10
             elif dataset.lower() == "emnist":
                 _dataset_cls = EMNIST
-                #TODO: EMNIST requires split as kwarg. Search for 'split' in kwargs and
+                # TODO: EMNIST requires split as kwarg. Search for 'split' in kwargs and
                 # update self.num_classes accordingly
                 # https://pytorch.org/docs/stable/torchvision/datasets.html#torchvision.datasets.EMNIST
                 self.num_classes = None
@@ -770,11 +771,17 @@ if "TORCH" in get_backends():
             """
 
             data = self.data[index]
+            label = data[1]
+
+            if isinstance(label, torch.Tensor):
+                label = label.numpy()
+            elif isinstance(label, int):
+                label = np.array(label)
             data_dict = {"data": np.array(data[0]),
-                         "label": data[1].numpy().reshape(1).astype(np.float32)}
+                         "label": label.reshape(1).astype(np.float32)}
 
             if self.one_hot:
-                #TODO: Remove and refer to batchgenerators transform:
+                # TODO: Remove and refer to batchgenerators transform:
                 # https://github.com/MIC-DKFZ/batchgenerators/blob/master/batchgenerators/transforms/utility_transforms.py#L97
                 def make_onehot(num_classes, labels):
                     """
@@ -784,10 +791,10 @@ if "TORCH" in get_backends():
                     ----------
                     num_classes : int
                         number of classes present in the dataset
-                    
+
                     labels : np.ndarray
                         labels in label-encoding format
-                    
+
                     Returns
                     -------
                     np.ndarray
@@ -798,18 +805,19 @@ if "TORCH" in get_backends():
                     assert isinstance(labels, np.ndarray)
                     if len(labels.shape) > 1:
                         one_hot = np.zeros(shape=(list(labels.shape) + [num_classes]),
-                                        dtype=labels.dtype)
+                                           dtype=labels.dtype)
                         for i, c in enumerate(np.arange(num_classes)):
                             one_hot[..., i][labels == c] = 1
                     else:
                         one_hot = np.zeros(shape=([num_classes]),
-                                        dtype=labels.dtype)
+                                           dtype=labels.dtype)
                         for i, c in enumerate(np.arange(num_classes)):
                             if labels == c:
                                 one_hot[i] = 1
                     return one_hot
 
-                data_dict['label'] = make_onehot(self.num_classes, data_dict['label'])
+                data_dict['label'] = make_onehot(
+                    self.num_classes, data_dict['label'])
 
             img = data_dict["data"]
 
