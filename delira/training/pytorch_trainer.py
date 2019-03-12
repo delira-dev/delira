@@ -260,7 +260,7 @@ if "TORCH" in get_backends():
 
             """
             self.save_state(os.path.join(
-                self.save_path, "checkpoint_epoch_0.pt"), 0)
+                self.save_path, "checkpoint_epoch_0"), 0)
 
         def _at_training_end(self):
             """
@@ -339,7 +339,7 @@ if "TORCH" in get_backends():
                 self.save_state(os.path.join(self.save_path,
                                              "checkpoint_epoch_%d.pt" % epoch),
                                 epoch)
-                                  
+
             if is_best:
                 self.save_state(os.path.join(self.save_path,
                                              "checkpoint_best.pt"),
@@ -379,7 +379,7 @@ if "TORCH" in get_backends():
                 keyword arguments
 
             """
-            if not file_name.endswith(".pth") or file_name.endswith(".pt"):
+            if not (file_name.endswith(".pth") or file_name.endswith(".pt")):
                 file_name = file_name + ".pt"
             save_checkpoint(file_name, self.module, self.optimizers,
                             **kwargs)
@@ -402,9 +402,9 @@ if "TORCH" in get_backends():
 
             """
 
-            if not file_name.endswith(".pth") or file_name.endswith(".pt"):
+            if not (file_name.endswith(".pth") or file_name.endswith(".pt")):
                 file_name = file_name + ".pt"
-                                  
+
             return load_checkpoint(file_name, **kwargs)
 
         def update_state(self, file_name, *args, **kwargs):
