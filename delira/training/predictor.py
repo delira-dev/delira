@@ -29,10 +29,18 @@ class Predictor(object):
 
         Parameters
         ----------
-        model :
-            model to predict from; must be callable
-
+        model : :class:`AbstractNetwork`
+            the model to predict from
+        convert_batch_to_npy_fn : type, optional
+            function converting a batch-tensor to numpy, default: identity 
+            function
+        prepare_batch_fn : [type], optional
+            function converting a batch-tensor to the framework specific 
+            tensor-type and pushing it to correct device, default: identity 
+            function
+                    
         """
+
         self._setup(model, convert_batch_to_npy_fn, prepare_batch_fn, **kwargs)
 
     def _setup(self, network, convert_batch_to_npy_fn, prepare_batch_fn):
@@ -168,7 +176,6 @@ class Predictor(object):
                                   "it has been set once" % key)
         else:
             super().__setattr__(key, value)
-
 
     @staticmethod
     def calc_metrics(groundtruths, *predictions, metrics={}, metric_keys=None):

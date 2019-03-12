@@ -47,6 +47,7 @@ if "TORCH" in get_backends():
                      fold=0,
                      callbacks=[],
                      start_epoch=1,
+                     metric_keys=None,
                      convert_batch_to_npy_fn=torch_convert_to_numpy,
                      mixed_precision=False,
                      mixed_precision_kwargs={"enable_caching": True,
@@ -58,18 +59,25 @@ if "TORCH" in get_backends():
 
             Parameters
             ----------
-            network : :class:`AbstractPyTorchNetwork`
+            network : :class:`AbstractTfNetwork`
                 the network to train
             save_path : str
                 path to save networks to
             losses : dict
                 dictionary containing the training losses
-            optimizer_cls : subclass of torch.optim.Optimizer
+            optimizer_cls : subclass of tf.train.Optimizer
                 optimizer class implementing the optimization algorithm of choice
             optimizer_params : dict
                 keyword arguments passed to optimizer during construction
-            metrics : dict
-                dictionary containing the validation metrics
+            train_metrics : dict, optional
+                metrics, which will be evaluated during train phase
+                (should work on numpy arrays)
+            val_metrics : dict, optional
+                metrics, which will be evaluated during test phase
+                (should work on numpy arrays)
+            val_dataset_metrics : dict, optional
+                metrics, which will be evaluated during test phase on the whole
+                dataset (should work on numpy arrays)
             lr_scheduler_cls : Any
                 learning rate schedule class: must implement step() method
             lr_scheduler_params : dict
@@ -87,6 +95,14 @@ if "TORCH" in get_backends():
                 initial callbacks to register
             start_epoch : int
                 epoch to start training at
+            metric_keys : dict
+                dict specifying which batch_dict entry to use for which metric as
+                target; default: None, which will result in key "label" for all
+                metrics
+            convert_batch_to_npy_fn : type, optional
+                function converting a batch-tensor to numpy, per default this is
+                a function, which detaches the tensor, moves it to cpu and the 
+                calls ``.numpy()`` on it
             mixed_precision : bool
                 whether to use mixed precision or not (False per default)
             mixed_precision_kwargs : dict
@@ -118,7 +134,8 @@ if "TORCH" in get_backends():
                 network, save_path, crits, optimizer_cls, optimizer_params,
                 train_metrics, val_metrics, val_dataset_metrics,
                 lr_scheduler_cls, lr_scheduler_params, gpu_ids, save_freq,
-                optim_fn, fold, callbacks, start_epoch, convert_batch_to_npy_fn)
+                optim_fn, fold, callbacks, start_epoch, metric_keys,
+                convert_batch_to_npy_fn)
 
             self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                         lr_scheduler_cls, lr_scheduler_params, gpu_ids,
@@ -150,6 +167,8 @@ if "TORCH" in get_backends():
                 keyword arguments passed to lr scheduler during construction
             gpu_ids : list
                 list containing ids of GPUs to use; if empty: use cpu instead
+            convert_batch_to_npy_fn : type
+                function converting a batch-tensor to numpy
             mixed_precision : bool
                 whether to use mixed precision or not (False per default)
             mixed_precision_kwargs : dict
