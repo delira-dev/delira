@@ -67,7 +67,6 @@ SklearnRecallScore = SklearnClassificationMetric(recall_score)
 SklearnZeroOneLoss = SklearnClassificationMetric(zero_one_loss)
 
 
-# TODO: Unit test
 class AurocMetric(object):
     def __init__(self, classes=(0, 1), **kwargs):
         """
