@@ -29,10 +29,18 @@ class Predictor(object):
 
         Parameters
         ----------
-        model :
-            model to predict from; must be callable
-
+        model : :class:`AbstractNetwork`
+            the model to predict from
+        convert_batch_to_npy_fn : type, optional
+            function converting a batch-tensor to numpy, default: identity 
+            function
+        prepare_batch_fn : [type], optional
+            function converting a batch-tensor to the framework specific 
+            tensor-type and pushing it to correct device, default: identity 
+            function
+                    
         """
+
         self._setup(model, convert_batch_to_npy_fn, prepare_batch_fn, **kwargs)
 
     def _setup(self, network, convert_batch_to_npy_fn, prepare_batch_fn):
@@ -116,7 +124,7 @@ class Predictor(object):
                             batch_dict[key] = [val]
 
                 for key, val_list in batch_dict.items():
-                    batch_dict[key] = np.array(val_list)
+                    batch_dict[key] = np.concatenate(val_list)
 
                 preds = self.predict(batch_dict)
 
@@ -168,36 +176,6 @@ class Predictor(object):
                                   "it has been set once" % key)
         else:
             super().__setattr__(key, value)
-
-    @staticmethod
-    def _is_better_val_scores(old_val_score, new_val_score,
-                              mode='highest'):
-        """
-        Check whether the new val score is better than the old one
-        with respect to the optimization goal
-
-        Parameters
-        ----------
-        old_val_score :
-            old validation score
-        new_val_score :
-            new validation score
-        mode: str
-            String to specify whether a higher or lower validation score is
-            optimal; must be in ['highest', 'lowest']
-
-        Returns
-        -------
-        bool
-            True if new score is better, False otherwise
-        """
-
-        assert mode in ['highest', 'lowest'], "Invalid Comparison Mode"
-
-        if mode == 'highest':
-            return new_val_score > old_val_score
-        elif mode == 'lowest':
-            return new_val_score < old_val_score
 
     @staticmethod
     def calc_metrics(groundtruths, *predictions, metrics={}, metric_keys=None):

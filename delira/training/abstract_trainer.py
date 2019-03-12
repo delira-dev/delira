@@ -49,6 +49,7 @@ class AbstractNetworkTrainer(Predictor):
                  fold: int,
                  callbacks: typing.List[AbstractCallback],
                  start_epoch: int,
+                 metric_keys=None,
                  convert_batch_to_npy_fn=lambda x: x,
                  **kwargs
                  ):
@@ -56,12 +57,54 @@ class AbstractNetworkTrainer(Predictor):
 
         Parameters
         ----------
+        network : :class:`AbstractTfNetwork`
+            the network to train
+        save_path : str
+            path to save networks to
+        losses : dict
+            dictionary containing the training losses
+        optimizer_cls : subclass of tf.train.Optimizer
+            optimizer class implementing the optimization algorithm of choice
+        optimizer_params : dict
+            keyword arguments passed to optimizer during construction
+        train_metrics : dict, optional
+            metrics, which will be evaluated during train phase
+            (should work on numpy arrays)
+        val_metrics : dict, optional
+            metrics, which will be evaluated during test phase
+            (should work on numpy arrays)
+        val_dataset_metrics : dict, optional
+            metrics, which will be evaluated during test phase on the whole
+            dataset (should work on numpy arrays)
+        lr_scheduler_cls : Any
+            learning rate schedule class: must implement step() method
+        lr_scheduler_params : dict
+            keyword arguments passed to lr scheduler during construction
+        gpu_ids : list
+            list containing ids of GPUs to use; if empty: use cpu instead
+        save_freq : int
+            integer specifying how often to save the current model's state.
+            State is saved every state_freq epochs
+        optim_fn : function
+            creates a dictionary containing all necessary optimizers
         fold : int
-            current fold in (default: 0)
+            current cross validation fold (0 per default)
         callbacks : list
-            list of callbacks to register
+            initial callbacks to register
+        start_epoch : int
+            epoch to start training at
+        metric_keys : dict
+            dict specifying which batch_dict entry to use for which metric as
+            target; default: None, which will result in key "label" for all
+            metrics
+        convert_batch_to_npy_fn : type, optional
+            function converting a batch-tensor to numpy, per default this is
+            the identity function
+        **kwargs :
+            Additional keyword arguments
 
         """
+
 
         # explicity not call self._setup here to reuse the __init__ of
         # abstract class. self._setup has to be called in subclass
@@ -93,18 +136,17 @@ class AbstractNetworkTrainer(Predictor):
         self.val_dataset_metrics = val_dataset_metrics
         self.stop_training = False
         self.save_freq = save_freq
+        self.metric_keys = metric_keys
 
         for cbck in callbacks:
             self.register_callback(cbck)
 
-    def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-               convert_batch_to_npy_fn, prepare_batch_fn):
+    def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids, convert_batch_to_npy_fn, prepare_batch_fn):
 
-        super()._setup(network, convert_batch_to_npy_fn,
-                       prepare_batch_fn)
+        super()._setup(network, convert_batch_to_npy_fn, prepare_batch_fn)
 
         self.closure_fn = network.closure
-        
+
         # optimizers must exist before calling _setup()
         if lr_scheduler_cls is not None:
             for key, optim in self.optimizers.items():
@@ -335,7 +377,8 @@ class AbstractNetworkTrainer(Predictor):
                 {k: v for k,
                  v in val_inputs.items() if k != "data"},
                 *val_predictions,
-                metrics={**self.val_metrics, **self.val_dataset_metrics})
+                metrics={**self.val_metrics, **self.val_dataset_metrics},
+                metric_keys=self.metric_keys)
 
             total_metrics = {
                 **{"val_" + k: v for k, v in metrics_val.items()},
@@ -533,3 +576,33 @@ class AbstractNetworkTrainer(Predictor):
 
         """
         self._update_state(self.load_state(file_name, *args, **kwargs))
+
+    @staticmethod
+    def _is_better_val_scores(old_val_score, new_val_score,
+                              mode='highest'):
+        """
+        Check whether the new val score is better than the old one
+        with respect to the optimization goal
+
+        Parameters
+        ----------
+        old_val_score :
+            old validation score
+        new_val_score :
+            new validation score
+        mode: str
+            String to specify whether a higher or lower validation score is
+            optimal; must be in ['highest', 'lowest']
+
+        Returns
+        -------
+        bool
+            True if new score is better, False otherwise
+        """
+
+        assert mode in ['highest', 'lowest'], "Invalid Comparison Mode"
+
+        if mode == 'highest':
+            return new_val_score > old_val_score
+        elif mode == 'lowest':
+            return new_val_score < old_val_score

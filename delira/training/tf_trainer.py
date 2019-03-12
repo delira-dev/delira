@@ -42,6 +42,7 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
                  fold=0,
                  callbacks=[],
                  start_epoch=1,
+                 metric_keys=None,
                  convert_batch_to_npy_fn=lambda x: x,
                  **kwargs
                  ):
@@ -59,8 +60,15 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
             optimizer class implementing the optimization algorithm of choice
         optimizer_params : dict
             keyword arguments passed to optimizer during construction
-        metrics : dict
-            dictionary containing the validation metrics
+        train_metrics : dict, optional
+            metrics, which will be evaluated during train phase 
+            (should work on numpy arrays)
+        val_metrics : dict, optional
+            metrics, which will be evaluated during test phase 
+            (should work on numpy arrays)
+        val_dataset_metrics : dict, optional
+            metrics, which will be evaluated during test phase on the whole 
+            dataset (should work on numpy arrays)
         lr_scheduler_cls : Any
             learning rate schedule class: must implement step() method
         lr_scheduler_params : dict
@@ -78,8 +86,15 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
             initial callbacks to register
         start_epoch : int
             epoch to start training at
+        metric_keys : dict
+            dict specifying which batch_dict entry to use for which metric as 
+            target; default: None, which will result in key "label" for all 
+            metrics
+        convert_batch_to_npy_fn : type, optional
+            function converting a batch-tensor to numpy, per default this is
+            the identity function
         **kwargs :
-            additional keyword arguments
+            Additional keyword arguments
 
         """
 
@@ -87,7 +102,7 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
             network, save_path, losses, optimizer_cls, optimizer_params,
             train_metrics, val_metrics, val_dataset_metrics, lr_scheduler_cls,
             lr_scheduler_params, gpu_ids, save_freq, optim_fn, fold, callbacks,
-            start_epoch, convert_batch_to_npy_fn)
+            start_epoch, metric_keys, convert_batch_to_npy_fn)
 
         # remove prior Trixihandlers and ensure logging of training results to self.save_path
         # This facilitates visualization of multiple splits/fold inside one tensorboard-instance by means of
