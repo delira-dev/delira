@@ -179,6 +179,26 @@ class Predictor(object):
 
     @staticmethod
     def calc_metrics(groundtruths, *predictions, metrics={}, metric_keys=None):
+        """
+        Compute metrics
+
+        Parameters
+        ----------
+        groundtruths: dict
+            dict with ground truth data
+        predictions: np.ndarray
+            predictions of network in numpy
+        metrics: dict
+            dict with metrics
+        metric_keys: dict
+            dict which contains hashable for groundtruths dict for the
+            respective metric
+
+        Returns
+        -------
+        dict
+            dict with metric results
+        """
         if metric_keys is None:
             metric_keys = {k: "label" for k in metrics.keys()}
 

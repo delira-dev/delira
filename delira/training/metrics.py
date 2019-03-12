@@ -11,7 +11,6 @@ import numpy as np
 from delira import get_backends
 
 
-# TODO: check input type of y_true, y_pred
 class SklearnClassificationMetric(object):
     def __init__(self, score_fn):
         """
@@ -33,7 +32,7 @@ class SklearnClassificationMetric(object):
         y_true: np.ndarray
             ground truth data
         y_pred: np.ndarray
-            predicted result
+            predictions of network
         kwargs:
             variable number of keyword arguments passed to score_fn
 
@@ -65,24 +64,23 @@ SklearnRecallScore = SklearnClassificationMetric(recall_score)
 SklearnZeroOneLoss = SklearnClassificationMetric(zero_one_loss)
 
 
-# TODO: check input format of y_true and y_pred
 # TODO: Unit test
 class AurocMetric(object):
     def __init__(self, classes=(0, 1), **kwargs):
         """
-
+        Implements the auroc metric for binary and multi class classification
 
         Parameters
         ----------
         classes
         kwargs:
-            variable number of keyword arguments passed to label_binarize
+            variable number of keyword arguments passed to roc_auc_score
         """
         self.classes = classes
         self.kwargs = kwargs
         if len(self.classes) < 2:
-            raise ValueError("At least classes 2 must exist for classification. "
-                             "Only classes {} were passed to "
+            raise ValueError("At least classes 2 must exist for "
+                             "classification. Only classes {} were passed to "
                              "AurocMetric.".format(classes))
 
     def __call__(self, y_true, y_pred, **kwargs):
@@ -91,13 +89,17 @@ class AurocMetric(object):
 
         Parameters
         ----------
-        y_true:
-        y_pred:
+        y_true: np.ndarray
+            ground truth data with shape (N)
+        y_pred: np.ndarray
+            predictions of network in numpy format with shape (N, nclasses)
         kwargs:
             variable number of keyword arguments passed to roc_auc_score
+
         Returns
         -------
-
+        float
+            computes auc score
         """
         # binary classification
         if len(self.classes) == 2:
@@ -114,5 +116,5 @@ class AurocMetric(object):
 
         # classification with multiple classes
         if len(self.classes) > 2:
-            y_true_bin = label_binarize(y_true, self.classes, **self.kwargs)
-            return roc_auc_score(y_true_bin, y_pred, **kwargs)
+            y_true_bin = label_binarize(y_true, self.classes)
+            return roc_auc_score(y_true_bin, y_pred, **kwargs, **self.kwargs)
