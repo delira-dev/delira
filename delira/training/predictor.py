@@ -116,7 +116,7 @@ class Predictor(object):
                             batch_dict[key] = [val]
 
                 for key, val_list in batch_dict.items():
-                    batch_dict[key] = np.array(val_list)
+                    batch_dict[key] = np.concatenate(val_list)
 
                 preds = self.predict(batch_dict)
 
