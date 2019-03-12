@@ -71,7 +71,7 @@ if "TORCH" in get_backends():
                 keyword arguments passed to optimizer during construction
             train_metrics : dict, optional
                 metrics, which will be evaluated during train phase
-                (should work on numpy arrays)
+                (should work on framework's tensor types)
             val_metrics : dict, optional
                 metrics, which will be evaluated during test phase
                 (should work on numpy arrays)
