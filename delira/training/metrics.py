@@ -74,7 +74,8 @@ class AurocMetric(object):
 
         Parameters
         ----------
-        classes
+        classes: array-like
+            uniquely holds the label for each class.
         kwargs:
             variable number of keyword arguments passed to roc_auc_score
         """
