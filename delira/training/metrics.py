@@ -12,7 +12,7 @@ from delira import get_backends
 
 
 class SklearnClassificationMetric(object):
-    def __init__(self, score_fn):
+    def __init__(self, score_fn, **kwargs):
         """
         Wraps an score function as a metric
 
@@ -20,8 +20,11 @@ class SklearnClassificationMetric(object):
         ----------
         score_fn: function
             function which should be wrapped
+        kwargs:
+            variable number of keyword arguments passed to score_fn function
         """
         self._score_fn = score_fn
+        self.kwargs = kwargs
 
     def __call__(self, y_true, y_pred, **kwargs):
         """
@@ -46,7 +49,7 @@ class SklearnClassificationMetric(object):
         for k, v in arrays.items():
             arrays[k] = v.reshape(v.shape[0], -1).astype(np.uint8)
 
-        return self._score_fn(**arrays, **kwargs)
+        return self._score_fn(**arrays, **kwargs, **self.kwargs)
 
 
 SklearnAccuracyScore = SklearnClassificationMetric(accuracy_score)
@@ -103,12 +106,12 @@ class AurocMetric(object):
         """
         # binary classification
         if len(self.classes) == 2:
-            # output of two units (e.g. softmax)
-            if y_pred.shape[2] == 2:
-                return roc_auc_score(y_true, y_pred[:, 1], **kwargs)
             # single output unit (e.g. sigmoid)
-            elif y_pred.shape[2] == 1:
+            if len(y_pred.shape) == 1 or y_pred.shape[2] == 1:
                 return roc_auc_score(y_true, y_pred, **kwargs)
+            # output of two units (e.g. softmax)
+            elif y_pred.shape[2] == 2:
+                return roc_auc_score(y_true, y_pred[:, 1], **kwargs)
             else:
                 raise ValueError("Can not compute auroc metric for binary "
                                  "clases with {} predicted "
