@@ -78,6 +78,11 @@ class AurocMetric(object):
             uniquely holds the label for each class.
         kwargs:
             variable number of keyword arguments passed to roc_auc_score
+
+        Raises
+        ------
+        ValueError
+            if not at least two classes are provided
         """
         self.classes = classes
         self.kwargs = kwargs
@@ -103,6 +108,12 @@ class AurocMetric(object):
         -------
         float
             computes auc score
+
+        Raises
+        ------
+        ValueError
+            if two classes are given and the predictions contain more than two
+            classes
         """
         # binary classification
         if len(self.classes) == 2:
@@ -114,7 +125,7 @@ class AurocMetric(object):
                 return roc_auc_score(y_true, y_pred[:, 1], **kwargs)
             else:
                 raise ValueError("Can not compute auroc metric for binary "
-                                 "clases with {} predicted "
+                                 "classes with {} predicted "
                                  "classes.".format(y_pred.shape[2]))
 
         # classification with multiple classes
