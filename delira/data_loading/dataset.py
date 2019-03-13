@@ -1,9 +1,9 @@
-import abc
 import os
 from tqdm import tqdm
 import numpy as np
 from skimage.transform import resize
 from sklearn.model_selection import train_test_split
+import abc
 import typing
 from ..utils import subdirs
 from ..utils.decorators import make_deprecated
@@ -243,7 +243,7 @@ class BaseLazyDataset(AbstractDataset):
 
     """
 
-    def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
+    def __init__(self, data_path, load_fn, img_extensions, gt_extensions=[],
                  **load_kwargs):
         """
 
@@ -325,7 +325,7 @@ class BaseLazyDataset(AbstractDataset):
             if fname.endswith(ext):
                 is_valid_file = True
 
-        has_label = False
+        has_label = not self._gt_extensions
         for ext in self._gt_extensions:
             label_file = fname.rsplit(".", maxsplit=1)[0] + ext
             if os.path.isfile(label_file):
@@ -363,7 +363,7 @@ class BaseCacheDataset(AbstractDataset):
 
     """
 
-    def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
+    def __init__(self, data_path, load_fn, img_extensions, gt_extensions=[],
                  **load_kwargs):
         """
 
@@ -446,7 +446,7 @@ class BaseCacheDataset(AbstractDataset):
             if fname.endswith(ext):
                 is_valid_file = True
 
-        has_label = False
+        has_label = not self._gt_extensions
         for ext in self._gt_extensions:
             label_file = fname.rsplit(".", maxsplit=1)[0] + ext
             if os.path.isfile(label_file):

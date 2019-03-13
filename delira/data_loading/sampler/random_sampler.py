@@ -1,7 +1,9 @@
-from random import shuffle, choices
 from collections import OrderedDict
 from ..dataset import AbstractDataset
 from .abstract_sampler import AbstractSampler
+
+from numpy.random import choice, shuffle
+from numpy import concatenate
 
 
 class RandomSampler(AbstractSampler):
@@ -53,7 +55,9 @@ class RandomSampler(AbstractSampler):
         if new_global_idx >= len(self._indices):
             new_global_idx = len(self._indices)
 
-        indices = choices(self._indices, k=new_global_idx - self._global_index)
+        indices = choice(self._indices,
+                         size=new_global_idx - self._global_index)
+        # indices = choices(self._indices, k=new_global_idx - self._global_index)
         self._global_index = new_global_idx
         return indices
 
@@ -145,7 +149,7 @@ class PrevalenceRandomSampler(AbstractSampler):
         _samples = []
 
         for key, idx_list in self._indices.items():
-            _samples += choices(idx_list, k=samples_per_class)
+            _samples.append(choice(idx_list, size=samples_per_class))
 
         # add elements until len(_samples) == n_indices
         # works because less indices are left than n_classes
@@ -153,8 +157,9 @@ class PrevalenceRandomSampler(AbstractSampler):
         for key, idx_list in self._indices.items():
             if len(_samples) >= n_indices:
                 break
-            _samples += choices(idx_list, k=1)
+            _samples.append(choice(idx_list, size=1))
 
+        _samples = concatenate(_samples)
         self._global_index += n_indices
         if self._shuffle:
             shuffle(_samples)
@@ -254,7 +259,7 @@ class StoppingPrevalenceRandomSampler(AbstractSampler):
             if new_global_idx >= len(idx_list):
                 new_global_idx = len(idx_list)
 
-            _samples += choices(idx_list, k=samples_per_class)
+            _samples.append(choice(idx_list, size=samples_per_class))
 
             self._global_idxs[key] = new_global_idx
 
@@ -267,9 +272,10 @@ class StoppingPrevalenceRandomSampler(AbstractSampler):
 
             new_global_idx = self._global_idxs[key] + 1
 
-            _samples += choices(idx_list, k=1)
+            _samples.append(choice(idx_list, size=1))
             self._global_idxs[key] = new_global_idx
 
+        _samples = concatenate(_samples)
         if self._shuffle:
             shuffle(_samples)
 
