@@ -17,7 +17,7 @@ def test_sklearn_classification_metric():
     wrapped_score = metric_wrapped(target, pred)
     assert np.abs(wrapped_score - 0.4) < 1e-8
 
-    metric_ac = SklearnAccuracyScore()
+    metric_ac = SklearnAccuracyScore
     score = metric_ac(target, pred)
     assert np.abs(score - 0.4) < 1e-8
 
