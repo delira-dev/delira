@@ -2,6 +2,7 @@ from ..dataset import AbstractDataset
 from .abstract_sampler import AbstractSampler
 
 from numpy.random import choice
+import numpy as np
 
 
 class WeightedRandomSampler(AbstractSampler):
@@ -25,7 +26,7 @@ class WeightedRandomSampler(AbstractSampler):
         super().__init__()
 
         self._indices = list(range(len(indices)))
-        self._weights = weight
+        self._weights = weights
         self._global_index = 0
 
     @classmethod
@@ -45,9 +46,7 @@ class WeightedRandomSampler(AbstractSampler):
             The initialzed sampler
 
         """
-
-        indices = list(range(len(dataset)))
-        labels = [d['label'] for d in dataset.data]
+        labels = [d['label'] for d in dataset]
         return cls(labels, **kwargs)
 
     def _get_indices(self, n_indices):
@@ -68,8 +67,6 @@ class WeightedRandomSampler(AbstractSampler):
         ------
         StopIteration
             If maximal number of samples is reached
-        TypeError
-            if weights and cum_weights are specified at the same time
         ValueError
             if weights or cum_weights don't match the population
 
@@ -94,3 +91,28 @@ class WeightedRandomSampler(AbstractSampler):
     def __len__(self):
         return len(self._indices)
 
+
+class WeightedPrevalenceRandomSampler(WeightedRandomSampler):
+    def __int__(self, indices):
+        """
+        Implements random Per-Class Sampling and ensures uniform sampling
+        of all classes
+
+        Parameters
+        ----------
+        indices : array-like
+            list of classes each sample belongs to. List index corresponds to
+            data index and the value at a certain index indicates the
+             corresponding class
+        """
+        weights = np.array(indices)
+        classes, classes_count = np.unique(indices, return_counts=True)
+
+        # compute probabilities
+        classes_count = classes_count / weights.shape[0]
+
+        # generate weight matrix
+        for i, c in enumerate(classes):
+            weights[weights == c] = classes_count[i]
+
+        super().__init__(indices, weights=weights)

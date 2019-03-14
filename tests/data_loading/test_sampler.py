@@ -5,10 +5,12 @@ from delira.data_loading.sampler import LambdaSampler, \
                                         SequentialSampler, \
                                         StoppingPrevalenceRandomSampler, \
                                         StoppingPrevalenceSequentialSampler, \
-                                        WeightedRandomSampler
+                                        WeightedRandomSampler, \
+                                        WeightedPrevalenceRandomSampler
 
 import numpy as np
 from . import DummyDataset
+
 
 def test_lambda_sampler():
     np.random.seed(1)
@@ -25,6 +27,7 @@ def test_lambda_sampler():
 
     assert sampler_a(15) == list(range(15))
     assert sampler_b(15) == list(range(len(dset) - 15, len(dset)))
+
 
 def test_prevalence_random_sampler():
     np.random.seed(1)
@@ -49,6 +52,7 @@ def test_prevalence_random_sampler():
 
     assert len(sampler(5)) == 5
 
+
 def test_prevalence_sequential_sampler():
     np.random.seed(1)
     dset = DummyDataset(600, [0.5, 0.3, 0.2])
@@ -58,6 +62,7 @@ def test_prevalence_sequential_sampler():
     # ToDo add test considering actual sampling strategy
 
     assert len(sampler(5)) == 5
+
 
 def test_random_sampler():
     np.random.seed(1)
@@ -69,6 +74,7 @@ def test_random_sampler():
 
     # checks if labels are all the same (should not happen if random sampled)
     assert len(set([dset[_idx]["label"] for _idx in sampler(301)])) > 1
+
 
 def test_sequential_sampler():
     np.random.seed(1)
@@ -83,6 +89,7 @@ def test_sequential_sampler():
     # next 100 elements also same label -> next 201 elements: two different 
     # labels
     assert len(set([dset[_idx]["label"] for _idx in sampler(101)])) == 2
+
 
 def test_stopping_prevalence_random_sampler():
     np.random.seed(1)
@@ -100,6 +107,7 @@ def test_stopping_prevalence_random_sampler():
     except StopIteration:
         assert True
 
+
 def test_stopping_prevalence_sequential_sampler():
     np.random.seed(1)
     dset = DummyDataset(600, [0.5, 0.3, 0.2])
@@ -115,6 +123,52 @@ def test_stopping_prevalence_sequential_sampler():
 
     except StopIteration:
         assert True
+
+
+def test_weighted_sampler():
+    np.random.seed(1)
+    dset = DummyDataset(600, [0.5, 0.3, 0.2])
+
+    sampler = WeightedRandomSampler.from_dataset(dset)
+
+    for batch_len in [1, 2, 3]:
+
+        equal_batch = sampler(batch_len)
+
+        seen_labels = []
+        for idx in equal_batch:
+            curr_label = dset[idx]["label"]
+
+            if curr_label not in seen_labels:
+                seen_labels.append(curr_label)
+            else:
+                assert False, "Label already seen and labels must be unique. \
+                                Batch length: %d" % batch_len
+
+    assert len(sampler(5)) == 5
+
+
+def test_weighted_prevalence_sampler():
+    np.random.seed(1)
+    dset = DummyDataset(600, [0.5, 0.3, 0.2])
+
+    sampler = WeightedPrevalenceRandomSampler.from_dataset(dset)
+
+    for batch_len in [1, 2, 3]:
+
+        equal_batch = sampler(batch_len)
+
+        seen_labels = []
+        for idx in equal_batch:
+            curr_label = dset[idx]["label"]
+
+            if curr_label not in seen_labels:
+                seen_labels.append(curr_label)
+            else:
+                assert False, "Label already seen and labels must be unique. \
+                                Batch length: %d" % batch_len
+
+    assert len(sampler(5)) == 5
 
 
 if __name__ == '__main__':

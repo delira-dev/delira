@@ -116,6 +116,20 @@ class PrevalenceRandomSampler(AbstractSampler):
 
     @classmethod
     def from_dataset(cls, dataset: AbstractDataset, **kwargs):
+        """
+        Classmethod to initialize the sampler from a given dataset
+
+        Parameters
+        ----------
+        dataset : AbstractDataset
+            the given dataset
+
+        Returns
+        -------
+        AbstractSampler
+            The initialized sampler
+
+        """
         indices = range(len(dataset))
         labels = [dataset[idx]['label'] for idx in indices]
         return cls(labels, **kwargs)
@@ -225,6 +239,20 @@ class StoppingPrevalenceRandomSampler(AbstractSampler):
 
     @classmethod
     def from_dataset(cls, dataset: AbstractDataset, **kwargs):
+        """
+        Classmethod to initialize the sampler from a given dataset
+
+        Parameters
+        ----------
+        dataset : AbstractDataset
+            the given dataset
+
+        Returns
+        -------
+        AbstractSampler
+            The initialized sampler
+
+        """
         indices = range(len(dataset))
         labels = [dataset[idx]['label'] for idx in indices]
         return cls(labels, **kwargs)
