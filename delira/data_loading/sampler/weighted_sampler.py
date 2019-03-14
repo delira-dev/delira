@@ -1,5 +1,5 @@
-from ..dataset import AbstractDataset
-from .abstract_sampler import AbstractSampler
+from delira.data_loading.dataset import AbstractDataset
+from delira.data_loading.sampler.abstract_sampler import AbstractSampler
 
 from numpy.random import choice
 import numpy as np
@@ -93,7 +93,7 @@ class WeightedRandomSampler(AbstractSampler):
 
 
 class WeightedPrevalenceRandomSampler(WeightedRandomSampler):
-    def __int__(self, indices):
+    def __init__(self, indices):
         """
         Implements random Per-Class Sampling and ensures uniform sampling
         of all classes
@@ -105,14 +105,14 @@ class WeightedPrevalenceRandomSampler(WeightedRandomSampler):
             data index and the value at a certain index indicates the
              corresponding class
         """
-        weights = np.array(indices)
+        weights = np.array(indices).astype(np.float)
         classes, classes_count = np.unique(indices, return_counts=True)
 
         # compute probabilities
-        classes_count = classes_count / weights.shape[0]
+        target_prob = 1/classes.shape[0]
 
         # generate weight matrix
         for i, c in enumerate(classes):
-            weights[weights == c] = classes_count[i]
+            weights[weights == c] = (target_prob/classes_count[i])
 
         super().__init__(indices, weights=weights)

@@ -49,7 +49,6 @@ def test_prevalence_random_sampler():
                 assert False, "Label already seen and labels must be unique. \
                                 Batch length: %d" % batch_len
 
-
     assert len(sampler(5)) == 5
 
 
@@ -131,44 +130,27 @@ def test_weighted_sampler():
 
     sampler = WeightedRandomSampler.from_dataset(dset)
 
-    for batch_len in [1, 2, 3]:
+    assert len(sampler(250)) == 250
 
-        equal_batch = sampler(batch_len)
-
-        seen_labels = []
-        for idx in equal_batch:
-            curr_label = dset[idx]["label"]
-
-            if curr_label not in seen_labels:
-                seen_labels.append(curr_label)
-            else:
-                assert False, "Label already seen and labels must be unique. \
-                                Batch length: %d" % batch_len
-
-    assert len(sampler(5)) == 5
+    # checks if labels are all the same (should not happen if random sampled)
+    assert len(set([dset[_idx]["label"] for _idx in sampler(301)])) > 1
 
 
 def test_weighted_prevalence_sampler():
     np.random.seed(1)
-    dset = DummyDataset(600, [0.5, 0.3, 0.2])
+    dset = DummyDataset(2000, [0.5, 0.3, 0.2])
 
     sampler = WeightedPrevalenceRandomSampler.from_dataset(dset)
 
-    for batch_len in [1, 2, 3]:
+    assert len(sampler(250)) == 250
 
-        equal_batch = sampler(batch_len)
-
-        seen_labels = []
-        for idx in equal_batch:
-            curr_label = dset[idx]["label"]
-
-            if curr_label not in seen_labels:
-                seen_labels.append(curr_label)
-            else:
-                assert False, "Label already seen and labels must be unique. \
-                                Batch length: %d" % batch_len
-
-    assert len(sampler(5)) == 5
+    # checks if labels are all the same (should not happen if random sampled)
+    n_draw = 1000
+    label_list = [dset[_idx]["label"] for _idx in sampler(n_draw)]
+    assert len(set(label_list)) > 1
+    assert abs(label_list.count(0)/n_draw - (1 / 3)) < 0.1
+    assert abs(label_list.count(1)/n_draw - (1 / 3)) < 0.1
+    assert abs(label_list.count(2)/n_draw - (1 / 3)) < 0.1
 
 
 if __name__ == '__main__':
@@ -179,3 +161,5 @@ if __name__ == '__main__':
     test_sequential_sampler()
     test_stopping_prevalence_random_sampler()
     test_stopping_prevalence_sequential_sampler()
+    test_weighted_sampler()
+    test_weighted_prevalence_sampler()
