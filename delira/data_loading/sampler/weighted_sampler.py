@@ -1,5 +1,5 @@
-from delira.data_loading.dataset import AbstractDataset
-from delira.data_loading.sampler.abstract_sampler import AbstractSampler
+from ..dataset import AbstractDataset
+from .abstract_sampler import AbstractSampler
 
 from numpy.random import choice
 import numpy as np
