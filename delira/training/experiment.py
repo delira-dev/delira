@@ -687,6 +687,7 @@ if "TORCH" in get_backends():
                 optim_fn=create_optims_default_pytorch,
                 criterions=params.nested_get('criterions'),
                 optimizer_params=params.nested_get('optimizer_params'),
+                **self.kwargs,
                 **kwargs)
 
             # testing with batchsize 1 and 1 augmentation processs to
@@ -1050,6 +1051,7 @@ if "TF" in get_backends():
                 optimizer_params={},
                 metrics=metrics,
                 losses={},
+                **self.kwargs,
                 **kwargs)
 
             # testing with batchsize 1 and 1 augmentation processs to
