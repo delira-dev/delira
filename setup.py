@@ -58,7 +58,7 @@ setup(
     long_description_content_type='text/markdown',
     license=license,
     install_requires=requirements,
-    tests_require=["pytest-cov"],
+    tests_require=["coverage],
     python_requires=">=3.5",
     extras_require={
         "full": requirements_extra_full,

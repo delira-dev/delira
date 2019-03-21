@@ -2,69 +2,78 @@ import numpy as np
 
 from delira.data_loading import ConcatDataset, BaseCacheDataset
 
-def test_data_subset_concat():
-    def load_dummy_sample(path, label_load_fct):
-        """
-        Returns dummy data, independent of path or label_load_fct
-        Parameters
-        ----------
-        path
-        label_load_fct
-        Returns
-        -------
-        : dict
-            dict with data and label
-        """
-        return {'data': np.random.rand(1, 256, 256),
-                'label': np.random.randint(2)}
+import unittest
 
-    class DummyCacheDataset(BaseCacheDataset):
-        def __init__(self, num: int, label_load_fct, *args, **kwargs):
+
+class DataSubsetConcatTest(unittest.TestCase):
+
+    def test_data_subset_concat(self):
+
+        def load_dummy_sample(path, label_load_fct):
             """
-            Generates random samples with _make_dataset
+            Returns dummy data, independent of path or label_load_fct
             Parameters
             ----------
-            num : int
-                number of random samples
-            args :
-                passed to BaseCacheDataset
-            kwargs :
-                passed to BaseCacheDataset
-
+            path
+            label_load_fct
+            Returns
+            -------
+            : dict
+                dict with data and label
             """
-            self.label_load_fct = label_load_fct
-            super().__init__(data_path=num, *args, **kwargs)
+            return {'data': np.random.rand(1, 256, 256),
+                    'label': np.random.randint(2)}
 
-        def _make_dataset(self, path):
-            data = []
-            for i in range(path):
-                data.append(self._load_fn(i, self.label_load_fct))
-            return data
+        class DummyCacheDataset(BaseCacheDataset):
+            def __init__(self, num: int, label_load_fct, *args, **kwargs):
+                """
+                Generates random samples with _make_dataset
+                Parameters
+                ----------
+                num : int
+                    number of random samples
+                args :
+                    passed to BaseCacheDataset
+                kwargs :
+                    passed to BaseCacheDataset
 
-    dset_a = DummyCacheDataset(500, None, load_fn=load_dummy_sample,
-                               img_extensions=[], gt_extensions=[])
-    dset_b = DummyCacheDataset(700, None, load_fn=load_dummy_sample,
-                               img_extensions=[], gt_extensions=[])
+                """
+                self.label_load_fct = label_load_fct
+                super().__init__(data_path=num, *args, **kwargs)
 
-    # test concatenating
-    concat_dataset = ConcatDataset(dset_a, dset_b)
-    assert len(concat_dataset) == (len(dset_a) + len(dset_b))
+            def _make_dataset(self, path):
+                data = []
+                for i in range(path):
+                    data.append(self._load_fn(i, self.label_load_fct))
+                return data
 
-    assert concat_dataset[0]
+        dset_a = DummyCacheDataset(500, None, load_fn=load_dummy_sample,
+                                   img_extensions=[], gt_extensions=[])
+        dset_b = DummyCacheDataset(700, None, load_fn=load_dummy_sample,
+                                   img_extensions=[], gt_extensions=[])
 
-    # test slicing:
-    half_len_a = len(dset_a) // 2
-    half_len_b = len(dset_b) // 2
-    assert len(dset_a.get_subset(range(half_len_a))) == half_len_a
-    assert len(dset_b.get_subset(range(half_len_b))) == half_len_b
+        # test concatenating
+        concat_dataset = ConcatDataset(dset_a, dset_b)
 
-    sliced_concat_set = concat_dataset.get_subset(
-        range(half_len_a + half_len_b))
-    assert len(sliced_concat_set) == (half_len_a + half_len_b)
+        self.assertEqual(len(concat_dataset), len(dset_a) + len(dset_b))
 
-    # check if entries are valid
-    assert sliced_concat_set[0]
+        self.assertTrue(concat_dataset[0])
+
+        # test slicing:
+        half_len_a = len(dset_a) // 2
+        half_len_b = len(dset_b) // 2
+
+        self.assertEqual(len(dset_a.get_subset(range(half_len_a))), half_len_a)
+        self.assertEqual(len(dset_b.get_subset(range(half_len_b))), half_len_b)
+
+        sliced_concat_set = concat_dataset.get_subset(
+            range(half_len_a + half_len_b))
+
+        self.assertEqual(len(sliced_concat_set), half_len_a + half_len_b)
+
+        # check if entries are valid
+        self.assertTrue(sliced_concat_set[0])
 
 
 if __name__ == "__main__":
-    test_data_subset_concat()
+    unittest.main()
