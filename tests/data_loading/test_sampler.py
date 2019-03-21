@@ -7,11 +7,12 @@ from delira.data_loading.sampler import LambdaSampler, \
     StoppingPrevalenceSequentialSampler, \
     WeightedRandomSampler
 
+
 import numpy as np
 from . import DummyDataset
 
-import unittest
 
+import unittest
 
 class SamplerTest(unittest.TestCase):
 
@@ -21,6 +22,7 @@ class SamplerTest(unittest.TestCase):
 
         def sampling_fn_a(index_list, n_indices):
             return index_list[:n_indices]
+
 
         def sampling_fn_b(index_list, n_indices):
             return index_list[-n_indices:]
@@ -112,6 +114,35 @@ class SamplerTest(unittest.TestCase):
                 sample = sampler(3)
                 self.assertEqual(
                     len(set([dset[_idx]["label"] for _idx in sample])), 3)
+
+
+def test_weighted_sampler():
+    np.random.seed(1)
+    dset = DummyDataset(600, [0.5, 0.3, 0.2])
+
+    sampler = WeightedRandomSampler.from_dataset(dset)
+
+    assert len(sampler(250)) == 250
+
+    # checks if labels are all the same (should not happen if random sampled)
+    assert len(set([dset[_idx]["label"] for _idx in sampler(301)])) > 1
+
+
+def test_weighted_prevalence_sampler():
+    np.random.seed(1)
+    dset = DummyDataset(2000, [0.5, 0.3, 0.2])
+
+    sampler = WeightedPrevalenceRandomSampler.from_dataset(dset)
+
+    assert len(sampler(250)) == 250
+
+    # checks if labels are all the same (should not happen if random sampled)
+    n_draw = 1000
+    label_list = [dset[_idx]["label"] for _idx in sampler(n_draw)]
+    assert len(set(label_list)) > 1
+    assert abs(label_list.count(0)/n_draw - (1 / 3)) < 0.1
+    assert abs(label_list.count(1)/n_draw - (1 / 3)) < 0.1
+    assert abs(label_list.count(2)/n_draw - (1 / 3)) < 0.1
 
 
 if __name__ == '__main__':
