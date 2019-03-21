@@ -25,15 +25,6 @@ before_install:
   - pip install codecov
   - pip install -r docs/requirements.txt
 
-# command to install dependencies
-before_install:
-  - pip install -U pip wheel
-  - pip install -r requirements.txt
-  - pip install -r requirements_extra_torch.txt
-  - pip install coverage
-  - pip install codecov
-  - pip install -r docs/requirements.txt
-
 install:
   - pip install .
   
