@@ -1075,6 +1075,7 @@ if "TF" in get_backends():
                 optimizer_params={},
                 metrics=metrics,
                 losses={},
+                **self.kwargs,
                 **kwargs)
 
             # testing with batchsize 1 and 1 augmentation processs to

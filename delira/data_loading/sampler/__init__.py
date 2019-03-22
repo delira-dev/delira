@@ -3,7 +3,8 @@ from .sequential_sampler import SequentialSampler, \
     PrevalenceSequentialSampler, StoppingPrevalenceSequentialSampler
 from .random_sampler import RandomSampler, PrevalenceRandomSampler, \
     StoppingPrevalenceRandomSampler
-from .weighted_sampler import WeightedRandomSampler
+from .weighted_sampler import WeightedRandomSampler, \
+    WeightedPrevalenceRandomSampler
 from .lambda_sampler import LambdaSampler
 
 __all__ = [
