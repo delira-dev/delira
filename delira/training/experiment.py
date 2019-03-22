@@ -98,8 +98,8 @@ class AbstractExperiment(TrixiExperiment):
              network: AbstractNetwork,
              datamgr_test: BaseDataManager,
              metrics: dict,
-             prepare_batch,
-             convert_fn,
+             prepare_batch=lambda *x: x,
+             convert_fn=lambda *x: x,
              verbose=False,
              ** kwargs):
         """
@@ -127,6 +127,7 @@ class AbstractExperiment(TrixiExperiment):
             dictionary containing the mean validation metrics and
             the mean loss values
         """
+
         predictor = Predictor(
             network, convert_fn, prepare_batch)
 
@@ -995,7 +996,7 @@ if "TF" in get_backends():
                   train_kwargs={}, test_kwargs={}, **kwargs):
 
             if random_seed is not None:
-                torch.manual_seed(random_seed)
+                tf.set_random_seed(random_seed)
 
             super().kfold(num_epochs, data, num_splits, shuffle, random_seed,
                           train_kwargs, test_kwargs, **kwargs)
@@ -1007,7 +1008,7 @@ if "TF" in get_backends():
                              **kwargs):
 
             if random_seed is not None:
-                torch.manual_seed(random_seed)
+                tf.set_random_seed(random_seed)
 
             super().stratified_kfold(num_epochs, data, num_splits, shuffle,
                                      random_seed, label_key, train_kwargs,
@@ -1035,7 +1036,10 @@ if "TF" in get_backends():
                  params: Parameters,
                  network: AbstractNetwork,
                  datamgr_test: BaseDataManager,
+                 metrics: dict,
+                 verbose=False,             
                  **kwargs):
+
             """
             Executes prediction for all items in datamgr_test with network
 
@@ -1061,35 +1065,5 @@ if "TF" in get_backends():
                 dictionary containing the mean validation metrics and
                 the mean loss values
             """
-
-            # setup trainer with dummy optimization which won't be used!
-
-            training_params = params.permute_training_on_top().training
-            metrics = training_params.nested_get("metrics")
-
-            trainer = self.trainer_cls(
-                network=network,
-                save_path=os.path.join(self.save_path, 'test'),
-                optimizer_cls=training_params.nested_get("optimizer_cls"),
-                optim_fn=create_optims_default_tf,
-                optimizer_params={},
-                metrics=metrics,
-                losses={},
-                **self.kwargs,
-                **kwargs)
-
-            # testing with batchsize 1 and 1 augmentation processs to
-            # avoid dropping of last elements
-            orig_num_aug_processes = datamgr_test.n_process_augmentation
-            orig_batch_size = datamgr_test.batch_size
-
-            datamgr_test.batch_size = 1
-            datamgr_test.n_process_augmentation = 1
-
-            outputs, labels, metrics_val = trainer.predict(
-                datamgr_test.get_batchgen(), batch_size=orig_batch_size)
-
-            # reset old values
-            datamgr_test.batch_size = orig_batch_size
-            datamgr_test.n_process_augmentation = orig_num_aug_processes
-            return outputs, labels, metrics_val
+            return super().test(params, network, datamgr_test, metrics, verbose=verbose,
+                                **kwargs)
