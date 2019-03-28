@@ -31,3 +31,4 @@ def load_checkpoint(file: str, model=None):
 
     # following operation adds AssignVariableOps to the graph, keep an eye on this for memory leak
     tf.train.Saver().restore(model._sess, file)
+    return {}
