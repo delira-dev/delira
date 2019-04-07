@@ -1,5 +1,4 @@
 from delira import get_backends
-import pytest
 import unittest
 
 

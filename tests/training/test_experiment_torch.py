@@ -1,13 +1,12 @@
 
-
 from delira import get_backends
-import pytest
 import os
 import delira
 import unittest
 
 import numpy as np
 from delira.training.metrics import SklearnAccuracyScore
+from functools import partial
 
 
 class TorchExperimentTest(unittest.TestCase):
@@ -27,19 +26,23 @@ class TorchExperimentTest(unittest.TestCase):
                 Parameters(fixed_params={
                     "model": {},
                     "training": {
-                        "criterions": {"CE":
-                                       torch.nn.CrossEntropyLoss()},
+                        "losses": {"CE":
+                                       torch.nn.BCEWithLogitsLoss()},
                         "optimizer_cls": torch.optim.Adam,
                         "optimizer_params": {"lr": 1e-3},
                         "num_epochs": 2,
-                        "metrics": {},
+                        "val_metrics": {"accuracy": SklearnAccuracyScore(
+                            gt_logits=False, pred_logits=True)},
                         "lr_sched_cls": ReduceLROnPlateauCallbackPyTorch,
-                        "lr_sched_params": {}
+                        "lr_sched_params": {"mode": "max"}
                     }
                 }
                 ),
                 500,
-                50)
+                50,
+                "accuracy",
+                "highest"
+            )
         ]
 
         class DummyNetwork(ClassificationNetworkBasePyTorch):
@@ -65,7 +68,7 @@ class TorchExperimentTest(unittest.TestCase):
                                                       torch.float),
                         "label": torch.from_numpy(batch_dict["label"]
                                                   ).to(output_device,
-                                                       torch.long)}
+                                                       torch.float)}
 
         class DummyDataset(AbstractDataset):
             def __init__(self, length):
@@ -85,9 +88,13 @@ class TorchExperimentTest(unittest.TestCase):
         for case in test_cases:
             with self.subTest(case=case):
 
-                params, dataset_length_train, dataset_length_test = case
+                params, dataset_length_train, dataset_length_test, \
+                    val_score_key, val_score_mode = case
 
-                exp = PyTorchExperiment(params, DummyNetwork)
+                exp = PyTorchExperiment(params, DummyNetwork,
+                                        val_score_key=val_score_key,
+                                        val_score_mode=val_score_mode)
+
                 dset_train = DummyDataset(dataset_length_train)
                 dset_test = DummyDataset(dataset_length_test)
 
@@ -97,7 +104,11 @@ class TorchExperimentTest(unittest.TestCase):
                 net = exp.run(dmgr_train, dmgr_test)
                 exp.test(params=params,
                          network=net,
-                         datamgr_test=dmgr_test, )
+                         datamgr_test=dmgr_test,
+                         metrics=params.nested_get("val_metrics"),
+                         prepare_batch=partial(net.prepare_batch,
+                                               input_device="cpu",
+                                               output_device="cpu"))
 
                 exp.kfold(2, dmgr_train, num_splits=2)
                 exp.stratified_kfold(2, dmgr_train, num_splits=2)
