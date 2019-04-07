@@ -12,6 +12,8 @@ from ..models import AbstractNetwork
 import numpy as np
 import os
 from tqdm import tqdm
+from delira.logging import TrixiHandler
+from trixi.logger.tensorboard.tensorboardxlogger import TensorboardXLogger
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +48,8 @@ class AbstractNetworkTrainer(Predictor):
                  gpu_ids: typing.List[int],
                  save_freq: int,
                  optim_fn,
+                 logging_type: str,
+                 logging_kwargs: dict,
                  fold: int,
                  callbacks: typing.List[AbstractCallback],
                  start_epoch: int,
@@ -138,10 +142,12 @@ class AbstractNetworkTrainer(Predictor):
         self.save_freq = save_freq
         self.metric_keys = metric_keys
 
+
         for cbck in callbacks:
             self.register_callback(cbck)
 
-    def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids, convert_batch_to_npy_fn, prepare_batch_fn):
+    def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
+               convert_batch_to_npy_fn, prepare_batch_fn):
 
         super()._setup(network, convert_batch_to_npy_fn, prepare_batch_fn)
 
@@ -606,3 +612,48 @@ class AbstractNetworkTrainer(Predictor):
             return new_val_score > old_val_score
         elif mode == 'lowest':
             return new_val_score < old_val_score
+
+    def _reinitialize_logging(self, logging_type, logging_kwargs: dict):
+        from ..logging import TensorboardXLoggingHandler, VisdomLoggingHandler
+
+        if isinstance(logging_type, str):
+            if logging_type.lower() == "visdom":
+                logging_cls = VisdomLoggingHandler
+
+            elif logging_type.lower() == "tensorboardx":
+                logging_cls = TensorboardXLoggingHandler
+
+            else:
+                raise ValueError("Invalid Logging Type")
+
+        else:
+            logging_cls = logging_type
+
+        if logging_cls == VisdomLoggingHandler:
+            _logging_kwargs = {"level": 0}
+        elif logging_cls == TensorboardXLoggingHandler:
+            _logging_kwargs = {"log_dir": self.save_path,
+                               "level": 0}
+
+        _logging_kwargs.update(logging_kwargs)
+
+        # remove prior Trixihandlers and reinitialize it with given logging type
+        # This facilitates visualization of multiple splits/fold inside one
+        # tensorboard-instance by means of
+        # different tf.Summary.FileWriters()
+
+        root_logger = logging.getLogger()
+        new_handlers = []
+        for handler in root_logger.handlers:
+            if isinstance(handler, TrixiHandler):
+                handler.close()
+            else:
+                new_handlers.append(handler)
+
+        root_logger.handlers = []
+
+        new_handlers.append(
+            logging_cls(**logging_kwargs)
+        )
+        logging.basicConfig(level=logging.INFO,
+                            handlers=new_handlers)

@@ -80,3 +80,58 @@ class TrixiHandler(Handler):
                         kwargs = {}
 
                     getattr(self._logger, _prefix + key)(*args, **kwargs)
+
+
+class TensorboardXLoggingHandler(TrixiHandler):
+    """
+    Logging Handler to log with TensorboardX (via Trixi)
+    """
+
+    def __init__(self, log_dir, level=NOTSET, **kwargs):
+        """
+
+        Parameters
+        ----------
+        log_dir : str
+            path to log to
+        level : int (default: NOTSET)
+            logging level
+        **kwargs :
+            additional keyword arguments
+
+        """
+
+        from trixi.logger.tensorboard import TensorboardXLogger
+
+        super().__init__(TensorboardXLogger, level=level,
+                         target_dir=log_dir, **kwargs)
+
+
+class VisdomLoggingHandler(TrixiHandler):
+    """
+    Logging Handler to log with Visdom (via Trixi)
+
+    """
+    def __init__(self, exp_name, server="http://localhost", port=8080,
+                 level=NOTSET, **kwargs):
+        """
+
+        Parameters
+        ----------
+        exp_name : str
+            experiment name
+        server : str
+            address of visdom server
+        port : int
+            port of visdom server
+        level : int (default: NOTSET)
+            logging level
+        **kwargs :
+            additional keyword arguments
+
+        """
+
+        from trixi.logger.visdom import NumpyVisdomLogger
+
+        super().__init__(NumpyVisdomLogger, level=level, exp_name=exp_name,
+                         server=server, port=port, **kwargs)
