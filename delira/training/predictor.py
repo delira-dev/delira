@@ -2,6 +2,7 @@ from .callbacks import AbstractCallback
 from batchgenerators.dataloading import MultiThreadedAugmenter
 import pickle
 from abc import abstractmethod
+from collections.abc import Iterable
 import numpy as np
 from ..data_loading import BaseDataManager
 from tqdm import tqdm
@@ -34,7 +35,7 @@ class Predictor(object):
         convert_batch_to_npy_fn : type, optional
             function converting a batch-tensor to numpy, default: identity 
             function
-        prepare_batch_fn : [type], optional
+        prepare_batch_fn : type, optional
             function converting a batch-tensor to the framework specific 
             tensor-type and pushing it to correct device, default: identity 
             function
@@ -44,53 +45,102 @@ class Predictor(object):
         self._setup(model, convert_batch_to_npy_fn, prepare_batch_fn, **kwargs)
 
     def _setup(self, network, convert_batch_to_npy_fn, prepare_batch_fn):
+        """
+
+        Parameters
+        ----------
+        network : :class:`AbstractNetwork`
+            the network to predict from
+        convert_batch_to_npy_fn : type
+            a callable function to convert tensors to numpy
+        prepare_batch_fn : type
+            function converting a batch-tensor to the framework specific
+            tensor-type and pushing it to correct device, default: identity
+            function
+
+        """
         self.module = network
         self._convert_batch_to_npy_fn = convert_batch_to_npy_fn
         self._prepare_batch = prepare_batch_fn
 
     def __call__(self, data):
+        """
+        Method to call the class.
+        Returns the predictions corresponding to the given data obtained by the
+        model
+
+        Parameters
+        ----------
+        data : dict
+            batch dictionary
+
+        Returns
+        -------
+        Any
+            predicted data
+        """
         return self.predict(data)
 
     def predict(self, data, keys=["data"]):
+
         data = self._prepare_batch(data)
 
         if isinstance(data, dict):
-            data = [data[key] for key in keys]
+            _data = [data[key] for key in keys]
+        elif isinstance(data, list) or isinstance(data, tuple):
+            _data = data
+        else:
+            _data = [data]
 
-        return self._convert_batch_to_npy_fn(
-            self.module(
-                *data
+        pred = self.module(
+                *_data
             )
-        )
 
-    def predict_data_mgr(self, datamgr, batchsize=None, verbose=False):
+        # wrap predictions in list if necessary
+        if not (isinstance(pred, list) or isinstance(pred, tuple)):
+            pred = [pred]
+
+        # converts positional arguments and keyword arguments,
+        # but returns only positional arguments, since keyword arguments are
+        # not given. Change this, if switched to dicts
+        return self._convert_batch_to_npy_fn(
+            *pred
+        )[0]
+
+    def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
+                         metric_keys=None, verbose=False):
         """
         Defines a routine to predict data obtained from a batchgenerator
 
         Parameters
         ----------
-        batchgen : MultiThreadedAugmenter
-            Generator Holding the Batches
-        batchsize : Artificial batchsize (sampling will be done with batchsize
-                    1 and sampled data will be stacked to match the artificial
-                    batchsize)(default: None)
-
-        Raises
-        ------
-        NotImplementedError
-            If not overwritten by subclass
+        datamgr : :class:`BaseDataManager`
+            Manager producing a generator holding the batches
+        batchsize : int
+            Artificial batchsize (sampling will be done with batchsize
+            1 and sampled data will be stacked to match the artificial
+            batchsize)(default: None)
+        metrics : dict
+            the metrics to calculate
+        metric_keys : dict
+            the ``batch_dict`` items to use for metric calculation
+        verbose : bool
+            whether to show a progress-bar or not, default: False
 
         """
 
         orig_num_aug_processes = datamgr.n_process_augmentation
         orig_batch_size = datamgr.batch_size
 
+        if batchsize is None:
+            batchsize = orig_batch_size
+
         datamgr.batch_size = 1
         datamgr.n_process_augmentation = 1
 
         batchgen = datamgr.get_batchgen()
 
-        predictions_all, inputs_all = [], []
+        predictions_all, metric_vals = [], {k: [] for k in metrics.keys()}
 
         n_batches = batchgen.generator.num_batches * batchgen.num_processes
 
@@ -128,8 +178,15 @@ class Predictor(object):
 
                 preds = self.predict(batch_dict)
 
+                # calculate metrics for predicted batch
+                _metric_vals = self.calc_metrics(batch_dict, *preds,
+                                                 metrics=metrics,
+                                                 metric_keys=metric_keys)
+
+                for k, v in _metric_vals.items():
+                    metric_vals[k].append(v)
+
                 predictions_all.append(preds)
-                inputs_all.append(batch_dict)
 
                 batch_list = []
 
@@ -138,18 +195,13 @@ class Predictor(object):
         predictions_all = zip(*predictions_all)
         predictions_all = [np.vstack(_outputs) for _outputs in predictions_all]
 
-        input_keys = inputs_all[0].keys()
-
-        total_input_dict = {}
-
-        for key in input_keys:
-            total_input_dict[key] = np.concatenate(
-                [_input[key] for _input in inputs_all])
+        for k, v in metric_vals.items():
+            metric_vals[k] = np.array(v)
 
         datamgr.batch_size = orig_batch_size
         datamgr.n_process_augmentation = orig_num_aug_processes
 
-        return predictions_all, total_input_dict
+        return predictions_all, metric_vals
 
     def __setattr__(self, key, value):
         """
@@ -184,13 +236,13 @@ class Predictor(object):
 
         Parameters
         ----------
-        groundtruths: dict
+        groundtruths : dict
             dict with ground truth data
-        predictions: np.ndarray
+        predictions : np.ndarray
             predictions of network in numpy
         metrics: dict
             dict with metrics
-        metric_keys: dict
+        metric_keys : dict
             dict which contains hashable for groundtruths dict for the
             respective metric
 

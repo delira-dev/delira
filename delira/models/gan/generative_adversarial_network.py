@@ -152,14 +152,14 @@ if "TORCH" in get_backends():
                 for key, crit_fn in losses.items():
                     _loss_val = crit_fn(discr_pred_real,
                                         torch.ones_like(discr_pred_real))
-                    loss_vals[key + "_discr_real"] = _loss_val.detach()
+                    loss_vals[key + "_discr_real"] = _loss_val.item()
                     total_loss_discr_real += _loss_val
 
                 # train discr with prediction from fake image
                 for key, crit_fn in losses.items():
                     _loss_val = crit_fn(discr_pred_fake,
                                         torch.zeros_like(discr_pred_fake))
-                    loss_vals[key + "_discr_fake"] = _loss_val.detach()
+                    loss_vals[key + "_discr_fake"] = _loss_val.item()
                     total_loss_discr_fake += _loss_val
 
                 total_loss_discr = total_loss_discr_fake + total_loss_discr_real
@@ -178,7 +178,7 @@ if "TORCH" in get_backends():
                 for key, crit_fn in losses.items():
                     _loss_val = crit_fn(discr_pred_fake,
                                         torch.ones_like(discr_pred_fake))
-                    loss_vals[key + "_adversarial"] = _loss_val.detach().cpu()
+                    loss_vals[key + "_adversarial"] = _loss_val.item()
                     total_loss_gen += _loss_val
 
                 with torch.no_grad():
@@ -187,19 +187,19 @@ if "TORCH" in get_backends():
                         metric_vals[key + "_discr_real"] = metric_fn(
                             discr_pred_real,
                             torch.ones_like(
-                                discr_pred_real)).detach()
+                                discr_pred_real)).item()
 
                         # calculate metrics for discriminator with fake prediction
                         metric_vals[key + "_discr_fake"] = metric_fn(
                             discr_pred_fake,
                             torch.zeros_like(
-                                discr_pred_fake)).detach()
+                                discr_pred_fake)).item()
 
                         # calculate adversarial metrics
                         metric_vals[key + "_adversarial"] = metric_fn(
                             discr_pred_fake,
                             torch.ones_like(
-                                discr_pred_fake)).detach()
+                                discr_pred_fake)).item()
 
                 if optimizers:
                     # actual backpropagation
@@ -221,17 +221,6 @@ if "TORCH" in get_backends():
 
                     loss_vals = eval_loss_vals
                     metric_vals = eval_metrics_vals
-
-            for key, val in {**metric_vals, **loss_vals}.items():
-                logging.info({"value": {"value": val.item(), "name": key,
-                                        "env_appendix": "_%02d" % fold
-                                        }})
-
-            logging.info({'image_grid': {"images": batch, "name": "real_images",
-                                        "env_appendix": "_%02d" % fold}})
-            logging.info({"image_grid": {"images": fake_image_batch,
-                                        "name": "fake_images",
-                                        "env_appendix": "_%02d" % fold}})
 
             return metric_vals, loss_vals, [fake_image_batch, discr_pred_fake,
                                             discr_pred_real]

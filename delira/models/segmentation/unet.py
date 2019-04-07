@@ -264,13 +264,6 @@ if "TORCH" in get_backends():
                 loss_vals = eval_loss_vals
                 metric_vals = eval_metrics_vals
 
-            logging.info({'image_grid': {"images": inputs, "name": "input_images",
-                                        "env_appendix": "_%02d" % fold}})
-
-            logging.info({'image_grid': {"images": preds,
-                                        "name": "predicted_images",
-                                        "env_appendix": "_%02d" % fold}})
-
             return metric_vals, loss_vals, [preds]
 
         def _build_model(self, num_classes, in_channels=3, depth=5,
@@ -683,13 +676,13 @@ if "TORCH" in get_backends():
 
                     for key, crit_fn in losses.items():
                         _loss_val = crit_fn(preds, *data_dict.values())
-                        loss_vals[key] = _loss_val.detach()
+                        loss_vals[key] = _loss_val.item()
                         total_loss += _loss_val
 
                     with torch.no_grad():
                         for key, metric_fn in metrics.items():
                             metric_vals[key] = metric_fn(
-                                preds, *data_dict.values())
+                                preds, *data_dict.values()).item()
 
             if optimizers:
                 optimizers['default'].zero_grad()
@@ -712,16 +705,6 @@ if "TORCH" in get_backends():
                 metric_vals = eval_metrics_vals
 
             slicing_dim = inputs.size(2) // 2  # visualize slice in mid of volume
-
-            logging.info({'image_grid': {"inputs": inputs[:, :, slicing_dim, ...],
-                                        "name":
-                                            "input_images",
-                                        "env_appendix": "_%02d" % fold}})
-
-            logging.info({'image_grid': {"results": preds[:, :, slicing_dim, ...],
-                                        "name":
-                                            "predicted_images",
-                                        "env_appendix": "_%02d" % fold}})
 
             return metric_vals, loss_vals, [preds]
 

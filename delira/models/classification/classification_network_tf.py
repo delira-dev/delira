@@ -183,10 +183,6 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
             image_names = "val_" + str(image_names)
 
-        for key, val in {**metric_vals, **loss_vals}.items():
-            logging.info({"value": {"value": val.item(), "name": key,
-                                    "env_appendix": "_%02d" % fold
-                                    }})
 
         #logging.info({'image_grid': {"image_array": inputs, "name": image_names,
         #                             "title": "input_images", "env_appendix": "_%02d" % fold}})

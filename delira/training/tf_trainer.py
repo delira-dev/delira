@@ -5,17 +5,16 @@ from tqdm.auto import tqdm
 import tensorflow as tf
 from batchgenerators.dataloading import MultiThreadedAugmenter
 from .callbacks import AbstractCallback
-from .abstract_trainer import AbstractNetworkTrainer
+from .base_trainer import BaseNetworkTrainer
 from .train_utils import create_optims_default_tf as create_optims_default
 from .train_utils import initialize_uninitialized
+from .train_utils import convert_tf_tensor_to_npy
 from ..io import tf_load_checkpoint, tf_save_checkpoint
-from delira.logging import TrixiHandler
-from trixi.logger.tensorboard.tensorboardxlogger import TensorboardXLogger
 
 logger = logging.getLogger(__name__)
 
 
-class TfNetworkTrainer(AbstractNetworkTrainer):
+class TfNetworkTrainer(BaseNetworkTrainer):
     """
     Train and Validate a Network
 
@@ -33,17 +32,18 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
                  optimizer_params={},
                  train_metrics={},
                  val_metrics={},
-                 val_dataset_metrics={},
                  lr_scheduler_cls=None,
                  lr_scheduler_params={},
                  gpu_ids=[],
                  save_freq=1,
                  optim_fn=create_optims_default,
+                 logging_type="tensorboardx",
+                 logging_kwargs={},
                  fold=0,
                  callbacks=[],
                  start_epoch=1,
                  metric_keys=None,
-                 convert_batch_to_npy_fn=lambda x: x,
+                 convert_batch_to_npy_fn=convert_tf_tensor_to_npy,
                  **kwargs
                  ):
         """
@@ -66,9 +66,6 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         val_metrics : dict, optional
             metrics, which will be evaluated during test phase 
             (should work on numpy arrays)
-        val_dataset_metrics : dict, optional
-            metrics, which will be evaluated during test phase on the whole 
-            dataset (should work on numpy arrays)
         lr_scheduler_cls : Any
             learning rate schedule class: must implement step() method
         lr_scheduler_params : dict
@@ -80,6 +77,12 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
             State is saved every state_freq epochs
         optim_fn : function
             creates a dictionary containing all necessary optimizers
+        logging_type : str or callable
+            the type of logging. If string: it must be one of
+            ["visdom", "tensorboardx"]
+            If callable: it must be a logging handler class
+        logging_kwargs : dict
+            dictionary containing all logging keyword arguments
         fold : int
             current cross validation fold (0 per default)
         callbacks : list
@@ -100,28 +103,21 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
 
         super().__init__(
             network, save_path, losses, optimizer_cls, optimizer_params,
-            train_metrics, val_metrics, val_dataset_metrics, lr_scheduler_cls,
-            lr_scheduler_params, gpu_ids, save_freq, optim_fn, fold, callbacks,
-            start_epoch, metric_keys, convert_batch_to_npy_fn)
-
-        # remove prior Trixihandlers and ensure logging of training results to self.save_path
-        # This facilitates visualization of multiple splits/fold inside one tensorboard-instance by means of
-        # different tf.Summary.FileWriters()
-        root_logger = logging.getLogger()
-        for handler in root_logger.handlers:
-            handler.close()
-        root_logger.handlers = []
-        logging.basicConfig(level=logging.INFO,
-                            handlers=[TrixiHandler(TensorboardXLogger, 0, self.save_path)])
+            train_metrics, val_metrics, lr_scheduler_cls,
+            lr_scheduler_params, gpu_ids, save_freq, optim_fn, logging_type,
+            logging_kwargs, fold, callbacks, start_epoch, metric_keys,
+            convert_batch_to_npy_fn)
 
         self._setup(network, optim_fn, optimizer_cls, optimizer_params,
-                    lr_scheduler_cls, lr_scheduler_params, gpu_ids)
+                    lr_scheduler_cls, lr_scheduler_params,
+                    convert_batch_to_npy_fn, gpu_ids)
 
         for key, val in kwargs.items():
             setattr(self, key, val)
 
     def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
-               lr_scheduler_cls, lr_scheduler_params, gpu_ids):
+               lr_scheduler_cls, lr_scheduler_params, convert_batch_to_npy_fn,
+               gpu_ids):
         """
         Defines the Trainers Setup
 
@@ -138,6 +134,9 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
             learning rate schedule class: must implement step() method
         lr_scheduler_params : dict
             keyword arguments passed to lr scheduler during construction
+        convert_batch_to_npy_fn : type, optional
+            function converting a batch-tensor to numpy, per default this is
+            the identity function
         gpu_ids : list
             list containing ids of GPUs to use; if empty: use cpu instead
         """
@@ -169,7 +168,7 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         self.optimizers = optim_fn(optimizer_cls, **optimizer_params)
 
         super()._setup(network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-                       lambda x: x, lambda x: x)
+                       convert_batch_to_npy_fn, lambda x: x)
 
         self.use_gpu = True
 
@@ -215,33 +214,31 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
 
         return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
 
-    def predict_data_mgr(self, datamgr, batch_size=None, verbose=False):
+    def predict_data_mgr(self, datamgr, batch_size=None, metrics={},
+                         metric_keys={}, verbose=False):
         """
-        Returns predictions from network for batches from batchgen
+        Defines a routine to predict data obtained from a batchgenerator
 
         Parameters
         ----------
-        batchgen : MultiThreadedAugmenter
-            Generator yielding the batches to predict
-
-        batch_size : None or int
-            if int: collect batches until batch_size is reached and
-            forward them together
-
-        Returns
-        -------
-        np.ndarray
-            predictions from batches
-        list of np.ndarray
-            labels from batches
-        dict
-            dictionary containing the mean validation metrics and
-            the mean loss values
+        datamgr : :class:`BaseDataManager`
+            Manager producing a generator holding the batches
+        batchsize : int
+            Artificial batchsize (sampling will be done with batchsize
+            1 and sampled data will be stacked to match the artificial
+            batchsize)(default: None)
+        metrics : dict
+            the metrics to calculate
+        metric_keys : dict
+            the ``batch_dict`` items to use for metric calculation
+        verbose : bool
+            whether to show a progress-bar or not, default: False
 
         """
         self.module.training = False
 
-        return super().predict_data_mgr(datamgr, batch_size, verbose=verbose)
+        return super().predict_data_mgr(datamgr, batch_size, metrics,
+                                        metric_keys, verbose=verbose)
 
     def save_state(self, file_name, *args, **kwargs):
         """

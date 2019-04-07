@@ -1,6 +1,7 @@
 from .parameters import Parameters
 from .experiment import AbstractExperiment
-from .abstract_trainer import AbstractNetworkTrainer
+from .base_trainer import BaseNetworkTrainer
+from .predictor import Predictor
 
 from delira import get_backends
 

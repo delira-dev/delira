@@ -5,7 +5,7 @@ from ..data_loading import BaseDataManager, BaseLazyDataset
 from delira import __version__ as delira_version
 from .parameters import Parameters
 from ..models import AbstractNetwork
-from .abstract_trainer import AbstractNetworkTrainer
+from .base_trainer import BaseNetworkTrainer
 from .predictor import Predictor
 from trixi.experiment import Experiment as TrixiExperiment
 import os
@@ -131,16 +131,10 @@ class AbstractExperiment(TrixiExperiment):
         predictor = Predictor(
             network, convert_fn, prepare_batch)
 
-        val_predictions, val_inputs = predictor.predict_data_mgr(
-            datamgr_test, 1, verbose=verbose)
+        val_predictions, val_metrics = predictor.predict_data_mgr(
+            datamgr_test, 1, metrics=metrics, verbose=verbose)
 
-        metrics_val = predictor.calc_metrics(
-            {k: v for k,
-             v in val_inputs.items() if k != "data"},
-            *val_predictions,
-            metrics=metrics)
-
-        return val_predictions, val_inputs, metrics_val
+        return val_predictions, val_metrics
 
     def kfold(self, num_epochs: int,
               data: BaseDataManager,
@@ -337,10 +331,8 @@ class AbstractExperiment(TrixiExperiment):
 
         metrics_val = {}
         outputs = {}
-        labels = {}
 
-        metrics = {**self.params.nested_get("val_metrics", {}),
-                   **self.params.nested_get("val_dataset_metrics", {})}
+        metrics = self.params.nested_get("val_metrics", {})
 
         if num_splits is None:
             num_splits = 10
@@ -385,14 +377,13 @@ class AbstractExperiment(TrixiExperiment):
                              fold=idx,
                              **kwargs)
 
-            _outputs, _labels, _metrics_val = self.test(
+            _outputs, _metrics_val = self.test(
                 self.params, model, test_data, metrics=metrics)
 
             outputs[str(idx)] = _outputs
-            labels[str(idx)] = _labels
             metrics_val[str(idx)] = _metrics_val
 
-        return outputs, labels, metrics_val
+        return outputs, metrics_val
 
     def __str__(self):
         """
@@ -422,7 +413,7 @@ class AbstractExperiment(TrixiExperiment):
 
         Returns
         -------
-        :class:`AbstractNetworkTrainer`
+        :class:`BaseNetworkTrainer`
             trainer of trained network
 
         """
@@ -465,7 +456,7 @@ if "TORCH" in get_backends():
 
     import torch
     from .train_utils import create_optims_default_pytorch, \
-        torch_convert_to_numpy
+        convert_torch_tensor_to_npy
     from .pytorch_trainer import PyTorchNetworkTrainer as PTNetworkTrainer
     from ..models import AbstractPyTorchNetwork
 
@@ -552,10 +543,8 @@ if "TORCH" in get_backends():
             self.trainer_cls = trainer_cls
 
             if val_score_key is None:
-                if params.nested_get("val_dataset_metrics", False):
-                    val_score_key = sorted(
-                        params.nested_get("val_dataset_metrics").keys())[0]
-                elif params.nested_get("val_metrics", False):
+
+                if params.nested_get("val_metrics", False):
                     val_score_key = sorted(
                         params.nested_get("val_metrics").keys())[0]
 
@@ -600,8 +589,6 @@ if "TORCH" in get_backends():
             lr_scheduler_params = training_params.nested_get("lr_sched_params",
                                                              {})
             val_metrics = training_params.nested_get("val_metrics", {})
-            val_dataset_metrics = training_params.nested_get(
-                "val_dataset_metrics", {})
 
             return self.trainer_cls(
                 network=model,
@@ -614,7 +601,6 @@ if "TORCH" in get_backends():
                 optimizer_params=optimizer_params,
                 train_metrics=train_metrics,
                 val_metrics=val_metrics,
-                val_dataset_metrics=val_dataset_metrics,
                 lr_scheduler_cls=lr_scheduler_cls,
                 lr_scheduler_params=lr_scheduler_params,
                 optim_fn=self._optim_builder,
@@ -645,7 +631,7 @@ if "TORCH" in get_backends():
 
             Returns
             -------
-            :class:`AbstractNetworkTrainer`
+            :class:`BaseNetworkTrainer`
                 trainer of trained network
 
             Raises
@@ -717,7 +703,7 @@ if "TORCH" in get_backends():
                                         output_device=torch.device("cpu"))
 
             return super().test(params, network, datamgr_test, metrics,
-                                prepare_batch, torch_convert_to_numpy, verbose,
+                                prepare_batch, convert_torch_tensor_to_npy, verbose,
                                 **kwargs)
 
         def save(self):
@@ -832,10 +818,7 @@ if "TF" in get_backends():
             self.trainer_cls = trainer_cls
 
             if val_score_key is None:
-                if params.nested_get("val_dataset_metrics", False):
-                    val_score_key = sorted(
-                        params.nested_get("val_dataset_metrics").keys())[0]
-                elif params.nested_get("val_metrics", False):
+                if params.nested_get("val_metrics", False):
                     val_score_key = sorted(
                         params.nested_get("val_metrics").keys())[0]
             self.val_score_key = val_score_key
@@ -882,8 +865,6 @@ if "TF" in get_backends():
             lr_scheduler_params = training_params.nested_get("lr_sched_params",
                                                              {})
             val_metrics = training_params.nested_get("val_metrics", {})
-            val_dataset_metrics = training_params.nested_get(
-                "val_dataset_metrics", {})
 
             return self.trainer_cls(
                 network=model,
@@ -896,7 +877,6 @@ if "TF" in get_backends():
                 optimizer_params=optimizer_params,
                 train_metrics=train_metrics,
                 val_metrics=val_metrics,
-                val_dataset_metrics=val_dataset_metrics,
                 lr_scheduler_cls=lr_scheduler_cls,
                 lr_scheduler_params=lr_scheduler_params,
                 optim_fn=self._optim_builder,
@@ -927,7 +907,7 @@ if "TF" in get_backends():
 
             Returns
             -------
-            :class:`AbstractNetworkTrainer`
+            :class:`BaseNetworkTrainer`
                 trainer of trained network
 
             Raises
@@ -1014,7 +994,6 @@ if "TF" in get_backends():
                                      random_seed, label_key, train_kwargs,
                                      test_kwargs, **kwargs)
 
-
         def stratified_kfold_predict(self, num_epochs: int,
                                      data: BaseDataManager,
                                      split_val=0.2,
@@ -1028,8 +1007,10 @@ if "TF" in get_backends():
             if random_seed is not None:
                 tf.set_random_seed(random_seed)
 
-            return super().stratified_kfold_predict(num_epochs, data, split_val, num_splits, shuffle,
-                                                    random_seed, label_key, train_kwargs,
+            return super().stratified_kfold_predict(num_epochs, data, split_val,
+                                                    num_splits, shuffle,
+                                                    random_seed, label_key,
+                                                    train_kwargs,
                                                     test_kwargs, **kwargs)
 
         def test(self,
@@ -1065,5 +1046,5 @@ if "TF" in get_backends():
                 dictionary containing the mean validation metrics and
                 the mean loss values
             """
-            return super().test(params, network, datamgr_test, metrics, verbose=verbose,
-                                **kwargs)
+            return super().test(params, network, datamgr_test, metrics,
+                                verbose=verbose, **kwargs)

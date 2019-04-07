@@ -8,9 +8,6 @@ if "TORCH" in get_backends():
 
     from ..utils.decorators import torch_tensor_func, torch_module_func
 
-    def torch_convert_to_numpy(*args):
-        return tuple(_x.detach().cpu().numpy() for _x in args)
-
     @dtype_func(float)
     def float_to_pytorch_tensor(f: float):
         """
@@ -75,6 +72,34 @@ if "TORCH" in get_backends():
         return {"gen": optim_cls(model.gen.parameters(), **optim_params),
                 "discr": optim_cls(model.discr.parameters(), **optim_params)}
 
+    def convert_torch_tensor_to_npy(*args, **kwargs):
+        """
+        Function to convert all torch Tensors to numpy arrays
+
+        Parameters
+        ----------
+        *args :
+            arbitrary positional arguments
+        **kwargs :
+            arbitrary keyword arguments
+
+        Returns
+        -------
+        Iterable
+            all given positional arguments (converted if necessary)
+
+        dict
+            all given keyword arguments (converted if necessary)
+
+        """
+        args = [_arg.detach().cpu().numpy() for _arg in args
+                if isinstance(_arg, torch.Tensor)]
+        for k, v in kwargs.items():
+            if isinstance(v, torch.Tensor):
+                kwargs[k] = v.detach().cpu().numpy()
+
+        return args, kwargs
+
 if "TF" in get_backends():
     import tensorflow as tf
 
@@ -118,3 +143,26 @@ if "TF" in get_backends():
 
         if not_initialized_vars:
             sess.run(tf.variables_initializer(not_initialized_vars))
+
+
+    def convert_tf_tensor_to_npy(*args, **kwargs):
+        """
+        Function to convert all torch Tensors to numpy arrays
+
+        Parameters
+        ----------
+        *args :
+            arbitrary positional arguments
+        **kwargs :
+            arbitrary keyword arguments
+
+        Returns
+        -------
+        Iterable
+            all given positional arguments (converted if necessary)
+
+        dict
+            all given keyword arguments (converted if necessary)
+
+        """
+        return args, kwargs

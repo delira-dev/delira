@@ -6,7 +6,7 @@ import warnings
 from collections import OrderedDict
 from batchgenerators.dataloading import MultiThreadedAugmenter
 from .callbacks import AbstractCallback
-from .abstract_trainer import AbstractNetworkTrainer
+from .base_trainer import BaseNetworkTrainer
 from functools import partial
 
 from delira import get_backends
@@ -15,12 +15,12 @@ logger = logging.getLogger(__name__)
 
 if "TORCH" in get_backends():
     import torch
-    from .train_utils import torch_convert_to_numpy
+    from .train_utils import convert_torch_tensor_to_npy
     from .train_utils import create_optims_default_pytorch as create_optims_default
     from ..io.torch import load_checkpoint, save_checkpoint
     from ..models import AbstractPyTorchNetwork
 
-    class PyTorchNetworkTrainer(AbstractNetworkTrainer):
+    class PyTorchNetworkTrainer(BaseNetworkTrainer):
         """
         Train and Validate a Network
 
@@ -38,17 +38,18 @@ if "TORCH" in get_backends():
                      optimizer_params={},
                      train_metrics={},
                      val_metrics={},
-                     val_dataset_metrics={},
                      lr_scheduler_cls=None,
                      lr_scheduler_params={},
                      gpu_ids=[],
                      save_freq=1,
                      optim_fn=create_optims_default,
+                     logging_type="tensorboardx",
+                     logging_kwargs={},
                      fold=0,
                      callbacks=[],
                      start_epoch=1,
                      metric_keys=None,
-                     convert_batch_to_npy_fn=torch_convert_to_numpy,
+                     convert_batch_to_npy_fn=convert_torch_tensor_to_npy,
                      mixed_precision=False,
                      mixed_precision_kwargs={"enable_caching": True,
                                              "verbose": False,
@@ -75,9 +76,6 @@ if "TORCH" in get_backends():
             val_metrics : dict, optional
                 metrics, which will be evaluated during test phase
                 (should work on numpy arrays)
-            val_dataset_metrics : dict, optional
-                metrics, which will be evaluated during test phase on the whole
-                dataset (should work on numpy arrays)
             lr_scheduler_cls : Any
                 learning rate schedule class: must implement step() method
             lr_scheduler_params : dict
@@ -89,6 +87,12 @@ if "TORCH" in get_backends():
                 State is saved every state_freq epochs
             optim_fn : function
                 creates a dictionary containing all necessary optimizers
+            logging_type : str or callable
+                the type of logging. If string: it must be one of
+                ["visdom", "tensorboardx"]
+                If callable: it must be a logging handler class
+            logging_kwargs : dict
+                dictionary containing all logging keyword arguments
             fold : int
                 current cross validation fold (0 per default)
             callbacks : list
@@ -132,9 +136,9 @@ if "TORCH" in get_backends():
 
             super().__init__(
                 network, save_path, crits, optimizer_cls, optimizer_params,
-                train_metrics, val_metrics, val_dataset_metrics,
-                lr_scheduler_cls, lr_scheduler_params, gpu_ids, save_freq,
-                optim_fn, fold, callbacks, start_epoch, metric_keys,
+                train_metrics, val_metrics, lr_scheduler_cls,
+                lr_scheduler_params, gpu_ids, save_freq, optim_fn, logging_type,
+                logging_kwargs, fold, callbacks, start_epoch, metric_keys,
                 convert_batch_to_npy_fn)
 
             self._setup(network, optim_fn, optimizer_cls, optimizer_params,
@@ -382,6 +386,32 @@ if "TORCH" in get_backends():
 
             return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
 
+        def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
+                             metric_keys={}, verbose=False):
+            """
+            Defines a routine to predict data obtained from a batchgenerator
+
+            Parameters
+            ----------
+            datamgr : :class:`BaseDataManager`
+                Manager producing a generator holding the batches
+            batchsize : int
+                Artificial batchsize (sampling will be done with batchsize
+                1 and sampled data will be stacked to match the artificial
+                batchsize)(default: None)
+            metrics : dict
+                the metrics to calculate
+            metric_keys : dict
+                the ``batch_dict`` items to use for metric calculation
+            verbose : bool
+                whether to show a progress-bar or not, default: False
+
+            """
+            self.module.eval()
+
+            return super().predict_data_mgr(datamgr, batchsize, metrics,
+                                            metric_keys, verbose)
+
         def save_state(self, file_name, epoch, **kwargs):
             """
             saves the current state via :func:`delira.io.torch.save_checkpoint`
@@ -441,7 +471,7 @@ if "TORCH" in get_backends():
 
             Returns
             -------
-            :class:`AbstractNetworkTrainer`
+            :class:`BaseNetworkTrainer`
                 the trainer with a modified state
 
             """

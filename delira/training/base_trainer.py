@@ -13,12 +13,11 @@ import numpy as np
 import os
 from tqdm import tqdm
 from delira.logging import TrixiHandler
-from trixi.logger.tensorboard.tensorboardxlogger import TensorboardXLogger
 
 logger = logging.getLogger(__name__)
 
 
-class AbstractNetworkTrainer(Predictor):
+class BaseNetworkTrainer(Predictor):
     """
     Defines a Base API and basic functions for Network Trainers
 
@@ -42,7 +41,6 @@ class AbstractNetworkTrainer(Predictor):
                  optimizer_params: dict,
                  train_metrics: dict,
                  val_metrics: dict,
-                 val_dataset_metrics: dict,
                  lr_scheduler_cls: type,
                  lr_scheduler_params: dict,
                  gpu_ids: typing.List[int],
@@ -77,9 +75,6 @@ class AbstractNetworkTrainer(Predictor):
         val_metrics : dict, optional
             metrics, which will be evaluated during test phase
             (should work on numpy arrays)
-        val_dataset_metrics : dict, optional
-            metrics, which will be evaluated during test phase on the whole
-            dataset (should work on numpy arrays)
         lr_scheduler_cls : Any
             learning rate schedule class: must implement step() method
         lr_scheduler_params : dict
@@ -109,7 +104,6 @@ class AbstractNetworkTrainer(Predictor):
 
         """
 
-
         # explicity not call self._setup here to reuse the __init__ of
         # abstract class. self._setup has to be called in subclass
 
@@ -120,7 +114,6 @@ class AbstractNetworkTrainer(Predictor):
         assert isinstance(optimizer_params, dict)
         assert isinstance(train_metrics, dict)
         assert isinstance(val_metrics, dict)
-        assert isinstance(val_dataset_metrics, dict)
         assert isinstance(lr_scheduler_params, dict)
         assert isinstance(gpu_ids, list)
 
@@ -137,14 +130,14 @@ class AbstractNetworkTrainer(Predictor):
         self.losses = losses
         self.train_metrics = train_metrics
         self.val_metrics = val_metrics
-        self.val_dataset_metrics = val_dataset_metrics
         self.stop_training = False
         self.save_freq = save_freq
         self.metric_keys = metric_keys
 
-
         for cbck in callbacks:
             self.register_callback(cbck)
+
+        self._reinitialize_logging(logging_type, logging_kwargs)
 
     def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                convert_batch_to_npy_fn, prepare_batch_fn):
@@ -298,20 +291,28 @@ class AbstractNetworkTrainer(Predictor):
                                                    metrics=self.train_metrics,
                                                    fold=self.fold,
                                                    batch_nr=batch_nr)
-        metrics.append(_metrics)
-        losses.append(_losses)
+            metrics.append(_metrics)
+            losses.append(_losses)
 
         batchgen._finish()
 
-        return {
-            k: np.vstack([self._convert_batch_to_npy_fn(_metrics[k])
-                          for _metrics in metrics])
-            for k in metrics[0].keys()
-        }, {
-            k: np.vstack([self._convert_batch_to_npy_fn(_losses[k])
-                          for _losses in losses])
-            for k in losses[0].keys()
-        }
+        total_losses, total_metrics = {}, {}
+
+        for _metrics in metrics:
+            for key, val in _metrics.items():
+                if key in total_metrics:
+                    total_metrics[key].append(val)
+                else:
+                    total_metrics[key] = [val]
+
+        for _losses in losses:
+            for key, val in _losses.items():
+                if key in total_losses:
+                    total_losses[key].append(val)
+                else:
+                    total_losses[key] = [val]
+
+        return total_metrics, total_losses
 
     def train(self, num_epochs, datamgr_train, datamgr_valid=None,
               val_score_key=None, val_score_mode='highest', reduce_mode='mean',
@@ -334,6 +335,8 @@ class AbstractNetworkTrainer(Predictor):
             key specifying what kind of validation score is best
         reduce_mode : str
             'mean','sum','first_only'
+        verbose : bool
+            whether to show progress bars or not
 
         Raises
         ------
@@ -354,9 +357,9 @@ class AbstractNetworkTrainer(Predictor):
         new_val_score = best_val_score
 
         if reduce_mode == 'mean':
-            def reduce_fn(batch): return batch.mean()
+            def reduce_fn(batch): return np.mean(batch)
         elif reduce_mode == 'sum':
-            def reduce_fn(batch): return batch.sum()
+            def reduce_fn(batch): return np.sum(batch)
         elif reduce_mode == 'first_only':
             def reduce_fn(batch): return batch[0]
         elif reduce_mode == 'last_only':
@@ -366,6 +369,25 @@ class AbstractNetworkTrainer(Predictor):
 
         metrics_val = {}
 
+        val_metric_fns = {}
+
+        for k, v in self.val_metrics.items():
+            if not k.startswith("val_"):
+                k = "val_" + k
+
+            val_metric_fns[k] = v
+
+        if self.metric_keys is None:
+            val_metric_keys = None
+
+        else:
+            val_metric_keys = {}
+            for k, v in self.metric_keys.items():
+                if not k.startswith("val_"):
+                    k = "val_" + k
+
+                val_metric_keys[k] = v
+
         for epoch in range(self.start_epoch, num_epochs+1):
 
             self._at_epoch_begin(metrics_val, val_score_key, epoch,
@@ -373,24 +395,25 @@ class AbstractNetworkTrainer(Predictor):
 
             batch_gen_train = datamgr_train.get_batchgen(seed=epoch)
 
+            # train single network epoch
             train_metrics, train_losses = self._train_single_epoch(
                 batch_gen_train, epoch, verbose=verbose)
 
-            val_predictions, val_inputs = self.predict_data_mgr(
-                datamgr_valid, datamgr_valid.batch_size, verbose=verbose)
-
-            metrics_val = self.calc_metrics(
-                {k: v for k,
-                 v in val_inputs.items() if k != "data"},
-                *val_predictions,
-                metrics={**self.val_metrics, **self.val_dataset_metrics},
-                metric_keys=self.metric_keys)
-
+            # validate network
+            val_predictions, val_metrics = self.predict_data_mgr(
+                datamgr_valid, datamgr_valid.batch_size,
+                metrics=val_metric_fns, metric_keys=val_metric_keys,
+                verbose=verbose)
+            
             total_metrics = {
-                **{"val_" + k: v for k, v in metrics_val.items()},
+                **val_metrics,
                 **train_metrics,
                 **train_losses}
 
+            for k, v in total_metrics.items():
+                total_metrics[k] = reduce_fn(v)
+
+            # check if metric became better
             if val_score_key is not None:
                 if val_score_key not in total_metrics:
                     if "val_" + val_score_key not in total_metrics:
@@ -401,6 +424,7 @@ class AbstractNetworkTrainer(Predictor):
 
                     else:
                         new_val_score = total_metrics["val_" + val_score_key]
+                        val_score_key = "val_" + val_score_key
                 else:
                     new_val_score = total_metrics.get(val_score_key)
 
@@ -416,12 +440,12 @@ class AbstractNetworkTrainer(Predictor):
                     logging.info("New Best Value at Epoch %03d : %03.3f" %
                                  (epoch, best_val_score))
 
+            # log metrics and loss values
             for key, val in total_metrics.items():
-                logging.info({"value": {"value": reduce_fn(val), "name": key,
-                                        "env_appendix": "_%02d" % self.fold
+                logging.info({"value": {"value": val, "name": key
                                         }})
 
-            self._at_epoch_end(metrics_val, val_score_key, epoch, is_best)
+            self._at_epoch_end(total_metrics, val_score_key, epoch, is_best)
 
             is_best = False
 
@@ -545,7 +569,7 @@ class AbstractNetworkTrainer(Predictor):
 
         Returns
         -------
-        :class:`AbstractNetworkTrainer`
+        :class:`BaseNetworkTrainer`
             the trainer with a modified state
 
         """
@@ -577,7 +601,7 @@ class AbstractNetworkTrainer(Predictor):
 
         Returns
         -------
-        :class:`AbstractNetworkTrainer`
+        :class:`BaseNetworkTrainer`
             the trainer with a modified state
 
         """
@@ -630,12 +654,17 @@ class AbstractNetworkTrainer(Predictor):
             logging_cls = logging_type
 
         if logging_cls == VisdomLoggingHandler:
-            _logging_kwargs = {"level": 0}
+            _logging_kwargs = {"exp_name": "main",
+                               "level": 0}
         elif logging_cls == TensorboardXLoggingHandler:
             _logging_kwargs = {"log_dir": self.save_path,
                                "level": 0}
 
         _logging_kwargs.update(logging_kwargs)
+
+        if "exp_name" in _logging_kwargs.keys():
+            _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
+                                          "_%02d" % self.fold
 
         # remove prior Trixihandlers and reinitialize it with given logging type
         # This facilitates visualization of multiple splits/fold inside one
@@ -653,7 +682,7 @@ class AbstractNetworkTrainer(Predictor):
         root_logger.handlers = []
 
         new_handlers.append(
-            logging_cls(**logging_kwargs)
+            logging_cls(**_logging_kwargs)
         )
         logging.basicConfig(level=logging.INFO,
                             handlers=new_handlers)

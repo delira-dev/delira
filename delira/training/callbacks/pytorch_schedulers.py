@@ -125,8 +125,17 @@ if 'TORCH' in get_backends():
                 modified trainer
 
             """
-            metrics = kwargs.get("val_metrics", {}).get(kwargs.get("val_score_key",
-                                                                   None))
+            val_metrics = kwargs.get("val_metrics", {})
+
+            val_score_key = kwargs.get("val_score_key", None)
+
+            metrics = val_metrics.get(val_score_key)
+
+            print(kwargs)
+            print(val_metrics)
+            print(val_score_key)
+            print(metrics)
+
             self.scheduler.step(metrics=metrics)
 
             return {}

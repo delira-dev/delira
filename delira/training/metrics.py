@@ -3,27 +3,32 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, \
     matthews_corrcoef, precision_score, recall_score, zero_one_loss, \
     roc_auc_score
 from sklearn.preprocessing import label_binarize
-from ..utils.decorators import make_deprecated
 
-import trixi
 import numpy as np
+from scipy.special import softmax
 
 from delira import get_backends
 
 
 class SklearnClassificationMetric(object):
-    def __init__(self, score_fn, **kwargs):
+    def __init__(self, score_fn, gt_logits=False, pred_logits=True, **kwargs):
         """
         Wraps an score function as a metric
 
         Parameters
         ----------
-        score_fn: function
+        score_fn : function
             function which should be wrapped
+        gt_logits : bool
+            whether given ``y_true`` are logits or not
+        pred_logits : bool
+            whether given ``y_pred`` are logits or not
         kwargs:
             variable number of keyword arguments passed to score_fn function
         """
         self._score_fn = score_fn
+        self._gt_logits = gt_logits
+        self._pred_logits = pred_logits
         self.kwargs = kwargs
 
     def __call__(self, y_true, y_pred, **kwargs):
@@ -44,27 +49,105 @@ class SklearnClassificationMetric(object):
         float
             result from score function
         """
-        arrays = {"y_true": y_true, "y_pred": y_pred}
 
-        for k, v in arrays.items():
-            arrays[k] = v.reshape(v.shape[0], -1).astype(np.uint8)
+        if self._gt_logits:
+            y_true = np.argmax(y_true, axis=-1)
 
-        return self._score_fn(**arrays, **kwargs, **self.kwargs)
+        if self._pred_logits:
+            y_pred = np.argmax(y_pred, axis=-1)
+
+        return self._score_fn(y_true=y_true, y_pred=y_pred,
+                              **kwargs, **self.kwargs)
 
 
-SklearnAccuracyScore = SklearnClassificationMetric(accuracy_score)
-SklearnBalancedAccuracyScore = SklearnClassificationMetric(
-    balanced_accuracy_score)
-SklearnF1Score = SklearnClassificationMetric(f1_score)
-SklearnFBetaScore = SklearnClassificationMetric(fbeta_score)
-SklearnHammingLoss = SklearnClassificationMetric(hamming_loss)
-SklearnJaccardSimilarityScore = SklearnClassificationMetric(
-    jaccard_similarity_score)
-SklearnLogLoss = SklearnClassificationMetric(log_loss)
-SklearnMatthewsCorrCoeff = SklearnClassificationMetric(matthews_corrcoef)
-SklearnPrecisionScore = SklearnClassificationMetric(precision_score)
-SklearnRecallScore = SklearnClassificationMetric(recall_score)
-SklearnZeroOneLoss = SklearnClassificationMetric(zero_one_loss)
+class SklearnAccuracyScore(SklearnClassificationMetric):
+    """
+    Accuracy Metric
+    """
+    def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
+        super().__init__(accuracy_score, gt_logits, pred_logits, **kwargs)
+
+
+class SklearnBalancedAccuracyScore(SklearnClassificationMetric):
+    """
+    Balanced Accuracy Metric
+    """
+    def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
+        super().__init__(balanced_accuracy_score, gt_logits, pred_logits,
+                         **kwargs)
+
+
+class SklearnF1ScoreScore(SklearnClassificationMetric):
+    """
+    F1 Score
+    """
+    def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
+        super().__init__(f1_score, gt_logits, pred_logits, **kwargs)
+
+
+class SklearnFBetaScore(SklearnClassificationMetric):
+    """
+    F-Beta Score (Generalized F1)
+    """
+    def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
+        super().__init__(fbeta_score, gt_logits, pred_logits, **kwargs)
+
+
+class SklearnHammingLoss(SklearnClassificationMetric):
+    """
+    Hamming Loss
+    """
+    def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
+        super().__init__(hamming_loss, gt_logits, pred_logits, **kwargs)
+
+
+class SklearnJaccardSimilarityScore(SklearnClassificationMetric):
+    """
+    Jaccard Similarity Score
+    """
+    def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
+        super().__init__(jaccard_similarity_score, gt_logits, pred_logits,
+                         **kwargs)
+
+
+class SklearnLogLoss(SklearnClassificationMetric):
+    """
+    Log Loss (NLL)
+    """
+    def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
+        super().__init__(log_loss, gt_logits, pred_logits, **kwargs)
+
+
+class SklearnMatthewsCorrCoeff(SklearnClassificationMetric):
+    """
+    Matthews Correlation Coefficient
+    """
+    def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
+        super().__init__(matthews_corrcoef, gt_logits, pred_logits, **kwargs)
+
+
+class SklearnPrecisionScore(SklearnClassificationMetric):
+    """
+    Precision Score
+    """
+    def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
+        super().__init__(precision_score, gt_logits, pred_logits, **kwargs)
+
+
+class SklearnRecallScore(SklearnClassificationMetric):
+    """
+    Recall Score
+    """
+    def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
+        super().__init__(recall_score, gt_logits, pred_logits, **kwargs)
+
+
+class SklearnZeroOneLoss(SklearnClassificationMetric):
+    """
+    Zero One Loss
+    """
+    def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
+        super().__init__(zero_one_loss, gt_logits, pred_logits, **kwargs)
 
 
 class AurocMetric(object):
