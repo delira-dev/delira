@@ -3,7 +3,7 @@ import delira
 import unittest
 
 import numpy as np
-from delira.training.metrics import SklearnAccuracyScore
+from sklearn.metrics import mean_absolute_error
 
 
 class TfExperimentTest(unittest.TestCase):
@@ -14,6 +14,7 @@ class TfExperimentTest(unittest.TestCase):
 
         from delira.training import TfExperiment, Parameters
         from delira.models.classification import ClassificationNetworkBaseTf
+        from delira.models import AbstractTfNetwork
         from delira.data_loading import AbstractDataset, BaseDataManager
         import tensorflow as tf
 
@@ -27,7 +28,7 @@ class TfExperimentTest(unittest.TestCase):
                         "optimizer_cls": tf.train.AdamOptimizer,
                         "optimizer_params": {"learning_rate": 1e-3},
                         "num_epochs": 2,
-                        "metrics": {},
+                        "val_metrics": {"accuracy": mean_absolute_error},
                         "lr_sched_cls": None,
                         "lr_sched_params": {}}
                 }
@@ -38,12 +39,12 @@ class TfExperimentTest(unittest.TestCase):
 
         class DummyNetwork(ClassificationNetworkBaseTf):
             def __init__(self):
-                super().__init__(32, 1)
+                AbstractTfNetwork.__init__(self)
                 self.model = self._build_model(1)
 
                 images = tf.placeholder(shape=[None, 32],
                                         dtype=tf.float32)
-                labels = tf.placeholder(shape=[None, 1], dtype=tf.float32)
+                labels = tf.placeholder_with_default(tf.zeros([tf.shape(images)[0], 1]), shape=[None, 1])
 
                 preds_train = self.model(images, training=True)
                 preds_eval = self.model(images, training=False)
@@ -92,7 +93,8 @@ class TfExperimentTest(unittest.TestCase):
                 net = exp.run(dmgr_train, dmgr_test)
                 exp.test(params=params,
                          network=net,
-                         datamgr_test=dmgr_test, )
+                         datamgr_test=dmgr_test,
+                         metrics=params.nested_get("val_metrics"))
 
                 exp.kfold(2, dmgr_train, num_splits=2)
                 exp.stratified_kfold(2, dmgr_train, num_splits=2)

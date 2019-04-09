@@ -33,18 +33,19 @@ class TestPredictor(unittest.TestCase):
     def test_predictor_tf(self):
         from delira.training import Predictor
         from delira.models.classification import ClassificationNetworkBaseTf
+        from delira.models import AbstractTfNetwork
         from delira.training.train_utils import convert_tf_tensor_to_npy
 
         import tensorflow as tf
 
         class DummyNetwork(ClassificationNetworkBaseTf):
             def __init__(self):
-                super().__init__(32, 1)
+                AbstractTfNetwork.__init__(self)
                 self.model = self._build_model(1)
 
                 images = tf.placeholder(shape=[None, 32],
                                         dtype=tf.float32)
-                labels = tf.placeholder(shape=[None, 1], dtype=tf.float32)
+                labels = tf.placeholder_with_default(tf.zeros([tf.shape(images)[0], 1]), shape=[None, 1])
 
                 preds_train = self.model(images, training=True)
                 preds_eval = self.model(images, training=False)
