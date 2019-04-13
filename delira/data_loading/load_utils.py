@@ -1,9 +1,45 @@
 import numpy as np
 import os
-import typing
 import collections
 from skimage.io import imread
 from skimage.transform import resize
+
+
+def norm_range(data):
+    """
+    Returns the input data normalized to the range [-1,1]
+
+    Parameters
+    ----------
+    data : np.ndarray
+        data which should be normalized
+
+    Returns
+    -------
+    np.ndarary
+        normalized data
+    """
+    norm = data - data.min()
+    norm = norm/norm.max()
+    norm = norm - 0.5
+    norm = norm * 2
+    return norm
+
+
+def norm_zero_mean_unit_std(data):
+    """
+    Return normalized data with mean 0, standard deviation 1
+
+    Parameters
+    ----------
+    data : np.nadarray
+
+    Returns
+    -------
+    np.ndarray
+        normalized data
+    """
+    return (data - np.mean(data)) / np.std(data)
 
 
 def default_load_fn_2d(img_file, *label_files, img_shape, n_channels=1):
@@ -47,8 +83,10 @@ def default_load_fn_2d(img_file, *label_files, img_shape, n_channels=1):
 
 
 class LoadSample:
-    def __init__(self, extensions: typing.Dict[collections.Iterable],
-                 sample_fn: collections.Callable, normalize=[], dtype={},
+    def __init__(self,
+                 sample_ext: dict,
+                 sample_fn: collections.abc.Callable,
+                 dtype={}, normalize=[], norm_fn=norm_range,
                  **kwargs):
         """
         Provides a callable to load a single sample fom multiple files in a
@@ -56,25 +94,28 @@ class LoadSample:
 
         Parameters
         ----------
-        extensions: dict of iterable
-            Defines the data _extensions. The dict key defines the position of
+        sample_ext : dict of iterable
+            Defines the data _sample_ext. The dict key defines the position of
             the sample inside the returned data dict, while the list defines
             the the files which should be loaded inside the data dict.
-        sample_fn: callable
+        sample_fn : callable
             function to load a single sample
-        normalize: list of hashable
+        dtype : dict
+            defines the data type which should be used for the respective key
+        normalize : list of hashable
             list of hashable which should be normalized. Can contain
             entire keys of extension (normalizes each element individually)
             or provide the file name which should be normalized
-        dtype: dict
-            defines the data type which should be used for the respective key
-        kwargs:
+        norm_fn : callable
+            callable to normalize input. Default: normalize range to [-1, 1]
+        kwargs :
             variable number of keyword arguments passed to load function
         """
-        self._extensions = extensions
-        self._normalize = normalize
-        self._dtype = dtype
+        self._sample_ext = sample_ext
         self._sample_fn = sample_fn
+        self._dtype = dtype
+        self._normalize = normalize
+        self._norm_fn = norm_fn
         self._kwargs = kwargs
 
     def __call__(self, path):
@@ -83,24 +124,23 @@ class LoadSample:
 
         Parameters
         ----------
-        path: str
-            defines patch to folder which contain the _extensions
+        path : str
+            defines patch to folder which contain the _sample_ext
 
         Returns
         -------
         dict
-            dict with data defines by _extensions
+            dict with data defines by _sample_ext
         """
         sample_dict = {}
-        for key, item in self._extensions.items():
+        for key, item in self._sample_ext.items():
             data_list = []
             for f in item:
                 data = self._sample_fn(os.path.join(path, f), **self._kwargs)
 
                 # _normalize data if necessary
                 if (key in self._normalize) or (f in self._normalize):
-                    data -= data.min()
-                    data = data/data.max()
+                    data = self._norm_fn(data)
 
                 # cast data to type
                 if key in self._dtype:
@@ -116,45 +156,41 @@ class LoadSample:
 
 
 class LoadSampleLabel(LoadSample):
-    def __init__(self, extensions: typing.Dict[collections.Iterable],
-                 sample_fn: collections.Callable,
-                 label_ext: collections.Iterable,
-                 label_fn: collections.Callable,
-                 normalize=[], dtype={}, sample_kwargs={}, **kwargs):
+    def __init__(self,
+                 sample_ext: dict,
+                 sample_fn: collections.abc.Callable,
+                 label_ext: collections.abc.Iterable,
+                 label_fn: collections.abc.Callable,
+                 sample_kwargs={}, **kwargs):
         """
         Load sample and label from folder
 
         Parameters
         ----------
-        extensions: dict of list
-            Defines the data _extensions. The dict key defines the position of
+        sample_ext : dict of list
+            Defines the data _sample_ext. The dict key defines the position of
             the sample inside the returned data dict, while the list defines
             the the files which should be loaded inside the data dict.
             Passed to LoadSample.
-        sample_fn: callable
+        sample_fn : callable
             function to load a single sample
             Passed to LoadSample.
-        normalize: list of hashable
-            list of hashable which should be normalized. Can contain
-            entire keys of extension (normalizes each element individually)
-            or provide the file name which should be normalized
-            Passed to LoadSample.
-        label_ext: str
+        label_ext : str
             extension for label
         label_fn: function
             functions which returns the label inside a dict
-        args:
+        args :
             variable number of positional arguments passed to LoadSample
-        sample_kwargs:
+        sample_kwargs :
             additional keyword arguments passed to LoadSample
-        kwargs:
+        kwargs :
             variable number of keyword arguments passed to _label_fn
 
         See Also
         --------
         :class: `LoadSample`
         """
-        super().__init__(extensions, sample_fn, normalize, dtype, **sample_kwargs)
+        super().__init__(sample_ext, sample_fn, **sample_kwargs)
         self._label_ext = label_ext
         self._label_fn = label_fn
         self._label_kwargs = kwargs
@@ -165,7 +201,7 @@ class LoadSampleLabel(LoadSample):
 
         Parameters
         ----------
-        path: str
+        path : str
 
         Returns
         -------
@@ -177,3 +213,4 @@ class LoadSampleLabel(LoadSample):
                                     **self._label_kwargs)
         sample_dict.update(label_dict)
         return sample_dict
+

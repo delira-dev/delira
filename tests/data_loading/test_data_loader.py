@@ -3,6 +3,7 @@ from delira.data_loading import BaseDataLoader, SequentialSampler
 import numpy as np 
 from . import DummyDataset
 
+
 def test_data_loader():
     np.random.seed(1)
     dset = DummyDataset(600, [0.5, 0.3, 0.2])
@@ -15,6 +16,7 @@ def test_data_loader():
     assert "label" in loader.generate_train_batch()
     assert "data" in loader.generate_train_batch()
     assert len(set([_tmp for _tmp in loader.generate_train_batch()["label"]])) == 1
+
 
 if __name__ == '__main__':
     test_data_loader()

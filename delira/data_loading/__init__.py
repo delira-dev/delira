@@ -2,8 +2,8 @@
 from .data_loader import BaseDataLoader
 from .data_manager import BaseDataManager
 from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset, \
-                     ConcatDataset
-from .load_utils import default_load_fn_2d
+                     ConcatDataset, BaseExtendCacheDataset
+from .load_utils import default_load_fn_2d, LoadSample, LoadSampleLabel
 from .sampler import LambdaSampler, \
     WeightedRandomSampler, \
     PrevalenceRandomSampler, \
