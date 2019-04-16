@@ -80,7 +80,7 @@ class AbstractNetwork(object):
             Metric values (with same keys as input dict metrics)
         dict
             Loss values (with same keys as input dict losses)
-        list
+        dict
             Arbitrary number of predictions
 
         Raises

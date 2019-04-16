@@ -9,7 +9,6 @@ if "TORCH" in get_backends():
     import logging
     from ..abstract_network import AbstractPyTorchNetwork
 
-
     class UNet2dPyTorch(AbstractPyTorchNetwork):
         """
         The :class:`UNet2dPyTorch` is a convolutional encoder-decoder neural
@@ -169,7 +168,7 @@ if "TORCH" in get_backends():
             # torch.nn.CrossEntropyLoss is your training script,
             # as this module includes a softmax already.
             x = self.conv_final(x)
-            return x
+            return {"pred": x}
 
         @staticmethod
         def closure(model, data_dict: dict, optimizers: dict, losses={},
@@ -235,14 +234,14 @@ if "TORCH" in get_backends():
                 if data_dict:
 
                     for key, crit_fn in losses.items():
-                        _loss_val = crit_fn(preds, *data_dict.values())
+                        _loss_val = crit_fn(preds["pred"], *data_dict.values())
                         loss_vals[key] = _loss_val.detach()
                         total_loss += _loss_val
 
                     with torch.no_grad():
                         for key, metric_fn in metrics.items():
                             metric_vals[key] = metric_fn(
-                                preds, *data_dict.values())
+                                preds["pred"], *data_dict.values())
 
             if optimizers:
                 optimizers['default'].zero_grad()
@@ -264,7 +263,7 @@ if "TORCH" in get_backends():
                 loss_vals = eval_loss_vals
                 metric_vals = eval_metrics_vals
 
-            return metric_vals, loss_vals, [preds]
+            return metric_vals, loss_vals, preds
 
         def _build_model(self, num_classes, in_channels=3, depth=5,
                         start_filts=64):
@@ -286,10 +285,10 @@ if "TORCH" in get_backends():
             Notes
             -----
             The Helper functions and classes are defined within this function
-            because ``delira`` offers a possibility to save the source code
-            along the weights to completely recover the network without needing
-            a manually created network instance and these helper functions have
-            to be saved too.
+            because ``delira`` once offered a possibility to save the source 
+            code along the weights to completely recover the network without 
+            needing a manually created network instance and these helper 
+            functions had to be saved too.
 
             """
 
@@ -448,7 +447,6 @@ if "TORCH" in get_backends():
                     torch.long)
 
             return return_dict
-
 
     class UNet3dPyTorch(AbstractPyTorchNetwork):
         """
@@ -609,7 +607,7 @@ if "TORCH" in get_backends():
             # torch.nn.CrossEntropyLoss is your training script,
             # as this module includes a softmax already.
             x = self.conv_final(x)
-            return x
+            return {"preds": x}
 
         @staticmethod
         def closure(model, data_dict: dict, optimizers: dict, losses={},
@@ -675,14 +673,15 @@ if "TORCH" in get_backends():
                 if data_dict:
 
                     for key, crit_fn in losses.items():
-                        _loss_val = crit_fn(preds, *data_dict.values())
+                        _loss_val = crit_fn(preds["pred"], 
+                                            *data_dict.values())
                         loss_vals[key] = _loss_val.item()
                         total_loss += _loss_val
 
                     with torch.no_grad():
                         for key, metric_fn in metrics.items():
                             metric_vals[key] = metric_fn(
-                                preds, *data_dict.values()).item()
+                                preds["pred"], *data_dict.values()).item()
 
             if optimizers:
                 optimizers['default'].zero_grad()
@@ -706,10 +705,10 @@ if "TORCH" in get_backends():
 
             slicing_dim = inputs.size(2) // 2  # visualize slice in mid of volume
 
-            return metric_vals, loss_vals, [preds]
+            return metric_vals, loss_vals, preds
 
         def _build_model(self, num_classes, in_channels=3, depth=5,
-                        start_filts=64):
+                         start_filts=64):
             """
             Builds the actual model
 
@@ -728,15 +727,15 @@ if "TORCH" in get_backends():
             Notes
             -----
             The Helper functions and classes are defined within this function
-            because ``delira`` offers a possibility to save the source code
-            along the weights to completely recover the network without needing
-            a manually created network instance and these helper functions have
-            to be saved too.
+            because ``delira`` once offered a possibility to save the source 
+            code along the weights to completely recover the network without 
+            needing a manually created network instance and these helper 
+            functions had to be saved too.
 
             """
 
             def conv3x3x3(in_channels, out_channels, stride=1,
-                        padding=1, bias=True, groups=1):
+                          padding=1, bias=True, groups=1):
                 return torch.nn.Conv3d(
                     in_channels,
                     out_channels,

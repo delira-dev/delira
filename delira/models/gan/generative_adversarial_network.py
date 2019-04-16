@@ -85,7 +85,9 @@ if "TORCH" in get_backends():
             discr_pred_fake = self.discr(fake_image_batch)
             discr_pred_real = self.discr(real_image_batch)
 
-            return fake_image_batch, discr_pred_fake, discr_pred_real
+            return {"fake_images": fake_image_batch, 
+                    "discr_fake": discr_pred_fake, 
+                    "discr_real": discr_pred_real}
 
         @staticmethod
         def closure(model, data_dict: dict,
@@ -146,29 +148,31 @@ if "TORCH" in get_backends():
                 batch = data_dict.pop("data")
 
                 # predict batch
-                fake_image_batch, discr_pred_fake, discr_pred_real = model(batch)
+                preds = model(batch)
 
                 # train discr with prediction from real image
                 for key, crit_fn in losses.items():
-                    _loss_val = crit_fn(discr_pred_real,
-                                        torch.ones_like(discr_pred_real))
+                    _loss_val = crit_fn(preds["discr_real"],
+                                        torch.ones_like(preds["discr_real"]))
                     loss_vals[key + "_discr_real"] = _loss_val.item()
                     total_loss_discr_real += _loss_val
 
                 # train discr with prediction from fake image
                 for key, crit_fn in losses.items():
-                    _loss_val = crit_fn(discr_pred_fake,
-                                        torch.zeros_like(discr_pred_fake))
+                    _loss_val = crit_fn(preds["discr_fake"],
+                                        torch.zeros_like(preds["discr_fake"]))
                     loss_vals[key + "_discr_fake"] = _loss_val.item()
                     total_loss_discr_fake += _loss_val
 
-                total_loss_discr = total_loss_discr_fake + total_loss_discr_real
+                total_loss_discr = total_loss_discr_fake + \
+                    total_loss_discr_real
 
                 if optimizers:
 
                     # actual backpropagation
                     optimizers["discr"].zero_grad()
-                    # perform loss scaling via apex if half precision is enabled
+                    # perform loss scaling via apex if mixed precision is 
+                    # enabled
                     with optimizers["discr"].scale_loss(
                             total_loss_discr) as scaled_loss:
                         scaled_loss.backward(retain_graph=True)
@@ -176,30 +180,32 @@ if "TORCH" in get_backends():
 
                 # calculate adversarial loss for generator update
                 for key, crit_fn in losses.items():
-                    _loss_val = crit_fn(discr_pred_fake,
-                                        torch.ones_like(discr_pred_fake))
+                    _loss_val = crit_fn(preds["discr_fake"],
+                                        torch.ones_like(preds["discr_fake"]))
                     loss_vals[key + "_adversarial"] = _loss_val.item()
                     total_loss_gen += _loss_val
 
                 with torch.no_grad():
                     for key, metric_fn in metrics.items():
-                        # calculate metrics for discriminator with real prediction
+                        # calculate metrics for discriminator with real 
+                        # prediction
                         metric_vals[key + "_discr_real"] = metric_fn(
-                            discr_pred_real,
+                            preds["discr_real"],
                             torch.ones_like(
-                                discr_pred_real)).item()
+                                preds["discr_real"])).item()
 
-                        # calculate metrics for discriminator with fake prediction
+                        # calculate metrics for discriminator with fake 
+                        # prediction
                         metric_vals[key + "_discr_fake"] = metric_fn(
-                            discr_pred_fake,
+                            preds["discr_fake"],
                             torch.zeros_like(
-                                discr_pred_fake)).item()
+                                preds["discr_fake"])).item()
 
                         # calculate adversarial metrics
                         metric_vals[key + "_adversarial"] = metric_fn(
-                            discr_pred_fake,
+                            preds["discr_fake"],
                             torch.ones_like(
-                                discr_pred_fake)).item()
+                                preds["discr_fake"])).item()
 
                 if optimizers:
                     # actual backpropagation
@@ -222,8 +228,7 @@ if "TORCH" in get_backends():
                     loss_vals = eval_loss_vals
                     metric_vals = eval_metrics_vals
 
-            return metric_vals, loss_vals, [fake_image_batch, discr_pred_fake,
-                                            discr_pred_real]
+            return metric_vals, loss_vals, preds
 
         @staticmethod
         def _build_models(in_channels, noise_length, **kwargs):

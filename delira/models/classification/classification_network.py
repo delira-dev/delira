@@ -59,7 +59,7 @@ if "TORCH" in get_backends():
 
             """
 
-            return self.module(input_batch)
+            return {"pred": self.module(input_batch)}
 
         @staticmethod
         def closure(model: AbstractPyTorchNetwork, data_dict: dict,
@@ -126,7 +126,7 @@ if "TORCH" in get_backends():
                 if data_dict:
 
                     for key, crit_fn in losses.items():
-                        _loss_val = crit_fn(preds, *data_dict.values())
+                        _loss_val = crit_fn(preds["pred"], *data_dict.values())
                         loss_vals[key] = _loss_val.item()
                         total_loss += _loss_val
 
@@ -155,8 +155,8 @@ if "TORCH" in get_backends():
                 loss_vals = eval_loss_vals
                 metric_vals = eval_metrics_vals
 
-            return metric_vals, loss_vals, [preds]
-
+            return metric_vals, loss_vals, preds
+            
         @staticmethod
         def _build_model(in_channels: int, n_outputs: int, **kwargs):
             """
