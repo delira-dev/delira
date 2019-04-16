@@ -24,14 +24,21 @@ class Predictor(object):
     # static variable to prevent certain attributers from overwriting
     __KEYS_TO_GUARD = []
 
-    def __init__(self, model, convert_batch_to_npy_fn=lambda *x: x,
-                 prepare_batch_fn=lambda *x: x, **kwargs):
+    def __init__(self, model, key_mapping: dict, 
+                 convert_batch_to_npy_fn=lambda x: x,
+                 prepare_batch_fn=lambda x: x, **kwargs):
         """
 
         Parameters
         ----------
         model : :class:`AbstractNetwork`
             the model to predict from
+        key_mapping : dict
+            a dictionary containing the mapping from the ``data_dict`` to 
+            the actual model's inputs.
+            E.g. if a model accepts one input named 'x' and the data_dict 
+            contains one entry named 'data' this argument would have to 
+            be ``{'x': 'data'}``
         convert_batch_to_npy_fn : type, optional
             function converting a batch-tensor to numpy, default: identity 
             function
@@ -42,15 +49,23 @@ class Predictor(object):
                     
         """
 
-        self._setup(model, convert_batch_to_npy_fn, prepare_batch_fn, **kwargs)
+        self._setup(model, key_mapping, convert_batch_to_npy_fn, 
+                    prepare_batch_fn, **kwargs)
 
-    def _setup(self, network, convert_batch_to_npy_fn, prepare_batch_fn):
+    def _setup(self, network, key_mapping, convert_batch_to_npy_fn, 
+               prepare_batch_fn):
         """
 
         Parameters
         ----------
         network : :class:`AbstractNetwork`
             the network to predict from
+        key_mapping : dict
+            a dictionary containing the mapping from the ``data_dict`` to 
+            the actual model's inputs.
+            E.g. if a model accepts one input named 'x' and the data_dict 
+            contains one entry named 'data' this argument would have to 
+            be ``{'x': 'data'}``
         convert_batch_to_npy_fn : type
             a callable function to convert tensors to numpy
         prepare_batch_fn : type
@@ -60,14 +75,15 @@ class Predictor(object):
 
         """
         self.module = network
+        self.key_mapping = key_mapping
         self._convert_batch_to_npy_fn = convert_batch_to_npy_fn
         self._prepare_batch = prepare_batch_fn
 
     def __call__(self, data):
         """
         Method to call the class.
-        Returns the predictions corresponding to the given data obtained by the
-        model
+        Returns the predictions corresponding to the given data 
+        obtained by the model
 
         Parameters
         ----------
@@ -76,7 +92,7 @@ class Predictor(object):
 
         Returns
         -------
-        Any
+        dict
             predicted data
         """
         return self.predict(data)
@@ -85,27 +101,19 @@ class Predictor(object):
 
         data = self._prepare_batch(data)
 
-        if isinstance(data, dict):
-            _data = [data[key] for key in keys]
-        elif isinstance(data, list) or isinstance(data, tuple):
-            _data = data
-        else:
-            _data = [data]
+        mapped_data = {
+            k: data[v] for k, v in self.key_mapping.items()}
 
         pred = self.module(
-                *_data
+                **mapped_data
             )
 
-        # wrap predictions in list if necessary
-        if not (isinstance(pred, list) or isinstance(pred, tuple)):
-            pred = [pred]
-
         # converts positional arguments and keyword arguments,
-        # but returns only positional arguments, since keyword arguments are
-        # not given. Change this, if switched to dicts
+        # but returns only keyword arguments, since positional 
+        # arguments are not given.
         return self._convert_batch_to_npy_fn(
-            *pred
-        )[0]
+            **pred
+        )[1]
 
     def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
                          metric_keys=None, verbose=False):
@@ -179,7 +187,7 @@ class Predictor(object):
                 preds = self.predict(batch_dict)
 
                 # calculate metrics for predicted batch
-                _metric_vals = self.calc_metrics(batch_dict, *preds,
+                _metric_vals = self.calc_metrics({**batch_dict, **preds},
                                                  metrics=metrics,
                                                  metric_keys=metric_keys)
 
@@ -192,8 +200,18 @@ class Predictor(object):
 
         batchgen._finish()
 
-        predictions_all = zip(*predictions_all)
-        predictions_all = [np.vstack(_outputs) for _outputs in predictions_all]
+        # convert predictions from list of dicts to dict of lists
+        new_predictions_all = {}
+        for preds in predictions_all:
+            for k, v in preds.items():
+                if k in new_predictions_all:
+                    new_predictions_all[k].append(v)
+                else:
+                    new_predictions_all[k] = [v]
+                
+        # concatenate lists to single arrays
+        predictions_all = {k: np.concatenate(_outputs) 
+                           for k, _outputs in new_predictions_all.items()}
 
         for k, v in metric_vals.items():
             metric_vals[k] = np.array(v)
@@ -230,21 +248,22 @@ class Predictor(object):
             super().__setattr__(key, value)
 
     @staticmethod
-    def calc_metrics(groundtruths, *predictions, metrics={}, metric_keys=None):
+    def calc_metrics(batch_dict, metrics={}, metric_keys=None):
         """
         Compute metrics
 
         Parameters
         ----------
-        groundtruths : dict
-            dict with ground truth data
-        predictions : np.ndarray
-            predictions of network in numpy
+        batch_dict : dict
+            dictionary containing the whole batch 
+            (including predictions)
         metrics: dict
             dict with metrics
         metric_keys : dict
-            dict which contains hashable for groundtruths dict for the
-            respective metric
+            dict of tuples which contains hashables for specifying the items 
+            to use for calculating the respective metric.
+            If not specified for a metric, the keys "pred" and "label" 
+            are used per default
 
         Returns
         -------
@@ -252,7 +271,8 @@ class Predictor(object):
             dict with metric results
         """
         if metric_keys is None:
-            metric_keys = {k: "label" for k in metrics.keys()}
+            metric_keys = {k: ("pred", "label") for k in metrics.keys()}
 
-        return {key: metric_fn(groundtruths[metric_keys[key]], *predictions)
+        return {key: metric_fn(batch_dict[metric_keys[key][0]], 
+                               batch_dict[metric_keys[key][1]])
                 for key, metric_fn in metrics.items()}

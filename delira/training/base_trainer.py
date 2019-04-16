@@ -46,6 +46,7 @@ class BaseNetworkTrainer(Predictor):
                  gpu_ids: typing.List[int],
                  save_freq: int,
                  optim_fn,
+                 key_mapping: dict,
                  logging_type: str,
                  logging_kwargs: dict,
                  fold: int,
@@ -86,6 +87,18 @@ class BaseNetworkTrainer(Predictor):
             State is saved every state_freq epochs
         optim_fn : function
             creates a dictionary containing all necessary optimizers
+        key_mapping : dict
+            a dictionary containing the mapping from the ``data_dict`` to 
+            the actual model's inputs.
+            E.g. if a model accepts one input named 'x' and the data_dict 
+            contains one entry named 'data' this argument would have to 
+            be ``{'x': 'data'}``
+        logging_type : str or callable
+            the type of logging. If string: it must be one of
+            ["visdom", "tensorboardx"]
+            If callable: it must be a logging handler class
+        logging_kwargs : dict
+            dictionary containing all logging keyword arguments
         fold : int
             current cross validation fold (0 per default)
         callbacks : list
@@ -140,9 +153,10 @@ class BaseNetworkTrainer(Predictor):
         self._reinitialize_logging(logging_type, logging_kwargs)
 
     def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-               convert_batch_to_npy_fn, prepare_batch_fn):
+               key_mapping, convert_batch_to_npy_fn, prepare_batch_fn):
 
-        super()._setup(network, convert_batch_to_npy_fn, prepare_batch_fn)
+        super()._setup(network, key_mapping, convert_batch_to_npy_fn, 
+                       prepare_batch_fn)
 
         self.closure_fn = network.closure
 

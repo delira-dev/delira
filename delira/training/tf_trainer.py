@@ -27,6 +27,7 @@ class TfNetworkTrainer(BaseNetworkTrainer):
     def __init__(self,
                  network,
                  save_path,
+                 key_mapping, 
                  losses: dict,
                  optimizer_cls,
                  optimizer_params={},
@@ -37,6 +38,7 @@ class TfNetworkTrainer(BaseNetworkTrainer):
                  gpu_ids=[],
                  save_freq=1,
                  optim_fn=create_optims_default,
+                 key_mapping: dict,
                  logging_type="tensorboardx",
                  logging_kwargs={},
                  fold=0,
@@ -54,6 +56,12 @@ class TfNetworkTrainer(BaseNetworkTrainer):
             the network to train
         save_path : str
             path to save networks to
+        key_mapping : dict
+            a dictionary containing the mapping from the ``data_dict`` to 
+            the actual model's inputs.
+            E.g. if a model accepts one input named 'x' and the data_dict 
+            contains one entry named 'data' this argument would have to 
+            be ``{'x': 'data'}``
         losses : dict
             dictionary containing the training losses
         optimizer_cls : subclass of tf.train.Optimizer
@@ -103,7 +111,7 @@ class TfNetworkTrainer(BaseNetworkTrainer):
 
         super().__init__(
             network, save_path, losses, optimizer_cls, optimizer_params,
-            train_metrics, val_metrics, lr_scheduler_cls,
+            train_metrics, val_metrics, lr_scheduler_cls, key_mapping,
             lr_scheduler_params, gpu_ids, save_freq, optim_fn, logging_type,
             logging_kwargs, fold, callbacks, start_epoch, metric_keys,
             convert_batch_to_npy_fn)
@@ -148,7 +156,8 @@ class TfNetworkTrainer(BaseNetworkTrainer):
 
         """
         if gpu_ids and tf.test.is_gpu_available():
-            assert len(gpu_ids) <= len(get_available_gpus()), "more GPUs specified than available"
+            assert len(gpu_ids) <= len(get_available_gpus()), "more GPUs 
+            specified than available"
             self.use_gpu = True
             if len(gpu_ids) > 1:
                 logger.warning(
@@ -187,9 +196,11 @@ class TfNetworkTrainer(BaseNetworkTrainer):
             best network
 
         """
-        if os.path.isfile(os.path.join(self.save_path, 'checkpoint_best.meta')):
+        if os.path.isfile(os.path.join(self.save_path, 
+                                       'checkpoint_best.meta')):
 
-            # load best model and return it. Since the state is hidden in the graph, we don't actually need to use
+            # load best model and return it. Since the state is hidden in the 
+            # graph, we don't actually need to use
             # self.update_state.
             self.update_state(os.path.join(self.save_path,
                                            'checkpoint_best')

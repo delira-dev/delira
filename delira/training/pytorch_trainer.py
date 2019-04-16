@@ -33,6 +33,7 @@ if "TORCH" in get_backends():
         def __init__(self,
                      network: AbstractPyTorchNetwork,
                      save_path: str,
+                     key_mapping,
                      losses=None,
                      optimizer_cls=None,
                      optimizer_params={},
@@ -64,10 +65,17 @@ if "TORCH" in get_backends():
                 the network to train
             save_path : str
                 path to save networks to
+            key_mapping : dict
+                a dictionary containing the mapping from the ``data_dict`` to 
+                the actual model's inputs.
+                E.g. if a model accepts one input named 'x' and the data_dict 
+                contains one entry named 'data' this argument would have to 
+                be ``{'x': 'data'}``
             losses : dict
                 dictionary containing the training losses
             optimizer_cls : subclass of tf.train.Optimizer
-                optimizer class implementing the optimization algorithm of choice
+                optimizer class implementing the optimization algorithm of 
+                choice
             optimizer_params : dict
                 keyword arguments passed to optimizer during construction
             train_metrics : dict, optional
@@ -121,9 +129,9 @@ if "TORCH" in get_backends():
                     crits = losses
                 elif criterions is not None:
                     warnings.warn(DeprecationWarning(
-                        "The 'criterions' argument is deprecated and will be \
-                        removed in next release to unify APIs across backends. \
-                        Use 'losses' instead "))
+                        "The 'criterions' argument is deprecated and will \
+                         be removed in next release to unify APIs across \
+                         backends. Use 'losses' instead "))
                     crits = criterions
 
             else:
@@ -137,9 +145,9 @@ if "TORCH" in get_backends():
             super().__init__(
                 network, save_path, crits, optimizer_cls, optimizer_params,
                 train_metrics, val_metrics, lr_scheduler_cls,
-                lr_scheduler_params, gpu_ids, save_freq, optim_fn, logging_type,
-                logging_kwargs, fold, callbacks, start_epoch, metric_keys,
-                convert_batch_to_npy_fn)
+                lr_scheduler_params, gpu_ids, save_freq, optim_fn, key_mapping,
+                logging_type, logging_kwargs, fold, callbacks, start_epoch, 
+                metric_keys, convert_batch_to_npy_fn)
 
             self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                         lr_scheduler_cls, lr_scheduler_params, gpu_ids,
@@ -195,20 +203,21 @@ if "TORCH" in get_backends():
 
             except ImportError:
                 if mixed_precision:
-                    logger.warning("Apex was not found found, trying to continue \
-                                    in full precision instead")
+                    logger.warning("Apex was not found found, trying to \
+                                    continue in full precision instead")
                 from ..utils.context_managers import DefaultOptimWrapperTorch
                 wrap_fn = DefaultOptimWrapperTorch
 
-            # wrap optimizers by half_precision_optimizer via apex if necessary
+            # wrap optimizers by half_precision_optimizer via apex if 
+            # necessary
             self.optimizers = {k: wrap_fn(
                 v, num_loss=len(self.losses)) for k, v
                 in self.optimizers.items()}
 
             # Load latest epoch file if available
             if os.path.isdir(self.save_path):
-                # check all files in directory starting with "checkpoint" and not
-                # ending with "_best.pth"
+                # check all files in directory starting with "checkpoint" and 
+                # not ending with "_best.pth"
                 files = [x for x in os.listdir(self.save_path)
                          if os.path.isfile(os.path.join(self.save_path, x))
                          and x.startswith("checkpoint")
@@ -287,7 +296,8 @@ if "TORCH" in get_backends():
 
         def _at_training_end(self):
             """
-            Defines Behaviour at end of training: Loads best model if available
+            Defines Behaviour at end of training: Loads best model if 
+            available
 
             Returns
             -------
@@ -295,7 +305,8 @@ if "TORCH" in get_backends():
                 best network
 
             """
-            if os.path.isfile(os.path.join(self.save_path, 'checkpoint_best.pt')):
+            if os.path.isfile(os.path.join(self.save_path, 
+                                           'checkpoint_best.pt')):
 
                 # load best model and return it
                 self.update_state(os.path.join(self.save_path,
@@ -303,8 +314,8 @@ if "TORCH" in get_backends():
 
             return self.module
 
-        def _at_epoch_begin(self, metrics_val, val_score_key, epoch, num_epochs,
-                            **kwargs):
+        def _at_epoch_begin(self, metrics_val, val_score_key, epoch, 
+                            num_epochs, **kwargs):
             """
             Defines behaviour at beginning of each epoch: Executes all callbacks's
             `at_epoch_begin` method
@@ -384,7 +395,8 @@ if "TORCH" in get_backends():
 
             self.module.train()
 
-            return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
+            return super()._train_single_epoch(batchgen, epoch, 
+                                               verbose=verbose)
 
         def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
                              metric_keys={}, verbose=False):
@@ -405,6 +417,13 @@ if "TORCH" in get_backends():
                 the ``batch_dict`` items to use for metric calculation
             verbose : bool
                 whether to show a progress-bar or not, default: False
+
+            Returns
+            -------
+            dict
+                predictions
+            dict
+                calculated metrics
 
             """
             self.module.eval()
