@@ -648,7 +648,7 @@ if "TORCH" in get_backends():
 
             data = self.data[index]
             data_dict = {"data": np.array(data[0]),
-                         "label": data[1].numpy().reshape(1).astype(np.float32)}
+                         "label": data[1].reshape(1).astype(np.float32)}
 
             if self.one_hot:
                 # TODO: Remove and refer to batchgenerators transform:
