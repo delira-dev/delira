@@ -38,7 +38,6 @@ class TfNetworkTrainer(BaseNetworkTrainer):
                  gpu_ids=[],
                  save_freq=1,
                  optim_fn=create_optims_default,
-                 key_mapping: dict,
                  logging_type="tensorboardx",
                  logging_kwargs={},
                  fold=0,
