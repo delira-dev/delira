@@ -7,7 +7,10 @@ from skimage.transform import resize
 from sklearn.model_selection import train_test_split
 from delira import get_backends
 
+from ..utils import subdirs
 from ..utils.decorators import make_deprecated
+from delira.utils.decorators import make_deprecated
+from .load_utils import LoadSampleLabel
 
 
 class AbstractDataset:
@@ -535,6 +538,120 @@ class ConcatDataset(AbstractDataset):
         return sum([len(dset) for dset in self.data])
 
 
+@make_deprecated('Will be removed in favour of LoadSample function.')
+class Nii3DLazyDataset(BaseLazyDataset):
+    """
+       Dataset to load 3D medical images (e.g. from .nii files) during training
+        """
+
+    def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
+                 img_files, label_file, **load_kwargs):
+        """
+         Parameters
+        ----------
+        data_path : str
+            root path to data samples where each samples has it's own folder
+        load_fn : function
+            function to load single data sample
+        img_extensions : list
+            valid extensions of image files
+        gt_extensions : list
+            valid extensions of label files
+        img_files : list
+            list of image filenames
+        label_file : string
+            label file name
+        **load_kwargs :
+            additional loading keyword arguments (image shape,
+            channel number, ...); passed to load_fn
+         """
+        self.img_files = img_files
+        self.label_file = label_file
+        super().__init__(data_path, load_fn, **load_kwargs)
+
+    def _make_dataset(self, path):
+        """
+        Helper Function to make a dataset containing all samples in a certain
+        directory
+         Parameters
+        ----------
+        path: str
+            path to data samples
+         Returns
+        -------
+        list
+            list of sample paths
+         Raises
+        ------
+        AssertionError
+            if `path` is not a valid directory
+         """
+        assert os.path.isdir(path)
+
+        data = [[{'img': [os.path.join(t, i) for i in self.img_files],
+                  'label': os.path.join(t, self.label_file)}]
+                for t in subdirs(path)]
+        return data
+
+
+@make_deprecated('Will be removed in favour of LoadSample function.')
+class Nii3DCacheDatset(BaseCacheDataset):
+    """
+    Dataset to load 3D medical images (e.g. from .nii files) before training
+     """
+
+    def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
+                 img_files, label_file, **load_kwargs):
+        """
+         Parameters
+        ----------
+        data_path : str
+            root path to data samples where each samples has it's own folder
+        load_fn : function
+            function to load single data sample
+        img_extensions : list
+            valid extensions of image files
+        gt_extensions : list
+            valid extensions of label files
+        img_files : list
+            list of image filenames
+        label_file : str
+            label file name
+        **load_kwargs :
+            additional loading keyword arguments (image shape,
+            channel number, ...); passed to load_fn
+         """
+        self.img_files = img_files
+        self.label_file = label_file
+        super().__init__(data_path, load_fn, **load_kwargs)
+
+    def _make_dataset(self, path):
+        """
+        Helper Function to make a dataset containing all samples in a certain
+        directory
+         Parameters
+        ----------
+        path: str
+            path to data samples
+         Returns
+        -------
+        list
+            list of samples
+         Raises
+        ------
+        AssertionError
+            if `path` is not a valid directory
+         """
+        assert os.path.isdir(path)
+        data = []
+        for s in tqdm(subdirs(path), unit='samples', desc="Loading samples"):
+            files = {'img': [os.path.join(s, i) for i in self.img_files],
+                     'label': os.path.join(s, self.label_file)}
+
+            data.append(self._load_fn(files, **self._load_kwargs))
+        return data
+
+
 if "TORCH" in get_backends():
     from torchvision.datasets import CIFAR10, CIFAR100, EMNIST, MNIST, FashionMNIST
 
@@ -713,4 +830,3 @@ if "TORCH" in get_backends():
 
             """
             return len(self.data)
-

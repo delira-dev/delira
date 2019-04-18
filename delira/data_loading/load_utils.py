@@ -86,10 +86,10 @@ class LoadSample:
     def __init__(self,
                  sample_ext: dict,
                  sample_fn: collections.abc.Callable,
-                 dtype={}, normalize=[], norm_fn=norm_range,
+                 dtype={}, normalize=(), norm_fn=norm_range,
                  **kwargs):
         """
-        Provides a callable to load a single sample fom multiple files in a
+        Provides a callable to load a single sample from multiple files in a
         folder
 
         Parameters
@@ -102,7 +102,7 @@ class LoadSample:
             function to load a single sample
         dtype : dict
             defines the data type which should be used for the respective key
-        normalize : list of hashable
+        normalize : iterable of hashable
             list of hashable which should be normalized. Can contain
             entire keys of extension (normalizes each element individually)
             or provide the file name which should be normalized
@@ -110,6 +110,20 @@ class LoadSample:
             callable to normalize input. Default: normalize range to [-1, 1]
         kwargs :
             variable number of keyword arguments passed to load function
+
+        Examples
+        --------
+        Simple loading function which returns a dict with `data`
+        >>> from delira.data_loading.nii import load_nii
+        >>> load_fn = LoadSample({'data:': ['data.nii']}, load_nii)
+
+        Loading function for data (casted to float32 and normalized) and
+        segmentation (casted to unit8)
+        >>> from delira.data_loading.nii import load_nii
+        >>> load_fn = LoadSample({'data:': ['data.nii'], 'seg': ['seg.nii']},
+        >>>                      load_nii, dtype={'data': 'float32',
+        >>>                                       'seg': 'uint8'},
+        >>>                      normalize=('data',))
         """
         self._sample_ext = sample_ext
         self._sample_fn = sample_fn
@@ -213,4 +227,3 @@ class LoadSampleLabel(LoadSample):
                                     **self._label_kwargs)
         sample_dict.update(label_dict)
         return sample_dict
-
