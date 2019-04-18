@@ -399,8 +399,8 @@ class BaseLazyDataset(AbstractDataset):
 
 class BaseExtendCacheDataset(BaseCacheDataset):
     """
-    Dataset to preload and cache data. Function to load sample can return
-    multiple samples at once
+    Dataset to preload and cache data. Function to load sample is expected
+    to return an iterable which can contain multiple samples
 
     Notes
     -----
