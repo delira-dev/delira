@@ -98,6 +98,16 @@ def test_cache_dataset():
     except:
         raise AssertionError('Dataset access failed.')
 
+    try:
+        j = 0
+        for i in dataset:
+            assert 'data' in i
+            assert 'label' in i
+            j += 1
+        assert j == len(dataset)
+    except:
+        raise AssertionError('Dataset iteration failed.')
+
     # test extend cache dataset
     dataset = BaseExtendCacheDataset(paths, load_mul_sample)
     assert len(dataset) == 40
@@ -107,6 +117,16 @@ def test_cache_dataset():
         a = dataset[39]
     except:
         raise AssertionError('Dataset access failed.')
+
+    try:
+        j = 0
+        for i in dataset:
+            assert 'data' in i
+            assert 'label' in i
+            j += 1
+        assert j == len(dataset)
+    except:
+        raise AssertionError('Dataset iteration failed.')
 
 
 def test_lazy_dataset():
@@ -120,6 +140,16 @@ def test_lazy_dataset():
         a = dataset[9]
     except:
         raise AssertionError('Dataset access failed.')
+
+    try:
+        j = 0
+        for i in dataset:
+            assert 'data' in i
+            assert 'label' in i
+            j += 1
+        assert j == len(dataset)
+    except:
+        raise AssertionError('Dataset iteration failed.')
 
 
 def test_load_sample():

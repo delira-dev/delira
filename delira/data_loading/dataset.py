@@ -80,6 +80,17 @@ class AbstractDataset:
         """
         return len(self.data)
 
+    def __iter__(self):
+        """
+        Return an iterator for the dataset
+
+        Returns
+        -------
+        object
+            a single sample
+        """
+        return _DatasetIter(self)
+
     def get_sample_from_index(self, index):
         """
         Returns the data sample for a given index
@@ -171,6 +182,33 @@ class AbstractDataset:
             np.arange(len(self)), *args, **kwargs)
 
         return self.get_subset(train_idxs), self.get_subset(test_idxs)
+
+
+class _DatasetIter(object):
+    """
+    Iterator for dataset
+    """
+    def __init__(self, dset):
+        """
+
+        Parameters
+        ----------
+        dset: :class: `AbstractDataset`
+            the dataset which should be iterated
+        """
+        self._dset = dset
+        self._curr_index = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._curr_index > len(self._dset):
+            raise StopIteration
+
+        sample = self._dset[self._curr_index]
+        self._curr_index += 1
+        return sample
 
 
 class BlankDataset(AbstractDataset):
