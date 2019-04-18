@@ -203,7 +203,7 @@ class _DatasetIter(object):
         return self
 
     def __next__(self):
-        if self._curr_index > len(self._dset):
+        if self._curr_index == len(self._dset):
             raise StopIteration
 
         sample = self._dset[self._curr_index]
