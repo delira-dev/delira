@@ -5,25 +5,46 @@ from skimage.io import imread
 from skimage.transform import resize
 
 
-def norm_range(data):
+def norm_range(mode):
     """
-    Returns the input data normalized to the range [-1,1]
+    Closure function for range normalization
 
     Parameters
     ----------
-    data : np.ndarray
-        data which should be normalized
+    mode : str
+        '-1,1' normalizes data to range [-1, 1], while '0,1'
+        normalizes data to range [0, 1]
 
     Returns
     -------
-    np.ndarary
-        normalized data
+    callable
+        normalization function
     """
-    norm = data - data.min()
-    norm = norm/norm.max()
-    norm = norm - 0.5
-    norm = norm * 2
-    return norm
+    def norm_fn(data):
+        """
+        Returns the input data normalized to the range
+
+        Parameters
+        ----------
+        data : np.ndarray
+            data which should be normalized
+
+        Returns
+        -------
+        np.ndarary
+            normalized data
+        """
+        norm = data - data.min()
+        norm = norm / norm.max()
+        if mode == '-1,1':
+            norm = norm - 0.5
+            norm = norm * 2
+        elif mode == '0,1':
+            pass
+        else:
+            raise ValueError('{mode} not supported.')
+        return norm
+    return norm_fn
 
 
 def norm_zero_mean_unit_std(data):
