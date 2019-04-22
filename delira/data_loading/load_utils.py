@@ -3,6 +3,7 @@ import os
 import collections
 from skimage.io import imread
 from skimage.transform import resize
+from delira.utils.decorators import make_deprecated
 
 
 def norm_range(mode):
@@ -63,6 +64,34 @@ def norm_zero_mean_unit_std(data):
     return (data - np.mean(data)) / np.std(data)
 
 
+def _is_valid_image_file(self, fname):
+    """
+    Helper Function to check wheter file is image file and has at least
+    one label file
+     Parameters
+    ----------
+    fname : str
+        filename of image path
+     Returns
+    -------
+    bool
+        is valid data sample
+     """
+    is_valid_file = False
+    for ext in self._img_extensions:
+        if fname.endswith(ext):
+            is_valid_file = True
+
+    has_label = not self._gt_extensions
+    for ext in self._gt_extensions:
+        label_file = fname.rsplit(".", maxsplit=1)[0] + ext
+        if os.path.isfile(label_file):
+            has_label = True
+
+    return is_valid_file and has_label
+
+
+@make_deprecated("Will be replaced by LoadSample.")
 def default_load_fn_2d(img_file, *label_files, img_shape, n_channels=1):
     """
     loading single 2d sample with arbitrary number of samples
@@ -107,7 +136,7 @@ class LoadSample:
     def __init__(self,
                  sample_ext: dict,
                  sample_fn: collections.abc.Callable,
-                 dtype={}, normalize=(), norm_fn=norm_range,
+                 dtype={}, normalize=(), norm_fn=norm_range('-1,1'),
                  **kwargs):
         """
         Provides a callable to load a single sample from multiple files in a

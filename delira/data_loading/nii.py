@@ -65,6 +65,8 @@ def load_sample_nii(files, label_load_cls):
     return sample
 
 
+@make_deprecated("Labels can now be provided by a function which returns "
+                 "a dictionary.")
 class BaseLabelGenerator(object):
     """
     Base Class to load labels from json files
