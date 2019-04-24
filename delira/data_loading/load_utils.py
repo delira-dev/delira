@@ -64,7 +64,8 @@ def norm_zero_mean_unit_std(data):
     return (data - np.mean(data)) / np.std(data)
 
 
-def _is_valid_image_file(self, fname):
+@make_deprecated
+def _is_valid_image_file(fname, img_extensions, gt_extensions):
     """
     Helper Function to check wheter file is image file and has at least
     one label file
@@ -78,12 +79,12 @@ def _is_valid_image_file(self, fname):
         is valid data sample
      """
     is_valid_file = False
-    for ext in self._img_extensions:
+    for ext in img_extensions:
         if fname.endswith(ext):
             is_valid_file = True
 
-    has_label = not self._gt_extensions
-    for ext in self._gt_extensions:
+    has_label = not gt_extensions
+    for ext in gt_extensions:
         label_file = fname.rsplit(".", maxsplit=1)[0] + ext
         if os.path.isfile(label_file):
             has_label = True
