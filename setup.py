@@ -56,6 +56,8 @@ setup(
     test_suite="unittest",
     long_description=readme,
     long_description_content_type='text/markdown',
+    maintainer="Justus Schock",
+    maintainer_email="justus.schock@rwth-aachen.de",
     license=license,
     install_requires=requirements,
     tests_require=["coverage"],
