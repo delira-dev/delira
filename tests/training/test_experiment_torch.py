@@ -68,7 +68,7 @@ class TfExperimentTest(unittest.TestCase):
 
         class DummyDataset(AbstractDataset):
             def __init__(self, length):
-                super().__init__(None, None, None, None)
+                super().__init__(None, None)
                 self.length = length
 
             def __getitem__(self, index):
