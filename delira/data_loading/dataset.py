@@ -574,12 +574,12 @@ class ConcatDataset(AbstractDataset):
         return sum([len(dset) for dset in self.data])
 
 
-@make_deprecated('Will be removed in favour of LoadSample function.')
 class Nii3DLazyDataset(BaseLazyDataset):
     """
        Dataset to load 3D medical images (e.g. from .nii files) during training
         """
 
+    @make_deprecated('LoadSample')
     def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
                  img_files, label_file, **load_kwargs):
         """
@@ -630,12 +630,12 @@ class Nii3DLazyDataset(BaseLazyDataset):
         return data
 
 
-@make_deprecated('Will be removed in favour of LoadSample function.')
 class Nii3DCacheDatset(BaseCacheDataset):
     """
     Dataset to load 3D medical images (e.g. from .nii files) before training
      """
 
+    @make_deprecated('LoadSample')
     def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
                  img_files, label_file, **load_kwargs):
         """

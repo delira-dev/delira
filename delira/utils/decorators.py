@@ -90,10 +90,19 @@ def make_deprecated(new_func):
     def deprecation(func):
         @wraps(func)
         def func_wrapper(*args, **kwargs):
+            if not isinstance(new_func, str):
+                new_func_name = new_func.__name__
+            else:
+                new_func_name = new_func
+
+            if func.__name__ == '__init__':
+                old_func_name = func.__class__.__name__
+            else:
+                old_func_name = func.__name__
             warnings.warn(DeprecationWarning("%s is deprecated in favor of %s"
                                              " and will be removed at next "
-                                             "release" % (func.__name__,
-                                                          new_func.__name__)))
+                                             "release" % (old_func_name,
+                                                          new_func_name)))
             return func(*args, **kwargs)
 
         return func_wrapper

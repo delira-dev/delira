@@ -24,7 +24,7 @@ def load_nii(path):
     return sitk.GetArrayFromImage(sitk.ReadImage(path))
 
 
-@make_deprecated('LoadSample function can be used this replicate the behavior.')
+@make_deprecated('LoadSample')
 def load_sample_nii(files, label_load_cls):
     """
     Load sample from multiple ITK files
@@ -65,13 +65,13 @@ def load_sample_nii(files, label_load_cls):
     return sample
 
 
-@make_deprecated("Labels can now be provided by a function which returns "
-                 "a dictionary.")
 class BaseLabelGenerator(object):
     """
     Base Class to load labels from json files
 
     """
+
+    @make_deprecated('dict containing labels')
     def __init__(self, fpath):
         """
 
