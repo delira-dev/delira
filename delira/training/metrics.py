@@ -9,8 +9,7 @@ from delira import get_backends
 if "TORCH" in get_backends():
     import torch
 
-    from .train_utils import pytorch_tensor_to_numpy, float_to_pytorch_tensor 
-    @make_deprecated(trixi)
+    from .train_utils import pytorch_tensor_to_numpy, float_to_pytorch_tensor
     class AurocMetricPyTorch(torch.nn.Module):
         """
         Metric to Calculate AuROC
@@ -23,6 +22,8 @@ if "TORCH" in get_backends():
             :class:`AurocMetricPyTorch` will be removed in next release
 
         """
+
+        @make_deprecated(trixi)
         def __init__(self):
             super().__init__()
 
@@ -50,7 +51,6 @@ if "TORCH" in get_backends():
             return float_to_pytorch_tensor(score)
 
 
-    @make_deprecated(trixi)
     class AccuracyMetricPyTorch(torch.nn.Module):
         """
         Metric to Calculate Accuracy
@@ -63,6 +63,8 @@ if "TORCH" in get_backends():
             class:`AccuracyMetricPyTorch` will be removed in next release
 
         """
+
+        @make_deprecated(trixi)
         def __init__(self, normalize=True, sample_weight=None):
             """
 
