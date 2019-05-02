@@ -6,6 +6,7 @@ dense = tf.keras.layers.Dense
 relu = tf.keras.layers.ReLU
 gap2d = tf.keras.layers.GlobalAveragePooling2D
 batchnorm2d = tf.keras.layers.BatchNormalization
+add = tf.keras.layers.Add
 
 class ResNet18(tf.keras.Model):
     def __init__(self, num_classes=None):
@@ -35,10 +36,12 @@ class ResNet18(tf.keras.Model):
         self.conv5_2 = conv2d(filters=512, strides=1, kernel_size=3,
                               padding='same')
 
-        self.gap = gap2d()
         self.dense1 = dense(1000)
         self.dense2 = dense(num_classes)
+       
+        self.gap = gap2d()
         self.relu = relu()
+        self.add = add()
 
     def call(self, inputs, training=None):
         x = self.conv1(inputs)
@@ -46,24 +49,28 @@ class ResNet18(tf.keras.Model):
         x = self.relu(x)
         x = self.pool1(x)
 
-        x = self.conv2_1(x)
-        x = self.relu(x)
-        x = self.conv2_2(x)
-        x = self.relu(x)
-
-        x = self.conv3_1(x)
-        x = self.relu(x)
-        x = self.conv3_2(x)
+        _x = self.conv2_1(x)
+        _x = self.relu(_x)
+        _x = self.conv2_2(_x)
+        x = self.add([x, _x])
         x = self.relu(x)
 
-        x = self.conv4_1(x)
-        x = self.relu(x)
-        x = self.conv4_2(x)
+        _x = self.conv3_1(x)
+        _x = self.relu(_x)
+        _x = self.conv3_2(_x)
+        x = self.add([x, _x])
         x = self.relu(x)
 
-        x = self.conv5_1(x)
+        _x = self.conv4_1(x)
+        _x = self.relu(_x)
+        _x = self.conv4_2(_x)
+        x = self.add([x, _x])
         x = self.relu(x)
-        x = self.conv5_2(x)
+
+        _x = self.conv5_1(x)
+        _x = self.relu(_x)
+        _x = self.conv5_2(_x)
+        x = self.add([x, _x])
         x = self.relu(x)
 
         x = self.gap(x)
