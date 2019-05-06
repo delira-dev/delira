@@ -10,13 +10,26 @@ add = tf.keras.layers.Add
 
 
 def get_image_format_and_axis():
+    """
+    helper function to read out keras image_format and convert to axis
+    dimension
+
+    Returns
+    -------
+    str
+        image data format (either "channels_first" or "channels_last")
+    int
+        integer corresponding to the channel_axis (either 1 or -1)
+    """
     image_format = tf.keras.backend.image_data_format()
     if image_format == "channels_first":
         return image_format, 1
     elif image_format == "channels_last":
         return image_format, -1
     else:
-        raise Exception("Image format type unknown")
+        raise RuntimeError(
+                "Image format unknown, got: {}".format(image_format)
+                )
 
 
 class ResBlock(tf.keras.Model):
@@ -120,17 +133,17 @@ class ResNet18(tf.keras.Model):
         x = self.relu(x)
         x = self.pool1(x)
 
-        x = self.block_2_1(x)
-        x = self.block_2_2(x)
+        x = self.block_2_1(x, training=training)
+        x = self.block_2_2(x, training=training)
 
-        x = self.block_3_1(x)
-        x = self.block_3_2(x)
+        x = self.block_3_1(x, training=training)
+        x = self.block_3_2(x, training=training)
 
-        x = self.block_4_1(x)
-        x = self.block_4_2(x)
+        x = self.block_4_1(x, training=training)
+        x = self.block_4_2(x, training=training)
 
-        x = self.block_5_1(x)
-        x = self.block_5_2(x)
+        x = self.block_5_1(x, training=training)
+        x = self.block_5_2(x, training=training)
 
         x = self.gap(x)
         x = self.dense(x)
