@@ -4,10 +4,27 @@ import numpy as np
 import json
 import os
 from abc import abstractmethod
-
+from delira.utils.decorators import make_deprecated
 logger = logging.getLogger(__name__)
 
 
+def load_nii(path):
+    """
+    Loads a single nii file
+    Parameters
+    ----------
+    path: str
+        path to nii file which should be loaded
+
+    Returns
+    -------
+    np.ndarray
+        numpy array containing the loaded data
+    """
+    return sitk.GetArrayFromImage(sitk.ReadImage(path))
+
+
+@make_deprecated('LoadSample')
 def load_sample_nii(files, label_load_cls):
     """
     Load sample from multiple ITK files
@@ -53,6 +70,8 @@ class BaseLabelGenerator(object):
     Base Class to load labels from json files
 
     """
+
+    @make_deprecated('dict containing labels')
     def __init__(self, fpath):
         """
 

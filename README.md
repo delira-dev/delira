@@ -7,7 +7,7 @@
 Authors: [Justus Schock, Oliver Rippel, Christoph Haarburger](AUTHORS.rst)
 
 ## Introduction
-Delira was developed as a deep learning framework for medical images such as CT or MRI. Currently, it works on arbitrary data (based on [NumPy](http://www.numpy.org/)). 
+Delira was originally developed as a deep learning framework for medical images such as CT or MRI. Currently, it works on arbitrary data (based on [NumPy](http://www.numpy.org/)). 
 
 Based on [batchgenerators](https://github.com/MIC-DKFZ/batchgenerators) and [trixi](https://github.com/MIC-DKFZ/trixi) it provides a framework for
 * Dataset loading
@@ -16,6 +16,7 @@ Based on [batchgenerators](https://github.com/MIC-DKFZ/batchgenerators) and [tri
 * A generic trainer class that implements the training process for all [backends](#choose-backend)
 * Already implemented [models](delira/models) used in medical image processing and exemplaric implementations of most used models in general (like Resnet)
 * Web-based monitoring using [Visdom](https://github.com/facebookresearch/visdom)
+* Tensorboard monitoring
 * Model save and load functions
 
 Delira supports classification and regression problems as well as generative adversarial networks and segmentation tasks.
@@ -35,6 +36,9 @@ Currently the only available backends are [PyTorch](https://pytorch.org) and [Te
 
 ### Docker
 The easiest way to use `delira` is via docker (with the [nvidia-runtime](https://github.com/NVIDIA/nvidia-docker) for GPU-support) and using the [Dockerfile](docker/Dockerfile) or the [prebuild-images](https://cloud.docker.com/u/justusschock/repository/docker/justusschock/delira).
+
+### Chat
+We have a [community chat on slack](https://deliradev.slack.com). If you need an invitation, just [drop a mail](mailto:justus.schock@rwth-aachen.de). It may take a day or two until we respond.
 
 ## Getting Started
 The best way to learn how to use is to have a look at the [tutorial notebook](notebooks/tutorial_delira.ipynb).

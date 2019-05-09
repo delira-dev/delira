@@ -6,9 +6,6 @@ from delira.models.classification.ResNet18 import ResNet18
 
 from delira.utils.decorators import make_deprecated
 
-tf.keras.backend.set_image_data_format('channels_first')
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -35,6 +32,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         n_outputs : int
             number of outputs (usually same as number of classes)
         """
+        tf.keras.backend.set_image_data_format('channels_first')
         # register params by passing them as kwargs to parent class __init__
         super().__init__(in_channels=in_channels,
                          n_outputs=n_outputs,

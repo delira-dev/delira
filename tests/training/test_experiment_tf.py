@@ -5,7 +5,6 @@ import unittest
 import numpy as np
 from sklearn.metrics import mean_absolute_error
 
-
 class TfExperimentTest(unittest.TestCase):
 
     @unittest.skipIf("TF" not in delira.get_backends(),
@@ -65,7 +64,7 @@ class TfExperimentTest(unittest.TestCase):
 
         class DummyDataset(AbstractDataset):
             def __init__(self, length):
-                super().__init__(None, None, None, None)
+                super().__init__(None, None)
                 self.length = length
 
             def __getitem__(self, index):

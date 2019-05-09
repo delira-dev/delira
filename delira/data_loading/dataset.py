@@ -1,13 +1,14 @@
+import abc
 import os
-from tqdm import tqdm
+import typing
 import numpy as np
+from tqdm import tqdm
 from skimage.transform import resize
 from sklearn.model_selection import train_test_split
-import abc
-import typing
+from delira import get_backends
+
 from ..utils import subdirs
 from ..utils.decorators import make_deprecated
-from delira import get_backends
 
 
 class AbstractDataset:
@@ -16,7 +17,7 @@ class AbstractDataset:
 
     """
 
-    def __init__(self, data_path, load_fn, img_extensions, gt_extensions):
+    def __init__(self, data_path: str, load_fn: typing.Callable):
         """
 
         Parameters
@@ -25,21 +26,13 @@ class AbstractDataset:
             path to data samples
         load_fn : function
             function to load single sample
-        img_extensions : list
-            valid extensions of image files
-        gt_extensions : list
-            valid extensions of label files
-
         """
-
-        self._img_extensions = img_extensions
-        self._gt_extensions = gt_extensions
         self.data_path = data_path
         self._load_fn = load_fn
         self.data = []
 
     @abc.abstractmethod
-    def _make_dataset(self, path):
+    def _make_dataset(self, path: str):
         """
         Create dataset
 
@@ -84,6 +77,17 @@ class AbstractDataset:
             number of samples
         """
         return len(self.data)
+
+    def __iter__(self):
+        """
+        Return an iterator for the dataset
+
+        Returns
+        -------
+        object
+            a single sample
+        """
+        return _DatasetIter(self)
 
     def get_sample_from_index(self, index):
         """
@@ -178,10 +182,37 @@ class AbstractDataset:
         return self.get_subset(train_idxs), self.get_subset(test_idxs)
 
 
+class _DatasetIter(object):
+    """
+    Iterator for dataset
+    """
+    def __init__(self, dset):
+        """
+
+        Parameters
+        ----------
+        dset: :class: `AbstractDataset`
+            the dataset which should be iterated
+        """
+        self._dset = dset
+        self._curr_index = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._curr_index >= len(self._dset):
+            raise StopIteration
+
+        sample = self._dset[self._curr_index]
+        self._curr_index += 1
+        return sample
+
+
 class BlankDataset(AbstractDataset):
     """
     Blank Dataset loading the data, which has been passed
-    in it's ``__init__`` by it's ``load_fn``
+    in it's ``__init__`` by it's ``_sample_fn``
 
     """
 
@@ -198,7 +229,7 @@ class BlankDataset(AbstractDataset):
             additional keyword arguments (are set as class attribute)
 
         """
-        super().__init__(None, None, None, None)
+        super().__init__(None, None)
 
         self.data = data
         self._old_getitem = old_getitem
@@ -208,7 +239,7 @@ class BlankDataset(AbstractDataset):
 
     def __getitem__(self, index):
         """
-        returns single sample corresponding to ``index`` via the ``load_fn``
+        returns single sample corresponding to ``index`` via the ``_sample_fn``
 
         Parameters
         ----------
@@ -233,124 +264,7 @@ class BlankDataset(AbstractDataset):
             number of samples
 
         """
-
         return len(self.data)
-
-
-class BaseLazyDataset(AbstractDataset):
-    """
-    Dataset to load data in a lazy way
-
-    """
-
-    def __init__(self, data_path, load_fn, img_extensions, gt_extensions=[],
-                 **load_kwargs):
-        """
-
-        Parameters
-        ----------
-        data_path : str
-            path to data samples
-        load_fn : function
-            function to load single data sample
-        img_extensions : list
-            valid extensions of image files
-        gt_extensions : list
-            valid extensions of label files
-        **load_kwargs :
-            additional loading keyword arguments (image shape,
-            channel number, ...); passed to load_fn
-
-        """
-        super().__init__(data_path, load_fn, img_extensions, gt_extensions)
-        self._load_kwargs = load_kwargs
-        self.data = self._make_dataset(self.data_path)
-
-    def _make_dataset(self, path):
-        """
-        Helper Function to make a dataset containing paths to all images in a
-        certain directory
-
-        Parameters
-        ----------
-        path : str
-            path to data samples
-
-        Returns
-        -------
-        list
-            list of sample paths
-
-        Raises
-        ------
-        AssertionError
-            if `path` is not a valid directory
-
-        """
-        data = []
-        assert os.path.isdir(path), '%s is not a valid directory' % dir
-
-        for root, _, fnames in sorted(os.walk(path)):
-            for fname in fnames:
-                fpath = os.path.join(root, fname)
-                if self._is_valid_image_file(fpath):
-                    sample = [fpath]
-                    for ext in self._gt_extensions:
-                        gt_path = fpath.rsplit(".", maxsplit=1)[0] + ext
-                        if os.path.isfile(gt_path):
-                            sample.append(gt_path)
-
-                    data.append(sample)
-
-        return data
-
-    def _is_valid_image_file(self, fname):
-        """
-        Helper Function to check wheter file is image file and has at least
-        one label file
-
-        Parameters
-        ----------
-        fname : str
-            filename of image path
-
-        Returns
-        -------
-        bool
-            is valid data sample
-
-        """
-        is_valid_file = False
-        for ext in self._img_extensions:
-            if fname.endswith(ext):
-                is_valid_file = True
-
-        has_label = not self._gt_extensions
-        for ext in self._gt_extensions:
-            label_file = fname.rsplit(".", maxsplit=1)[0] + ext
-            if os.path.isfile(label_file):
-                has_label = True
-
-        return is_valid_file and has_label
-
-    def __getitem__(self, index):
-        """
-        load data sample specified by index
-
-        Parameters
-        ----------
-        index : int
-            index to specifiy which data sample to load
-
-        Returns
-        -------
-        dict
-            loaded data sample
-        """
-        data_dict = self._load_fn(*self.get_sample_from_index(index),
-                                  **self._load_kwargs)
-
-        return data_dict
 
 
 class BaseCacheDataset(AbstractDataset):
@@ -363,96 +277,65 @@ class BaseCacheDataset(AbstractDataset):
 
     """
 
-    def __init__(self, data_path, load_fn, img_extensions, gt_extensions=[],
-                 **load_kwargs):
+    def __init__(self, data_path: typing.Union[str, list],
+                 load_fn: typing.Callable, **load_kwargs):
         """
 
         Parameters
         ----------
-        data_path : str
-            path to data samples
+        data_path : str or list
+            if data_path is a string, _sample_fn is called for all items inside
+            the specified directory
+            if data_path is a list, _sample_fn is called for elements in the
+            list
         load_fn : function
-            function to load single data sample
-        img_extensions : list
-            valid extensions of image files
-        gt_extensions : list
-            valid extensions of label files
+            function to load a single data sample
         **load_kwargs :
             additional loading keyword arguments (image shape,
-            channel number, ...); passed to load_fn
+            channel number, ...); passed to _sample_fn
 
         """
-        super().__init__(data_path, load_fn, img_extensions, gt_extensions)
+        super().__init__(data_path, load_fn)
         self._load_kwargs = load_kwargs
         self.data = self._make_dataset(data_path)
 
-    def _make_dataset(self, path):
+    def _make_dataset(self, path: typing.Union[str, list]):
         """
         Helper Function to make a dataset containing all samples in a certain
         directory
 
         Parameters
         ----------
-        path: str
-            path to data samples
+        path: str or list
+            if data_path is a string, _sample_fn is called for all items inside
+            the specified directory
+            if data_path is a list, _sample_fn is called for elements in the
+            list
 
         Returns
         -------
         list
-            list of sample paths
+            list of items which where returned from _sample_fn (typically dict)
 
         Raises
         ------
         AssertionError
-            if `path` is not a valid directory
+            if `path` is not a list and is not a valid directory
 
         """
         data = []
-        assert os.path.isdir(path), '%s is not a valid directory' % dir
-
-        for root, _, fnames in sorted(os.walk(path)):
-            for fname in fnames:
-                fpath = os.path.join(root, fname)
-                if self._is_valid_image_file(fpath):
-                    sample = [fpath]
-                    for ext in self._gt_extensions:
-                        gt_path = fpath.rsplit(".", maxsplit=1)[0] + ext
-                        if os.path.isfile(gt_path):
-                            sample.append(gt_path)
-
-                    data.append(self._load_fn(
-                        *sample, **self._load_kwargs))
-
+        if isinstance(path, list):
+            # iterate over all elements
+            for p in tqdm(path, unit='samples', desc="Loading samples"):
+                data.append(self._load_fn(p, **self._load_kwargs))
+        else:
+            # call _sample_fn for all elements inside directory
+            assert os.path.isdir(path), '%s is not a valid directory' % dir
+            for p in tqdm(os.listdir(path), unit='samples',
+                          desc="Loading samples"):
+                data.append(self._load_fn(os.path.join(path, p),
+                                          **self._load_kwargs))
         return data
-
-    def _is_valid_image_file(self, fname):
-        """
-        Helper Function to check wheter file is image file and has at least
-        one label file
-
-        Parameters
-        ----------
-        fname : str
-            filename of image path
-
-        Returns
-        -------
-        bool
-            is valid data sample
-
-        """
-        is_valid_file = False
-        for ext in self._img_extensions:
-            if fname.endswith(ext):
-                is_valid_file = True
-
-        has_label = not self._gt_extensions
-        for ext in self._gt_extensions:
-            label_file = fname.rsplit(".", maxsplit=1)[0] + ext
-            if os.path.isfile(label_file):
-                has_label = True
-
-        return is_valid_file and has_label
 
     def __getitem__(self, index):
         """
@@ -470,13 +353,173 @@ class BaseCacheDataset(AbstractDataset):
 
         """
         data_dict = self.get_sample_from_index(index)
-
         return data_dict
+
+
+class BaseLazyDataset(AbstractDataset):
+    """
+    Dataset to load data in a lazy way
+
+    """
+
+    def __init__(self, data_path: typing.Union[str, list],
+                 load_fn: typing.Callable, **load_kwargs):
+        """
+
+        Parameters
+        ----------
+        data_path : str or list
+            if data_path is a string, _sample_fn is called for all items inside
+            the specified directory
+            if data_path is a list, _sample_fn is called for elements in the
+            list
+        load_fn : function
+            function to load single data sample
+        **load_kwargs :
+            additional loading keyword arguments (image shape,
+            channel number, ...); passed to _sample_fn
+
+        """
+        super().__init__(data_path, load_fn)
+        self._load_kwargs = load_kwargs
+        self.data = self._make_dataset(self.data_path)
+
+    def _make_dataset(self, path: typing.Union[str, list]):
+        """
+        Helper Function to make a dataset containing paths to all images in a
+        certain directory
+
+        Parameters
+        ----------
+        path : str or list
+            path to data samples
+
+        Returns
+        -------
+        list
+            list of sample paths
+
+        Raises
+        ------
+        AssertionError
+            if `path` is not a valid directory
+
+        """
+        if isinstance(path, list):
+            # generate list from iterable
+            data = list(path)
+        else:
+            # generate list from all items
+            assert os.path.isdir(path), '%s is not a valid directory' % dir
+            data = [os.path.join(path, p) for p in os.listdir(path)]
+        return data
+
+    def __getitem__(self, index):
+        """
+        load data sample specified by index
+
+        Parameters
+        ----------
+        index : int
+            index to specifiy which data sample to load
+
+        Returns
+        -------
+        dict
+            loaded data sample
+        """
+        data_dict = self._load_fn(self.get_sample_from_index(index),
+                                  **self._load_kwargs)
+        return data_dict
+
+
+class BaseExtendCacheDataset(BaseCacheDataset):
+    """
+    Dataset to preload and cache data. Function to load sample is expected
+    to return an iterable which can contain multiple samples
+
+    Notes
+    -----
+    data needs to fit completely into RAM!
+
+    """
+
+    def __init__(self, data_path: typing.Union[str, list],
+                 load_fn: typing.Callable, **load_kwargs):
+        """
+
+        Parameters
+        ----------
+        data_path : str or list
+            if data_path is a string, _sample_fn is called for all items inside
+            the specified directory
+            if data_path is a list, _sample_fn is called for elements in the list
+        load_fn : function
+            function to load a multiple data samples at once. Needs to return
+            an iterable which extends the internal list.
+        **load_kwargs :
+            additional loading keyword arguments (image shape,
+            channel number, ...); passed to _sample_fn
+
+        See Also
+        --------
+        :class: `BaseCacheDataset`
+
+        """
+        super().__init__(data_path, load_fn, **load_kwargs)
+
+    def _make_dataset(self, path: typing.Union[str, list]):
+        """
+        Helper Function to make a dataset containing all samples in a certain
+        directory
+
+        Parameters
+        ----------
+        path: str or iterable
+            if data_path is a string, _sample_fn is called for all items inside
+            the specified directory
+            if data_path is a list, _sample_fn is called for elements in the
+            list
+
+        Returns
+        -------
+        list
+            list of items which where returned from _sample_fn (typically dict)
+
+        Raises
+        ------
+        AssertionError
+            if `path` is not a list and is not a valid directory
+
+        """
+        data = []
+        if isinstance(path, list):
+            # iterate over all elements
+            for p in tqdm(path, unit='samples', desc="Loading samples"):
+                data.extend(self._load_fn(p, **self._load_kwargs))
+        else:
+            # call _sample_fn for all elements inside directory
+            assert os.path.isdir(path), '%s is not a valid directory' % dir
+            for p in tqdm(os.listdir(path), unit='samples',
+                          desc="Loading samples"):
+                data.extend(self._load_fn(os.path.join(path, p),
+                                          **self._load_kwargs))
+        return data
 
 
 class ConcatDataset(AbstractDataset):
     def __init__(self, *datasets):
-        super().__init__(None, None, None, None)
+        """
+        Concatenate multiple datasets to one
+
+        Parameters
+        ----------
+        datasets:
+            variable number of datasets
+        """
+        super().__init__(None, None)
+
+        # TODO: Why should datasets[0] be a list not a AbstractDataset?
 
         # check if first item in datasets is list and datasets is of length 1
         if (len(datasets) == 1) and isinstance(datasets[0], list):
@@ -533,15 +576,14 @@ class ConcatDataset(AbstractDataset):
 
 class Nii3DLazyDataset(BaseLazyDataset):
     """
-    Dataset to load 3D medical images (e.g. from .nii files) during training
+       Dataset to load 3D medical images (e.g. from .nii files) during training
+        """
 
-    """
-
+    @make_deprecated('LoadSample')
     def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
                  img_files, label_file, **load_kwargs):
         """
-
-        Parameters
+         Parameters
         ----------
         data_path : str
             root path to data samples where each samples has it's own folder
@@ -558,34 +600,28 @@ class Nii3DLazyDataset(BaseLazyDataset):
         **load_kwargs :
             additional loading keyword arguments (image shape,
             channel number, ...); passed to load_fn
-
-        """
+         """
         self.img_files = img_files
         self.label_file = label_file
-        super().__init__(data_path, load_fn, img_extensions, gt_extensions,
-                         **load_kwargs)
+        super().__init__(data_path, load_fn, **load_kwargs)
 
     def _make_dataset(self, path):
         """
         Helper Function to make a dataset containing all samples in a certain
         directory
-
-        Parameters
+         Parameters
         ----------
         path: str
             path to data samples
-
-        Returns
+         Returns
         -------
         list
             list of sample paths
-
-        Raises
+         Raises
         ------
         AssertionError
             if `path` is not a valid directory
-
-        """
+         """
         assert os.path.isdir(path)
 
         data = [[{'img': [os.path.join(t, i) for i in self.img_files],
@@ -597,14 +633,13 @@ class Nii3DLazyDataset(BaseLazyDataset):
 class Nii3DCacheDatset(BaseCacheDataset):
     """
     Dataset to load 3D medical images (e.g. from .nii files) before training
+     """
 
-    """
-
+    @make_deprecated('LoadSample')
     def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
                  img_files, label_file, **load_kwargs):
         """
-
-        Parameters
+         Parameters
         ----------
         data_path : str
             root path to data samples where each samples has it's own folder
@@ -621,34 +656,28 @@ class Nii3DCacheDatset(BaseCacheDataset):
         **load_kwargs :
             additional loading keyword arguments (image shape,
             channel number, ...); passed to load_fn
-
-        """
+         """
         self.img_files = img_files
         self.label_file = label_file
-        super().__init__(data_path, load_fn, img_extensions, gt_extensions,
-                         **load_kwargs)
+        super().__init__(data_path, load_fn, **load_kwargs)
 
     def _make_dataset(self, path):
         """
         Helper Function to make a dataset containing all samples in a certain
         directory
-
-        Parameters
+         Parameters
         ----------
         path: str
             path to data samples
-
-        Returns
+         Returns
         -------
         list
             list of samples
-
-        Raises
+         Raises
         ------
         AssertionError
             if `path` is not a valid directory
-
-        """
+         """
         assert os.path.isdir(path)
         data = []
         for s in tqdm(subdirs(path), unit='samples', desc="Loading samples"):
@@ -662,6 +691,7 @@ class Nii3DCacheDatset(BaseCacheDataset):
 if "TORCH" in get_backends():
     from torchvision.datasets import CIFAR10, CIFAR100, EMNIST, MNIST, FashionMNIST
     import torch
+
 
     class TorchvisionClassificationDataset(AbstractDataset):
         """
@@ -695,7 +725,7 @@ if "TORCH" in get_backends():
                 class for initialization
 
             """
-            super().__init__("", None, [], [])
+            super().__init__("", None)
 
             self.download = download
             self.train = train
@@ -778,6 +808,7 @@ if "TORCH" in get_backends():
             elif isinstance(label, int):
                 label = np.array(label)
             data_dict = {"data": np.array(data[0]),
+
                          "label": label.reshape(1).astype(np.float32)}
 
             if self.one_hot:

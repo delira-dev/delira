@@ -48,6 +48,7 @@ class SklearnClassificationMetric(object):
         -------
         float
             result from score function
+
         """
 
         if self._gt_logits:
