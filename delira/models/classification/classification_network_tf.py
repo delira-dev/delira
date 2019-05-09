@@ -4,6 +4,8 @@ import typing
 from delira.models.abstract_network import AbstractTfNetwork
 from delira.models.classification.ResNet18 import ResNet18
 
+from delira.utils.decorators import make_deprecated
+
 tf.keras.backend.set_image_data_format('channels_first')
 
 
@@ -20,6 +22,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
     """
 
+    @make_deprecated("own repository to be announced")
     def __init__(self, in_channels: int, n_outputs: int, **kwargs):
         """
 

@@ -2,6 +2,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from delira import get_backends
+from delira.utils.decorators import make_deprecated
 
 if "TORCH" in get_backends():
     import torch
@@ -28,6 +29,7 @@ if "TORCH" in get_backends():
 
         """
 
+        @make_deprecated("Own repository to be announced")
         def __init__(self, n_channels, noise_length, **kwargs):
             """
 

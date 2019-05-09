@@ -1,6 +1,7 @@
 # Adapted from https://github.com/jaxony/unet-pytorch/blob/master/model.py
 
 from delira import get_backends
+from delira.utils.decorators import make_deprecated
 
 if "TORCH" in get_backends():
     import torch
@@ -42,6 +43,7 @@ if "TORCH" in get_backends():
 
         """
 
+        @make_deprecated("Own repository to be announced")
         def __init__(self, num_classes, in_channels=1, depth=5,
                     start_filts=64, up_mode='transpose',
                     merge_mode='concat'):

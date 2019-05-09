@@ -1,4 +1,5 @@
 import tensorflow as tf
+from delira.utils.decorators import make_deprecated
 
 conv2d = tf.keras.layers.Conv2D
 maxpool2d = tf.keras.layers.MaxPool2D
@@ -7,7 +8,9 @@ relu = tf.keras.layers.ReLU
 gap2d = tf.keras.layers.GlobalAveragePooling2D
 batchnorm2d = tf.keras.layers.BatchNormalization
 
+
 class ResNet18(tf.keras.Model):
+    @make_deprecated("own repository to be announced")
     def __init__(self, num_classes=None):
         super(ResNet18, self).__init__()
         self.conv1 = conv2d(filters=64, strides=2, kernel_size=7,
