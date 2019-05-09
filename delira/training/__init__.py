@@ -1,5 +1,5 @@
 from .parameters import Parameters
-from .experiment import AbstractExperiment
+from .experiment import BaseExperiment
 from .base_trainer import BaseNetworkTrainer
 from .predictor import Predictor
 

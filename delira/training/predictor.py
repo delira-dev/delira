@@ -97,7 +97,7 @@ class Predictor(object):
         """
         return self.predict(data)
 
-    def predict(self, data, keys=["data"]):
+    def predict(self, data):
 
         data = self._prepare_batch(data)
 
