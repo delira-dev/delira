@@ -250,11 +250,11 @@ class BaseExperiment(TrixiExperiment):
                                      "['random', 'stratified'], but got: %s"
                                      % str(split_type))
 
-                val_split = val_split_cls(n_splits=1, test_size=val_split,
-                                          random_state=random_seed)
+                _val_split = val_split_cls(n_splits=1, test_size=val_split,
+                                           random_state=random_seed)
 
-                for _train_idxs, _val_idxs in val_split.split(train_idxs,
-                                                              train_labels):
+                for _train_idxs, _val_idxs in _val_split.split(train_idxs,
+                                                               train_labels):
                     val_data = train_data.get_subset(_val_idxs)
                     val_data.update_state_from_dict(test_kwargs)
 
