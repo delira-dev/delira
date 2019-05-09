@@ -151,7 +151,7 @@ if "TORCH" in get_backends():
 
             self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                         lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-                        convert_batch_to_npy_fn,
+                        key_mapping, convert_batch_to_npy_fn,
                         mixed_precision, mixed_precision_kwargs)
 
             for key, val in kwargs.items():
@@ -159,7 +159,7 @@ if "TORCH" in get_backends():
 
         def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
                    lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-                   convert_batch_to_npy_fn, mixed_precision,
+                   key_mapping, convert_batch_to_npy_fn, mixed_precision,
                    mixed_precision_kwargs):
             """
             Defines the Trainers Setup
@@ -192,7 +192,7 @@ if "TORCH" in get_backends():
                                        **optimizer_params)
 
             super()._setup(network, lr_scheduler_cls, lr_scheduler_params,
-                           gpu_ids, convert_batch_to_npy_fn,
+                           gpu_ids, key_mapping, convert_batch_to_npy_fn,
                            network.prepare_batch)
 
             try:

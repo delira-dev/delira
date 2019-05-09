@@ -38,7 +38,8 @@ class BaseExperiment(TrixiExperiment):
                  **kwargs):
 
         if n_epochs is None:
-            n_epochs = params.nested_get("n_epochs")
+            n_epochs = params.nested_get("n_epochs",
+                                         params.nested_get("num_epochs"))
 
         super().__init__(n_epochs)
 
@@ -63,7 +64,7 @@ class BaseExperiment(TrixiExperiment):
 
         os.makedirs(self.save_path, exist_ok=True)
 
-        self._trainer_cls = trainer_cls
+        self.trainer_cls = trainer_cls
 
         if val_score_key is None:
             if params.nested_get("val_metrics", False):
@@ -126,12 +127,11 @@ class BaseExperiment(TrixiExperiment):
             lr_scheduler_params=lr_scheduler_params,
             optim_fn=self._optim_builder,
             save_freq=self.checkpoint_freq,
-            **self.kwargs,
             **kwargs
         )
 
-    def _setup_test(self, model, convert_batch_to_npy_fn, prepare_batch_fn,
-                    **kwargs):
+    def _setup_test(self, params, model, convert_batch_to_npy_fn,
+                    prepare_batch_fn, **kwargs):
         predictor = Predictor(model=model, key_mapping=self.key_mapping,
                               convert_batch_to_npy_fn=convert_batch_to_npy_fn,
                               prepare_batch_fn=prepare_batch_fn, **kwargs)
@@ -151,7 +151,10 @@ class BaseExperiment(TrixiExperiment):
         self._run += 1
 
         num_epochs = kwargs.get("num_epochs", training_params.nested_get(
-            "num_epochs"))
+            "num_epochs", self.n_epochs))
+
+        if num_epochs is None:
+            num_epochs = self.n_epochs
 
         return trainer.train(num_epochs, train_data, val_data,
                              self.val_score_key, kwargs.get("val_score_mode",
@@ -166,7 +169,7 @@ class BaseExperiment(TrixiExperiment):
     def test(self, network, test_data: BaseDataManager, params,
              metrics: dict, metric_keys=None,
              verbose=False, prepare_batch=lambda x: x,
-             convert_fn=lambda x: x,**kwargs):
+             convert_fn=lambda x: x, **kwargs):
 
         params = self._resolve_params(params)
         kwargs = self._resolve_kwargs(kwargs)
@@ -192,6 +195,11 @@ class BaseExperiment(TrixiExperiment):
 
         metrics_test, outputs = {}, {}
         split_idxs = list(range(len(data.dataset)))
+
+        if train_kwargs is None:
+            train_kwargs = {}
+        if test_kwargs is None:
+            test_kwargs = {}
 
         # switch between differnt kfold types
         if split_type == "random":
@@ -236,7 +244,7 @@ class BaseExperiment(TrixiExperiment):
                 elif split_type == "stratified":
                     # iterate over dataset to get labels for stratified splitting
                     train_labels = [train_data.dataset[_idx][label_key]
-                                    for _idx in split_idxs]
+                                    for _idx in train_idxs]
                 else:
                     raise ValueError("split_type must be one of "
                                      "['random', 'stratified'], but got: %s"

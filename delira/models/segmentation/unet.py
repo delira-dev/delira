@@ -609,7 +609,7 @@ if "TORCH" in get_backends():
             # torch.nn.CrossEntropyLoss is your training script,
             # as this module includes a softmax already.
             x = self.conv_final(x)
-            return {"preds": x}
+            return {"pred": x}
 
         @staticmethod
         def closure(model, data_dict: dict, optimizers: dict, losses={},

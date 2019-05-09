@@ -117,14 +117,14 @@ class TfNetworkTrainer(BaseNetworkTrainer):
 
         self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                     lr_scheduler_cls, lr_scheduler_params,
-                    convert_batch_to_npy_fn, gpu_ids)
+                    key_mapping, convert_batch_to_npy_fn, gpu_ids)
 
         for key, val in kwargs.items():
             setattr(self, key, val)
 
     def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
-               lr_scheduler_cls, lr_scheduler_params, convert_batch_to_npy_fn,
-               gpu_ids):
+               lr_scheduler_cls, lr_scheduler_params, key_mapping,
+               convert_batch_to_npy_fn, gpu_ids):
         """
         Defines the Trainers Setup
 
@@ -176,7 +176,7 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         self.optimizers = optim_fn(optimizer_cls, **optimizer_params)
 
         super()._setup(network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-                       convert_batch_to_npy_fn, lambda x: x)
+                       key_mapping, convert_batch_to_npy_fn, lambda x: x)
 
         self.use_gpu = True
 

@@ -302,14 +302,20 @@ if "TF" in get_backends():
             """
             raise NotImplementedError()
 
-        def run(self, *args):
+        def run(self, *args, **kwargs):
             """
             Evaluates `self.outputs_train` or `self.outputs_eval` based on `self.training`
 
             Parameters
             ----------
             *args :
-                arguments to feed as `self.inputs`. Must have same length as `self.inputs`
+                arguments to feed as ``self.inputs``.
+            **kwargs :
+                keyword arguments to feed as ``self.inputs``
+
+            Note
+            ----
+            ``args`` and ``kwargs`` together must have same length as ``self.inputs``
 
             Returns
             -------
@@ -321,6 +327,9 @@ if "TF" in get_backends():
                 _feed_dict = dict(zip([self.inputs], args))
             else:
                 _feed_dict = dict(zip(self.inputs, args))
+
+            _feed_dict.update(kwargs)
+
             if self.training:
                 return self._sess.run(self.outputs_train, feed_dict=_feed_dict)
             else:

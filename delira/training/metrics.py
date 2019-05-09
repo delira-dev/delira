@@ -23,7 +23,7 @@ class SklearnClassificationMetric(object):
             whether given ``y_true`` are logits or not
         pred_logits : bool
             whether given ``y_pred`` are logits or not
-        kwargs:
+        **kwargs:
             variable number of keyword arguments passed to score_fn function
         """
         self._score_fn = score_fn

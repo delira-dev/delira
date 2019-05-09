@@ -135,7 +135,7 @@ if "TORCH" in get_backends():
                     with torch.no_grad():
                         for key, metric_fn in metrics.items():
                             metric_vals[key] = metric_fn(
-                                preds, *data_dict.values()).item()
+                                preds["pred"], *data_dict.values()).item()
 
             if optimizers:
                 optimizers['default'].zero_grad()

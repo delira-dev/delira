@@ -53,7 +53,7 @@ class Predictor(object):
                     prepare_batch_fn, **kwargs)
 
     def _setup(self, network, key_mapping, convert_batch_to_npy_fn, 
-               prepare_batch_fn):
+               prepare_batch_fn, **kwargs):
         """
 
         Parameters

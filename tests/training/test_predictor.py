@@ -3,26 +3,28 @@ import unittest
 import numpy as np
 from functools import partial
 
+from delira.data_loading import AbstractDataset, BaseDataManager
+
+
+class DummyDataset(AbstractDataset):
+    def __init__(self, length):
+        super().__init__(None, None)
+        self.length = length
+
+    def __getitem__(self, index):
+        return {"data": np.random.rand(32),
+                "label": np.random.randint(0, 1, 1)}
+
+    def __len__(self):
+        return self.length
+
+    def get_sample_from_index(self, index):
+        return self.__getitem__(index)
+
 
 class TestPredictor(unittest.TestCase):
 
     def setUp(self):
-        from delira.data_loading import AbstractDataset, BaseDataManager
-
-        class DummyDataset(AbstractDataset):
-            def __init__(self, length):
-                super().__init__(None, None, None, None)
-                self.length = length
-
-            def __getitem__(self, index):
-                return {"data": np.random.rand(32),
-                        "label": np.random.randint(0, 1, 1)}
-
-            def __len__(self):
-                return self.length
-
-            def get_sample_from_index(self, index):
-                return self.__getitem__(index)
 
         self.dset = DummyDataset(20)
         self.dmgr = BaseDataManager(self.dset, 4, 1, transforms=None)
@@ -67,6 +69,7 @@ class TestPredictor(unittest.TestCase):
 
         predictor = Predictor(
             DummyNetwork(),
+            {"images": "data"},
             # prepare_batch_fn=partial(DummyNetwork.prepare_batch,
             #                                          input_device="cpu",
             #                                          output_device="cpu"),
@@ -96,7 +99,7 @@ class TestPredictor(unittest.TestCase):
                 super().__init__(32, 1)
 
             def forward(self, x):
-                return self.module(x)
+                return {"pred": self.module(x)}
 
             @staticmethod
             def _build_model(in_channels, n_outputs):
@@ -117,6 +120,7 @@ class TestPredictor(unittest.TestCase):
 
         predictor = Predictor(
             DummyNetwork(),
+            {"x": "data"},
             convert_torch_tensor_to_npy,
             prepare_batch_fn=partial(DummyNetwork.prepare_batch,
                                      input_device="cpu", output_device="cpu")
@@ -130,4 +134,6 @@ class TestPredictor(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    from multiprocessing import freeze_support
+    freeze_support()
     unittest.main()
