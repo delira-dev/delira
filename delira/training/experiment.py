@@ -250,11 +250,11 @@ class BaseExperiment(TrixiExperiment):
                                      "['random', 'stratified'], but got: %s"
                                      % str(split_type))
 
-                val_split = val_split_cls(n_splits=1, test_size=val_split,
-                                          random_state=random_seed)
+                _val_split = val_split_cls(n_splits=1, test_size=val_split,
+                                           random_state=random_seed)
 
-                for _train_idxs, _val_idxs in val_split.split(train_idxs,
-                                                              train_labels):
+                for _train_idxs, _val_idxs in _val_split.split(train_idxs,
+                                                               train_labels):
                     val_data = train_data.get_subset(_val_idxs)
                     val_data.update_state_from_dict(test_kwargs)
 
@@ -333,16 +333,11 @@ class BaseExperiment(TrixiExperiment):
         with open(file_name, "rb") as f:
             return pickle.load(f)
 
-    def _resolve_params(self, params: typing.Union[dict, None]):
+    def _resolve_params(self, params: typing.Union[Parameters, None]):
         if params is None:
             params = Parameters()
 
-        elif not isinstance(params, Parameters):
-            _params = params
-            params = Parameters()
-            params.update(_params)
-
-        if hasattr(self, "params"):
+        if hasattr(self, "params") and isinstance(self.params, Parameters):
             params = params.permute_training_on_top()
             params.update(self.params.permute_training_on_top())
 
@@ -353,7 +348,7 @@ class BaseExperiment(TrixiExperiment):
         if kwargs is None:
             kwargs = {}
 
-        if hasattr(self, "kwargs"):
+        if hasattr(self, "kwargs") and isinstance(self.kwargs, dict):
             _kwargs = kwargs
             kwargs = self.kwargs
             kwargs.update(_kwargs)

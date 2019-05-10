@@ -131,11 +131,6 @@ if 'TORCH' in get_backends():
 
             metrics = val_metrics.get(val_score_key)
 
-            print(kwargs)
-            print(val_metrics)
-            print(val_score_key)
-            print(metrics)
-
             self.scheduler.step(metrics=metrics)
 
             return {}

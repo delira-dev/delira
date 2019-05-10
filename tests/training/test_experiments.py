@@ -204,6 +204,7 @@ class ExperimentTest(unittest.TestCase):
     def test_experiment_kfold_torch(self):
         from delira.training import PyTorchExperiment
         from delira.data_loading import BaseDataManager
+        from copy import deepcopy
 
         # all test cases
         for case in self._test_cases_torch:
@@ -230,15 +231,23 @@ class ExperimentTest(unittest.TestCase):
                                 dmgr = BaseDataManager(dset, 16, 1, None)
                                 exp.kfold(dmgr, params.nested_get("val_metrics"),
                                           shuffle=True, split_type=split_type,
-                                          num_splits=3)
+                                          num_splits=2)
 
                             continue
 
                         # check all types of validation data
                         for val_split in [0.2, None]:
                             with self.subTest(val_split=val_split):
+
+                                # disable lr scheduling if no validation data
+                                # is present
+                                _params = deepcopy(params)
+                                if val_split is None:
+                                    # _params = _params.permute_training_on_top()
+                                    _params["fixed"]["training"
+                                    ]["lr_sched_cls"] = None
                                 exp = PyTorchExperiment(
-                                    params, network_cls,
+                                    _params, network_cls,
                                     key_mapping={"x": "data"},
                                     val_score_key=val_score_key,
                                     val_score_mode=val_score_mode)
@@ -249,7 +258,7 @@ class ExperimentTest(unittest.TestCase):
                                 dmgr = BaseDataManager(dset, 16, 1, None)
                                 exp.kfold(dmgr, params.nested_get("val_metrics"),
                                           shuffle=True, split_type=split_type,
-                                          val_split=val_split, num_splits=3)
+                                          val_split=val_split, num_splits=2)
 
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF Backend installed")
@@ -258,13 +267,13 @@ class ExperimentTest(unittest.TestCase):
         from delira.training import TfExperiment
         from delira.data_loading import BaseDataManager
 
-        for case in self._test_cases_torch:
+        for case in self._test_cases_tf:
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
                  val_score_key, val_score_mode, network_cls) = case
 
                 exp = TfExperiment(params, network_cls,
-                                   key_mapping={"x": "data"},
+                                   key_mapping={"images": "data"},
                                    val_score_key=val_score_key,
                                    val_score_mode=val_score_mode)
 
@@ -282,15 +291,14 @@ class ExperimentTest(unittest.TestCase):
         from delira.training import TfExperiment
         from delira.data_loading import BaseDataManager
 
-        for case in self._test_cases_torch:
+        for case in self._test_cases_tf:
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
-                 val_score_key, val_score_mode, network_cls) = case
+                 network_cls) = case
 
                 exp = TfExperiment(params, network_cls,
-                                   key_mapping={"x": "data"},
-                                   val_score_key=val_score_key,
-                                   val_score_mode=val_score_mode)
+                                   key_mapping={"images": "data"},
+                                   )
 
                 model = network_cls()
 
@@ -307,7 +315,7 @@ class ExperimentTest(unittest.TestCase):
         from delira.data_loading import BaseDataManager
 
         # all test cases
-        for case in self._test_cases_torch:
+        for case in self._test_cases_tf:
             with self.subTest(case=case):
 
                 # both split_types
@@ -317,14 +325,11 @@ class ExperimentTest(unittest.TestCase):
                             # must raise ValueError
                             with self.assertRaises(ValueError):
                                 (params, dataset_length_train,
-                                 dataset_length_test, val_score_key,
-                                 val_score_mode, network_cls) = case
+                                 dataset_length_test, network_cls) = case
 
                                 exp = TfExperiment(
                                     params, network_cls,
-                                    key_mapping={"x": "data"},
-                                    val_score_key=val_score_key,
-                                    val_score_mode=val_score_mode)
+                                    key_mapping={"images": "data"})
 
                                 dset = DummyDataset(
                                     dataset_length_test + dataset_length_train)
@@ -332,7 +337,7 @@ class ExperimentTest(unittest.TestCase):
                                 dmgr = BaseDataManager(dset, 16, 1, None)
                                 exp.kfold(dmgr, params.nested_get("val_metrics"),
                                           shuffle=True, split_type=split_type,
-                                          num_splits=3)
+                                          num_splits=2)
 
                             continue
 
@@ -340,14 +345,11 @@ class ExperimentTest(unittest.TestCase):
                         for val_split in [0.2, None]:
                             with self.subTest(val_split=val_split):
                                 (params, dataset_length_train,
-                                 dataset_length_test, val_score_key,
-                                 val_score_mode, network_cls) = case
+                                 dataset_length_test, network_cls) = case
 
                                 exp = TfExperiment(
                                     params, network_cls,
-                                    key_mapping={"x": "data"},
-                                    val_score_key=val_score_key,
-                                    val_score_mode=val_score_mode)
+                                    key_mapping={"images": "data"})
 
                                 dset = DummyDataset(
                                     dataset_length_test + dataset_length_train)
@@ -355,7 +357,7 @@ class ExperimentTest(unittest.TestCase):
                                 dmgr = BaseDataManager(dset, 16, 1, None)
                                 exp.kfold(dmgr, params.nested_get("val_metrics"),
                                           shuffle=True, split_type=split_type,
-                                          val_split=val_split, num_splits=3)
+                                          val_split=val_split, num_splits=2)
 
 
 if __name__ == '__main__':

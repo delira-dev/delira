@@ -413,16 +413,18 @@ class BaseNetworkTrainer(Predictor):
             train_metrics, train_losses = self._train_single_epoch(
                 batch_gen_train, epoch, verbose=verbose)
 
-            # validate network
-            val_predictions, val_metrics = self.predict_data_mgr(
-                datamgr_valid, datamgr_valid.batch_size,
-                metrics=val_metric_fns, metric_keys=val_metric_keys,
-                verbose=verbose)
-            
             total_metrics = {
-                **val_metrics,
                 **train_metrics,
                 **train_losses}
+
+            # validate network
+            if datamgr_valid is not None:
+                val_predictions, val_metrics = self.predict_data_mgr(
+                    datamgr_valid, datamgr_valid.batch_size,
+                    metrics=val_metric_fns, metric_keys=val_metric_keys,
+                    verbose=verbose)
+
+                total_metrics.update(val_metrics)
 
             for k, v in total_metrics.items():
                 total_metrics[k] = reduce_fn(v)
