@@ -23,6 +23,19 @@ logger = logging.getLogger(__name__)
 
 
 class BaseExperiment(TrixiExperiment):
+    """
+    Baseclass for Experiments.
+
+    Implements:
+
+    * Setup-Behavior for Models, Trainers and Predictors (depending on train
+        and test case)
+
+    * The K-Fold logic (including stratified and random splitting)
+
+    * Argument Handling
+
+    """
 
     def __init__(self,
                  params: Parameters,
@@ -36,6 +49,41 @@ class BaseExperiment(TrixiExperiment):
                  checkpoint_freq=1,
                  trainer_cls=BaseNetworkTrainer,
                  **kwargs):
+        """
+
+        Parameters
+        ----------
+        params : :class:`Parameters`
+            the training parameters
+        model_cls : Subclass of :class:`AbstractNetwork`
+            the class implementing the model to train
+        n_epochs : int or None
+            the number of epochs to train, if None: can be specified later
+            during actual training
+        name : str or None
+            the Experiment's name
+        save_path : str or None
+            the path to save the results and checkpoints to.
+            if None: Current working directory will be used
+        key_mapping : dict
+            mapping between data_dict and model inputs (necessary for
+            prediction with :class:`Predictor`-API)
+        val_score_key : str or None
+            key defining which metric to use for validation (determining best
+            model and scheduling lr); if None: No validation-based operations
+            will be done (model might still get validated, but validation metrics
+            can only be logged and not used further)
+        optim_builder : function
+            Function returning a dict of backend-specific optimizers
+        checkpoint_freq : int
+            frequency of saving checkpoints (1 denotes saving every epoch,
+            2 denotes saving every second epoch etc.); default: 1
+        trainer_cls : subclass of :class:`BaseNetworkTrainer`
+            the trainer class to use for training the model
+        **kwargs :
+            additional keyword arguments
+
+        """
 
         if n_epochs is None:
             n_epochs = params.nested_get("n_epochs",
@@ -86,12 +134,56 @@ class BaseExperiment(TrixiExperiment):
         self.kwargs = kwargs
 
     def setup(self, params, training=True, **kwargs):
+        """
+        Defines the setup behavior (model, trainer etc.) for training and
+        testing case
+
+        Parameters
+        ----------
+        params : :class:`Parameters`
+            the parameters to use for setup
+        training : bool
+            whether to setup for training case or for testing case
+        **kwargs :
+            additional keyword arguments
+
+        Returns
+        -------
+        :class:`BaseNetworkTrainer`
+            the created trainer (if ``training=True``)
+        :class:`Predictor`
+            the created predictor (if ``training=False``)
+
+        See Also
+        --------
+
+        * :meth:`BaseExperiment._setup_training` for training setup
+
+        * :meth:`BaseExperiment._setup_test` for test setup
+
+        """
         if training:
             return self._setup_training(params, **kwargs)
 
         return self._setup_test(params, **kwargs)
 
     def _setup_training(self, params, **kwargs):
+        """
+        Handles the setup for training case
+
+        Parameters
+        ----------
+        params : :class:`Parameters`
+            the parameters containing the model and training kwargs
+        **kwargs :
+            additional keyword arguments
+
+        Returns
+        -------
+        :class:`BaseNetworkTrainer`
+            the created trainer
+
+        """
         model_params = params.permute_training_on_top().model
 
         model_kwargs = {**model_params.fixed, **model_params.variable}
@@ -132,6 +224,30 @@ class BaseExperiment(TrixiExperiment):
 
     def _setup_test(self, params, model, convert_batch_to_npy_fn,
                     prepare_batch_fn, **kwargs):
+        """
+
+        Parameters
+        ----------
+        params : :class:`Parameters`
+            the parameters containing the model and training kwargs
+            (ignored here, just passed for subclassing and unified API)
+        model : :class:`AbstractNetwork`
+            the model to test
+        convert_batch_to_npy_fn : function
+            function to convert a batch of tensors to numpy
+        prepare_batch_fn : function
+            function to convert a batch-dict to a format accepted by the model.
+            This conversion typically includes dtype-conversion, reshaping,
+            wrapping to backend-specific tensors and pushing to correct devices
+        **kwargs :
+            additional keyword arguments
+
+        Returns
+        -------
+        :class:`Predictor`
+            the created predictor
+
+        """
         predictor = Predictor(model=model, key_mapping=self.key_mapping,
                               convert_batch_to_npy_fn=convert_batch_to_npy_fn,
                               prepare_batch_fn=prepare_batch_fn, **kwargs)
@@ -140,6 +256,33 @@ class BaseExperiment(TrixiExperiment):
     def run(self, train_data: BaseDataManager,
             val_data: BaseDataManager = None,
             params: Parameters = None, **kwargs):
+
+        """
+        Setup and run training
+
+        Parameters
+        ----------
+        train_data : :class:`BaseDataManager`
+            the data to use for training
+        val_data : :class:`BaseDataManager` or None
+            the data to use for validation (no validation is done
+            if passing None); default: None
+        params : :class:`Parameters` or None
+            the parameters to use for training and model instantiation
+            (will be merged with ``self.params``)
+        **kwargs :
+            additional keyword arguments
+
+        Returns
+        -------
+        :class:`AbstractNetwork`
+            The trained network returned by the trainer (usually best network)
+
+        See Also
+        --------
+        :class:`BaseNetworkTrainer` for training itself
+
+        """
 
         params = self._resolve_params(params)
         kwargs = self._resolve_kwargs(kwargs)
@@ -163,18 +306,83 @@ class BaseExperiment(TrixiExperiment):
     def resume(self, save_path: str, train_data: BaseDataManager,
                val_data: BaseDataManager = None,
                params: Parameters = None, **kwargs):
+        """
+        Resumes a previous training by passing an explicit ``save_path``
+        instead of generating a new one
+
+        Parameters
+        ----------
+        save_path : str
+            path to previous training
+        train_data : :class:`BaseDataManager`
+            the data to use for training
+        val_data : :class:`BaseDataManager` or None
+            the data to use for validation (no validation is done
+            if passing None); default: None
+        params : :class:`Parameters` or None
+            the parameters to use for training and model instantiation
+            (will be merged with ``self.params``)
+        **kwargs :
+            additional keyword arguments
+
+        Returns
+        -------
+        :class:`AbstractNetwork`
+            The trained network returned by the trainer (usually best network)
+
+        See Also
+        --------
+        :class:`BaseNetworkTrainer` for training itself
+
+        """
         return self.run(train_data=train_data, val_data=val_data, params=params,
                         save_path=save_path, **kwargs)
 
-    def test(self, network, test_data: BaseDataManager, params,
+    def test(self, network, test_data: BaseDataManager,
              metrics: dict, metric_keys=None,
              verbose=False, prepare_batch=lambda x: x,
              convert_fn=lambda x: x, **kwargs):
+        """
+        Setup and run testing on a given network
 
-        params = self._resolve_params(params)
+        Parameters
+        ----------
+        network : :class:`AbstractNetwork`
+            the (trained) network to test
+        test_data : :class:`BaseDataManager`
+            the data to use for testing
+        metrics : dict
+            the metrics to calculate
+        metric_keys : dict of tuples
+            the batch_dict keys to use for each metric to calculate.
+            Should contain a value for each key in ``metrics``.
+            If no values are given for a key, per default ``pred`` and ``label``
+             will be used for metric calculation
+        verbose : bool
+            verbosity of the test process
+        prepare_batch : function
+            function to convert a batch-dict to a format accepted by the model.
+            This conversion typically includes dtype-conversion, reshaping,
+            wrapping to backend-specific tensors and pushing to correct devices
+        convert_fn : function
+            function to convert a batch of tensors to numpy
+        **kwargs :
+            additional keyword arguments
+
+        Returns
+        -------
+        dict
+            all predictions obtained by feeding the ``test_data`` through the
+            ``network``
+        dict
+            all metrics calculated upon the ``test_data`` and the obtained
+            predictions
+
+        """
+
         kwargs = self._resolve_kwargs(kwargs)
 
-        predictor = self.setup(params, training=False, model=network,
+        predictor = self.setup(None, training=False, model=network,
                                convert_batch_to_npy_fn=convert_fn,
                                prepare_batch_fn=prepare_batch, **kwargs)
 
@@ -186,6 +394,98 @@ class BaseExperiment(TrixiExperiment):
               split_type="random", val_split=0.2, label_key="label",
               train_kwargs: dict = None, metric_keys: dict = None,
               test_kwargs: dict = None, params=None, verbose=False, **kwargs):
+        """
+        Performs a k-Fold cross-validation
+
+        Parameters
+        ----------
+        data : :class:`BaseDataManager`
+            the data to use for training(, validation) and testing. Will be
+            split based on ``split_type`` and ``val_split``
+        metrics : dict
+            dictionary containing the metrics to evaluate during k-fold
+        num_epochs : int or None
+            number of epochs to train (if not given, will either be extracted
+            from ``params``, ``self.parms`` or ``self.n_epochs``)
+        num_splits : int or None
+            the number of splits to extract from ``data``.
+            If None: uses a default of 10
+        shuffle : bool
+            whether to shuffle the data before splitting or not (implemented by
+            index-shuffling rather than actual data-shuffling to retain
+            potentially lazy-behavior of datasets)
+        random_seed : None
+            seed to seed numpy, the splitting functions and the used
+            backend-framework
+        split_type : str
+            must be one of ['random', 'stratified']
+            if 'random': uses random data splitting
+            if 'stratified': uses stratified data splitting. Stratification
+            will be based on ``label_key``
+        val_split : float or None
+            the fraction of the train data to use as validation set. If None:
+            No validation will be done during training; only testing for each
+            fold after the training is complete
+        label_key : str
+            the label to use for stratification. Will be ignored unless
+            ``split_type`` is 'stratified'. Default: 'label'
+        train_kwargs : dict or None
+            kwargs to update the behavior of the :class:`BaseDataManager`
+            containing the train data. If None: empty dict will be passed
+        metric_keys : dict of tuples
+            the batch_dict keys to use for each metric to calculate.
+            Should contain a value for each key in ``metrics``.
+            If no values are given for a key, per default ``pred`` and ``label``
+             will be used for metric calculation
+        test_kwargs : dict or None
+            kwargs to update the behavior of the :class:`BaseDataManager`
+            containing the test and validation data.
+            If None: empty dict will be passed
+        params : :class:`Parameters`or None
+            the training and model parameters
+            (will be merged with ``self.params``)
+        verbose : bool
+            verbosity
+        **kwargs :
+            additional keyword arguments
+
+        Returns
+        -------
+        dict
+            all predictions from all folds
+        dict
+            all metric values from all folds
+
+        Raises
+        ------
+        ValueError
+            if ``split_type`` is neither 'random', nor 'stratified'
+
+        See Also
+        --------
+
+        * :class:`sklearn.model_selection.KFold`
+        and :class:`sklearn.model_selection.ShuffleSplit`
+        for random data-splitting
+
+        * :class:`sklearn.model_selection.StratifiedKFold`
+        and :class:`sklearn.model_selection.StratifiedShuffleSplit`
+        for stratified data-splitting
+
+        * :meth:`BaseDataManager.update_from_state_dict` for updating the
+        data managers by kwargs
+
+        * :meth:`BaseExperiment.run` for the training
+
+        * :meth:`BaseExperiment.test` for the testing
+
+        Notes
+        -----
+        using stratified splits may be slow during split-calculation, since
+        each item must be loaded once to obtain the labels necessary for
+        stratification.
+
+        """
 
         # set number of splits if not specified
         if num_splits is None:
@@ -276,7 +576,7 @@ class BaseExperiment(TrixiExperiment):
 
     def __str__(self):
         """
-        Converts :class:`AbstractExperiment` to string representation
+        Converts :class:`BaseExperiment` to string representation
 
         Returns
         -------
@@ -291,7 +591,7 @@ class BaseExperiment(TrixiExperiment):
 
     def __call__(self, *args, **kwargs):
         """
-        Call :meth:`AbstractExperiment.run`
+        Call :meth:`BaseExperiment.run`
 
         Parameters
         ----------
@@ -334,16 +634,50 @@ class BaseExperiment(TrixiExperiment):
             return pickle.load(f)
 
     def _resolve_params(self, params: typing.Union[Parameters, None]):
+        """
+        Merges the given params with ``self.params``.
+        If the same argument is given in both params,
+        the one from the currently given parameters is used here
+
+        Parameters
+        ----------
+        params : :class:`Parameters` or None
+            the parameters to merge with ``self.params``
+
+        Returns
+        -------
+        :class:`Parameters`
+            the merged parameter instance
+
+        """
         if params is None:
             params = Parameters()
 
         if hasattr(self, "params") and isinstance(self.params, Parameters):
+            _params = params
+            params = self.params
             params = params.permute_training_on_top()
-            params.update(self.params.permute_training_on_top())
+            params.update(_params.permute_training_on_top())
 
         return params
 
     def _resolve_kwargs(self, kwargs: typing.Union[dict, None]):
+        """
+        Merges given kwargs with ``self.kwargs``
+        If same argument is present in both kwargs, the one from the given
+        kwargs will be used here
+
+        Parameters
+        ----------
+        kwargs : dict
+            the given kwargs to merge with self.kwargs
+
+        Returns
+        -------
+        dict
+            merged kwargs
+
+        """
 
         if kwargs is None:
             kwargs = {}
@@ -384,6 +718,44 @@ if "TORCH" in get_backends():
                      checkpoint_freq=1,
                      trainer_cls=PTNetworkTrainer,
                      **kwargs):
+            """
+
+            Parameters
+            ----------
+            params : :class:`Parameters`
+                the training parameters
+            model_cls : Subclass of :class:`AbstractPyTorchNetwork`
+                the class implementing the model to train
+            n_epochs : int or None
+                the number of epochs to train, if None: can be specified later
+                during actual training
+            name : str or None
+                the Experiment's name
+            save_path : str or None
+                the path to save the results and checkpoints to.
+                if None: Current working directory will be used
+            key_mapping : dict
+                mapping between data_dict and model inputs (necessary for
+                prediction with :class:`Predictor`-API), if no keymapping is
+                given, a default key_mapping of {"x": "data"} will be used here
+            val_score_key : str or None
+                key defining which metric to use for validation (determining
+                best model and scheduling lr); if None: No validation-based
+                operations will be done (model might still get validated,
+                but validation metrics can only be logged and not used further)
+            optim_builder : function
+                Function returning a dict of backend-specific optimizers.
+                defaults to :func:`create_optims_default_pytorch`
+            checkpoint_freq : int
+                frequency of saving checkpoints (1 denotes saving every epoch,
+                2 denotes saving every second epoch etc.); default: 1
+            trainer_cls : subclass of :class:`PyTorchNetworkTrainer`
+                the trainer class to use for training the model, defaults to
+                :class:`PyTorchNetworkTrainer`
+            **kwargs :
+                additional keyword arguments
+
+            """
 
             if key_mapping is None:
                 key_mapping = {"x": "data"}
@@ -402,7 +774,100 @@ if "TORCH" in get_backends():
                   train_kwargs: dict = None, test_kwargs: dict = None,
                   metric_keys: dict = None, params=None, verbose=False,
                   **kwargs):
+            """
+            Performs a k-Fold cross-validation
 
+            Parameters
+            ----------
+            data : :class:`BaseDataManager`
+                the data to use for training(, validation) and testing. Will be
+                split based on ``split_type`` and ``val_split``
+            metrics : dict
+                dictionary containing the metrics to evaluate during k-fold
+            num_epochs : int or None
+                number of epochs to train (if not given, will either be
+                extracted from ``params``, ``self.parms`` or ``self.n_epochs``)
+            num_splits : int or None
+                the number of splits to extract from ``data``.
+                If None: uses a default of 10
+            shuffle : bool
+                whether to shuffle the data before splitting or not (implemented
+                by index-shuffling rather than actual data-shuffling to retain
+                potentially lazy-behavior of datasets)
+            random_seed : None
+                seed to seed numpy, the splitting functions and the used
+                backend-framework
+            split_type : str
+                must be one of ['random', 'stratified']
+                if 'random': uses random data splitting
+                if 'stratified': uses stratified data splitting. Stratification
+                will be based on ``label_key``
+            val_split : float or None
+                the fraction of the train data to use as validation set. If None:
+                No validation will be done during training; only testing for
+                each fold after the training is complete
+            label_key : str
+                the label to use for stratification. Will be ignored unless
+                ``split_type`` is 'stratified'. Default: 'label'
+            train_kwargs : dict or None
+                kwargs to update the behavior of the :class:`BaseDataManager`
+                containing the train data. If None: empty dict will be passed
+            metric_keys : dict of tuples
+                the batch_dict keys to use for each metric to calculate.
+                Should contain a value for each key in ``metrics``.
+                If no values are given for a key, per default ``pred`` and
+                ``label`` will be used for metric calculation
+            test_kwargs : dict or None
+                kwargs to update the behavior of the :class:`BaseDataManager`
+                containing the test and validation data.
+                If None: empty dict will be passed
+            params : :class:`Parameters`or None
+                the training and model parameters
+                (will be merged with ``self.params``)
+            verbose : bool
+                verbosity
+            **kwargs :
+                additional keyword arguments
+
+            Returns
+            -------
+            dict
+                all predictions from all folds
+            dict
+                all metric values from all folds
+
+            Raises
+            ------
+            ValueError
+                if ``split_type`` is neither 'random', nor 'stratified'
+
+            See Also
+            --------
+
+            * :class:`sklearn.model_selection.KFold`
+            and :class:`sklearn.model_selection.ShuffleSplit`
+            for random data-splitting
+
+            * :class:`sklearn.model_selection.StratifiedKFold`
+            and :class:`sklearn.model_selection.StratifiedShuffleSplit`
+            for stratified data-splitting
+
+            * :meth:`BaseDataManager.update_from_state_dict` for updating the
+            data managers by kwargs
+
+            * :meth:`BaseExperiment.run` for the training
+
+            * :meth:`BaseExperiment.test` for the testing
+
+            Notes
+            -----
+            using stratified splits may be slow during split-calculation, since
+            each item must be loaded once to obtain the labels necessary for
+            stratification.
+
+            """
+
+            # seed torch backend
             if random_seed is not None:
                 torch.manual_seed(random_seed)
 
@@ -420,12 +885,56 @@ if "TORCH" in get_backends():
                  metrics: dict, metric_keys=None,
                  verbose=False, prepare_batch=None,
                  convert_fn=None, **kwargs):
+            """
+            Setup and run testing on a given network
 
+            Parameters
+            ----------
+            network : :class:`AbstractNetwork`
+                the (trained) network to test
+            test_data : :class:`BaseDataManager`
+                the data to use for testing
+            metrics : dict
+                the metrics to calculate
+            metric_keys : dict of tuples
+                the batch_dict keys to use for each metric to calculate.
+                Should contain a value for each key in ``metrics``.
+                If no values are given for a key, per default ``pred`` and
+                ``label``
+                 will be used for metric calculation
+            verbose : bool
+                verbosity of the test process
+            prepare_batch : function
+                function to convert a batch-dict to a format accepted by the
+                model. This conversion typically includes dtype-conversion,
+                reshaping, wrapping to backend-specific tensors and
+                pushing to correct devices. If not further specified uses the
+                ``network``'s ``prepare_batch`` with CPU devices
+            convert_fn : function
+                function to convert a batch of tensors to numpy
+                if not specified defaults to :func:`convert_torch_tensor_to_npy`
+            **kwargs :
+                additional keyword arguments
+
+            Returns
+            -------
+            dict
+                all predictions obtained by feeding the ``test_data`` through
+                the ``network``
+            dict
+                all metrics calculated upon the ``test_data`` and the obtained
+                predictions
+
+            """
+
+            # use backend-specific and model-specific prepare_batch fn
+            # (runs on CPU per default)
             if prepare_batch is None:
                 prepare_batch = partial(network.prepare_batch,
                                         input_device=torch.device("cpu"),
                                         output_device=torch.device("cpu"))
 
+            # switch to backend-specific convert function
             if convert_fn is None:
                 convert_fn = convert_torch_tensor_to_npy
 
@@ -455,6 +964,45 @@ if "TF" in get_backends():
                      checkpoint_freq=1,
                      trainer_cls=TfNetworkTrainer,
                      **kwargs):
+            """
+
+            Parameters
+            ----------
+            params : :class:`Parameters`
+                the training parameters
+            model_cls : Subclass of :class:`AbstractTfNetwork`
+                the class implementing the model to train
+            n_epochs : int or None
+                the number of epochs to train, if None: can be specified later
+                during actual training
+            name : str or None
+                the Experiment's name
+            save_path : str or None
+                the path to save the results and checkpoints to.
+                if None: Current working directory will be used
+            key_mapping : dict
+                mapping between data_dict and model inputs (necessary for
+                prediction with :class:`Predictor`-API), if no keymapping is
+                given, a default key_mapping of {"images": "data"} will be used
+                here
+            val_score_key : str or None
+                key defining which metric to use for validation (determining
+                best model and scheduling lr); if None: No validation-based
+                operations will be done (model might still get validated,
+                but validation metrics can only be logged and not used further)
+            optim_builder : function
+                Function returning a dict of backend-specific optimizers.
+                defaults to :func:`create_optims_default_tf`
+            checkpoint_freq : int
+                frequency of saving checkpoints (1 denotes saving every epoch,
+                2 denotes saving every second epoch etc.); default: 1
+            trainer_cls : subclass of :class:`TfNetworkTrainer`
+                the trainer class to use for training the model, defaults to
+                :class:`TfNetworkTrainer`
+            **kwargs :
+                additional keyword arguments
+
+            """
 
             if key_mapping is None:
                 key_mapping = {"images": "data"}
@@ -468,6 +1016,34 @@ if "TF" in get_backends():
                              **kwargs)
 
         def setup(self, params, training=True, **kwargs):
+            """
+            Defines the setup behavior (model, trainer etc.) for training and
+            testing case
+
+            Parameters
+            ----------
+            params : :class:`Parameters`
+                the parameters to use for setup
+            training : bool
+                whether to setup for training case or for testing case
+            **kwargs :
+                additional keyword arguments
+
+            Returns
+            -------
+            :class:`BaseNetworkTrainer`
+                the created trainer (if ``training=True``)
+            :class:`Predictor`
+                the created predictor (if ``training=False``)
+
+            See Also
+            --------
+
+            * :meth:`BaseExperiment._setup_training` for training setup
+
+            * :meth:`BaseExperiment._setup_test` for test setup
+
+            """
 
             tf.reset_default_graph()
 
@@ -479,7 +1055,100 @@ if "TF" in get_backends():
                   train_kwargs: dict = None, test_kwargs: dict = None,
                   metric_keys: dict = None, params=None, verbose=False,
                   **kwargs):
+            """
+            Performs a k-Fold cross-validation
 
+            Parameters
+            ----------
+            data : :class:`BaseDataManager`
+                the data to use for training(, validation) and testing. Will be
+                split based on ``split_type`` and ``val_split``
+            metrics : dict
+                dictionary containing the metrics to evaluate during k-fold
+            num_epochs : int or None
+                number of epochs to train (if not given, will either be
+                extracted from ``params``, ``self.parms`` or ``self.n_epochs``)
+            num_splits : int or None
+                the number of splits to extract from ``data``.
+                If None: uses a default of 10
+            shuffle : bool
+                whether to shuffle the data before splitting or not (implemented
+                by index-shuffling rather than actual data-shuffling to retain
+                potentially lazy-behavior of datasets)
+            random_seed : None
+                seed to seed numpy, the splitting functions and the used
+                backend-framework
+            split_type : str
+                must be one of ['random', 'stratified']
+                if 'random': uses random data splitting
+                if 'stratified': uses stratified data splitting. Stratification
+                will be based on ``label_key``
+            val_split : float or None
+                the fraction of the train data to use as validation set. If None:
+                No validation will be done during training; only testing for
+                each fold after the training is complete
+            label_key : str
+                the label to use for stratification. Will be ignored unless
+                ``split_type`` is 'stratified'. Default: 'label'
+            train_kwargs : dict or None
+                kwargs to update the behavior of the :class:`BaseDataManager`
+                containing the train data. If None: empty dict will be passed
+            metric_keys : dict of tuples
+                the batch_dict keys to use for each metric to calculate.
+                Should contain a value for each key in ``metrics``.
+                If no values are given for a key, per default ``pred`` and
+                ``label`` will be used for metric calculation
+            test_kwargs : dict or None
+                kwargs to update the behavior of the :class:`BaseDataManager`
+                containing the test and validation data.
+                If None: empty dict will be passed
+            params : :class:`Parameters`or None
+                the training and model parameters
+                (will be merged with ``self.params``)
+            verbose : bool
+                verbosity
+            **kwargs :
+                additional keyword arguments
+
+            Returns
+            -------
+            dict
+                all predictions from all folds
+            dict
+                all metric values from all folds
+
+            Raises
+            ------
+            ValueError
+                if ``split_type`` is neither 'random', nor 'stratified'
+
+            See Also
+            --------
+
+            * :class:`sklearn.model_selection.KFold`
+            and :class:`sklearn.model_selection.ShuffleSplit`
+            for random data-splitting
+
+            * :class:`sklearn.model_selection.StratifiedKFold`
+            and :class:`sklearn.model_selection.StratifiedShuffleSplit`
+            for stratified data-splitting
+
+            * :meth:`BaseDataManager.update_from_state_dict` for updating the
+            data managers by kwargs
+
+            * :meth:`BaseExperiment.run` for the training
+
+            * :meth:`BaseExperiment.test` for the testing
+
+            Notes
+            -----
+            using stratified splits may be slow during split-calculation, since
+            each item must be loaded once to obtain the labels necessary for
+            stratification.
+
+            """
+
+            # seed tf backend
             if random_seed is not None:
                 tf.set_random_seed(random_seed)
 
@@ -497,7 +1166,48 @@ if "TF" in get_backends():
                  metrics: dict, metric_keys=None,
                  verbose=False, prepare_batch=lambda x: x,
                  convert_fn=None, **kwargs):
+            """
+            Setup and run testing on a given network
 
+            Parameters
+            ----------
+            network : :class:`AbstractNetwork`
+                the (trained) network to test
+            test_data : :class:`BaseDataManager`
+                the data to use for testing
+            metrics : dict
+                the metrics to calculate
+            metric_keys : dict of tuples
+                the batch_dict keys to use for each metric to calculate.
+                Should contain a value for each key in ``metrics``.
+                If no values are given for a key, per default ``pred`` and
+                ``label``
+                 will be used for metric calculation
+            verbose : bool
+                verbosity of the test process
+            prepare_batch : function
+                function to convert a batch-dict to a format accepted by the
+                model. This conversion typically includes dtype-conversion,
+                reshaping, wrapping to backend-specific tensors and
+                pushing to correct devices. If not further specified uses the
+                ``network``'s ``prepare_batch`` with CPU devices
+            convert_fn : function
+                function to convert a batch of tensors to numpy
+                if not specified defaults to :func:`convert_torch_tensor_to_npy`
+            **kwargs :
+                additional keyword arguments
+
+            Returns
+            -------
+            dict
+                all predictions obtained by feeding the ``test_data`` through
+                the ``network``
+            dict
+                all metrics calculated upon the ``test_data`` and the obtained
+                predictions
+
+            """
+            # specify convert_fn to correct backend function
             if convert_fn is None:
                 convert_fn = convert_tf_tensor_to_npy
 
