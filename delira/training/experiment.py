@@ -928,11 +928,13 @@ if "TORCH" in get_backends():
             """
 
             # use backend-specific and model-specific prepare_batch fn
-            # (runs on CPU per default)
+            # (runs on same device as passed network per default)
+
+            device = next(network.parameters()).device
             if prepare_batch is None:
                 prepare_batch = partial(network.prepare_batch,
-                                        input_device=torch.device("cpu"),
-                                        output_device=torch.device("cpu"))
+                                        input_device=device,
+                                        output_device=device)
 
             # switch to backend-specific convert function
             if convert_fn is None:

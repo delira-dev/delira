@@ -45,6 +45,7 @@ class TfNetworkTrainer(BaseNetworkTrainer):
                  start_epoch=1,
                  metric_keys=None,
                  convert_batch_to_npy_fn=convert_tf_tensor_to_npy,
+                 val_freq=1,
                  **kwargs
                  ):
         """
@@ -103,6 +104,11 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         convert_batch_to_npy_fn : type, optional
             function converting a batch-tensor to numpy, per default this is
             the identity function
+        val_freq : int
+            validation frequency specifying how often to validate the trained
+            model (a value of 1 denotes validating every epoch,
+            a value of 2 denotes validating every second epoch etc.);
+            defaults to 1
         **kwargs :
             Additional keyword arguments
 
@@ -110,10 +116,10 @@ class TfNetworkTrainer(BaseNetworkTrainer):
 
         super().__init__(
             network, save_path, losses, optimizer_cls, optimizer_params,
-            train_metrics, val_metrics, lr_scheduler_cls, key_mapping,
-            lr_scheduler_params, gpu_ids, save_freq, optim_fn, logging_type,
+            train_metrics, val_metrics, lr_scheduler_cls, lr_scheduler_params,
+            gpu_ids, save_freq, optim_fn, key_mapping,logging_type,
             logging_kwargs, fold, callbacks, start_epoch, metric_keys,
-            convert_batch_to_npy_fn)
+            convert_batch_to_npy_fn, val_freq)
 
         self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                     lr_scheduler_cls, lr_scheduler_params,

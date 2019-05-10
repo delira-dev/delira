@@ -56,6 +56,7 @@ if "TORCH" in get_backends():
                                              "verbose": False,
                                              "allow_banned": False},
                      criterions=None,
+                     val_freq=1,
                      ** kwargs):
             """
 
@@ -119,6 +120,11 @@ if "TORCH" in get_backends():
                 whether to use mixed precision or not (False per default)
             mixed_precision_kwargs : dict
                 additional keyword arguments for mixed precision
+            val_freq : int
+                validation frequency specifying how often to validate the trained
+                model (a value of 1 denotes validating every epoch,
+                a value of 2 denotes validating every second epoch etc.);
+                defaults to 1
             **kwargs :
                 additional keyword arguments
 
@@ -147,7 +153,7 @@ if "TORCH" in get_backends():
                 train_metrics, val_metrics, lr_scheduler_cls,
                 lr_scheduler_params, gpu_ids, save_freq, optim_fn, key_mapping,
                 logging_type, logging_kwargs, fold, callbacks, start_epoch, 
-                metric_keys, convert_batch_to_npy_fn)
+                metric_keys, convert_batch_to_npy_fn, val_freq)
 
             self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                         lr_scheduler_cls, lr_scheduler_params, gpu_ids,

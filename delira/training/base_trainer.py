@@ -54,6 +54,7 @@ class BaseNetworkTrainer(Predictor):
                  start_epoch: int,
                  metric_keys=None,
                  convert_batch_to_npy_fn=lambda x: x,
+                 val_freq=1,
                  **kwargs
                  ):
         """
@@ -112,6 +113,11 @@ class BaseNetworkTrainer(Predictor):
         convert_batch_to_npy_fn : type, optional
             function converting a batch-tensor to numpy, per default this is
             the identity function
+        val_freq : int
+            validation frequency specifying how often to validate the trained
+            model (a value of 1 denotes validating every epoch,
+            a value of 2 denotes validating every second epoch etc.);
+            defaults to 1
         **kwargs :
             Additional keyword arguments
 
@@ -151,6 +157,8 @@ class BaseNetworkTrainer(Predictor):
             self.register_callback(cbck)
 
         self._reinitialize_logging(logging_type, logging_kwargs)
+        self._tqdm_desc = "Validate"
+        self.val_freq = val_freq
 
     def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                key_mapping, convert_batch_to_npy_fn, prepare_batch_fn):
@@ -418,7 +426,7 @@ class BaseNetworkTrainer(Predictor):
                 **train_losses}
 
             # validate network
-            if datamgr_valid is not None:
+            if datamgr_valid is not None and (epoch % self.val_freq == 0):
                 val_predictions, val_metrics = self.predict_data_mgr(
                     datamgr_valid, datamgr_valid.batch_size,
                     metrics=val_metric_fns, metric_keys=val_metric_keys,

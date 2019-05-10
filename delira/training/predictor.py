@@ -1,12 +1,9 @@
-from .callbacks import AbstractCallback
-from batchgenerators.dataloading import MultiThreadedAugmenter
-import pickle
-from abc import abstractmethod
-from collections.abc import Iterable
-import numpy as np
-from ..data_loading import BaseDataManager
-from tqdm import tqdm
 import logging
+
+import numpy as np
+from tqdm import tqdm
+
+from ..data_loading import BaseDataManager
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +48,8 @@ class Predictor(object):
 
         self._setup(model, key_mapping, convert_batch_to_npy_fn, 
                     prepare_batch_fn, **kwargs)
+
+        self._tqdm_desc = "Test"
 
     def _setup(self, network, key_mapping, convert_batch_to_npy_fn, 
                prepare_batch_fn, **kwargs):
@@ -154,7 +153,7 @@ class Predictor(object):
 
         if verbose:
             iterable = tqdm(enumerate(batchgen), unit=' sample',
-                            total=n_batches, desc='Test')
+                            total=n_batches, desc=self._tqdm_desc)
 
         else:
             iterable = enumerate(batchgen)
