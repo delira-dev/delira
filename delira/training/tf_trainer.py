@@ -191,6 +191,33 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         # check for unitialized variables
         initialize_uninitialized(self.module._sess)
 
+        # Load latest epoch file if available
+            if os.path.isdir(self.save_path):
+                # check all files in directory starting with "checkpoint" and 
+                # not ending with "_best.meta"
+                files = [x for x in os.listdir(self.save_path)
+                         if os.path.isfile(os.path.join(self.save_path, x))
+                         and x.startswith("checkpoint")
+                         and x.endswith(".meta")
+                         and not (x.endswith("_best.meta")
+                                  or x.endswith("_best.meta"))]
+
+                # if list is not empty: load previous state
+                if files:
+
+                    latest_epoch = max([
+                        int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
+                        for x in files])
+
+                    latest_state_path = os.path.join(
+                        self.save_path, "checkpoint_epoch_%d.meta" 
+                        % latest_epoch)
+
+                    logger.info("Attempting to load state from previous \
+                                training from %s" % latest_state_path)
+
+                    self.update_state(latest_state_path)
+                    
     def _at_training_end(self):
         """
         Defines Behaviour at end of training: Loads best model if available

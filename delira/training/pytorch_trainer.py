@@ -320,33 +320,6 @@ if "TORCH" in get_backends():
 
             return self.module
 
-        def _at_epoch_begin(self, metrics_val, val_score_key, epoch, 
-                            num_epochs, **kwargs):
-            """
-            Defines behaviour at beginning of each epoch: Executes all callbacks's
-            `at_epoch_begin` method
-
-            Parameters
-            ----------
-            metrics_val : dict
-                validation metrics
-            val_score_key : str
-                validation score key
-            epoch : int
-                current epoch
-            num_epochs : int
-                total number of epochs
-            **kwargs :
-                keyword arguments
-
-            """
-
-            # execute all callbacks
-            for cb in self._callbacks:
-                self._update_state(cb.at_epoch_begin(self, val_metrics=metrics_val,
-                                                     val_score_key=val_score_key,
-                                                     curr_epoch=epoch))
-
         def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
                           **kwargs):
             """
