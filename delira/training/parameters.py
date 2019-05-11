@@ -270,10 +270,11 @@ class Parameters(LookupConfig):
         """
 
         variability_on_top = self.variability_on_top
+        dict_like_variability_on_top = dict_like.variability_on_top
 
         if variability_on_top:
             if isinstance(dict_like, Parameters):
-                dict_like = dict_like.permute_training_on_top()
+                dict_like = dict_like.permute_variability_on_top()
             else:
                 if not ("fixed" in dict_like.keys() 
                         or "variable" in dict_like.keys()):
@@ -293,6 +294,14 @@ class Parameters(LookupConfig):
         super().update(dict_like=dict_like, deep=deep, 
                        ignore=ignore, 
                        allow_dict_overwrite=allow_dict_overwrite)
+        
+        # restore original permutation of dict_like
+        if variability_on_top and not dict_like_variability_on_top:
+            # dict_like changed to variability_on_top
+            dict_like.permute_variability_on_top()
+        elif not variability_on_top and dict_like_variability_on_top:
+            # dict_like changed to training_on_top
+            dict_like.permute_training_on_top()
         
     def __str__(self):
         """
@@ -333,6 +342,8 @@ class Parameters(LookupConfig):
         if var_top:
             return _params.permute_variability_on_top()
         else:
+            # restore original perumation
+            self.permute_training_on_top()
             return _params.permute_training_on_top()
 
     def __deepcopy__(self, memo):
@@ -355,6 +366,8 @@ class Parameters(LookupConfig):
         if var_top:
             return _params.permute_variability_on_top()
         else:
+            # restore original perumation
+            self.permute_training_on_top()
             return _params.permute_training_on_top()
 
     
