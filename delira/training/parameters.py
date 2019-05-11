@@ -3,6 +3,7 @@ import pickle
 import yaml
 from copy import deepcopy, copy
 
+
 class Parameters(LookupConfig):
     """
     Class Containing all variable and fixed parameters for training and model 
@@ -216,7 +217,8 @@ class Parameters(LookupConfig):
                       "wb") as f:
                 pickle.dump(self, f)
 
-    def update(self, dict_like, deep=False, ignore=None, allow_dict_overwrite=True):
+    def update(self, dict_like, deep=False, ignore=None,
+               allow_dict_overwrite=True):
         """Update entries in the Parameters
 
         Parameters
@@ -268,45 +270,49 @@ class Parameters(LookupConfig):
             }
 
         """
+        empty = self.variability_on_top == self.training_on_top
+        if not empty:
+            variability_on_top = self.variability_on_top
 
-        variability_on_top = self.variability_on_top
-        dict_like_variability_on_top = dict_like.variability_on_top
+            if variability_on_top:
+                if isinstance(dict_like, Parameters):
+                    dict_like_variability_on_top = dict_like.variability_on_top
+                    dict_like = dict_like.permute_variability_on_top()
+                else:
+                    if not ("fixed" in dict_like.keys()
+                            or "variable" in dict_like.keys()):
+                        raise RuntimeError("Unsafe to Update from dict with "
+                                           "another structre as current "
+                                           "parameters")
 
-        if variability_on_top:
-            if isinstance(dict_like, Parameters):
-                dict_like = dict_like.permute_variability_on_top()
             else:
-                if not ("fixed" in dict_like.keys() 
-                        or "variable" in dict_like.keys()):
-                    raise RuntimeError("Unsafe to Update from dict with "
-                                       "another structre as current "
-                                       "parameters")
+                if isinstance(dict_like, Parameters):
+                    dict_like_variability_on_top = dict_like.variability_on_top
+                    dict_like = dict_like.permute_training_on_top()
+                else:
+                    if not ("model" in dict_like.keys()
+                            or "training" in dict_like.keys()):
+                        raise RuntimeError("Unsafe to Update from dict with "
+                                           "another structre as current "
+                                           "parameters")
 
-        else:
-            if isinstance(dict_like, Parameters):
-                dict_like = dict_like.permute_training_on_top()
-            else:
-                if not ("model" in dict_like.keys()
-                        or "training" in dict_like.keys()):
-                    raise RuntimeError("Unsafe to Update from dict with "
-                                       "another structre as current "
-                                       "parameters")
-        super().update(dict_like=dict_like, deep=deep, 
-                       ignore=ignore, 
+        super().update(dict_like=dict_like, deep=deep,
+                       ignore=ignore,
                        allow_dict_overwrite=allow_dict_overwrite)
-        
-        # restore original permutation of dict_like
-        if variability_on_top and not dict_like_variability_on_top:
-            # dict_like changed to variability_on_top
-            dict_like.permute_variability_on_top()
-        elif not variability_on_top and dict_like_variability_on_top:
-            # dict_like changed to training_on_top
-            dict_like.permute_training_on_top()
-        
+
+        if not empty and isinstance(dict_like, Parameters):
+            # restore original permutation of dict_like
+            if variability_on_top and not dict_like_variability_on_top:
+                # dict_like changed to variability_on_top
+                dict_like.permute_training_on_top()
+            elif not variability_on_top and dict_like_variability_on_top:
+                # dict_like changed to training_on_top
+                dict_like.permute_variability_on_top()
+
     def __str__(self):
         """
         String Representation of class
-        
+
         Returns
         -------
         str
@@ -334,10 +340,8 @@ class Parameters(LookupConfig):
 
         var_top = self.variability_on_top
 
-    
-        _params = Parameters(
-            copy(dict(self.permute_variability_on_top()))
-        )
+        _params = Parameters()
+        _params.update(copy(dict(self.permute_variability_on_top())))
 
         if var_top:
             return _params.permute_variability_on_top()
@@ -358,10 +362,10 @@ class Parameters(LookupConfig):
         """
 
         var_top = self.variability_on_top
-        
-        _params = Parameters(
-            deepcopy(dict(self.permute_variability_on_top()), memo=memo)
-        )
+
+        _params = Parameters()
+        _params.update(deepcopy(dict(self.permute_variability_on_top()),
+                                memo=memo))
 
         if var_top:
             return _params.permute_variability_on_top()
@@ -369,5 +373,3 @@ class Parameters(LookupConfig):
             # restore original perumation
             self.permute_training_on_top()
             return _params.permute_training_on_top()
-
-    
