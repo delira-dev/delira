@@ -322,12 +322,18 @@ class Parameters(LookupConfig):
             copied parameters
 
         """
+
+        var_top = self.variability_on_top
+
     
         _params = Parameters(
             copy(dict(self.permute_variability_on_top()))
         )
 
-        return _params
+        if var_top:
+            return _params.permute_variability_on_top()
+        else:
+            return _params.permute_training_on_top()
 
     def __deepcopy__(self, memo):
         """
@@ -340,9 +346,15 @@ class Parameters(LookupConfig):
 
         """
 
+        var_top = self.variability_on_top
+        
         _params = Parameters(
-            deepcopy(dict(self.permute_training_on_top()), memo=memo)
+            deepcopy(dict(self.permute_variability_on_top()), memo=memo)
         )
-        return _params
+
+        if var_top:
+            return _params.permute_variability_on_top()
+        else:
+            return _params.permute_training_on_top()
 
     
