@@ -69,7 +69,7 @@ class ExperimentTest(unittest.TestCase):
                     "model": {},
                     "training": {
                         "losses": {"CE":
-                                       torch.nn.BCEWithLogitsLoss()},
+                                   torch.nn.BCEWithLogitsLoss()},
                         "optimizer_cls": torch.optim.Adam,
                         "optimizer_params": {"lr": 1e-3},
                         "num_epochs": 2,
@@ -129,7 +129,7 @@ class ExperimentTest(unittest.TestCase):
                         "model": {},
                         "training": {
                             "losses": {"CE":
-                                           tf.losses.softmax_cross_entropy},
+                                       tf.losses.softmax_cross_entropy},
                             "optimizer_cls": tf.train.AdamOptimizer,
                             "optimizer_params": {"learning_rate": 1e-3},
                             "num_epochs": 2,
@@ -195,7 +195,7 @@ class ExperimentTest(unittest.TestCase):
                 prepare_batch = partial(model.prepare_batch,
                                         output_device="cpu", input_device="cpu")
 
-                exp.test(model, dmgr_test, params,
+                exp.test(model, dmgr_test,
                          params.nested_get("val_metrics"),
                          prepare_batch=prepare_batch)
 
@@ -241,11 +241,12 @@ class ExperimentTest(unittest.TestCase):
 
                                 # disable lr scheduling if no validation data
                                 # is present
-                                _params = deepcopy(params)
+                                _params = Parameters()
+                                _params.update(params, deep=True)
                                 if val_split is None:
                                     # _params = _params.permute_training_on_top()
                                     _params["fixed"]["training"
-                                    ]["lr_sched_cls"] = None
+                                                     ]["lr_sched_cls"] = None
                                 exp = PyTorchExperiment(
                                     _params, network_cls,
                                     key_mapping={"x": "data"},
@@ -362,4 +363,3 @@ class ExperimentTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

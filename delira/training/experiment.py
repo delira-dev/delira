@@ -256,7 +256,6 @@ class BaseExperiment(TrixiExperiment):
     def run(self, train_data: BaseDataManager,
             val_data: BaseDataManager = None,
             params: Parameters = None, **kwargs):
-
         """
         Setup and run training
 
@@ -512,7 +511,8 @@ class BaseExperiment(TrixiExperiment):
             split_cls = StratifiedKFold
             val_split_cls = StratifiedShuffleSplit
             # iterate over dataset to get labels for stratified splitting
-            split_labels = [data.dataset[_idx][label_key] for _idx in split_idxs]
+            split_labels = [data.dataset[_idx][label_key]
+                            for _idx in split_idxs]
         else:
             raise ValueError("split_type must be one of "
                              "['random', 'stratified'], but got: %s"
@@ -564,7 +564,7 @@ class BaseExperiment(TrixiExperiment):
                              params=params, num_epochs=num_epochs, fold=idx,
                              **kwargs)
 
-            _outputs, _metrics_test = self.test(model, test_data, params,
+            _outputs, _metrics_test = self.test(model, test_data,
                                                 metrics=metrics,
                                                 metric_keys=metric_keys,
                                                 verbose=verbose)
@@ -881,7 +881,7 @@ if "TORCH" in get_backends():
                                  metric_keys=metric_keys, params=params,
                                  verbose=verbose, **kwargs)
 
-        def test(self, network, test_data: BaseDataManager, params,
+        def test(self, network, test_data: BaseDataManager,
                  metrics: dict, metric_keys=None,
                  verbose=False, prepare_batch=None,
                  convert_fn=None, **kwargs):
@@ -941,7 +941,6 @@ if "TORCH" in get_backends():
                 convert_fn = convert_torch_tensor_to_npy
 
             return super().test(network=network, test_data=test_data,
-                                params=params,
                                 metrics=metrics, metric_keys=metric_keys,
                                 verbose=verbose, prepare_batch=prepare_batch,
                                 convert_fn=convert_fn, **kwargs)
