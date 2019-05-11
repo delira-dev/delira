@@ -1,6 +1,7 @@
 from ..utils import LookupConfig
 import pickle
 import yaml
+from copy import deepcopy, copy
 
 class Parameters(LookupConfig):
     """
@@ -214,6 +215,84 @@ class Parameters(LookupConfig):
             with open(filepath.replace(".yaml", "").replace(".yml", ""),
                       "wb") as f:
                 pickle.dump(self, f)
+
+    def update(self, dict_like, deep=False, ignore=None, allow_dict_overwrite=True):
+        """Update entries in the Parameters
+
+        Parameters
+        ----------
+        dict_like : dict
+            Update source
+        deep : bool
+            Make deep copies of all references in the source.
+        ignore : Iterable
+            Iterable of keys to ignore in update
+        allow_dict_overwrite : bool
+            Allow overwriting with dict.
+            Regular dicts only update on the highest level while we recurse
+            and merge Configs. This flag decides whether it is possible to
+            overwrite a 'regular' value with a dict/Config at lower levels.
+            See examples for an illustration of the difference
+
+        Examples:
+        ---------
+        The following illustrates the update behaviour if
+        :obj:allow_dict_overwrite is active. If it isn't, an AttributeError
+        would be raised, originating from trying to update "string"::
+
+            config1 = Config(config={
+                "lvl0": {
+                    "lvl1": "string",
+                    "something": "else"
+                }
+            })
+
+            config2 = Config(config={
+                "lvl0": {
+                    "lvl1": {
+                        "lvl2": "string"
+                    }
+                }
+            })
+
+            config1.update(config2, allow_dict_overwrite=True)
+
+            >>>config1
+            {
+                "lvl0": {
+                    "lvl1": {
+                        "lvl2": "string"
+                    },
+                    "something": "else"
+                }
+            }
+
+        """
+
+        variability_on_top = self.variability_on_top
+
+        if variability_on_top:
+            if isinstance(dict_like, Parameters):
+                dict_like = dict_like.permute_training_on_top()
+            else:
+                if not ("fixed" in dict_like.keys() 
+                        or "variable" in dict_like.keys()):
+                    raise RuntimeError("Unsafe to Update from dict with "
+                                       "another structre as current "
+                                       "parameters")
+
+        else:
+            if isinstance(dict_like, Parameters):
+                dict_like = dict_like.permute_training_on_top()
+            else:
+                if not ("model" in dict_like.keys()
+                        or "training" in dict_like.keys()):
+                    raise RuntimeError("Unsafe to Update from dict with "
+                                       "another structre as current "
+                                       "parameters")
+        super().update(dict_like=dict_like, deep=deep, 
+                       ignore=ignore, 
+                       allow_dict_overwrite=allow_dict_overwrite)
         
     def __str__(self):
         """
@@ -232,5 +311,38 @@ class Parameters(LookupConfig):
             except TypeError:
                 s += "\t{} = {}\n".format(k, v.__class__.__name__)
         return s
+
+    def __copy__(self):
+        """
+        Enables shallow copy
+
+        Returns
+        -------
+        :class:`Parameters`
+            copied parameters
+
+        """
+    
+        _params = Parameters(
+            copy(dict(self.permute_variability_on_top()))
+        )
+
+        return _params
+
+    def __deepcopy__(self, memo):
+        """
+        Enables deepcopy
+
+        Returns
+        -------
+        :class:`Parameters`
+            deepcopied parameters
+
+        """
+
+        _params = Parameters(
+            deepcopy(dict(self.permute_training_on_top()), memo=memo)
+        )
+        return _params
 
     
