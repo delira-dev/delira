@@ -269,13 +269,6 @@ if "TORCH" in get_backends():
                                         "env_appendix": "_%02d" % fold
                                         }})
 
-            logging.info({'image_grid': {"images": inputs, "name": "input_images",
-                                        "env_appendix": "_%02d" % fold}})
-
-            logging.info({'image_grid': {"images": preds,
-                                        "name": "predicted_images",
-                                        "env_appendix": "_%02d" % fold}})
-
             return metric_vals, loss_vals, [preds]
 
         def _build_model(self, num_classes, in_channels=3, depth=5,
@@ -720,18 +713,6 @@ if "TORCH" in get_backends():
                 logging.info({"value": {"value": val.item(), "name": key,
                                         "env_appendix": "_%02d" % fold
                                         }})
-
-            slicing_dim = inputs.size(2) // 2  # visualize slice in mid of volume
-
-            logging.info({'image_grid': {"inputs": inputs[:, :, slicing_dim, ...],
-                                        "name":
-                                            "input_images",
-                                        "env_appendix": "_%02d" % fold}})
-
-            logging.info({'image_grid': {"results": preds[:, :, slicing_dim, ...],
-                                        "name":
-                                            "predicted_images",
-                                        "env_appendix": "_%02d" % fold}})
 
             return metric_vals, loss_vals, [preds]
 
