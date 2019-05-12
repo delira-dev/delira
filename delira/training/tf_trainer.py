@@ -117,7 +117,7 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         super().__init__(
             network, save_path, losses, optimizer_cls, optimizer_params,
             train_metrics, val_metrics, lr_scheduler_cls, lr_scheduler_params,
-            gpu_ids, save_freq, optim_fn, key_mapping,logging_type,
+            gpu_ids, save_freq, optim_fn, key_mapping, logging_type,
             logging_kwargs, fold, callbacks, start_epoch, metric_keys,
             convert_batch_to_npy_fn, val_freq)
 
@@ -218,6 +218,7 @@ class TfNetworkTrainer(BaseNetworkTrainer):
 
                 self.update_state(latest_state_path)
 
+
 def _at_training_end(self):
     """
     Defines Behaviour at end of training: Loads best model if available
@@ -233,12 +234,13 @@ def _at_training_end(self):
 
         # load best model and return it. Since the state is hidden in the
         # graph, we don't actually need to use
-        # self.update_state.
+        # self._update_state.
         self.update_state(os.path.join(self.save_path,
                                        'checkpoint_best')
                           )
 
     return self.module
+
 
 def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch,
                         verbose=False):
@@ -256,6 +258,7 @@ def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch,
     self.module.training = True
 
     return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
+
 
 def predict_data_mgr(self, datamgr, batch_size=None, metrics={},
                      metric_keys={}, verbose=False):
@@ -283,6 +286,7 @@ def predict_data_mgr(self, datamgr, batch_size=None, metrics={},
     return super().predict_data_mgr(datamgr, batch_size, metrics,
                                     metric_keys, verbose=verbose)
 
+
 def save_state(self, file_name, *args, **kwargs):
     """
     saves the current state via :func:`delira.io.tf.save_checkpoint`
@@ -293,6 +297,7 @@ def save_state(self, file_name, *args, **kwargs):
         filename to save the state to
     """
     tf_save_checkpoint(file_name, self.module)
+
 
 def load_state(self, file_name, *args, **kwargs):
     """

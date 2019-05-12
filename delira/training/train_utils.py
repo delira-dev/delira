@@ -144,7 +144,6 @@ if "TF" in get_backends():
         if not_initialized_vars:
             sess.run(tf.variables_initializer(not_initialized_vars))
 
-
     def convert_tf_tensor_to_npy(*args, **kwargs):
         """
         Function to convert all torch Tensors to numpy arrays
