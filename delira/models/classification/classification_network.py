@@ -160,9 +160,6 @@ if "TORCH" in get_backends():
                                         "env_appendix": "_%02d" % fold
                                         }})
 
-            logging.info({'image_grid': {"images": inputs, "name": "input_images",
-                                         "env_appendix": "_%02d" % fold}})
-
             return metric_vals, loss_vals, [preds]
 
         @staticmethod
