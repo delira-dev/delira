@@ -43,7 +43,7 @@ class Predictor(object):
             function converting a batch-tensor to the framework specific 
             tensor-type and pushing it to correct device, default: identity 
             function
-                    
+
         """
 
         self._setup(model, key_mapping, convert_batch_to_npy_fn, 
@@ -78,7 +78,7 @@ class Predictor(object):
         self._convert_batch_to_npy_fn = convert_batch_to_npy_fn
         self._prepare_batch = prepare_batch_fn
 
-    def __call__(self, data):
+    def __call__(self, data: dict):
         """
         Method to call the class.
         Returns the predictions corresponding to the given data 
@@ -96,7 +96,7 @@ class Predictor(object):
         """
         return self.predict(data)
 
-    def predict(self, data):
+    def predict(self, data: dict):
 
         data = self._prepare_batch(data)
 
@@ -108,7 +108,7 @@ class Predictor(object):
             )
 
         # converts positional arguments and keyword arguments,
-        # but returns only keyword arguments, since positional 
+        # but returns only keyword arguments, since positional
         # arguments are not given.
         return self._convert_batch_to_npy_fn(
             **pred
