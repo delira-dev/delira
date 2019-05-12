@@ -36,7 +36,8 @@ class TestPredictor(unittest.TestCase):
         from delira.training import Predictor
         from delira.models.classification import ClassificationNetworkBaseTf
         from delira.models import AbstractTfNetwork
-        from delira.training.train_utils import convert_tf_tensor_to_npy
+        from delira.training.train_utils import convert_tf_tensor_to_npy,\
+            initialize_uninitialized
 
         import tensorflow as tf
 
@@ -47,14 +48,18 @@ class TestPredictor(unittest.TestCase):
 
                 images = tf.placeholder(shape=[None, 32],
                                         dtype=tf.float32)
-                labels = tf.placeholder_with_default(tf.zeros([tf.shape(images)[0], 1]), shape=[None, 1])
+                labels = tf.placeholder_with_default(
+                            tf.zeros(
+                                [tf.shape(images)[0], 1]),
+                            shape=[None, 1])
 
                 preds_train = self.model(images, training=True)
                 preds_eval = self.model(images, training=False)
 
-                self.inputs = [images, labels]
-                self.outputs_train = [preds_train]
-                self.outputs_eval = [preds_eval]
+                self.inputs["images"] = images
+                self.inputs["labels"] = labels
+                self.outputs_train["prediction"] = preds_train
+                self.outputs_eval["prediction"] = preds_eval
 
             @staticmethod
             def _build_model(n_outputs):
@@ -67,8 +72,11 @@ class TestPredictor(unittest.TestCase):
                                               bias_initializer='glorot_uniform')]
                 )
 
+        net = DummyNetwork()
+        initialize_uninitialized(net._sess)
+
         predictor = Predictor(
-            DummyNetwork(),
+            net,
             {"images": "data"},
             # prepare_batch_fn=partial(DummyNetwork.prepare_batch,
             #                                          input_device="cpu",
@@ -76,13 +84,14 @@ class TestPredictor(unittest.TestCase):
             convert_batch_to_npy_fn=convert_tf_tensor_to_npy
         )
 
-        pred = predictor.predict(self.dset[0])
+        # add singleton dimension for test case
+        batch = self.dset[0]
+        batch['data'] = batch['data'][np.newaxis, :]
 
-        # print(pred)
+        pred = predictor.predict(batch)
 
         pred_dmgr = predictor.predict_data_mgr(self.dmgr)
 
-        # print(pred_dmgr)
 
     @unittest.skipIf("TORCH" not in get_backends(),
                      reason="No Torch Backend Installed")

@@ -254,14 +254,14 @@ if "TF" in get_backends():
             """
             AbstractNetwork.__init__(self, **kwargs)
             self._sess = sess()
-            self.inputs = None
-            self.outputs_train = None
-            self.outputs_eval = None
+            self.inputs = {}
+            self.outputs_train = {}
+            self.outputs_eval = {}
             self._losses = None
             self._optims = None
             self.training = True
 
-        def __call__(self, *args):
+        def __call__(self, *args, **kwargs):
             """
             Wrapper for calling self.run in eval setting
 
@@ -269,6 +269,8 @@ if "TF" in get_backends():
             ----------
             *args :
                 positional arguments (passed to `self.run`)
+            **kwargs:
+                keyword arguments (passed to `self.run`)
 
             Returns
             -------
@@ -277,7 +279,7 @@ if "TF" in get_backends():
 
             """
             self.training = False
-            return self.run(*args)
+            return self.run(*args, **kwargs)
 
         def _add_losses(self, losses: dict):
             """
@@ -309,26 +311,21 @@ if "TF" in get_backends():
             Parameters
             ----------
             *args :
-                arguments to feed as ``self.inputs``.
+                currently unused, exist for compatibility reasons
             **kwargs :
-                keyword arguments to feed as ``self.inputs``
-
-            Note
-            ----
-            ``args`` and ``kwargs`` together must have same length as ``self.inputs``
+                kwargs used to feed as ``self.inputs``. Sam keys as for ``self.inputs`` must be used
 
             Returns
             -------
-            np.ndarray or list
-                based on len(self.outputs*), returns either list or np.ndarray
+            dict
+                sames keys as outputs_train or outputs_eval, containing evaluated expressions as values
 
             """
-            if isinstance(self.inputs, tf.Tensor):
-                _feed_dict = dict(zip([self.inputs], args))
-            else:
-                _feed_dict = dict(zip(self.inputs, args))
+            _feed_dict = {}
 
-            _feed_dict.update(kwargs)
+            for feed_key, feed_value in kwargs.items():
+                assert feed_key in self.inputs.keys(), "{} not found in self.inputs".format(feed_key)
+                _feed_dict[self.inputs[feed_key]] = feed_value
 
             if self.training:
                 return self._sess.run(self.outputs_train, feed_dict=_feed_dict)

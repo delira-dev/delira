@@ -49,9 +49,10 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         preds_train = self.model(images, training=True)
         preds_eval = self.model(images, training=False)
 
-        self.inputs = [images, labels]
-        self.outputs_train = [preds_train]
-        self.outputs_eval = [preds_eval]
+        self.inputs["images"] = images
+        self.inputs["labels"] = labels
+        self.outputs_train["prediction"] = preds_train
+        self.outputs_eval["prediction"] = preds_eval
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -73,13 +74,14 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         else:
             self._losses = {}
             for name, _loss in losses.items():
-                self._losses[name] = _loss(self.inputs[-1], self.outputs_train[0])
+                self._losses[name] = _loss(self.inputs['labels'],
+                                           self.outputs_train['prediction'])
 
             total_loss = tf.reduce_mean(list(self._losses.values()), axis=0)
 
             self._losses['total'] = total_loss
-            self.outputs_train.append(self._losses)
-            self.outputs_eval.append(self._losses)
+            self.outputs_train['losses'] = self._losses
+            self.outputs_eval['losses'] = self._losses
 
     def _add_optims(self, optims: dict):
         """
@@ -100,7 +102,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             self._optims = optims['default']
             grads = self._optims.compute_gradients(self._losses['total'])
             step = self._optims.apply_gradients(grads)
-            self.outputs_train.append(step)
+            self.outputs_train['default_optim'] = step
 
     @staticmethod
     def _build_model(n_outputs: int, **kwargs):
@@ -161,7 +163,9 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
         inputs = data_dict.pop('data')
 
-        preds, losses, *_ = model.run(inputs, data_dict['label'])
+        outputs = model.run(images=inputs, labels=data_dict['label'])
+        preds = outputs['prediction']
+        losses = outputs['losses']
 
         for key, loss_val in losses.items():
             loss_vals[key] = loss_val
@@ -170,7 +174,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             metric_vals[key] = metric_fn(
                 preds, *data_dict.values())
 
-        if model.training == False:
+        if not model.training:
             # add prefix "val" in validation mode
             eval_loss_vals, eval_metrics_vals = {}, {}
             for key in loss_vals.keys():
