@@ -95,20 +95,26 @@ class ParametersTest(unittest.TestCase):
                     invalid_key, default="default"))
 
                 params_shallow = copy(params.permute_training_on_top())
-                self.assertTrue(params.training_on_top,
-                                params_shallow.training_on_top)
+                self.assertEqual(params.training_on_top,
+                                 params_shallow.training_on_top)
+                params_shallow["model.fixed.a"] += 1
+                self.assertNotEqual(params_shallow["model.fixed.a"],
+                                    params["model.fixed.a"])
 
                 params_shallow2 = copy(params.permute_variability_on_top())
-                self.assertTrue(params.variability_on_top,
-                                params_shallow2.variability_on_top)
+                self.assertEqual(params.variability_on_top,
+                                 params_shallow2.variability_on_top)
 
                 params_deep = deepcopy(params.permute_training_on_top())
-                self.assertTrue(params.training_on_top,
-                                params_deep.training_on_top)
+                self.assertEqual(params.training_on_top,
+                                 params_deep.training_on_top)
+                params_deep["model.fixed.a"] += 1
+                self.assertNotEqual(params_deep["model.fixed.a"],
+                                    params["model.fixed.a"])
 
                 params_deep2 = deepcopy(params.permute_variability_on_top())
-                self.assertTrue(params.variability_on_top,
-                                params_deep2.variability_on_top)
+                self.assertEqual(params.variability_on_top,
+                                 params_deep2.variability_on_top)
 
                 params.permute_training_on_top()
                 params_deep.permute_variability_on_top()
