@@ -227,11 +227,11 @@ if "TORCH" in get_backends():
                                         "env_appendix": "_%02d" % fold
                                         }})
 
-            logging.info({'image_grid': {"images": batch, "name": "real_images",
-                                        "env_appendix": "_%02d" % fold}})
-            logging.info({"image_grid": {"images": fake_image_batch,
-                                        "name": "fake_images",
-                                        "env_appendix": "_%02d" % fold}})
+#             logging.info({'image_grid': {"images": batch, "name": "real_images",
+#                                         "env_appendix": "_%02d" % fold}})
+#             logging.info({"image_grid": {"images": fake_image_batch,
+#                                         "name": "fake_images",
+#                                         "env_appendix": "_%02d" % fold}})
 
             return metric_vals, loss_vals, [fake_image_batch, discr_pred_fake,
                                             discr_pred_real]
