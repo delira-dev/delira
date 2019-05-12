@@ -27,7 +27,7 @@ class TfNetworkTrainer(BaseNetworkTrainer):
     def __init__(self,
                  network,
                  save_path,
-                 key_mapping, 
+                 key_mapping,
                  losses: dict,
                  optimizer_cls,
                  optimizer_params={},
@@ -192,118 +192,118 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         initialize_uninitialized(self.module._sess)
 
         # Load latest epoch file if available
-            if os.path.isdir(self.save_path):
-                # check all files in directory starting with "checkpoint" and 
-                # not ending with "_best.meta"
-                files = [x for x in os.listdir(self.save_path)
-                         if os.path.isfile(os.path.join(self.save_path, x))
-                         and x.startswith("checkpoint")
-                         and x.endswith(".meta")
-                         and not (x.endswith("_best.meta")
-                                  or x.endswith("_best.meta"))]
+        if os.path.isdir(self.save_path):
+            # check all files in directory starting with "checkpoint" and
+            # not ending with "_best.meta"
+            files = [x for x in os.listdir(self.save_path)
+                     if os.path.isfile(os.path.join(self.save_path, x))
+                     and x.startswith("checkpoint")
+                     and x.endswith(".meta")
+                     and not (x.endswith("_best.meta")
+                              or x.endswith("_best.meta"))]
 
-                # if list is not empty: load previous state
-                if files:
+            # if list is not empty: load previous state
+            if files:
 
-                    latest_epoch = max([
-                        int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
-                        for x in files])
+                latest_epoch = max([
+                    int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
+                    for x in files])
 
-                    latest_state_path = os.path.join(
-                        self.save_path, "checkpoint_epoch_%d.meta" 
-                        % latest_epoch)
+                latest_state_path = os.path.join(
+                    self.save_path, "checkpoint_epoch_%d.meta"
+                                    % latest_epoch)
 
-                    logger.info("Attempting to load state from previous \
+                logger.info("Attempting to load state from previous \
                                 training from %s" % latest_state_path)
 
-                    self.update_state(latest_state_path)
-                    
-    def _at_training_end(self):
-        """
-        Defines Behaviour at end of training: Loads best model if available
+                self.update_state(latest_state_path)
 
-        Returns
-        -------
-        :class:`AbstractTfNetwork`
-            best network
+def _at_training_end(self):
+    """
+    Defines Behaviour at end of training: Loads best model if available
 
-        """
-        if os.path.isfile(os.path.join(self.save_path, 
-                                       'checkpoint_best.meta')):
+    Returns
+    -------
+    :class:`AbstractTfNetwork`
+        best network
 
-            # load best model and return it. Since the state is hidden in the 
-            # graph, we don't actually need to use
-            # self.update_state.
-            self.update_state(os.path.join(self.save_path,
-                                           'checkpoint_best')
-                              )
+    """
+    if os.path.isfile(os.path.join(self.save_path,
+                                   'checkpoint_best.meta')):
 
-        return self.module
+        # load best model and return it. Since the state is hidden in the
+        # graph, we don't actually need to use
+        # self.update_state.
+        self.update_state(os.path.join(self.save_path,
+                                       'checkpoint_best')
+                          )
 
-    def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch,
-                            verbose=False):
-        """
-        Trains the network a single epoch
+    return self.module
 
-        Parameters
-        ----------
-        batchgen : MultiThreadedAugmenter
-            Generator yielding the training batches
-        epoch : int
-            current epoch
+def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch,
+                        verbose=False):
+    """
+    Trains the network a single epoch
 
-        """
-        self.module.training = True
+    Parameters
+    ----------
+    batchgen : MultiThreadedAugmenter
+        Generator yielding the training batches
+    epoch : int
+        current epoch
 
-        return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
+    """
+    self.module.training = True
 
-    def predict_data_mgr(self, datamgr, batch_size=None, metrics={},
-                         metric_keys={}, verbose=False):
-        """
-        Defines a routine to predict data obtained from a batchgenerator
+    return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
 
-        Parameters
-        ----------
-        datamgr : :class:`BaseDataManager`
-            Manager producing a generator holding the batches
-        batchsize : int
-            Artificial batchsize (sampling will be done with batchsize
-            1 and sampled data will be stacked to match the artificial
-            batchsize)(default: None)
-        metrics : dict
-            the metrics to calculate
-        metric_keys : dict
-            the ``batch_dict`` items to use for metric calculation
-        verbose : bool
-            whether to show a progress-bar or not, default: False
+def predict_data_mgr(self, datamgr, batch_size=None, metrics={},
+                     metric_keys={}, verbose=False):
+    """
+    Defines a routine to predict data obtained from a batchgenerator
 
-        """
-        self.module.training = False
+    Parameters
+    ----------
+    datamgr : :class:`BaseDataManager`
+        Manager producing a generator holding the batches
+    batchsize : int
+        Artificial batchsize (sampling will be done with batchsize
+        1 and sampled data will be stacked to match the artificial
+        batchsize)(default: None)
+    metrics : dict
+        the metrics to calculate
+    metric_keys : dict
+        the ``batch_dict`` items to use for metric calculation
+    verbose : bool
+        whether to show a progress-bar or not, default: False
 
-        return super().predict_data_mgr(datamgr, batch_size, metrics,
-                                        metric_keys, verbose=verbose)
+    """
+    self.module.training = False
 
-    def save_state(self, file_name, *args, **kwargs):
-        """
-        saves the current state via :func:`delira.io.tf.save_checkpoint`
+    return super().predict_data_mgr(datamgr, batch_size, metrics,
+                                    metric_keys, verbose=verbose)
 
-        Parameters
-        ----------
-        file_name : str
-            filename to save the state to
-        """
-        tf_save_checkpoint(file_name, self.module)
+def save_state(self, file_name, *args, **kwargs):
+    """
+    saves the current state via :func:`delira.io.tf.save_checkpoint`
 
-    def load_state(self, file_name, *args, **kwargs):
-        """
-        Loads the new state from file via :func:`delira.io.tf.load_checkpoint`
+    Parameters
+    ----------
+    file_name : str
+        filename to save the state to
+    """
+    tf_save_checkpoint(file_name, self.module)
 
-        Parameters
-        ----------
-        file_name : str
-            the file to load the state from
-        Returns
-        -------
+def load_state(self, file_name, *args, **kwargs):
+    """
+    Loads the new state from file via :func:`delira.io.tf.load_checkpoint`
 
-        """
-        return tf_load_checkpoint(file_name, self.module)
+    Parameters
+    ----------
+    file_name : str
+        the file to load the state from
+    Returns
+    -------
+
+    """
+    return tf_load_checkpoint(file_name, self.module)
