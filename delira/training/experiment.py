@@ -286,6 +286,7 @@ class BaseExperiment(TrixiExperiment):
         params = self._resolve_params(params)
         kwargs = self._resolve_kwargs(kwargs)
 
+        params.permute_training_on_top()
         training_params = params.training
 
         trainer = self.setup(params, training=True, **kwargs)
