@@ -9,7 +9,7 @@ import unittest
 import numpy as np
 
 
-class TfExperimentTest(unittest.TestCase):
+class TorchExperimentTest(unittest.TestCase):
 
     @unittest.skipIf("TORCH" not in delira.get_backends(),
                      reason="No TORCH Backend installed")
@@ -24,15 +24,17 @@ class TfExperimentTest(unittest.TestCase):
         test_cases = [
             (
                 Parameters(fixed_params={
-                    "model": {},
+                    "model": {'in_channels': 32,
+                              'n_outputs': 1},
                     "training": {
-                        "criterions": {"CE":
-                                       torch.nn.CrossEntropyLoss()},
+                        "criterions": {"BCE":
+                                       torch.nn.BCEWithLogitsLoss()},
                         "optimizer_cls": torch.optim.Adam,
                         "optimizer_params": {"lr": 1e-3},
                         "num_epochs": 2,
                         "metrics": {},
-                        "lr_sched_cls": ReduceLROnPlateauCallbackPyTorch,
+                        # ReduceLROnPlateauCallbackPyTorch,
+                        "lr_sched_cls": None,
                         "lr_sched_params": {}
                     }
                 }
@@ -43,8 +45,8 @@ class TfExperimentTest(unittest.TestCase):
 
         class DummyNetwork(ClassificationNetworkBasePyTorch):
 
-            def __init__(self):
-                super().__init__(32, 1)
+            def __init__(self, in_channels: int, n_outputs: int):
+                super().__init__(in_channels, n_outputs)
 
             def forward(self, x):
                 return self.module(x)
@@ -64,7 +66,7 @@ class TfExperimentTest(unittest.TestCase):
                                                       torch.float),
                         "label": torch.from_numpy(batch_dict["label"]
                                                   ).to(output_device,
-                                                       torch.long)}
+                                                       torch.float)}
 
         class DummyDataset(AbstractDataset):
             def __init__(self, length):
@@ -105,4 +107,3 @@ class TfExperimentTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

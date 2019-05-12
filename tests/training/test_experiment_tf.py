@@ -4,6 +4,7 @@ import unittest
 
 import numpy as np
 
+
 class TfExperimentTest(unittest.TestCase):
 
     @unittest.skipIf("TF" not in delira.get_backends(),
@@ -36,8 +37,8 @@ class TfExperimentTest(unittest.TestCase):
         ]
 
         class DummyNetwork(ClassificationNetworkBaseTf):
-            def __init__(self):
-                super().__init__(32, 1)
+            def __init__(self, in_channels: int, n_outputs: int):
+                super().__init__(in_channels, n_outputs)
                 self.model = self._build_model(1)
 
                 images = tf.placeholder(shape=[None, 32],
