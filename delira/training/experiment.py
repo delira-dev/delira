@@ -656,8 +656,7 @@ class BaseExperiment(TrixiExperiment):
         if hasattr(self, "params") and isinstance(self.params, Parameters):
             _params = params
             params = self.params
-            params = params.permute_training_on_top()
-            params.update(_params.permute_training_on_top())
+            params.update(_params)
 
         return params
 

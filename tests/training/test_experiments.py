@@ -241,8 +241,7 @@ class ExperimentTest(unittest.TestCase):
 
                                 # disable lr scheduling if no validation data
                                 # is present
-                                _params = Parameters()
-                                _params.update(params, deep=True)
+                                _params = deepcopy(params)
                                 if val_split is None:
                                     # _params = _params.permute_training_on_top()
                                     _params["fixed"]["training"
