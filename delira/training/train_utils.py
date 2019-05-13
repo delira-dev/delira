@@ -4,7 +4,50 @@ from ..utils.decorators import dtype_func
 from delira import get_backends
 
 
+def _check_and_correct_zero_shape(arg):
+    """
+    Corrects the shape of numpy array to be at least 1d and returns the
+    argument as is otherwise
+
+    Parameters
+    ----------
+    arg : Any
+        the argument which must be corrected in its shape if it's
+        zero-dimensional
+
+    Returns
+    -------
+    Any
+        argument (shape corrected if necessary)
+    """
+    if isinstance(arg, np.ndarray) and arg.shape == ():
+        arg = arg.reshape(1)
+    return arg
+
+
 def convert_batch_to_numpy_identity(*args, **kwargs):
+    """
+    Corrects the shape of all zero-sized numpy arrays to be at least 1d
+
+    Parameters
+    ----------
+    *args :
+        positional arguments of potential arrays to be corrected
+    **kwargs :
+        keyword arguments of potential arrays to be corrected
+
+    Returns
+    -------
+
+    """
+    args = list(args)
+
+    for idx, arg in args:
+        args[idx] = _check_and_correct_zero_shape(arg)
+
+    for key, val in kwargs.items():
+        kwargs[key] = _check_and_correct_zero_shape(val)
+
     return args, kwargs
 
 
@@ -79,7 +122,8 @@ if "TORCH" in get_backends():
 
     def convert_torch_tensor_to_npy(*args, **kwargs):
         """
-        Function to convert all torch Tensors to numpy arrays
+        Function to convert all torch Tensors to numpy arrays and
+        reshape zero-size tensors
 
         Parameters
         ----------
@@ -103,7 +147,7 @@ if "TORCH" in get_backends():
             if isinstance(v, torch.Tensor):
                 kwargs[k] = v.detach().cpu().numpy()
 
-        return args, kwargs
+        return convert_batch_to_numpy_identity(*args, **kwargs)
 
 if "TF" in get_backends():
     import tensorflow as tf
@@ -151,7 +195,8 @@ if "TF" in get_backends():
 
     def convert_tf_tensor_to_npy(*args, **kwargs):
         """
-        Function to convert all torch Tensors to numpy arrays
+        Function to convert all tf Tensors to numpy arrays
+        and reshape zero-size tensors
 
         Parameters
         ----------
@@ -169,4 +214,4 @@ if "TF" in get_backends():
             all given keyword arguments (converted if necessary)
 
         """
-        return args, kwargs
+        return convert_batch_to_numpy_identity(*args, **kwargs)
