@@ -217,6 +217,7 @@ class TfNetworkTrainer(BaseNetworkTrainer):
                                 training from %s" % latest_state_path)
 
                 self.update_state(latest_state_path)
+                self.start_epoch = latest_epoch
 
 
 def _at_training_end(self):

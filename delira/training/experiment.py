@@ -38,7 +38,7 @@ class BaseExperiment(TrixiExperiment):
     """
 
     def __init__(self,
-                 params: Parameters,
+                 params: typing.Union[str, Parameters],
                  model_cls: AbstractNetwork,
                  n_epochs=None,
                  name=None,
@@ -85,16 +85,16 @@ class BaseExperiment(TrixiExperiment):
 
         """
 
+        # params could also be a file containing a pickled instance of parameters
+        if isinstance(params, str):
+            with open(params, "rb") as f:
+                params = pickle.load(f)
+
         if n_epochs is None:
             n_epochs = params.nested_get("n_epochs",
                                          params.nested_get("num_epochs"))
 
         super().__init__(n_epochs)
-
-        # params could also be a file containing a pickled instance of parameters
-        if isinstance(params, str):
-            with open(params, "rb") as f:
-                params = pickle.load(f)
 
         if name is None:
             name = "UnnamedExperiment"

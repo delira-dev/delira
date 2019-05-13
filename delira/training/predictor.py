@@ -22,7 +22,7 @@ class Predictor(object):
     __KEYS_TO_GUARD = []
 
     def __init__(self, model, key_mapping: dict, 
-                 convert_batch_to_npy_fn=lambda x: x,
+                 convert_batch_args_kwargs_to_npy_fn=lambda *x, **y: (x, y),
                  prepare_batch_fn=lambda x: x, **kwargs):
         """
 
@@ -36,9 +36,9 @@ class Predictor(object):
             E.g. if a model accepts one input named 'x' and the data_dict 
             contains one entry named 'data' this argument would have to 
             be ``{'x': 'data'}``
-        convert_batch_to_npy_fn : type, optional
-            function converting a batch-tensor to numpy, default: identity 
-            function
+        convert_batch_args_kwargs_to_npy_fn : type, optional
+            a callable function to convert tensors in positional and keyword
+            arguments to numpy; default: identity function
         prepare_batch_fn : type, optional
             function converting a batch-tensor to the framework specific 
             tensor-type and pushing it to correct device, default: identity 
@@ -46,12 +46,12 @@ class Predictor(object):
 
         """
 
-        self._setup(model, key_mapping, convert_batch_to_npy_fn, 
+        self._setup(model, key_mapping, convert_batch_args_kwargs_to_npy_fn,
                     prepare_batch_fn, **kwargs)
 
         self._tqdm_desc = "Test"
 
-    def _setup(self, network, key_mapping, convert_batch_to_npy_fn, 
+    def _setup(self, network, key_mapping, convert_batch_args_kwargs_to_npy_fn,
                prepare_batch_fn, **kwargs):
         """
 
@@ -65,8 +65,9 @@ class Predictor(object):
             E.g. if a model accepts one input named 'x' and the data_dict 
             contains one entry named 'data' this argument would have to 
             be ``{'x': 'data'}``
-        convert_batch_to_npy_fn : type
-            a callable function to convert tensors to numpy
+        convert_batch_args_kwargs_to_npy_fn : type
+            a callable function to convert tensors in positional and keyword
+            arguments to numpy
         prepare_batch_fn : type
             function converting a batch-tensor to the framework specific
             tensor-type and pushing it to correct device, default: identity
@@ -75,7 +76,7 @@ class Predictor(object):
         """
         self.module = network
         self.key_mapping = key_mapping
-        self._convert_batch_to_npy_fn = convert_batch_to_npy_fn
+        self._convert_to_npy_fn = convert_batch_args_kwargs_to_npy_fn
         self._prepare_batch = prepare_batch_fn
 
     def __call__(self, data: dict):
@@ -110,7 +111,7 @@ class Predictor(object):
         # converts positional arguments and keyword arguments,
         # but returns only keyword arguments, since positional
         # arguments are not given.
-        return self._convert_batch_to_npy_fn(
+        return self._convert_to_npy_fn(
             **pred
         )[1]
 
@@ -133,6 +134,13 @@ class Predictor(object):
             the ``batch_dict`` items to use for metric calculation
         verbose : bool
             whether to show a progress-bar or not, default: False
+
+        Returns
+        -------
+        dict
+            a dictionary containing all predictions
+        dict
+            a dictionary containing all validation metrics (maybe empty)
 
         """
 
@@ -272,6 +280,5 @@ class Predictor(object):
         if metric_keys is None:
             metric_keys = {k: ("pred", "label") for k in metrics.keys()}
 
-        return {key: metric_fn(batch_dict[metric_keys[key][0]], 
-                               batch_dict[metric_keys[key][1]])
+        return {key: metric_fn(*[batch_dict[k] for k in metric_keys[key]])
                 for key, metric_fn in metrics.items()}
