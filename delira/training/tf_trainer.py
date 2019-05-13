@@ -219,97 +219,92 @@ class TfNetworkTrainer(BaseNetworkTrainer):
                 self.update_state(latest_state_path)
                 self.start_epoch = latest_epoch
 
+    def _at_training_end(self):
+        """
+        Defines Behaviour at end of training: Loads best model if available
 
-def _at_training_end(self):
-    """
-    Defines Behaviour at end of training: Loads best model if available
+        Returns
+        -------
+        :class:`AbstractTfNetwork`
+            best network
 
-    Returns
-    -------
-    :class:`AbstractTfNetwork`
-        best network
+        """
+        if os.path.isfile(os.path.join(self.save_path,
+                                       'checkpoint_best.meta')):
 
-    """
-    if os.path.isfile(os.path.join(self.save_path,
-                                   'checkpoint_best.meta')):
+            # load best model and return it. Since the state is hidden in the
+            # graph, we don't actually need to use
+            # self._update_state.
+            self.update_state(os.path.join(self.save_path,
+                                           'checkpoint_best')
+                              )
 
-        # load best model and return it. Since the state is hidden in the
-        # graph, we don't actually need to use
-        # self._update_state.
-        self.update_state(os.path.join(self.save_path,
-                                       'checkpoint_best')
-                          )
+        return self.module
 
-    return self.module
+    def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch,
+                            verbose=False):
+        """
+        Trains the network a single epoch
 
+        Parameters
+        ----------
+        batchgen : MultiThreadedAugmenter
+            Generator yielding the training batches
+        epoch : int
+            current epoch
 
-def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch,
-                        verbose=False):
-    """
-    Trains the network a single epoch
+        """
+        self.module.training = True
 
-    Parameters
-    ----------
-    batchgen : MultiThreadedAugmenter
-        Generator yielding the training batches
-    epoch : int
-        current epoch
+        return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
 
-    """
-    self.module.training = True
+    def predict_data_mgr(self, datamgr, batch_size=None, metrics={},
+                         metric_keys={}, verbose=False):
+        """
+        Defines a routine to predict data obtained from a batchgenerator
 
-    return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
+        Parameters
+        ----------
+        datamgr : :class:`BaseDataManager`
+            Manager producing a generator holding the batches
+        batchsize : int
+            Artificial batchsize (sampling will be done with batchsize
+            1 and sampled data will be stacked to match the artificial
+            batchsize)(default: None)
+        metrics : dict
+            the metrics to calculate
+        metric_keys : dict
+            the ``batch_dict`` items to use for metric calculation
+        verbose : bool
+            whether to show a progress-bar or not, default: False
 
+        """
+        self.module.training = False
 
-def predict_data_mgr(self, datamgr, batch_size=None, metrics={},
-                     metric_keys={}, verbose=False):
-    """
-    Defines a routine to predict data obtained from a batchgenerator
+        return super().predict_data_mgr(datamgr, batch_size, metrics,
+                                        metric_keys, verbose=verbose)
 
-    Parameters
-    ----------
-    datamgr : :class:`BaseDataManager`
-        Manager producing a generator holding the batches
-    batchsize : int
-        Artificial batchsize (sampling will be done with batchsize
-        1 and sampled data will be stacked to match the artificial
-        batchsize)(default: None)
-    metrics : dict
-        the metrics to calculate
-    metric_keys : dict
-        the ``batch_dict`` items to use for metric calculation
-    verbose : bool
-        whether to show a progress-bar or not, default: False
+    def save_state(self, file_name, *args, **kwargs):
+        """
+        saves the current state via :func:`delira.io.tf.save_checkpoint`
 
-    """
-    self.module.training = False
+        Parameters
+        ----------
+        file_name : str
+            filename to save the state to
+        """
+        tf_save_checkpoint(file_name, self.module)
 
-    return super().predict_data_mgr(datamgr, batch_size, metrics,
-                                    metric_keys, verbose=verbose)
+    def load_state(self, file_name, *args, **kwargs):
+        """
+        Loads the new state from file via :func:`delira.io.tf.load_checkpoint`
 
+        Parameters
+        ----------
+        file_name : str
+            the file to load the state from
+        Returns
+        -------
 
-def save_state(self, file_name, *args, **kwargs):
-    """
-    saves the current state via :func:`delira.io.tf.save_checkpoint`
-
-    Parameters
-    ----------
-    file_name : str
-        filename to save the state to
-    """
-    tf_save_checkpoint(file_name, self.module)
-
-
-def load_state(self, file_name, *args, **kwargs):
-    """
-    Loads the new state from file via :func:`delira.io.tf.load_checkpoint`
-
-    Parameters
-    ----------
-    file_name : str
-        the file to load the state from
-    Returns
-    -------
-
-    """
-    return tf_load_checkpoint(file_name, self.module)
+        """
+        return tf_load_checkpoint(file_name, self.module)
