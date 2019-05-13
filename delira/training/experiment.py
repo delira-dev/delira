@@ -53,8 +53,10 @@ class BaseExperiment(TrixiExperiment):
 
         Parameters
         ----------
-        params : :class:`Parameters`
-            the training parameters
+        params : :class:`Parameters` or str
+            the training parameters, if string is passed,
+            it is treated as a path to a pickle file, where the
+            parameters are loaded from
         model_cls : Subclass of :class:`AbstractNetwork`
             the class implementing the model to train
         n_epochs : int or None
@@ -707,7 +709,7 @@ if "TORCH" in get_backends():
 
     class PyTorchExperiment(BaseExperiment):
         def __init__(self,
-                     params: Parameters,
+                     params:typing.Union[str, Parameters],
                      model_cls: AbstractPyTorchNetwork,
                      n_epochs=None,
                      name=None,
@@ -722,8 +724,10 @@ if "TORCH" in get_backends():
 
             Parameters
             ----------
-            params : :class:`Parameters`
-                the training parameters
+            params : :class:`Parameters` or str
+                the training parameters, if string is passed,
+                it is treated as a path to a pickle file, where the
+                parameters are loaded from
             model_cls : Subclass of :class:`AbstractPyTorchNetwork`
                 the class implementing the model to train
             n_epochs : int or None
@@ -954,7 +958,7 @@ if "TF" in get_backends():
 
     class TfExperiment(BaseExperiment):
         def __init__(self,
-                     params: Parameters,
+                     params: typing.Union[str, Parameters],
                      model_cls: AbstractTfNetwork,
                      n_epochs=None,
                      name=None,
@@ -969,8 +973,10 @@ if "TF" in get_backends():
 
             Parameters
             ----------
-            params : :class:`Parameters`
-                the training parameters
+            params : :class:`Parameters` or str
+                the training parameters, if string is passed,
+                it is treated as a path to a pickle file, where the
+                parameters are loaded from
             model_cls : Subclass of :class:`AbstractTfNetwork`
                 the class implementing the model to train
             n_epochs : int or None

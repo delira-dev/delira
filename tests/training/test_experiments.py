@@ -271,12 +271,10 @@ class ExperimentTest(unittest.TestCase):
         for case in self._test_cases_tf:
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
-                 val_score_key, val_score_mode, network_cls) = case
+                 network_cls) = case
 
                 exp = TfExperiment(params, network_cls,
-                                   key_mapping={"images": "data"},
-                                   val_score_key=val_score_key,
-                                   val_score_mode=val_score_mode)
+                                   key_mapping={"images": "data"})
 
                 dset_train = DummyDataset(dataset_length_train)
                 dset_test = DummyDataset(dataset_length_test)
