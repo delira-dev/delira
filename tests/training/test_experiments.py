@@ -69,7 +69,7 @@ class ExperimentTest(unittest.TestCase):
                     "model": {},
                     "training": {
                         "losses": {"CE":
-                                   torch.nn.BCEWithLogitsLoss()},
+                                       torch.nn.BCEWithLogitsLoss()},
                         "optimizer_cls": torch.optim.Adam,
                         "optimizer_params": {"lr": 1e-3},
                         "num_epochs": 2,
@@ -130,7 +130,7 @@ class ExperimentTest(unittest.TestCase):
                         "model": {},
                         "training": {
                             "losses": {"CE":
-                                       tf.losses.softmax_cross_entropy},
+                                           tf.losses.softmax_cross_entropy},
                             "optimizer_cls": tf.train.AdamOptimizer,
                             "optimizer_params": {"learning_rate": 1e-3},
                             "num_epochs": 2,
@@ -246,7 +246,7 @@ class ExperimentTest(unittest.TestCase):
                                 if val_split is None:
                                     # _params = _params.permute_training_on_top()
                                     _params["fixed"]["training"
-                                                     ]["lr_sched_cls"] = None
+                                    ]["lr_sched_cls"] = None
                                 exp = PyTorchExperiment(
                                     _params, network_cls,
                                     key_mapping={"x": "data"},
@@ -274,7 +274,11 @@ class ExperimentTest(unittest.TestCase):
                  network_cls) = case
 
                 exp = TfExperiment(params, network_cls,
-                                   key_mapping={"images": "data"})
+                                   key_mapping={"images": "data"},
+                                   metric_keys={"mae":
+                                                    ["predictions",
+                                                     "label"]}
+                                   )
 
                 dset_train = DummyDataset(dataset_length_train)
                 dset_test = DummyDataset(dataset_length_test)
@@ -305,7 +309,11 @@ class ExperimentTest(unittest.TestCase):
                 dmgr_test = BaseDataManager(dset_test, 16, 1, None)
 
                 exp.test(model, dmgr_test, params,
-                         params.nested_get("val_metrics"))
+                         params.nested_get("val_metrics"),
+                         metric_keys={"mae":
+                                          ["predictions",
+                                           "label"]}
+                         )
 
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF Backend installed")
@@ -356,7 +364,10 @@ class ExperimentTest(unittest.TestCase):
                                 dmgr = BaseDataManager(dset, 16, 1, None)
                                 exp.kfold(dmgr, params.nested_get("val_metrics"),
                                           shuffle=True, split_type=split_type,
-                                          val_split=val_split, num_splits=2)
+                                          val_split=val_split, num_splits=2,
+                                          metric_keys={"mae":
+                                                           ["predictions",
+                                                            "label"]})
 
 
 if __name__ == '__main__':

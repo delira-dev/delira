@@ -3,6 +3,11 @@ from ..utils.decorators import dtype_func
 
 from delira import get_backends
 
+
+def convert_batch_to_numpy_identity(*args, **kwargs):
+    return args, kwargs
+
+
 if "TORCH" in get_backends():
     import torch
 

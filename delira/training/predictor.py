@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import tqdm
 
 from ..data_loading import BaseDataManager
+from .train_utils import convert_batch_to_numpy_identity
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +22,10 @@ class Predictor(object):
     # static variable to prevent certain attributers from overwriting
     __KEYS_TO_GUARD = []
 
-    def __init__(self, model, key_mapping: dict, 
-                 convert_batch_args_kwargs_to_npy_fn=lambda *x, **y: (x, y),
-                 prepare_batch_fn=lambda x: x, **kwargs):
+    def __init__(
+            self, model, key_mapping: dict,
+            convert_batch_to_npy_fn=convert_batch_to_numpy_identity,
+            prepare_batch_fn=lambda x: x, **kwargs):
         """
 
         Parameters
@@ -46,7 +48,7 @@ class Predictor(object):
 
         """
 
-        self._setup(model, key_mapping, convert_batch_args_kwargs_to_npy_fn,
+        self._setup(model, key_mapping, convert_batch_to_npy_fn,
                     prepare_batch_fn, **kwargs)
 
         self._tqdm_desc = "Test"
@@ -105,8 +107,8 @@ class Predictor(object):
             k: data[v] for k, v in self.key_mapping.items()}
 
         pred = self.module(
-                **mapped_data
-            )
+            **mapped_data
+        )
 
         # converts positional arguments and keyword arguments,
         # but returns only keyword arguments, since positional
@@ -215,9 +217,9 @@ class Predictor(object):
                     new_predictions_all[k].append(v)
                 else:
                     new_predictions_all[k] = [v]
-                
+
         # concatenate lists to single arrays
-        predictions_all = {k: np.concatenate(_outputs) 
+        predictions_all = {k: np.concatenate(_outputs)
                            for k, _outputs in new_predictions_all.items()}
 
         for k, v in metric_vals.items():
