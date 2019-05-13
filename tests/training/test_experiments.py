@@ -274,11 +274,7 @@ class ExperimentTest(unittest.TestCase):
                  network_cls) = case
 
                 exp = TfExperiment(params, network_cls,
-                                   key_mapping={"images": "data"},
-                                   metric_keys={"mae":
-                                                    ["predictions",
-                                                     "label"]}
-                                   )
+                                   key_mapping={"images": "data"})
 
                 dset_train = DummyDataset(dataset_length_train)
                 dset_test = DummyDataset(dataset_length_test)
@@ -309,11 +305,7 @@ class ExperimentTest(unittest.TestCase):
                 dmgr_test = BaseDataManager(dset_test, 16, 1, None)
 
                 exp.test(model, dmgr_test, params,
-                         params.nested_get("val_metrics"),
-                         metric_keys={"mae":
-                                          ["predictions",
-                                           "label"]}
-                         )
+                         params.nested_get("val_metrics"))
 
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF Backend installed")
@@ -365,9 +357,7 @@ class ExperimentTest(unittest.TestCase):
                                 exp.kfold(dmgr, params.nested_get("val_metrics"),
                                           shuffle=True, split_type=split_type,
                                           val_split=val_split, num_splits=2,
-                                          metric_keys={"mae":
-                                                           ["predictions",
-                                                            "label"]})
+                                          )
 
 
 if __name__ == '__main__':
