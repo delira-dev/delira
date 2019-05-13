@@ -51,8 +51,8 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
         self.inputs["images"] = images
         self.inputs["labels"] = labels
-        self.outputs_train["prediction"] = preds_train
-        self.outputs_eval["prediction"] = preds_eval
+        self.outputs_train["pred"] = preds_train
+        self.outputs_eval["pred"] = preds_eval
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -75,7 +75,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             self._losses = {}
             for name, _loss in losses.items():
                 self._losses[name] = _loss(self.inputs['labels'],
-                                           self.outputs_train['prediction'])
+                                           self.outputs_train['pred'])
 
             total_loss = tf.reduce_mean(list(self._losses.values()), axis=0)
 
@@ -152,8 +152,8 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
                 dict
                     Loss values (with same keys as those initially passed to model.init).
                     Additionally, a total_loss key is added
-                list
-                    Arbitrary number of predictions as np.array
+                dict
+                    outputs of `model.run`
 
                 """
 
@@ -164,7 +164,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         inputs = data_dict.pop('data')
 
         outputs = model.run(images=inputs, labels=data_dict['label'])
-        preds = outputs['prediction']
+        preds = outputs['pred']
         losses = outputs['losses']
 
         for key, loss_val in losses.items():
@@ -191,4 +191,4 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
         #logging.info({'image_grid': {"image_array": inputs, "name": image_names,
         #                             "title": "input_images", "env_appendix": "_%02d" % fold}})
-        return metric_vals, loss_vals, {"pred": preds}
+        return metric_vals, loss_vals, outputs

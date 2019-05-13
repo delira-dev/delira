@@ -109,8 +109,8 @@ class ExperimentTest(unittest.TestCase):
 
                     self.inputs["images"] = images
                     self.inputs["labels"] = labels
-                    self.outputs_train["prediction"] = preds_train
-                    self.outputs_eval["prediction"] = preds_eval
+                    self.outputs_train["pred"] = preds_train
+                    self.outputs_eval["pred"] = preds_eval
 
                 @staticmethod
                 def _build_model(n_outputs):
