@@ -230,7 +230,8 @@ if "TORCH" in get_backends():
                     loss_vals = eval_loss_vals
                     metric_vals = eval_metrics_vals
 
-            return metric_vals, loss_vals, preds
+            return metric_vals, loss_vals, {k: v.detach()
+                                            for k, v in preds.items()}
 
         @staticmethod
         def _build_models(in_channels, noise_length, **kwargs):

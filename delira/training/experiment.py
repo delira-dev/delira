@@ -1169,7 +1169,7 @@ if "TF" in get_backends():
                                  metric_keys=metric_keys, params=params,
                                  verbose=verbose, **kwargs)
 
-        def test(self, network, test_data: BaseDataManager, params,
+        def test(self, network, test_data: BaseDataManager,
                  metrics: dict, metric_keys=None,
                  verbose=False, prepare_batch=lambda x: x,
                  convert_fn=None, **kwargs):
@@ -1219,7 +1219,6 @@ if "TF" in get_backends():
                 convert_fn = convert_tf_tensor_to_npy
 
             return super().test(network=network, test_data=test_data,
-                                params=params,
                                 metrics=metrics, metric_keys=metric_keys,
                                 verbose=verbose, prepare_batch=prepare_batch,
                                 convert_fn=convert_fn, **kwargs)

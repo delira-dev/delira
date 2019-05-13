@@ -265,7 +265,8 @@ if "TORCH" in get_backends():
                 loss_vals = eval_loss_vals
                 metric_vals = eval_metrics_vals
 
-            return metric_vals, loss_vals, preds
+            return metric_vals, loss_vals, {k: v.detach()
+                                            for k, v in preds.items()}
 
         def _build_model(self, num_classes, in_channels=3, depth=5,
                         start_filts=64):
@@ -705,7 +706,8 @@ if "TORCH" in get_backends():
                 loss_vals = eval_loss_vals
                 metric_vals = eval_metrics_vals
 
-            return metric_vals, loss_vals, preds
+            return metric_vals, loss_vals, {k: v.detach()
+                                            for k, v in preds.items()}
 
         def _build_model(self, num_classes, in_channels=3, depth=5,
                          start_filts=64):
