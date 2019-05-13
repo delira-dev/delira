@@ -67,7 +67,7 @@ class Predictor(object):
             E.g. if a model accepts one input named 'x' and the data_dict 
             contains one entry named 'data' this argument would have to 
             be ``{'x': 'data'}``
-        convert_batch_args_kwargs_to_npy_fn : type
+        convert_batch_to_npy_fn : type
             a callable function to convert tensors in positional and keyword
             arguments to numpy
         prepare_batch_fn : type
