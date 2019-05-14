@@ -51,7 +51,7 @@ class BaseNetworkTrainer(Predictor):
                  logging_kwargs: dict,
                  fold: int,
                  callbacks: typing.List[AbstractCallback],
-                 start_epoch: int,
+                 start_epoch=1,
                  metric_keys=None,
                  convert_batch_to_npy_fn=lambda x: x,
                  val_freq=1,
@@ -144,7 +144,7 @@ class BaseNetworkTrainer(Predictor):
 
         self._callbacks = []
         self._fold = fold
-        self.start_epoch = 0
+        self.start_epoch = start_epoch
         self.save_path = save_path
         self.losses = losses
         self.train_metrics = train_metrics
