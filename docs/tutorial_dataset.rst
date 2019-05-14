@@ -24,7 +24,7 @@ the underlying structure of the data can be described as followed:
             * label 
         * …
 
-A single sample was contructed from multiple images which are all
+A single sample was constructed from multiple images which are all
 located in the same subdirectory. The corresponding signature of the
 ``AbstractDataset`` was given by
 ``data_path, load_fn, img_extensions, gt_extensions``. While most
@@ -38,7 +38,7 @@ Overview New API
 The new dataset API was refactored to a more general
 approach where only a ``data_path`` to the root directory and a
 ``load_fn`` for a single sample need to be provided. A simple loading
-function (``load_fn``) to generate random data indepentend from the
+function (``load_fn``) to generate random data independend from the
 given path might be realized as below.
 
 .. code:: ipython3
