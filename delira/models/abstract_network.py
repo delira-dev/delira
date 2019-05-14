@@ -134,6 +134,7 @@ class AbstractNetwork(object):
         """
         return self._init_kwargs
 
+
 if "TORCH" in get_backends():
     import torch
 

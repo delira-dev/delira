@@ -9,6 +9,9 @@ if "TORCH" in get_backends():
     from torchvision import models as t_models
     from delira.models.abstract_network import AbstractPyTorchNetwork
 
+    # use loss scaling if installed, otherwise falls back to "normal" backward
+    from ..model_utils import scale_loss
+
     class ClassificationNetworkBasePyTorch(AbstractPyTorchNetwork):
         """
         Implements basic classification with ResNet18
@@ -140,7 +143,8 @@ if "TORCH" in get_backends():
             if optimizers:
                 optimizers['default'].zero_grad()
                 # perform loss scaling via apex if half precision is enabled
-                with optimizers["default"].scale_loss(total_loss) as scaled_loss:
+                with scale_loss(total_loss,
+                                optimizers["default"]) as scaled_loss:
                     scaled_loss.backward()
                 optimizers['default'].step()
 
