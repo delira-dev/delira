@@ -16,6 +16,7 @@ def scale_loss(loss,
                model=None,
                delay_unscale=False,
                **kwargs):
+
     if amp is None:
         yield loss
 
@@ -24,5 +25,6 @@ def scale_loss(loss,
                             loss_id=loss_id, model=model,
                             delay_unscale=delay_unscale, 
                             **kwargs) as _loss:
+
             yield _loss
     return

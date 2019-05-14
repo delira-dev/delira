@@ -148,7 +148,6 @@ if "TORCH" in get_backends():
 
                 with scale_loss(total_loss,
                                 optimizers["default"]) as scaled_loss:
-
                     scaled_loss.backward()
                 optimizers['default'].step()
 
