@@ -6,7 +6,7 @@ from delira import get_backends
 file_logger = logging.getLogger(__name__)
 
 
-class AbstractNetwork(object, metaclass=abc.ABCMeta):
+class AbstractNetwork(object):
     """
     Abstract class all networks should be derived from
 
@@ -139,8 +139,7 @@ class AbstractNetwork(object, metaclass=abc.ABCMeta):
 if "TORCH" in get_backends():
     import torch
 
-    class AbstractPyTorchNetwork(AbstractNetwork, torch.nn.Module,
-                                 metaclass=abc.ABCMeta):
+    class AbstractPyTorchNetwork(AbstractNetwork, torch.nn.Module):
         """
         Abstract Class for PyTorch Networks
 
@@ -165,7 +164,6 @@ if "TORCH" in get_backends():
             AbstractNetwork.__init__(self, **kwargs)
 
         @abc.abstractmethod
-        @torch.jit.script_method
         def forward(self, *inputs):
             """
             Forward inputs through module (defines module behavior)
@@ -233,12 +231,17 @@ if "TORCH" in get_backends():
             return return_dict
 
 
-    class AbstractPyTorchJITNetwork(AbstractNetwork, torch.jit.ScriptModule,
-                                    metaclass=abc.ABCMeta):
+    class AbstractPyTorchJITNetwork(AbstractNetwork, torch.jit.ScriptModule):
 
         """
         Abstract Interface Class for PyTorch JIT Networks. For more information
         have a look at https://pytorch.org/docs/stable/jit.html#torchscript
+
+        Warnings
+        -----
+        In addition to the here defined API, a forward function must be
+        implemented and decorated with ``@torch.jit.script_method``
+
         """
         @abc.abstractmethod
         def __init__(self, optimize=True, **kwargs):
@@ -253,23 +256,6 @@ if "TORCH" in get_backends():
             """
             torch.jit.ScriptModule.__init__(self, optimize=optimize)
             AbstractNetwork.__init__(self, **kwargs)
-
-        @abc.abstractmethod
-        def forward(self, *inputs):
-            """
-            Forward inputs through module (defines module behavior)
-            Parameters
-            ----------
-            inputs : list
-                inputs of arbitrary type and number
-
-            Returns
-            -------
-            Any
-                result: module results of arbitrary type and number
-
-            """
-            raise NotImplementedError()
 
         def __call__(self, *args, **kwargs):
             """

@@ -116,7 +116,7 @@ if "TORCH" in get_backends():
             torch.jit.save(model, file + "_model.ptj")
 
         save_checkpoint(file + "_trainer_state.pt", None,
-                        optimizers=optimizers, epoch=epoch **kwargs)
+                        optimizers=optimizers, epoch=epoch, **kwargs)
 
     def load_checkpoint_jit(file: str, **kwargs):
         """
