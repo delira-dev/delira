@@ -13,9 +13,14 @@ if "TORCH" in get_backends():
 
         """
 
+<<<<<<< HEAD
         @make_deprecated(
             "'delira.models.model_utils.scale_loss' combined with "
             "new apex.amp API (https://github.com/NVIDIA/apex)")
+=======
+        @make_deprecated("'delira.models.model_utils.scale_loss' combined with "
+                         "new apex.amp API (https://github.com/NVIDIA/apex)")
+>>>>>>> Move to new APEX.amp API
         def __init__(self, optimizer: torch.optim.Optimizer, *args, **kwargs):
             """
 

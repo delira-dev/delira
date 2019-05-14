@@ -65,6 +65,7 @@ if "TORCH" in get_backends():
                      metric_keys=None,
                      convert_batch_to_npy_fn=convert_torch_tensor_to_npy,
                      mixed_precision=False,
+
                      mixed_precision_kwargs={"opt_level": "o1",
                                              "cast_model_type": None,
                                              "patch_torch_functions": None,
@@ -313,6 +314,28 @@ if "TORCH" in get_backends():
             self._prepare_batch = partial(
                 self._prepare_batch, input_device=self.input_device,
                 output_device=self.output_device)
+
+            try:
+                # use apex for mixed precision if installed
+                from apex import amp
+
+                # extract optimizers and corresponding keys
+                # (in case dict is not ordered)
+                _optim_keys = list(self.optimizers.keys())
+                _optims = list(self.optimizers[k] for k in _optim_keys)
+
+                # wrap model and register optimizers for mixed precision
+                self.module, _optims = amp.initialize(self.module, _optims,
+                                                      mixed_precision,
+                                                      **mixed_precision_kwargs)
+                for k, v in zip(_optim_keys, _optims):
+                    self.optimizers[k] = v
+
+            except (ImportError, RuntimeError) as e:
+                logging.debug("Either APEX can't be imported correctly or a value "
+                              "missmatch occured. Switching to default FP32 "
+                              "training insted. The following Exception occured:"
+                              "\n%s" % str(e))
 
         def _at_training_begin(self, *args, **kwargs):
             """
