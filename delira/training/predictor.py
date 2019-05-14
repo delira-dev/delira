@@ -73,7 +73,7 @@ class Predictor(object):
         convert_batch_to_npy_fn : type
             a callable function to convert tensors in positional and keyword
             arguments to numpy
-        prepare_batch_fn : type
+        prepare_batch_fn : (dict, str, str) -> dict
             function converting a batch-tensor to the framework specific
             tensor-type and pushing it to correct device, default: identity
             function
