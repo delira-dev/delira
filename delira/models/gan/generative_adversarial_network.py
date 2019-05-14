@@ -9,6 +9,8 @@ logger = logging.getLogger(__name__)
 if "TORCH" in get_backends():
     import torch
 
+    # use loss scaling if installed, otherwise falls back to "normal" backward
+    from ..model_utils import scale_loss
     from delira.models.abstract_network import AbstractPyTorchNetwork
 
     class GenerativeAdversarialNetworkBasePyTorch(AbstractPyTorchNetwork):
@@ -178,8 +180,8 @@ if "TORCH" in get_backends():
 
                     # perform loss scaling via apex if half precision is
                     # enabled
-                    with optimizers["discr"].scale_loss(
-                            total_loss_discr) as scaled_loss:
+                    with scale_loss(total_loss_discr,
+                                    optimizers["discr"]) as scaled_loss:
                         scaled_loss.backward(retain_graph=True)
                     optimizers["discr"].step()
 
@@ -216,10 +218,11 @@ if "TORCH" in get_backends():
                 if optimizers:
                     # actual backpropagation
                     optimizers["gen"].zero_grad()
-                    # perform loss scaling via apex if half precision is
-                    # enabled
-                    with optimizers["gen"].scale_loss(
-                            total_loss_gen) as scaled_loss:
+
+                    # perform loss scaling via apex if half precision is enabled
+                    with scale_loss(total_loss_gen,
+                                    optimizers["gen"]) as scaled_loss:
+
                         scaled_loss.backward()
                     optimizers["gen"].step()
 
