@@ -38,7 +38,7 @@ Overview New API
 The new dataset API was refactored to a more general
 approach where only a ``data_path`` to the root directory and a
 ``load_fn`` for a single sample need to be provided. A simple loading
-function (``load_fn``) to generate random data independend from the
+function (``load_fn``) to generate random data independent from the
 given path might be realized as below.
 
 .. code:: ipython3
