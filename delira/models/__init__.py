@@ -3,7 +3,8 @@ from .abstract_network import AbstractNetwork
 from delira import get_backends
 
 if "TORCH" in get_backends():
-    from .abstract_network import AbstractPyTorchNetwork
+    from .abstract_network import AbstractPyTorchNetwork, \
+        AbstractPyTorchJITNetwork
     from .classification import VGG3DClassificationNetworkPyTorch, \
         ClassificationNetworkBasePyTorch
 

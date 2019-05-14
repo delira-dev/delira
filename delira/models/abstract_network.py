@@ -5,7 +5,7 @@ from delira import get_backends
 file_logger = logging.getLogger(__name__)
 
 
-class AbstractNetwork(object):
+class AbstractNetwork(object, metaclass=abc.ABCMeta):
     """
     Abstract class all networks should be derived from
 
@@ -134,10 +134,12 @@ class AbstractNetwork(object):
         """
         return self._init_kwargs
 
+
 if "TORCH" in get_backends():
     import torch
 
-    class AbstractPyTorchNetwork(AbstractNetwork, torch.nn.Module):
+    class AbstractPyTorchNetwork(AbstractNetwork, torch.nn.Module,
+                                 metaclass=abc.ABCMeta):
         """
         Abstract Class for PyTorch Networks
 
@@ -159,6 +161,96 @@ if "TORCH" in get_backends():
 
             """
             torch.nn.Module.__init__(self)
+            AbstractNetwork.__init__(self, **kwargs)
+
+        @abc.abstractmethod
+        @torch.jit.script_method
+        def forward(self, *inputs):
+            """
+            Forward inputs through module (defines module behavior)
+            Parameters
+            ----------
+            inputs : list
+                inputs of arbitrary type and number
+
+            Returns
+            -------
+            Any
+                result: module results of arbitrary type and number
+
+            """
+            raise NotImplementedError()
+
+        def __call__(self, *args, **kwargs):
+            """
+            Calls Forward method
+
+            Parameters
+            ----------
+            *args :
+                positional arguments (passed to `forward`)
+            **kwargs :
+                keyword arguments (passed to `forward`)
+
+            Returns
+            -------
+            Any
+                result: module results of arbitrary type and number
+
+            """
+            return torch.jit.ScriptModule.__call__(self, *args, **kwargs)
+
+        @staticmethod
+        def prepare_batch(batch: dict, input_device, output_device):
+            """
+            Helper Function to prepare Network Inputs and Labels (convert them to
+            correct type and shape and push them to correct devices)
+
+            Parameters
+            ----------
+            batch : dict
+                dictionary containing all the data
+            input_device : torch.device
+                device for network inputs
+            output_device : torch.device
+                device for network outputs
+
+            Returns
+            -------
+            dict
+                dictionary containing data in correct type and shape and on correct
+                device
+
+            """
+            return_dict = {"data": torch.from_numpy(batch.pop("data")).to(
+                input_device).to(torch.float)}
+
+            for key, vals in batch.items():
+                return_dict[key] = torch.from_numpy(vals).to(output_device).to(
+                    torch.float)
+
+            return return_dict
+
+
+    class AbstractPyTorchJITNetwork(AbstractNetwork, torch.jit.ScriptModule,
+                                    metaclass=abc.ABCMeta):
+
+        """
+        Abstract Interface Class for PyTorch JIT Networks. For more information
+        have a look at https://pytorch.org/docs/stable/jit.html#torchscript
+        """
+        @abc.abstractmethod
+        def __init__(self, optimize=True, **kwargs):
+            """
+
+            Parameters
+            ----------
+            optimize : bool
+                whether to optimize the network graph or not; default: True
+            **kwargs :
+                additional keyword arguments (passed to :class:`AbstractNetwork`)
+            """
+            torch.jit.ScriptModule.__init__(self, optimize=optimize)
             AbstractNetwork.__init__(self, **kwargs)
 
         @abc.abstractmethod
@@ -195,7 +287,7 @@ if "TORCH" in get_backends():
                 result: module results of arbitrary type and number
 
             """
-            return torch.nn.Module.__call__(self, *args, **kwargs)
+            return torch.jit.ScriptModule.__call__(self, *args, **kwargs)
 
         @staticmethod
         def prepare_batch(batch: dict, input_device, output_device):
@@ -228,10 +320,11 @@ if "TORCH" in get_backends():
 
             return return_dict
 
+
 if "TF" in get_backends():
     import tensorflow as tf
 
-    class AbstractTfNetwork(AbstractNetwork):
+    class AbstractTfNetwork(AbstractNetwork, metaclass=abc.ABCMeta):
         """
         Abstract Class for Tf Networks
 
