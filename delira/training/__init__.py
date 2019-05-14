@@ -7,7 +7,7 @@ from .predictor import Predictor
 from delira import get_backends
 
 if "TORCH" in get_backends():
-    from .experiment import PyTorchExperiment
+    from .experiment import PyTorchExperiment, PyTorchJITExperiment
     from .pytorch_trainer import PyTorchNetworkTrainer, PyTorchJITNetworkTrainer
 
 if "TF" in get_backends():
