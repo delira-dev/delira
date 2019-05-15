@@ -20,12 +20,11 @@ logger = logging.getLogger(__name__)
 if "TORCH" in get_backends():
     import torch
     from .train_utils import convert_torch_tensor_to_npy
-
     from .train_utils import create_optims_default_pytorch as \
         create_optims_default
-    from ..io.torch import load_checkpoint, save_checkpoint, \
-        save_checkpoint_jit, load_checkpoint_jit
-    from ..models import AbstractPyTorchNetwork, AbstractPyTorchJITNetwork
+    from ..io.torch import load_checkpoint_torch, save_checkpoint_torch, \
+        save_checkpoint_torchscript, load_checkpoint_torchscript
+    from ..models import AbstractPyTorchNetwork, AbstractTorchScriptNetwork
 
 
     class PyTorchNetworkTrainer(BaseNetworkTrainer):
@@ -426,8 +425,8 @@ if "TORCH" in get_backends():
             """
             if not (file_name.endswith(".pth") or file_name.endswith(".pt")):
                 file_name = file_name + ".pt"
-            save_checkpoint(file_name, self.module, self.optimizers,
-                            **kwargs)
+            save_checkpoint_torch(file_name, self.module, self.optimizers,
+                                  **kwargs)
 
         @staticmethod
         def load_state(file_name, **kwargs):
@@ -451,7 +450,7 @@ if "TORCH" in get_backends():
             if not (file_name.endswith(".pth") or file_name.endswith(".pt")):
                 file_name = file_name + ".pt"
 
-            return load_checkpoint(file_name, **kwargs)
+            return load_checkpoint_torch(file_name, **kwargs)
 
         def update_state(self, file_name, *args, **kwargs):
             """
@@ -530,9 +529,10 @@ if "TORCH" in get_backends():
             """
             return super(path, extensions)
 
-    class PyTorchJITNetworkTrainer(PyTorchNetworkTrainer):
+
+    class TorchScriptNetworkTrainer(PyTorchNetworkTrainer):
         def __init__(self,
-                     network: AbstractPyTorchJITNetwork,
+                     network: AbstractTorchScriptNetwork,
                      save_path: str,
                      key_mapping,
                      losses=None,
@@ -712,8 +712,8 @@ if "TORCH" in get_backends():
             if file_name.endswith(".pt") or file_name.endswith(".pth"):
                 file_name = file_name.rsplit(".", 1)[0]
 
-            save_checkpoint_jit(file_name, self.module, self.optimizers,
-                                **kwargs)
+            save_checkpoint_torchscript(file_name, self.module, self.optimizers,
+                                        **kwargs)
 
         @staticmethod
         def load_state(file_name, **kwargs):
@@ -733,7 +733,7 @@ if "TORCH" in get_backends():
                 new state
 
             """
-            return load_checkpoint_jit(file_name, **kwargs)
+            return load_checkpoint_torchscript(file_name, **kwargs)
 
         def _update_state(self, new_state):
             """
@@ -751,16 +751,7 @@ if "TORCH" in get_backends():
 
             """
             if "model" in new_state:
-                self.module = new_state.pop("model")
-
-            if "optimizer" in new_state and new_state["optimizer"]:
-                optim_state = new_state.pop("optimizer")
-                for key in self.optimizers.keys():
-                    self.optimizers[key].load_state_dict(
-                        optim_state[key])
-
-            if "epoch" in new_state:
-                self.start_epoch = new_state.pop("epoch")
+                self.module = new_state.pop("model").to(self.input_device)
 
             return super()._update_state(new_state)
 
