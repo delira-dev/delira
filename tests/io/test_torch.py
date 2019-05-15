@@ -34,12 +34,12 @@ class IoTorchTest(unittest.TestCase):
 
     @unittest.skipIf("TORCH" not in get_backends(),
                      reason="No TORCH Backend Installed")
-    def test_jit_save(self):
+    def test_torchscript_save(self):
         from delira.io import jit_save_checkpoint, jit_load_checkpoint
-        from delira.models import AbstractPyTorchJITNetwork
+        from delira.models import AbstractTorchScriptNetwork
         import torch
 
-        class DummyNetwork(AbstractPyTorchJITNetwork):
+        class DummyNetwork(AbstractTorchScriptNetwork):
 
             def __init__(self):
                 super().__init__()

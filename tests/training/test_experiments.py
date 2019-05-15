@@ -28,7 +28,7 @@ class DummyDataset(AbstractDataset):
 class ExperimentTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        test_cases_torch, test_cases_jit, test_cases_tf = [], [], []
+        test_cases_torch, test_cases_torchscript, test_cases_tf = [], [], []
         from sklearn.metrics import mean_absolute_error
 
         # setup torch testcases
@@ -86,10 +86,10 @@ class ExperimentTest(unittest.TestCase):
 
             self._test_cases_torch = test_cases_torch
 
-            # setup JIT testcases
-            from delira.models import AbstractPyTorchJITNetwork
+            # setup TorchScript testcases
+            from delira.models import AbstractTorchScriptNetwork
 
-            class DummyNetworkJIT(AbstractPyTorchJITNetwork):
+            class DummyNetworkTorchScript(AbstractTorchScriptNetwork):
                 __constants__ = ["module"]
 
                 def __init__(self):
@@ -111,12 +111,12 @@ class ExperimentTest(unittest.TestCase):
                 @staticmethod
                 def _build_model(in_channels, n_outputs):
                     return torch.nn.Sequential(
-                            torch.nn.Linear(in_channels, 64),
-                            torch.nn.ReLU(),
-                            torch.nn.Linear(64, n_outputs)
-                        )
+                        torch.nn.Linear(in_channels, 64),
+                        torch.nn.ReLU(),
+                        torch.nn.Linear(64, n_outputs)
+                    )
 
-            test_cases_jit.append((
+            test_cases_torchscript.append((
                 Parameters(fixed_params={
                     "model": {},
                     "training": {
@@ -134,9 +134,9 @@ class ExperimentTest(unittest.TestCase):
                 50,
                 "mae",
                 "lowest",
-                DummyNetworkJIT))
+                DummyNetworkTorchScript))
 
-            self._test_cases_jit = test_cases_jit
+            self._test_cases_torchscript = test_cases_torchscript
 
         # setup tf tescases
         if "TF" in get_backends():
@@ -314,20 +314,20 @@ class ExperimentTest(unittest.TestCase):
 
     @unittest.skipIf("TORCH" not in get_backends(),
                      reason="No TORCH Backend installed")
-    def test_experiment_run_jit(self):
+    def test_experiment_run_torchscript(self):
 
-        from delira.training import PyTorchJITExperiment
+        from delira.training import TorchScriptExperiment
         from delira.data_loading import BaseDataManager
 
-        for case in self._test_cases_jit:
+        for case in self._test_cases_torchscript:
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
                  val_score_key, val_score_mode, network_cls) = case
 
-                exp = PyTorchJITExperiment(params, network_cls,
-                                           key_mapping={"x": "data"},
-                                           val_score_key=val_score_key,
-                                           val_score_mode=val_score_mode)
+                exp = TorchScriptExperiment(params, network_cls,
+                                            key_mapping={"x": "data"},
+                                            val_score_key=val_score_key,
+                                            val_score_mode=val_score_mode)
 
                 dset_train = DummyDataset(dataset_length_train)
                 dset_test = DummyDataset(dataset_length_test)
@@ -339,19 +339,19 @@ class ExperimentTest(unittest.TestCase):
 
     @unittest.skipIf("TORCH" not in get_backends(),
                      reason="No TORCH Backend installed")
-    def test_experiment_test_jit(self):
-        from delira.training import PyTorchJITExperiment
+    def test_experiment_test_torchscript(self):
+        from delira.training import TorchScriptExperiment
         from delira.data_loading import BaseDataManager
 
-        for case in self._test_cases_jit:
+        for case in self._test_cases_torchscript:
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
                  val_score_key, val_score_mode, network_cls) = case
 
-                exp = PyTorchJITExperiment(params, network_cls,
-                                           key_mapping={"x": "data"},
-                                           val_score_key=val_score_key,
-                                           val_score_mode=val_score_mode)
+                exp = TorchScriptExperiment(params, network_cls,
+                                            key_mapping={"x": "data"},
+                                            val_score_key=val_score_key,
+                                            val_score_mode=val_score_mode)
 
                 model = network_cls()
 
