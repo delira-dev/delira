@@ -28,20 +28,35 @@ def find_version(file):
                               re.M)
     if version_match:
         return version_match.group(1)
+    
+def unify_requirements(base_requirements: list, *additional_requirement_lists):
+    for reqs in additional_requirement_lists:
+        for req in reqs:
+            if req not in base_requirements:
+                base_requirements.append(req)
+                
+    return base_requirements
+
+def parse_all_requirements(backend_requirement_dict: dict):
+    backend_requirements = {"full": []}
+    for backend_name, requirement_file in backend_requirement_dict.items():
+        _reqs = resolve_requirements(
+            os.path.join(os.path.dirname(__file__), requirement_file))
+        backend_requirements[backend_name] = _reqs
+        
+        backend_requirements["full"] = unify_requirements[backend_requirements["full"], _reqs)
+    
+    return backend_requirements
+                                                          
+
+requirement_files = {"base": "requirements.txt",
+                     "torch": "requirements_extra_torch.txt",
+                     "torchscript": "requirements_extra.txt"
+                     "tf": "requirements_extra_tf.txt"
+                    }
 
 
-requirements = resolve_requirements(os.path.join(os.path.dirname(__file__),
-                                                 'requirements.txt'))
-
-requirements_extra_full = []
-
-requirements_extra_torch = resolve_requirements(os.path.join(
-    os.path.dirname(__file__), 'requirements_extra_torch.txt'))
-requirements_extra_full += requirements_extra_torch
-
-requirements_extra_tf = resolve_requirements(os.path.join(
-    os.path.dirname(__file__), 'requirements_extra_tf.txt'))
-requirements_extra_full += requirements_extra_tf
+requirement_dict = parse_all_requirements(requirement_files)
 
 readme = read_file(os.path.join(os.path.dirname(__file__), "README.md"))
 license = read_file(os.path.join(os.path.dirname(__file__), "LICENSE"))
@@ -59,12 +74,8 @@ setup(
     maintainer="Justus Schock",
     maintainer_email="justus.schock@rwth-aachen.de",
     license=license,
-    install_requires=requirements,
+    install_requires=requirement_dict.pop("base"),
     tests_require=["coverage"],
     python_requires=">=3.5",
-    extras_require={
-        "full": requirements_extra_full,
-        "torch": requirements_extra_torch,
-        "tf": requirements_extra_tf
-    }
+    extras_require=requirement_dict
 )
