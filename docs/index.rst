@@ -23,6 +23,7 @@ delira - Deep Learning In RAdiology
    gan_pytorch
    segmentation_2d_pytorch
    segmentation_3d_pytorch
+   custom_backend
 
 
 .. toctree::
