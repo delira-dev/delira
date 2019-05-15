@@ -237,7 +237,7 @@ if "TORCH" in get_backends():
         have a look at https://pytorch.org/docs/stable/jit.html#torchscript
 
         Warnings
-        -----
+        --------
         In addition to the here defined API, a forward function must be
         implemented and decorated with ``@torch.jit.script_method``
 
