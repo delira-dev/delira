@@ -8,10 +8,10 @@ logger = logging.getLogger(__name__)
 if "TORCH" in get_backends():
 
     import torch
-    from ..models import AbstractPyTorchNetwork, AbstractPyTorchJITNetwork
+    from ..models import AbstractPyTorchNetwork, AbstractTorchScriptNetwork
 
-    def save_checkpoint(file: str, model=None, optimizers={},
-                        epoch=None, **kwargs):
+    def save_checkpoint_torch(file: str, model=None, optimizers={},
+                              epoch=None, **kwargs):
         """
         Save checkpoint
 
@@ -34,7 +34,7 @@ if "TORCH" in get_backends():
             _model = model
 
         if isinstance(_model, (AbstractPyTorchNetwork,
-                               AbstractPyTorchJITNetwork)):
+                               AbstractTorchScriptNetwork)):
             model_state = _model.state_dict()
         else:
             model_state = {}
@@ -57,7 +57,7 @@ if "TORCH" in get_backends():
 
         torch.save(state, file, **kwargs)
 
-    def load_checkpoint(file, **kwargs):
+    def load_checkpoint_torch(file, **kwargs):
         """
         Loads a saved model
 
@@ -84,8 +84,8 @@ if "TORCH" in get_backends():
         return checkpoint
 
 
-    def save_checkpoint_jit(file: str, model=None, optimizers={},
-                        epoch=None, **kwargs):
+    def save_checkpoint_torchscript(file: str, model=None, optimizers={},
+                                    epoch=None, **kwargs):
         """
         Save current checkpoint to two different files:
             1.) ``file + "_model.ptj"``: Will include the state of the model
@@ -112,13 +112,14 @@ if "TORCH" in get_backends():
         if any([file.endswith(ext) for ext in [".pth", ".pt", ".ptj"]]):
             file = file.rsplit(".", 1)[0]
 
-        if isinstance(model, AbstractPyTorchJITNetwork):
+        if isinstance(model, AbstractTorchScriptNetwork):
             torch.jit.save(model, file + "_model.ptj")
 
-        save_checkpoint(file + "_trainer_state.pt", None,
-                        optimizers=optimizers, epoch=epoch, **kwargs)
+        if optimizers or epoch is not None:
+            save_checkpoint_torch(file + "_trainer_state.pt", None,
+                                  optimizers=optimizers, epoch=epoch, **kwargs)
 
-    def load_checkpoint_jit(file: str, **kwargs):
+    def load_checkpoint_torchscript(file: str, **kwargs):
         """
         Loads a saved checkpoint consisting of 2 files
         (see :func:`save_checkpoint_jit` for details)
@@ -153,7 +154,7 @@ if "TORCH" in get_backends():
         # load trainer state (if possible)
         trainer_file = model_file.replace("_model.ptj", "_trainer_state.pt")
         if os.path.isfile(trainer_file):
-            trainer_state = load_checkpoint(trainer_file, **kwargs)
+            trainer_state = load_checkpoint_torch(trainer_file, **kwargs)
 
         else:
             trainer_state = {"optimizer": {},

@@ -703,8 +703,8 @@ if "TORCH" in get_backends():
     from .train_utils import create_optims_default_pytorch, \
         convert_torch_tensor_to_npy
     from .pytorch_trainer import PyTorchNetworkTrainer as PTNetworkTrainer, \
-        PyTorchJITNetworkTrainer as PTJITNetworkTrainer
-    from ..models import AbstractPyTorchNetwork, AbstractPyTorchJITNetwork
+       TorchScriptNetworkTrainer
+    from ..models import AbstractPyTorchNetwork, AbstractTorchScriptNetwork
     import torch
 
 
@@ -950,10 +950,10 @@ if "TORCH" in get_backends():
                                 verbose=verbose, prepare_batch=prepare_batch,
                                 convert_fn=convert_fn, **kwargs)
 
-    class PyTorchJITExperiment(PyTorchExperiment):
+    class TorchScriptExperiment(PyTorchExperiment):
         def __init__(self,
                      params: typing.Union[str, Parameters],
-                     model_cls: AbstractPyTorchJITNetwork,
+                     model_cls: AbstractTorchScriptNetwork,
                      n_epochs=None,
                      name=None,
                      save_path=None,
@@ -961,7 +961,7 @@ if "TORCH" in get_backends():
                      val_score_key=None,
                      optim_builder=create_optims_default_pytorch,
                      checkpoint_freq=1,
-                     trainer_cls=PTJITNetworkTrainer,
+                     trainer_cls=TorchScriptNetworkTrainer,
                      **kwargs):
             """
 

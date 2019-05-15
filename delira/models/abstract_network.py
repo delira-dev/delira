@@ -57,6 +57,7 @@ class AbstractNetwork(object):
         """
         Function which handles prediction from batch, logging, loss calculation
         and optimizer step
+
         Parameters
         ----------
         model : :class:`AbstractNetwork`
@@ -230,10 +231,10 @@ if "TORCH" in get_backends():
             return return_dict
 
 
-    class AbstractPyTorchJITNetwork(AbstractNetwork, torch.jit.ScriptModule):
+    class AbstractTorchScriptNetwork(AbstractNetwork, torch.jit.ScriptModule):
 
         """
-        Abstract Interface Class for PyTorch JIT Networks. For more information
+        Abstract Interface Class for TorchScript Networks. For more information
         have a look at https://pytorch.org/docs/stable/jit.html#torchscript
 
         Warnings
