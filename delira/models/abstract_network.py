@@ -2,6 +2,7 @@ import abc
 import logging
 
 from delira import get_backends
+import numpy as np
 
 file_logger = logging.getLogger(__name__)
 
@@ -337,3 +338,33 @@ if "TF" in get_backends():
                 return self._sess.run(self.outputs_train, feed_dict=_feed_dict)
             else:
                 return self._sess.run(self.outputs_eval, feed_dict=_feed_dict)
+
+
+    class AbstractTfEagerNetwork(AbstractNetwork, tf.keras.layers.Layer):
+        def __init__(self, data_format="channels_first", trainable=True,
+                     name=None, dtype=None,**kwargs):
+            tf.keras.layers.Layer(trainable=trainable, name=name, dtype=dtype)
+            AbstractNetwork.__init__(self, **kwargs)
+
+            self.data_format = data_format
+            self.device = "/cpu:0"
+
+        @abc.abstractmethod
+        def call(self, *args, **kwargs):
+            raise NotImplementedError
+
+        def __call__(self, *args, **kwargs):
+            return self.call(*args, **kwargs)
+
+        @staticmethod
+        def prepare_batch(batch: dict, input_device, output_device):
+            new_batch = {}
+            with tf.device(output_device):
+                new_batch["label"] = tf.constant(batch.pop("label").astype(
+                    np.float32))
+
+            with tf.device(input_device):
+                for k, v in batch.items():
+                    new_batch[k] = tf.constant(v.astype(np.float32))
+
+            return new_batch

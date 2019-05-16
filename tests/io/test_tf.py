@@ -55,5 +55,48 @@ class IoTfTest(unittest.TestCase):
             with self.subTest(var_1=var_1, var_3=var_3):
                 self.assertTrue(np.all(var_1 == var_3))
 
+    @unittest.skipIf("TF" not in get_backends(), "No TF Backend installed")
+    def test_load_save_eager(self):
+        from delira.io import tf_eager_load_checkpoint, tf_eager_save_checkpoint
+        from delira.models import AbstractTfEagerNetwork
+        import tensorflow as tf
+        import numpy as np
+
+        if not tf.executing_eagerly():
+            tf.enable_eager_execution()
+
+        class DummyNetwork(AbstractTfEagerNetwork):
+            def __init__(self, in_channels, n_outputs):
+                super().__init__(in_channels=in_channels, n_outputs=n_outputs)
+                self.net = self._build_model(in_channels, n_outputs)
+
+            @staticmethod
+            def _build_model(in_channels, n_outputs):
+                return tf.keras.models.Sequential(
+                    layers=[
+                        tf.keras.layers.Dense(
+                            64, input_shape=in_channels,
+                            bias_initializer='glorot_uniform'),
+                        tf.keras.layers.ReLU(),
+                        tf.keras.layers.Dense(n_outputs,
+                                              bias_initializer='glorot_uniform')
+                    ]
+                )
+
+            def call(self, inputs):
+                return self.net(inputs)
+
+        net = DummyNetwork((32,), 1)
+        input_tensor = np.random.rand(1, 32)
+        result_pre_save = net(input_tensor)
+        tf_eager_save_checkpoint("./model_eager", model=net)
+
+        loaded_state = tf_eager_load_checkpoint("./model_eager", model=net)
+        loaded_net = loaded_state["model"]
+
+        result_post_save = loaded_net(input_tensor)
+
+        self.assertTrue(np.array_equal(result_post_save, result_pre_save))
+
     if __name__ == '__main__':
         unittest.main()
