@@ -287,6 +287,7 @@ class ExperimentTest(unittest.TestCase):
                     DummyEagerNetwork)
                 )
 
+
         self._test_cases = test_cases
 
     @unittest.skipIf("TORCH" not in get_backends(),
@@ -573,6 +574,7 @@ class ExperimentTest(unittest.TestCase):
 
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF Backend installed")
+
     def test_experiment_run_tf_eager(self):
 
         from delira.training import TfEagerExperiment
@@ -600,16 +602,16 @@ class ExperimentTest(unittest.TestCase):
         from delira.training import TfEagerExperiment
         from delira.data_loading import BaseDataManager
         import tensorflow as tf
-        if not tf.executing_eagerly():
-            tf.enable_eager_execution()
+        switch_tf_execution_mode("eager")
 
         for case in self._test_cases["tf_eager"]:
+
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
                  network_cls) = case
 
                 exp = TfEagerExperiment(params, network_cls,
-                                        key_mapping={"x": "data"},
+                                        key_mapping={"x": "data"}
                                         )
 
                 model = network_cls()

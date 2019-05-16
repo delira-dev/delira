@@ -3,14 +3,16 @@ import os
 
 import numpy as np
 from batchgenerators.dataloading import MultiThreadedAugmenter
-
+import tensorflow as tf
 from .callbacks import AbstractCallback
 from functools import partial
 from .base_trainer import BaseNetworkTrainer
 from .train_utils import create_optims_default_tf as create_optims_default
 from .train_utils import initialize_uninitialized
 from .train_utils import convert_tf_tensor_to_npy
+
 from .train_utils import switch_tf_execution_mode
+
 from ..io import tf_load_checkpoint, tf_save_checkpoint, \
     tf_eager_load_checkpoint, tf_eager_save_checkpoint
 from ..models import AbstractTfNetwork, AbstractTfEagerNetwork
