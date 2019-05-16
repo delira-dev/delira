@@ -212,4 +212,9 @@ if "TF" in get_backends():
             all given keyword arguments (converted if necessary)
 
         """
+        args = [_arg.numpy() for _arg in args
+                if isinstance(_arg, tf.Tensor)]
+        for k, v in kwargs.items():
+            if isinstance(v, tf.Tensor):
+                kwargs[k] = v.numpy()
         return convert_batch_to_numpy_identity(*args, **kwargs)

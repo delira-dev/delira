@@ -11,3 +11,6 @@ if "TORCH" in get_backends():
 if "TF" in get_backends():
     from .tf import save_checkpoint as tf_save_checkpoint
     from .tf import load_checkpoint as tf_load_checkpoint
+    from .tf import save_checkpoint_eager as tf_eager_save_checkpoint
+    from .tf import load_checkpoint_eager as tf_eager_load_checkpoint
+
