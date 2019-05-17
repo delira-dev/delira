@@ -422,8 +422,8 @@ if "TF" in get_backends():
     class AbstractTfEagerNetwork(AbstractNetwork, tf.keras.layers.Layer):
         def __init__(self, data_format="channels_first", trainable=True,
                      name=None, dtype=None, **kwargs):
-
-            tf.keras.layers.Layer(trainable=trainable, name=name, dtype=dtype)
+            tf.keras.layers.Layer.__init__(self, trainable=trainable,
+                                           name=name, dtype=dtype)
             AbstractNetwork.__init__(self, **kwargs)
 
             self.data_format = data_format

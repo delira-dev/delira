@@ -230,7 +230,6 @@ if "TF" in get_backends():
             all given keyword arguments (converted if necessary)
 
         """
-
         eager = tf.executing_eagerly()
 
         # eager conversion
@@ -247,7 +246,6 @@ if "TF" in get_backends():
 
         for k, v in kwargs.items():
             kwargs[k] = convert_fn(v)
-
         return convert_batch_to_numpy_identity(*args, **kwargs)
 
 

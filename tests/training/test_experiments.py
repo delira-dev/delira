@@ -98,6 +98,7 @@ class ExperimentTest(unittest.TestCase):
             # setup TorchScript testcases
             from delira.models import AbstractTorchScriptNetwork
 
+
             class DummyNetworkTorchScript(AbstractTorchScriptNetwork):
                 __constants__ = ["module"]
 
@@ -286,7 +287,6 @@ class ExperimentTest(unittest.TestCase):
                     50,
                     DummyEagerNetwork)
                 )
-
 
         self._test_cases = test_cases
 
@@ -574,7 +574,6 @@ class ExperimentTest(unittest.TestCase):
 
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF Backend installed")
-
     def test_experiment_run_tf_eager(self):
 
         from delira.training import TfEagerExperiment
@@ -605,14 +604,13 @@ class ExperimentTest(unittest.TestCase):
         switch_tf_execution_mode("eager")
 
         for case in self._test_cases["tf_eager"]:
-
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
                  network_cls) = case
 
                 exp = TfEagerExperiment(params, network_cls,
                                         key_mapping={"x": "data"}
-                                        )
+                                       )
 
                 model = network_cls()
 
