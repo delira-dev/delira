@@ -213,6 +213,16 @@ class Predictor(object):
         new_predictions_all = {}
         for preds in predictions_all:
             for k, v in preds.items():
+
+                # check if v is scalar and convert to npy-array if necessary.
+                # Otherwise concatenation might fail
+                if np.isscalar(v):
+                    v = np.array(v)
+
+                # check for zero-sized arrays and reshape if necessary.
+                # Otherwise concatenation might fail
+                if v.shape == ():
+                    v = v.reshape(1)
                 if k in new_predictions_all:
                     new_predictions_all[k].append(v)
                 else:
