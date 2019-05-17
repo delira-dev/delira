@@ -59,8 +59,16 @@ def save_checkpoint_eager(file, model: AbstractTfEagerNetwork = None,
                           optimizer: typing.Dict[str, tf.train.Optimizer] = None,
                           epoch=None):
     variable_list = _create_varlist(model, optimizer)
-    saver = tf.contrib.eager.Saver(variable_list)
-    saver.save(file, global_step=epoch)
+
+    # can only save if variables exist, this is not the case if there was no
+    # input forwarded through the network (yet)
+    if variable_list:
+        saver = tf.contrib.eager.Saver(variable_list)
+        saver.save(file, global_step=epoch)
+        return
+    logging.warning("Could not save any variables because they don't exist "
+                    "(yet). If you haven't forwarded any input through your "
+                    "network yet, this is not an error, but expected behavior")
 
 
 def load_checkpoint_eager(file, model: AbstractTfEagerNetwork = None,
@@ -69,7 +77,13 @@ def load_checkpoint_eager(file, model: AbstractTfEagerNetwork = None,
 
     variable_list = _create_varlist(model, optimizer)
 
-    saver = tf.contrib.eager.Saver(variable_list)
-    saver.restore(file)
+    if variable_list:
+        saver = tf.contrib.eager.Saver(variable_list)
+        saver.restore(file)
 
-    return {"model": model, "optimizer": optimizer}
+        return {"model": model, "optimizer": optimizer}
+
+    raise RuntimeError("No Variables found to restore, probably no variables "
+                       "exist, because they aren't yet created. Make sure, you "
+                       "have at least once forwarded an input through your "
+                       "model!")
