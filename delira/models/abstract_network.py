@@ -337,7 +337,7 @@ if "TF" in get_backends():
 
     class AbstractTfEagerNetwork(AbstractNetwork, tf.keras.layers.Layer):
         def __init__(self, data_format="channels_first", trainable=True,
-                     name=None, dtype=None,**kwargs):
+                     name=None, dtype=None, **kwargs):
             tf.keras.layers.Layer(trainable=trainable, name=name, dtype=dtype)
             AbstractNetwork.__init__(self, **kwargs)
 
@@ -355,11 +355,13 @@ if "TF" in get_backends():
         def prepare_batch(batch: dict, input_device, output_device):
             new_batch = {}
             with tf.device(output_device):
-                new_batch["label"] = tf.constant(batch.pop("label").astype(
+                new_batch["label"] = tf.convert_to_tensor(batch["label"].astype(
                     np.float32))
 
             with tf.device(input_device):
                 for k, v in batch.items():
-                    new_batch[k] = tf.constant(v.astype(np.float32))
+                    if k == "label":
+                        continue
+                    new_batch[k] = tf.convert_to_tensor(v.astype(np.float32))
 
             return new_batch
