@@ -10,6 +10,7 @@ from .base_trainer import BaseNetworkTrainer
 from .train_utils import create_optims_default_tf as create_optims_default
 from .train_utils import initialize_uninitialized
 from .train_utils import convert_tf_tensor_to_npy
+from .train_utils import switch_tf_execution_mode
 from ..io import tf_load_checkpoint, tf_save_checkpoint, \
     tf_eager_load_checkpoint, tf_eager_save_checkpoint
 from ..models import AbstractTfNetwork, AbstractTfEagerNetwork
@@ -116,6 +117,8 @@ class TfNetworkTrainer(BaseNetworkTrainer):
             Additional keyword arguments
 
         """
+        # switch to graph execution
+        switch_tf_execution_mode("graph")
 
         super().__init__(
             network, save_path, losses, optimizer_cls, optimizer_params,
@@ -329,9 +332,6 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
                  metric_keys=None,
                  convert_batch_to_npy_fn=convert_tf_tensor_to_npy,
                  val_freq=1,
-                 eager_execution_kwargs={"config": None,
-                                         "device_policy": None,
-                                         "execution_mode": None},
                  **kwargs):
         """
 
@@ -394,49 +394,44 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
             model (a value of 1 denotes validating every epoch,
             a value of 2 denotes validating every second epoch etc.);
             defaults to 1
-        eager_execution_kwargs : dict
-            keyword arguments to initialize eager execution if not done already;
-            defaults to: {"config": None,
-                          "device_policy": None,
-                          "execution_mode": None}
         **kwargs :
             Additional keyword arguments
 
         """
 
-        if not tf.executing_eagerly():
-            tf.enable_eager_execution(**eager_execution_kwargs)
+        # switch to eager execution
+        switch_tf_execution_mode("eager")
 
-            super().__init__(network=network,
-                             save_path=save_path,
-                             losses=losses,
-                             optimizer_cls=optimizer_cls,
-                             optimizer_params=optimizer_params,
-                             train_metrics=train_metrics,
-                             val_metrics=val_metrics,
-                             lr_scheduler_cls=lr_scheduler_cls,
-                             lr_scheduler_params=lr_scheduler_params,
-                             gpu_ids=gpu_ids,
-                             save_freq=save_freq,
-                             optim_fn=optim_fn,
-                             key_mapping=key_mapping,
-                             logging_type=logging_type,
-                             logging_kwargs=logging_kwargs,
-                             fold=fold,
-                             callbacks=callbacks,
-                             start_epoch=start_epoch,
-                             metric_keys=metric_keys,
-                             convert_batch_to_npy_fn=convert_batch_to_npy_fn,
-                             val_freq=val_freq,
-                             **kwargs
-                             )
+        super().__init__(network=network,
+                         save_path=save_path,
+                         losses=losses,
+                         optimizer_cls=optimizer_cls,
+                         optimizer_params=optimizer_params,
+                         train_metrics=train_metrics,
+                         val_metrics=val_metrics,
+                         lr_scheduler_cls=lr_scheduler_cls,
+                         lr_scheduler_params=lr_scheduler_params,
+                         gpu_ids=gpu_ids,
+                         save_freq=save_freq,
+                         optim_fn=optim_fn,
+                         key_mapping=key_mapping,
+                         logging_type=logging_type,
+                         logging_kwargs=logging_kwargs,
+                         fold=fold,
+                         callbacks=callbacks,
+                         start_epoch=start_epoch,
+                         metric_keys=metric_keys,
+                         convert_batch_to_npy_fn=convert_batch_to_npy_fn,
+                         val_freq=val_freq,
+                         **kwargs
+                         )
 
-            self._setup(network, optim_fn, optimizer_cls, optimizer_params,
-                        lr_scheduler_cls, lr_scheduler_params,
-                        key_mapping, convert_batch_to_npy_fn, gpu_ids)
+        self._setup(network, optim_fn, optimizer_cls, optimizer_params,
+                    lr_scheduler_cls, lr_scheduler_params,
+                    key_mapping, convert_batch_to_npy_fn, gpu_ids)
 
-            for key, val in kwargs.items():
-                setattr(self, key, val)
+        for key, val in kwargs.items():
+            setattr(self, key, val)
 
     def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
                lr_scheduler_cls, lr_scheduler_params, key_mapping,
