@@ -52,7 +52,7 @@ if "TORCH" in get_backends():
                      metric_keys=None,
                      convert_batch_to_npy_fn=convert_torch_tensor_to_npy,
                      mixed_precision=False,
-                     mixed_precision_kwargs={"opt_level": "o0",
+                     mixed_precision_kwargs={"opt_level": "o1",
                                              "cast_model_type": None,
                                              "patch_torch_functions": None,
                                              "master_weights": None,
