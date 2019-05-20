@@ -88,37 +88,50 @@ class TorchModelTest(unittest.TestCase):
         for case in test_cases:
             with self.subTest(case=case):
 
+                mixed_prec = False
+
                 model, input_shape, output_shape, loss_fn, optim_fn, \
                     max_range, half_precision = case
-
-                try:
-                    from apex import amp
-                    amp_handle = amp.init(half_precision)
-                    wrapper_fn = amp_handle.wrap_optimizer
-                except ImportError:
-                    wrapper_fn = DefaultOptimWrapperTorch
 
                 start_time = time.time()
 
                 # test backward if optimizer fn is not None
                 if optim_fn is not None:
-                    optim = {k: wrapper_fn(v, num_loss=len(loss_fn))
-                             for k, v in optim_fn(model,
-                                                  torch.optim.Adam).items()}
+                    optim = optim_fn(model, torch.optim.Adam)
 
                 else:
                     optim = {}
 
                 closure = model.closure
                 device = torch.device("cpu")
+
+                if torch.cuda.is_available():
+                    device = torch.device("cuda")
+                    # only enable mixed precision on cuda
+                    mixed_prec = True
+
                 model = model.to(device)
                 prepare_batch = model.prepare_batch
+
+                try:
+                    from apex import amp
+                    _optim_keys = list(optim.keys())
+                    _optims = [optim[k] for k in _optim_keys]
+
+                    model, _optims = amp.initialize(model, _optims,
+                                                    enabled=mixed_prec,
+                                                    opt_level="O1")
+
+                    for k, v in zip(_optim_keys, optim):
+                        optim[k] = v
+
+                except ImportError:
+                    amp = None
 
                 # classification label: target_shape specifies max label
                 if isinstance(output_shape, int):
                     label = np.asarray([np.random.randint(output_shape)
-                                        for i in range(
-                        10)])
+                                        for i in range(10)])
                 else:
                     label = np.random.rand(10, *output_shape) * max_range
 
@@ -144,10 +157,7 @@ class TorchModelTest(unittest.TestCase):
                 del closure
                 del prepare_batch
                 del model
-                try:
-                    del amp_handle
-                except NameError:
-                    pass
+                del amp
                 gc.collect()
 
 

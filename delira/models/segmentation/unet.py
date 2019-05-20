@@ -9,6 +9,8 @@ if "TORCH" in get_backends():
     from torch.nn import init
     import logging
     from ..abstract_network import AbstractPyTorchNetwork
+    # use loss scaling if installed, otherwise falls back to "normal" backward
+    from ..model_utils import scale_loss
 
     class UNet2dPyTorch(AbstractPyTorchNetwork):
         """
@@ -248,7 +250,8 @@ if "TORCH" in get_backends():
             if optimizers:
                 optimizers['default'].zero_grad()
                 # perform loss scaling via apex if half precision is enabled
-                with optimizers["default"].scale_loss(total_loss) as scaled_loss:
+                with scale_loss(total_loss,
+                                optimizers["default"]) as scaled_loss:
                     scaled_loss.backward()
                 optimizers['default'].step()
 
@@ -689,7 +692,8 @@ if "TORCH" in get_backends():
             if optimizers:
                 optimizers['default'].zero_grad()
                 # perform loss scaling via apex if half precision is enabled
-                with optimizers["default"].scale_loss(total_loss) as scaled_loss:
+                with scale_loss(total_loss,
+                                optimizers["default"]) as scaled_loss:
                     scaled_loss.backward()
                 optimizers['default'].step()
 
