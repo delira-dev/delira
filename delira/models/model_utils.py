@@ -14,13 +14,15 @@ def scale_loss(loss,
                optimizers,
                loss_id=0,
                model=None,
-               delay_unscale=False):
+               delay_unscale=False,
+               **kwargs):
     if amp is None:
         yield loss
 
     else:
         with amp.scale_loss(loss=loss, optimizers=optimizers,
                             loss_id=loss_id, model=model,
-                            delay_unscale=delay_unscale) as _loss:
+                            delay_unscale=delay_unscale, 
+                            **kwargs) as _loss:
             yield _loss
     return
