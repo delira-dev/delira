@@ -96,7 +96,7 @@ if "SKLEARN" in get_backends():
             """
 
             super().__init__(
-                estimator, save_path, {}, None, None,
+                estimator, save_path, {}, None, {},
                 train_metrics, val_metrics, None,
                 {}, [], save_freq, None, key_mapping,
                 logging_type, logging_kwargs, fold, callbacks, start_epoch,
@@ -215,7 +215,7 @@ if "SKLEARN" in get_backends():
         def train(self, num_epochs, datamgr_train, datamgr_valid=None,
                   val_score_key=None, val_score_mode='highest',
                   reduce_mode='mean', verbose=True, label_key="label"):
-            if self.module.train_iterative:
+            if self.module.iterative_training:
                 # estimate classes from validation data
                 if datamgr_valid is not None:
                     self._get_classes_if_necessary(datamgr_valid, verbose,
