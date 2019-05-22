@@ -17,4 +17,3 @@ if "TF" in get_backends():
 
 if "SKLEARN" in get_backends():
     from .abstract_network import SklearnEstimator
-
