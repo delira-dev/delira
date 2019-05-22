@@ -19,11 +19,11 @@ if "SKLEARN" in get_backends():
 
     class SklearnEstimatorTrainer(BaseNetworkTrainer):
         """
-        Train and Validate a Network
+        Train and Validate a ``sklearn`` estimator
 
         See Also
         --------
-        :class:`AbstractNetwork`
+        :class:`SkLearnEstimator`
 
         """
 
@@ -190,6 +190,21 @@ if "SKLEARN" in get_backends():
 
         def _get_classes_if_necessary(self, dmgr: BaseDataManager, verbose,
                                       label_key=None):
+            """
+            Checks if available classes have to be collected before starting
+            the training to dynamically build the estimator (not all batches
+            contain all classes) and collects them if necessary
+
+            Parameters
+            ----------
+            dmgr : :class:`BaseDataManager`
+                the datamanager to collect the classes from
+            verbose : bool
+                verbosity
+            label_key : str or None
+                the key corresponding to the target value inside the data dict
+
+            """
             if label_key is None or not hasattr(self.module, "classes"):
                 return
             dset = dmgr.dataset
@@ -202,19 +217,54 @@ if "SKLEARN" in get_backends():
                 iterable = enumerate(dset)
 
             unique_targets = []
+
+            # iterate over dataset
             for sample_idx, sample in iterable:
                 item = sample[label_key]
                 if item not in unique_targets:
+
+                    # convert item if necessary
                     if np.isscalar(item):
                         item = np.array([item])
                     unique_targets.append(item)
 
+            # sort and concatenate items and feed variable inside the module
             unique_targets = np.concatenate(list(sorted(unique_targets)))
             self.module.classes = unique_targets
 
         def train(self, num_epochs, datamgr_train, datamgr_valid=None,
                   val_score_key=None, val_score_mode='highest',
                   reduce_mode='mean', verbose=True, label_key="label"):
+            """
+            Defines a routine to train a specified number of epochs
+
+            Parameters
+            ----------
+            num_epochs : int
+                number of epochs to train
+            datamgr_train : DataManager
+                the datamanager holding the train data
+            datamgr_valid : DataManager
+                the datamanager holding the validation data (default: None)
+            val_score_key : str
+                the key specifying which metric to use for validation
+                (default: None)
+            val_score_mode : str
+                key specifying what kind of validation score is best
+            reduce_mode : str
+                'mean','sum','first_only'
+            verbose : bool
+                whether to show progress bars or not
+            label_key : str or None
+                key specifiying the value inside the batch dict to use for
+                class collection if necessary
+
+            Raises
+            ------
+            NotImplementedError
+                If not overwritten by subclass
+
+            """
             if self.module.iterative_training:
                 # estimate classes from validation data
                 if datamgr_valid is not None:
