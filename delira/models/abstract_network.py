@@ -155,13 +155,12 @@ if "SKLEARN" in get_backends():
                     "classes" in get_signature(self.partial_fit).parameters):
                 self.classes = None
 
-            if hasattr(self, "partial_fit"):
-                self.iterative_training = True
-            else:
-                self.iterative_training = False
-
         def __call__(self, *args, **kwargs):
             return {"pred": self.predict(*args, **kwargs)}
+
+        @property
+        def iterative_training(self):
+            return hasattr(self, "partial_fit")
 
         @staticmethod
         def prepare_batch(batch: dict, input_device, output_device):
