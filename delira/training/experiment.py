@@ -343,7 +343,7 @@ class BaseExperiment(TrixiExperiment):
     def test(self, network, test_data: BaseDataManager,
              metrics: dict, metric_keys=None,
              verbose=False, prepare_batch=lambda x: x,
-             convert_fn=lambda x: x, **kwargs):
+             convert_fn=lambda *x, **y: (x, y), **kwargs):
         """
         Setup and run testing on a given network
 
@@ -1351,7 +1351,7 @@ if "SKLEARN" in get_backends():
             params : :class:`Parameters`
                 the parameters containing the model and training kwargs
                 (ignored here, just passed for subclassing and unified API)
-            model : :class:`AbstractNetwork`
+            model : :class:`sklearn.base.BaseEstimator`
                 the model to test
             convert_batch_to_npy_fn : function
                 function to convert a batch of tensors to numpy
@@ -1368,8 +1368,13 @@ if "SKLEARN" in get_backends():
                 the created predictor
 
             """
-            if isinstance(model, BaseEstimator):
+            if not isinstance(model, SklearnEstimator):
                 model = SklearnEstimator(model)
+
+            if prepare_batch_fn is None:
+                prepare_batch_fn = partial(model.prepare_batch,
+                                           input_device="cpu",
+                                           output_device="cpu")
 
             return super()._setup_test(params, model, convert_batch_to_npy_fn,
                                        prepare_batch_fn, **kwargs)
