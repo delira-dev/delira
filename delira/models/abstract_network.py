@@ -134,6 +134,68 @@ class AbstractNetwork(object):
         """
         return self._init_kwargs
 
+
+if "SKLEARN" in get_backends():
+    from sklearn.base import BaseEstimator
+    from inspect import signature as get_signature
+
+    class SklearnEstimator(AbstractNetwork):
+        def __init__(self, module: BaseEstimator):
+            super().__init__()
+
+            self.module = module
+
+            for key in ["fit", "partial_fit", "predict"]:
+                if hasattr(self.module, key):
+                    setattr(self, key, getattr(self.module, key))
+
+            if (hasattr(self, "partial_fit") and
+                    "classes" in get_signature(self.partial_fit).parameters):
+                self.classes = None
+
+            if hasattr(self, "partial_fit"):
+                self.iterative_training = True
+            else:
+                self.iterative_training = False
+
+        def __call__(self, *args, **kwargs):
+            return {"pred": self.predict(*args, **kwargs)}
+
+        @staticmethod
+        def prepare_batch(batch: dict, input_device, output_device):
+            new_batch = {"X": batch["data"]}
+            if "label" in batch:
+                new_batch["y"] = batch["label"]
+
+            return new_batch
+
+        @staticmethod
+        def closure(model, data_dict: dict, optimizers: dict, losses={},
+                    metrics={}, fold=0, **kwargs):
+            if model.iterative_training:
+                fit_fn = model.partial_fit
+
+            else:
+                fit_fn = model.fit
+
+            if hasattr(model, "classes"):
+                # classes must be specified here, because not all classes
+                # must be present in each batch and some estimators are build
+                # dynamically
+                fit_fn(**data_dict, classes=model.classes)
+            else:
+                fit_fn(**data_dict)
+
+            preds = model(data_dict.pop("X"))
+
+            metric_vals = {}
+
+            for key, metric_fn in metrics.items():
+                metric_vals[key] = metric_fn(preds["pred"], **data_dict)
+
+            return metric_vals, {}, preds
+
+
 if "TORCH" in get_backends():
     import torch
 
