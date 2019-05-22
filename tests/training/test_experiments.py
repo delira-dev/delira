@@ -28,7 +28,7 @@ class DummyDataset(AbstractDataset):
 class ExperimentTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        test_cases_torch, test_cases_tf = [], []
+        test_cases_torch, test_cases_tf, test_cases_sklearn = [], [], []
         from sklearn.metrics import mean_absolute_error
 
         # setup torch testcases
@@ -145,6 +145,42 @@ class ExperimentTest(unittest.TestCase):
             )
 
         self._test_cases_tf = test_cases_tf
+
+        if "SKLEARN" in get_backends():
+            from sklearn.tree import DecisionTreeClassifier
+            from sklearn.neural_network import MLPClassifier
+
+            test_cases_sklearn.append(
+                (Parameters(fixed_params={
+                    "model": {},
+                    "training": {
+                        "num_epochs": 2,
+                        "val_metrics": {"mae": mean_absolute_error}
+                    }
+                }),
+                 500,
+                 50,
+                 "mae",
+                 "lowest",
+                 DecisionTreeClassifier
+                ))
+
+            test_cases_sklearn.append(
+                (Parameters(fixed_params={
+                    "model": {},
+                    "training": {
+                        "num_epochs": 2,
+                        "val_metrics": {"mae": mean_absolute_error}
+                    }
+                }),
+                 500,
+                 50,
+                 "mae",
+                 "lowest",
+                 MLPClassifier
+                ))
+
+            self._test_cases_sklearn = test_cases_sklearn
 
     @unittest.skipIf("TORCH" not in get_backends(),
                      reason="No TORCH Backend installed")
@@ -373,6 +409,57 @@ class ExperimentTest(unittest.TestCase):
                                     val_split=val_split,
                                     num_splits=2,
                                 )
+
+    @unittest.skipIf("SKLEARN" not in get_backends(),
+                     reason="No SKLEARN Backend installed")
+    def test_experiment_run_sklearn(self):
+
+        from delira.training import SkLearnExperiment
+        from delira.data_loading import BaseDataManager
+
+        for case in self._test_cases_sklearn:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 val_score_key, val_score_mode, network_cls) = case
+
+                exp = SkLearnExperiment(params, network_cls,
+                                        key_mapping={"X": "X"},
+                                        val_score_key=val_score_key,
+                                        val_score_mode=val_score_mode)
+
+                dset_train = DummyDataset(dataset_length_train)
+                dset_test = DummyDataset(dataset_length_test)
+
+                dmgr_train = BaseDataManager(dset_train, 16, 4, None)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                exp.run(dmgr_train, dmgr_test)
+
+    @unittest.skipIf("SKLEARN" not in get_backends(),
+                     reason="No SKLEARN Backend installed")
+    def test_experiment_test_sklearn(self):
+        from delira.training import SkLearnExperiment
+        from delira.data_loading import BaseDataManager
+
+        for case in self._test_cases_sklearn:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 val_score_key, val_score_mode, network_cls) = case
+
+                exp = SkLearnExperiment(params, network_cls,
+                                        key_mapping={"X": "data"},
+                                        val_score_key=val_score_key,
+                                        val_score_mode=val_score_mode)
+                model = network_cls()
+
+                # must fit on 2 samples to initialize coefficients
+                model.fit(np.random.rand(2, 32), np.array([[0], [1]]))
+
+                dset_test = DummyDataset(dataset_length_test)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                exp.test(model, dmgr_test,
+                         params.nested_get("val_metrics"))
 
 
 if __name__ == '__main__':
