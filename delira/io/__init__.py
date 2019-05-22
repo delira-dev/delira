@@ -7,3 +7,7 @@ if "TORCH" in get_backends():
 if "TF" in get_backends():
     from .tf import save_checkpoint as tf_save_checkpoint
     from .tf import load_checkpoint as tf_load_checkpoint
+
+if "SKLEARN" in get_backends():
+    from .sklearn import load_checkpoint as sklearn_load_checkpoint
+    from .sklearn import save_checkpoint as sklearn_save_checkpoint
