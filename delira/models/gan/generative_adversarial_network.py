@@ -6,8 +6,9 @@ from delira.utils.decorators import make_deprecated
 
 if "TORCH" in get_backends():
     import torch
-    from torchvision import models as t_models
 
+    # use loss scaling if installed, otherwise falls back to "normal" backward
+    from ..model_utils import scale_loss
     from delira.models.abstract_network import AbstractPyTorchNetwork
 
 
@@ -175,8 +176,8 @@ if "TORCH" in get_backends():
                     optimizers["discr"].zero_grad()
                     # perform loss scaling via apex if mixed precision is 
                     # enabled
-                    with optimizers["discr"].scale_loss(
-                            total_loss_discr) as scaled_loss:
+                    with scale_loss(total_loss_discr,
+                                    optimizers["discr"]) as scaled_loss:
                         scaled_loss.backward(retain_graph=True)
                     optimizers["discr"].step()
 
@@ -213,8 +214,8 @@ if "TORCH" in get_backends():
                     # actual backpropagation
                     optimizers["gen"].zero_grad()
                     # perform loss scaling via apex if half precision is enabled
-                    with optimizers["gen"].scale_loss(
-                            total_loss_gen) as scaled_loss:
+                    with scale_loss(total_loss_gen,
+                                    optimizers["gen"]) as scaled_loss:
                         scaled_loss.backward()
                     optimizers["gen"].step()
 
