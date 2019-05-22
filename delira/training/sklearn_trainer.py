@@ -205,6 +205,7 @@ if "SKLEARN" in get_backends():
                 the key corresponding to the target value inside the data dict
 
             """
+
             if label_key is None or not hasattr(self.module, "classes"):
                 return
             dset = dmgr.dataset
@@ -266,6 +267,7 @@ if "SKLEARN" in get_backends():
 
             """
             if self.module.iterative_training:
+
                 # estimate classes from validation data
                 if datamgr_valid is not None:
                     self._get_classes_if_necessary(datamgr_valid, verbose,

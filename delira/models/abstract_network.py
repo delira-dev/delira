@@ -142,7 +142,6 @@ if "SKLEARN" in get_backends():
     from inspect import signature as get_signature
 
     class SklearnEstimator(AbstractNetwork):
-<<<<<<< HEAD
         """
         Wrapper Class to wrap all ``sklearn`` estimators and provide delira
         compatibility
@@ -156,22 +155,17 @@ if "SKLEARN" in get_backends():
             module : :class:`sklearn.base.BaseEstimator`
                 the module to wrap
             """
-=======
-        def __init__(self, module: BaseEstimator):
->>>>>>> Add Wrapper for Sklearn estimators
+
             super().__init__()
 
             self.module = module
 
-<<<<<<< HEAD
             # forwards methods to self.module if necessary
-=======
->>>>>>> Add Wrapper for Sklearn estimators
+
             for key in ["fit", "partial_fit", "predict"]:
                 if hasattr(self.module, key):
                     setattr(self, key, getattr(self.module, key))
 
-<<<<<<< HEAD
             # if estimator is build dynamically based on input, classes have to
             # be passed at least at first time (we pass it every time), because
             # not every class is present in  every batch
@@ -238,22 +232,7 @@ if "SKLEARN" in get_backends():
                 device
 
             """
-=======
-            if (hasattr(self, "partial_fit") and
-                    "classes" in get_signature(self.partial_fit).parameters):
-                self.classes = None
 
-            if hasattr(self, "partial_fit"):
-                self.iterative_training = True
-            else:
-                self.iterative_training = False
-
-        def __call__(self, *args, **kwargs):
-            return {"pred": self.predict(*args, **kwargs)}
-
-        @staticmethod
-        def prepare_batch(batch: dict, input_device, output_device):
->>>>>>> Add Wrapper for Sklearn estimators
             new_batch = {"X": batch["data"]}
             if "label" in batch:
                 new_batch["y"] = batch["label"]
