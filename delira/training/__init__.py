@@ -13,3 +13,6 @@ if "TORCH" in get_backends():
 if "TF" in get_backends():
     from .experiment import TfExperiment
     from .tf_trainer import TfNetworkTrainer
+
+if "CHAINER" in get_backends():
+    from .chainer_trainer import ChainerNetworkTrainer
