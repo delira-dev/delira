@@ -418,6 +418,7 @@ if "TF" in get_backends():
             else:
                 return self._sess.run(self.outputs_eval, feed_dict=_feed_dict)
 
+
     class AbstractTfEagerNetwork(AbstractNetwork, tf.keras.layers.Layer):
         def __init__(self, data_format="channels_first", trainable=True,
                      name=None, dtype=None, **kwargs):
@@ -450,3 +451,98 @@ if "TF" in get_backends():
                     new_batch[k] = tf.convert_to_tensor(v.astype(np.float32))
 
             return new_batch
+
+if "CHAINER" in get_backends():
+    import chainer
+
+    class AbstractChainerNetwork(chainer.Chain, AbstractNetwork):
+        """
+        Abstract Class for Chainer Networks
+        """
+
+        def __init__(self, **kwargs):
+            """
+
+            Parameters
+            ----------
+            **kwargs :
+                keyword arguments of arbitrary number and type
+                (will be registered as ``init_kwargs``)
+
+            """
+            chainer.Chain.__init__(self)
+            AbstractNetwork.__init__(self, **kwargs)
+
+        @abc.abstractmethod
+        def forward(self, *args, **kwargs) -> dict:
+            """
+            Feeds Arguments through the network
+
+            Parameters
+            ----------
+            *args :
+                positional arguments of arbitrary number and type
+            **kwargs :
+                keyword arguments of arbitrary number and type
+
+            Returns
+            -------
+            dict
+                dictionary containing all computation results
+
+            """
+            raise NotImplementedError
+
+        def __call__(self, *args, **kwargs) -> dict:
+            """
+            Makes instances of this class callable.
+            Calls the ``forward`` method.
+
+            Parameters
+            ----------
+            *args :
+                positional arguments of arbitrary number and type
+            **kwargs :
+                keyword arguments of arbitrary number and type
+
+            Returns
+            -------
+            dict
+                dictionary containing all computation results
+
+            """
+            return chainer.Chain.__call__(*args, **kwargs)
+
+        @staticmethod
+        def prepare_batch(batch: dict, input_device, output_device):
+            """
+            Helper Function to prepare Network Inputs and Labels (convert them
+            to correct type and shape and push them to correct devices)
+
+            Parameters
+            ----------
+            batch : dict
+                dictionary containing all the data
+            input_device : chainer.backend.Device or string
+                device for network inputs
+            output_device : torch.device
+                device for network outputs
+
+            Returns
+            -------
+            dict
+                dictionary containing data in correct type and shape and on
+                correct device
+
+            """
+            new_batch = {k: chainer.as_variable(v) for k, v in batch.items()}
+
+            for k, v in new_batch.items():
+                if k == "data":
+                    device = input_device
+                else:
+                    device = output_device
+
+                # makes modification inplace!
+                v.to_device(device)
+
