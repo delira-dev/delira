@@ -145,18 +145,18 @@ if "CHAINER" in get_backends():
                 return list(map(type(inputs), zip(*map(_scatter_map,
                                                        inputs.items()))))
 
-            # try to convert inputs to chainer variable first and afterwards apply
-            # _scatter_map again
+            # try to convert inputs to chainer variable first and afterwards
+            # apply _scatter_map again
             try:
                 return _scatter_map(chainer.as_variable(inputs))
             except TypeError:
                 return [inputs for targets in target_devices]
 
         # After scatter_map is called, a scatter_map cell will exist. This cell
-        # has a reference to the actual function scatter_map, which has references
-        # to a closure that has a reference to the scatter_map cell (because the
-        # fn is recursive). To avoid this reference cycle, we set the function to
-        # None, clearing the cell
+        # has a reference to the actual function scatter_map, which has
+        # references to a closure that has a reference to the scatter_map cell
+        # (because the fn is recursive). To avoid this reference cycle, we set
+        # the function to None, clearing the cell
         try:
             return _scatter_map(inputs)
         finally:
@@ -176,7 +176,8 @@ if "CHAINER" in get_backends():
                 return None
             if isinstance(out, dict):
                 if not all((len(out) == len(d) for d in outputs)):
-                    raise ValueError('All dicts must have the same number of keys')
+                    raise ValueError('All dicts must have the same number '
+                                     'of keys')
                 return type(out)(((k, gather_map([d[k] for d in outputs]))
                                   for k in out))
             return type(out)(map(gather_map, zip(*outputs)))
@@ -347,33 +348,6 @@ if "CHAINER" in get_backends():
         def zerograds(self):
             for module in self.modules:
                 module.zerograds()
-
-        # def __getattr__(self, item):
-        #     """
-        #     Forward every call to attributes to root module's attributes,
-        #     if attribute is not present here.
-        #
-        #     Parameters
-        #     ----------
-        #     item : str
-        #         the attribute name
-        #
-        #     Returns
-        #     -------
-        #     Any
-        #         the returned attribute
-        #
-        #     Raises
-        #     ------
-        #     AttributeError
-        #         attribute not present here and not found in root-module
-        #
-        #     """
-        #     try:
-        #         return self.__getattribute__(item)
-        #
-        #     except AttributeError:
-        #         return getattr(self.modules[0], item)
 
     class ParallelOptimizerCumulateGradientsHook(object):
         """
