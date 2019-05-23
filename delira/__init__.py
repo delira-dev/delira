@@ -15,7 +15,11 @@ warnings.simplefilter('ignore', ImportWarning)
 # being the package import name and the second being the backend abbreviation.
 # E.g. TensorFlow's package is named 'tensorflow' but if the package is found,
 # it will be considered as 'tf' later on
-__POSSIBLE_BACKENDS = [("torch", "torch"), ("tensorflow", "tf")]
+__POSSIBLE_BACKENDS = [
+    ("torch", "torch"),
+    ("tensorflow", "tf"),
+    ("chainer", "chainer")]
+
 __BACKENDS = []
 
 
