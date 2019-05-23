@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 if "CHAINER" in get_backends():
     import chainer
-    from .train_utils import convert_chainer_variable_to_array
+    from .train_utils import convert_chainer_tensor_to_npy
     from .train_utils import create_optims_default_chainer as create_optims_default
     from ..io.chainer import load_checkpoint, save_checkpoint
     from ..models import AbstractChainerNetwork
@@ -46,7 +46,7 @@ if "CHAINER" in get_backends():
                      callbacks=[],
                      start_epoch=1,
                      metric_keys=None,
-                     convert_batch_to_npy_fn=convert_chainer_variable_to_array,
+                     convert_batch_to_npy_fn=convert_chainer_tensor_to_npy,
                      mixed_precision=False,
                      val_freq=1,
                      ** kwargs):
