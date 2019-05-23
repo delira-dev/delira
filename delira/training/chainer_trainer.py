@@ -10,7 +10,9 @@ logger = logging.getLogger(__name__)
 
 if "CHAINER" in get_backends():
     import chainer
+
     from .train_utils import convert_chainer_tensor_to_npy
+
     from .train_utils import create_optims_default_chainer as create_optims_default
     from ..io.chainer import load_checkpoint, save_checkpoint
     from ..models import AbstractChainerNetwork
@@ -320,8 +322,9 @@ if "CHAINER" in get_backends():
         def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
                           **kwargs):
             """
-            Defines behaviour at beginning of each epoch: Executes all callbacks's
-            `at_epoch_end` method and saves current state if necessary
+            Defines behaviour at beginning of each epoch: Executes all
+            callbacks's `at_epoch_end` method and saves current state if
+            necessary
 
             Parameters
             ----------
@@ -341,13 +344,15 @@ if "CHAINER" in get_backends():
             """
 
             for cb in self._callbacks:
-                self._update_state(cb.at_epoch_end(self, val_metrics=metrics_val,
+                self._update_state(cb.at_epoch_end(self,
+                                                   val_metrics=metrics_val,
                                                    val_score_key=val_score_key,
                                                    curr_epoch=epoch))
 
             if epoch % self.save_freq == 0:
                 self.save_state(os.path.join(self.save_path,
-                                             "checkpoint_epoch_%d.chain" % epoch),
+                                             "checkpoint_epoch_%d.chain"
+                                             % epoch),
                                 epoch)
 
             if is_best:
@@ -409,7 +414,8 @@ if "CHAINER" in get_backends():
 
         def save_state(self, file_name, epoch, **kwargs):
             """
-            saves the current state via :func:`delira.io.chainer.save_checkpoint`
+            saves the current state via
+            :func:`delira.io.chainer.save_checkpoint`
 
             Parameters
             ----------

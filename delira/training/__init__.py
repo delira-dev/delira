@@ -19,3 +19,6 @@ if "CHAINER" in get_backends():
     from .chainer_trainer import ChainerNetworkTrainer
     from .experiment import ChainerExperiment
 
+if "CHAINER" in get_backends():
+    from .chainer_trainer import ChainerNetworkTrainer
+
