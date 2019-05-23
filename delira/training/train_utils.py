@@ -214,6 +214,7 @@ if "TF" in get_backends():
         """
         return convert_batch_to_numpy_identity(*args, **kwargs)
 
+
 if "CHAINER" in get_backends():
     import chainer
     from ..models.chainer_parallel import DataParallelOptimizer
