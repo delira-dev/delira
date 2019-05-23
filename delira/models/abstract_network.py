@@ -463,6 +463,7 @@ if "CHAINER" in get_backends():
         __call__ = None
 
     class AbstractChainerNetwork(chainer.Chain, ChainerMixin):
+
         """
         Abstract Class for Chainer Networks
         """
