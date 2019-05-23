@@ -13,7 +13,8 @@ if "CHAINER" in get_backends():
 
     from .train_utils import convert_chainer_tensor_to_npy
 
-    from .train_utils import create_optims_default_chainer as create_optims_default
+    from .train_utils import create_optims_default_chainer as \
+        create_optims_default
     from ..io.chainer import load_checkpoint, save_checkpoint
     from ..models import AbstractChainerNetwork
     from ..models.chainer_parallel import DataParallel, DataParallelOptimizer
@@ -103,18 +104,18 @@ if "CHAINER" in get_backends():
             start_epoch : int
                 epoch to start training at
             metric_keys : dict
-                dict specifying which batch_dict entry to use for which metric as
-                target; default: None, which will result in key "label" for all
-                metrics
+                dict specifying which batch_dict entry to use for which metric
+                as target; default: None, which will result in key "label" for
+                all metrics
             convert_batch_to_npy_fn : type, optional
-                function converting a batch-tensor to numpy, per default this is
-                a function, which detaches the tensor, moves it to cpu and the
-                calls ``.array`` on it
+                function converting a batch-tensor to numpy, per default this
+                is a function, which detaches the tensor, moves it to cpu and
+                then calls ``.array`` on it
             mixed_precision : bool
                 whether to use mixed precision or not (False per default)
             val_freq : int
-                validation frequency specifying how often to validate the trained
-                model (a value of 1 denotes validating every epoch,
+                validation frequency specifying how often to validate the
+                trained model (a value of 1 denotes validating every epoch,
                 a value of 2 denotes validating every second epoch etc.);
                 defaults to 1
             **kwargs :
@@ -150,7 +151,8 @@ if "CHAINER" in get_backends():
             optim_fn : function
                 creates a dictionary containing all necessary optimizers
             optimizer_cls : subclass of torch.optim.Optimizer
-                optimizer class implementing the optimization algorithm of choice
+                optimizer class implementing the optimization algorithm of
+                choice
             optimizer_params : dict
             lr_scheduler_cls : Any
                 learning rate schedule class: must implement step() method
@@ -192,9 +194,10 @@ if "CHAINER" in get_backends():
                         int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
                         for x in files])
 
-                    latest_state_path = os.path.join(self.save_path,
-                                                     "checkpoint_epoch_%d.chain"
-                                                     % latest_epoch)
+                    latest_state_path = os.path.join(
+                        self.save_path,
+                        "checkpoint_epoch_%d.chain"
+                        % latest_epoch)
 
                     # if pth file does not exist, load pt file instead
                     if not os.path.isfile(latest_state_path):
@@ -226,7 +229,8 @@ if "CHAINER" in get_backends():
                             self.input_device = chainer.get_device(
                                 gpu_device_prefix + str(gpu_ids[0]))
 
-                            # Train on multiple GPUs and use GPU 0 as output device
+                            # Train on multiple GPUs and use GPU 0 as output
+                            # device
                             self.module = DataParallel(
                                 self.module.to_device("@numpy"),
                                 devices=[chainer.get_device(
