@@ -300,7 +300,7 @@ if "CHAINER" in get_backends():
 
         return convert_batch_to_numpy_identity(*args, **kwargs)
 
-    def create_optims_chainer_default(model, optim_cls, **optimizer_params):
+    def create_optims_default_chainer(model, optim_cls, **optimizer_params):
         """
         Default function to create a single optimizer for chainer
         (also supports Data-Parallel)
