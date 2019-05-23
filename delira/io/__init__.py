@@ -13,3 +13,7 @@ if "TF" in get_backends():
     from .tf import load_checkpoint as tf_load_checkpoint
     from .tf import save_checkpoint_eager as tf_eager_save_checkpoint
     from .tf import load_checkpoint_eager as tf_eager_load_checkpoint
+
+if "CHAINER" in get_backends():
+    from .chainer import save_checkpoint as chainer_save_checkpoint
+    from .chainer import load_checkpoint as chainer_load_checkpoint
