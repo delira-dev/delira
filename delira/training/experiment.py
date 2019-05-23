@@ -1412,6 +1412,7 @@ if "TF" in get_backends():
             return BaseExperiment.setup(self, params=params, training=training,
                                         **kwargs)
 
+
 if "CHAINER" in get_backends():
     from ..models import AbstractChainerNetwork
     from .train_utils import create_optims_default_chainer, \
@@ -1517,7 +1518,7 @@ if "CHAINER" in get_backends():
             convert_fn : function
                 function to convert a batch of tensors to numpy
                 if not specified defaults to
-                :func:`convert_torch_tensor_to_npy`
+                :func:`convert_chainer_tensor_to_npy`
             **kwargs :
                 additional keyword arguments
 
