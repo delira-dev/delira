@@ -337,6 +337,32 @@ if "CHAINER" in get_backends():
             """
             return _gather(predictions, target_device, dim)
 
+        def __getattr__(self, item):
+            """
+            Forward every call to attributes to root module's attributes,
+            if attribute is not present here.
+
+            Parameters
+            ----------
+            item : str
+                the attribute name
+
+            Returns
+            -------
+            Any
+                the returned attribute
+
+            Raises
+            ------
+            AttributeError
+                attribute not present here and not found in root-module
+
+            """
+            if hasattr(self, item):
+                return super().__getattr__(item)
+
+            return self.modules[0].__getattr__(item)
+
     class ParallelOptimizerCumulateGradientsHook(object):
         """
         A hook which sums up all replication's gradients in a
