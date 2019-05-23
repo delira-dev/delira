@@ -248,6 +248,7 @@ if "TF" in get_backends():
             kwargs[k] = convert_fn(v)
         return convert_batch_to_numpy_identity(*args, **kwargs)
 
+
     from tensorflow.python.eager.context import context, EAGER_MODE, GRAPH_MODE
 
     # hacky switch function
@@ -266,6 +267,7 @@ if "TF" in get_backends():
         ctx = context()._eager_context
         ctx.mode = _mode
         ctx.is_eager = _mode == EAGER_MODE
+
 
 if "CHAINER" in get_backends():
     import chainer
