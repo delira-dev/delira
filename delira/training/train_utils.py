@@ -246,7 +246,8 @@ if "CHAINER" in get_backends():
 
         for k, v in kwargs.items():
             if isinstance(v, chainer.Variable):
-                kwargs[k] = v.to_cpu().array
+                v.to_cpu()
+                kwargs[k] = v.array
 
         return convert_batch_to_numpy_identity(*args, **kwargs)
 
