@@ -339,14 +339,6 @@ if "CHAINER" in get_backends():
 
             """
             return _gather(predictions, target_device, dim)
-        
-            def zerograds(self):
-                for module in self.modules:
-                    module.zerograds()
-
-            def cleargrads(self):
-                for module in self.modules:
-                    module.cleargrads()
 
         def cleargrads(self):
             for module in self.modules:
