@@ -29,6 +29,73 @@ class DummyDataset(AbstractDataset):
         return self.__getitem__(index)
 
 
+if "CHAINER" in get_backends():
+    from delira.models import AbstractChainerNetwork
+    import chainer
+
+    # define this outside, because it has to be pickleable, which it won't be, wehn defined inside a function
+    class DummyNetworkChainer(AbstractChainerNetwork):
+        def __init__(self):
+            super().__init__()
+
+            with self.init_scope():
+                self.dense_1 = chainer.links.Linear(32, 64)
+                self.dense_2 = chainer.links.Linear(64, 1)
+
+        def forward(self, x):
+            return {
+                "pred":
+                    self.dense_2(chainer.functions.relu(
+                        self.dense_1(x)))
+            }
+
+        @staticmethod
+        def closure(model, data_dict: dict, optimizers: dict, losses={},
+                    metrics={}, fold=0, **kwargs):
+            assert (optimizers and losses) or not optimizers, \
+                "Criterion dict cannot be emtpy, if optimizers are passed"
+
+            loss_vals = {}
+            metric_vals = {}
+            total_loss = 0
+
+            inputs = data_dict.pop("data")
+            preds = model(inputs)
+
+            if data_dict:
+
+                for key, crit_fn in losses.items():
+                    _loss_val = crit_fn(preds["pred"], *data_dict.values())
+                    loss_vals[key] = _loss_val.item()
+                    total_loss += _loss_val
+
+                with chainer.using_config("train", False):
+                    for key, metric_fn in metrics.items():
+                        metric_vals[key] = metric_fn(
+                            preds["pred"], *data_dict.values()).item()
+
+            if optimizers:
+                model.cleargrads()
+                total_loss.backward()
+                optimizers['default'].update()
+
+            else:
+
+                # add prefix "val" in validation mode
+                eval_loss_vals, eval_metrics_vals = {}, {}
+                for key in loss_vals.keys():
+                    eval_loss_vals["val_" + str(key)] = loss_vals[key]
+
+                for key in metric_vals:
+                    eval_metrics_vals["val_" + str(key)] = metric_vals[key]
+
+                loss_vals = eval_loss_vals
+                metric_vals = eval_metrics_vals
+
+            return metric_vals, loss_vals, {k: v.unchain()
+                                            for k, v in preds.items()}
+
+
 class ExperimentTest(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -36,11 +103,10 @@ class ExperimentTest(unittest.TestCase):
             "torch": [],
             "torchscript": [],
             "tf": [],
-            "tf_eager": []
-
+            "tf_eager": [],
+            "chainer": []
         }
 
-        test_cases_torch, test_cases_tf, test_cases_tf_eager = [], [], []
         from sklearn.metrics import mean_absolute_error
 
         # setup torch testcases
@@ -293,6 +359,30 @@ class ExperimentTest(unittest.TestCase):
                     50,
                     DummyEagerNetwork)
                 )
+
+        if "CHAINER" in get_backends():
+            import chainer
+
+            test_cases["chainer"].append(
+                (
+                    Parameters(fixed_params={
+                        "model": {},
+                        "training": {
+                            "losses": {
+                                "L1":
+                                    chainer.functions.mean_absolute_error},
+                            "optimizer_cls": chainer.optimizers.Adam,
+                            "optimizer_params": {},
+                            "num_epochs": 2,
+                            "val_metrics": {"mae": mean_absolute_error},
+                            "lr_sched_cls": None,
+                            "lr_sched_params": {}}
+                    }
+                    ),
+                    500,
+                    50,
+                    DummyNetworkChainer)
+            )
 
         self._test_cases = test_cases
 
@@ -634,6 +724,51 @@ class ExperimentTest(unittest.TestCase):
         if self._testMethodName.endswith(
                 "tf_eager") and "TF" in get_backends():
             switch_tf_execution_mode("graph")
+
+    @unittest.skipIf("CHAINER" not in get_backends(),
+                     reason="No CHAINER Backend installed")
+    def test_experiment_run_chainer(self):
+
+        from delira.training import ChainerExperiment
+        from delira.data_loading import BaseDataManager
+
+        for case in self._test_cases_chainer:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 network_cls) = case
+
+                exp = ChainerExperiment(params, network_cls,
+                                        key_mapping={"x": "data"})
+
+                dset_train = DummyDataset(dataset_length_train)
+                dset_test = DummyDataset(dataset_length_test)
+
+                dmgr_train = BaseDataManager(dset_train, 16, 4, None)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                exp.run(dmgr_train, dmgr_test)
+
+    @unittest.skipIf("CHAINER" not in get_backends(),
+                     reason="No CHAINER Backend installed")
+    def test_experiment_test_chainer(self):
+        from delira.training import ChainerExperiment
+        from delira.data_loading import BaseDataManager
+
+        for case in self._test_cases_chainer:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 network_cls) = case
+
+                exp = ChainerExperiment(params, network_cls,
+                                        key_mapping={"x": "data"},
+                                        )
+
+                model = network_cls()
+
+                dset_test = DummyDataset(dataset_length_test)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                exp.test(model, dmgr_test, params.nested_get("val_metrics"))
 
 
 if __name__ == '__main__':

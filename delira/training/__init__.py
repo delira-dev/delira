@@ -12,13 +12,10 @@ if "TORCH" in get_backends():
         TorchScriptNetworkTrainer
 
 if "TF" in get_backends():
-<<<<<<< HEAD
     from .experiment import TfExperiment, TfEagerExperiment
     from .tf_trainer import TfNetworkTrainer, TfEagerNetworkTrainer
-=======
-    from .experiment import TfExperiment
-    from .tf_trainer import TfNetworkTrainer
 
 if "CHAINER" in get_backends():
     from .chainer_trainer import ChainerNetworkTrainer
->>>>>>> Add Chainer trainer and forward all attribute calls to root module if necessary in DataParallel
+    from .experiment import ChainerExperiment
+

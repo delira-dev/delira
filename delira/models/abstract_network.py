@@ -454,8 +454,12 @@ if "TF" in get_backends():
 
 if "CHAINER" in get_backends():
     import chainer
+    import numpy as np
 
-    class AbstractChainerNetwork(chainer.Chain, AbstractNetwork):
+    class ChainerMixin(AbstractNetwork):
+        __call__ = None
+
+    class AbstractChainerNetwork(chainer.Chain, ChainerMixin):
         """
         Abstract Class for Chainer Networks
         """
@@ -511,7 +515,8 @@ if "CHAINER" in get_backends():
                 dictionary containing all computation results
 
             """
-            return chainer.Chain.__call__(*args, **kwargs)
+
+            return chainer.Chain.__call__(self, *args, **kwargs)
 
         @staticmethod
         def prepare_batch(batch: dict, input_device, output_device):
@@ -535,7 +540,8 @@ if "CHAINER" in get_backends():
                 correct device
 
             """
-            new_batch = {k: chainer.as_variable(v) for k, v in batch.items()}
+            new_batch = {k: chainer.as_variable(v.astype(np.float32))
+                         for k, v in batch.items()}
 
             for k, v in new_batch.items():
                 if k == "data":
@@ -546,3 +552,4 @@ if "CHAINER" in get_backends():
                 # makes modification inplace!
                 v.to_device(device)
 
+            return new_batch
