@@ -146,8 +146,11 @@ if "CHAINER" in get_backends():
                                                        inputs.items()))))
 
             # try to convert inputs to chainer variable first and afterwards apply
-            # __scatter_map again
-            return _scatter_map(chainer.as_variable(inputs))
+            # _scatter_map again
+            try:
+                return _scatter_map(chainer.as_variable(inputs))
+            except TypeError:
+                return [inputs for targets in target_devices]
 
         # After scatter_map is called, a scatter_map cell will exist. This cell
         # has a reference to the actual function scatter_map, which has references
@@ -250,7 +253,7 @@ if "CHAINER" in get_backends():
             predictions = []
             for _args, _kwargs, _module in zip(scattered_args, scattered_kwargs,
                                                self.modules):
-                predictions.append(_module(*_args, *_kwargs))
+                predictions.append(_module(*_args, **_kwargs))
 
             predictions = self._gather(predictions, self.dim,
                                        self._output_device)
@@ -345,31 +348,40 @@ if "CHAINER" in get_backends():
                 for module in self.modules:
                     module.cleargrads()
 
-        def __getattr__(self, item):
-            """
-            Forward every call to attributes to root module's attributes,
-            if attribute is not present here.
+        def cleargrads(self):
+            for module in self.modules:
+                module.cleargrads()
 
-            Parameters
-            ----------
-            item : str
-                the attribute name
+        def zerograds(self):
+            for module in self.modules:
+                module.zerograds()
 
-            Returns
-            -------
-            Any
-                the returned attribute
-
-            Raises
-            ------
-            AttributeError
-                attribute not present here and not found in root-module
-
-            """
-            if hasattr(self, item):
-                return super().__getattr__(item)
-
-            return self.modules[0].__getattr__(item)
+        # def __getattr__(self, item):
+        #     """
+        #     Forward every call to attributes to root module's attributes,
+        #     if attribute is not present here.
+        #
+        #     Parameters
+        #     ----------
+        #     item : str
+        #         the attribute name
+        #
+        #     Returns
+        #     -------
+        #     Any
+        #         the returned attribute
+        #
+        #     Raises
+        #     ------
+        #     AttributeError
+        #         attribute not present here and not found in root-module
+        #
+        #     """
+        #     try:
+        #         return self.__getattribute__(item)
+        #
+        #     except AttributeError:
+        #         return getattr(self.modules[0], item)
 
     class ParallelOptimizerCumulateGradientsHook(object):
         """
