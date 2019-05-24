@@ -386,6 +386,7 @@ class ExperimentTest(unittest.TestCase):
 
         self._test_cases = test_cases
 
+
     @unittest.skipIf("TORCH" not in get_backends(),
                      reason="No TORCH Backend installed")
     def test_experiment_run_torch(self):
@@ -697,7 +698,6 @@ class ExperimentTest(unittest.TestCase):
     def test_experiment_test_tf_eager(self):
         from delira.training import TfEagerExperiment
         from delira.data_loading import BaseDataManager
-        import tensorflow as tf
         switch_tf_execution_mode("eager")
 
         for case in self._test_cases["tf_eager"]:
@@ -720,10 +720,6 @@ class ExperimentTest(unittest.TestCase):
                                                output_device="/cpu:0",
                                                input_device="/cpu:0"))
 
-    def tearDown(self) -> None:
-        if self._testMethodName.endswith(
-                "tf_eager") and "TF" in get_backends():
-            switch_tf_execution_mode("graph")
 
     @unittest.skipIf("CHAINER" not in get_backends(),
                      reason="No CHAINER Backend installed")
@@ -769,6 +765,11 @@ class ExperimentTest(unittest.TestCase):
                 dmgr_test = BaseDataManager(dset_test, 16, 1, None)
 
                 exp.test(model, dmgr_test, params.nested_get("val_metrics"))
+
+    def tearDown(self) -> None:
+        if self._testMethodName.endswith(
+                "tf_eager") and "TF" in get_backends():
+            switch_tf_execution_mode("graph")
 
 
 if __name__ == '__main__':

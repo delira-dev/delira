@@ -147,6 +147,7 @@ if "CHAINER" in get_backends():
 
             # try to convert inputs to chainer variable first and afterwards
             # apply _scatter_map again
+
             try:
                 return _scatter_map(chainer.as_variable(inputs))
             except TypeError:
@@ -205,9 +206,9 @@ if "CHAINER" in get_backends():
                 the module to wrap (will be replicated on all devices)
             devices : list
                 a list containing the devices to use (either as strings or as
-                chainer.backend.Device). The first device will be used as output
-                device. Make sure, your labels are also on this device for loss
-                calculation!
+                chainer.backend.Device). The first device will be used as
+                output device. Make sure, your labels are also on this device
+                for loss calculation!
             batch_dim : int
                 the index of the batchdimension (usually 0, but can become
                 e.g. 1 in NLP tasks)
@@ -252,7 +253,8 @@ if "CHAINER" in get_backends():
                                                              self.dim)
 
             predictions = []
-            for _args, _kwargs, _module in zip(scattered_args, scattered_kwargs,
+            for _args, _kwargs, _module in zip(scattered_args,
+                                               scattered_kwargs,
                                                self.modules):
                 predictions.append(_module(*_args, **_kwargs))
 
