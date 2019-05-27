@@ -1,3 +1,4 @@
+[<img src="https://img.shields.io/badge/chat-slack%20channel-75BBC4.svg">](https://join.slack.com/t/deliradev/shared_invite/enQtNjI1MjA4MjQzMzQ2LTUzNTQ0MjQyNjJjNzgyODczY2Y1YjYxNjA3ZmQ0MGFhODhkYzQ4M2RjMGM1YWM3YWU5MDM0ZjdiNTQ4MmQ0ZDk)
 [![PyPI version](https://badge.fury.io/py/delira.svg)](https://badge.fury.io/py/delira) [![Build Status](https://travis-ci.com/justusschock/delira.svg?branch=master)](https://travis-ci.com/justusschock/delira) [![Documentation Status](https://readthedocs.org/projects/delira/badge/?version=master)](https://delira.readthedocs.io/en/master/?badge=master) [![codecov](https://codecov.io/gh/justusschock/delira/branch/master/graph/badge.svg)](https://codecov.io/gh/justusschock/delira)
 ![LICENSE](https://img.shields.io/github/license/justusschock/delira.svg)
 
@@ -38,7 +39,7 @@ Currently the only available backends are [PyTorch](https://pytorch.org) and [Te
 The easiest way to use `delira` is via docker (with the [nvidia-runtime](https://github.com/NVIDIA/nvidia-docker) for GPU-support) and using the [Dockerfile](docker/Dockerfile) or the [prebuild-images](https://cloud.docker.com/u/justusschock/repository/docker/justusschock/delira).
 
 ### Chat
-We have a [community chat on slack](https://deliradev.slack.com). If you need an invitation, just [drop a mail](mailto:justus.schock@rwth-aachen.de). It may take a day or two until we respond.
+We have a [community chat on slack](https://deliradev.slack.com). If you need an invitation, just follow [this link](https://join.slack.com/t/deliradev/shared_invite/enQtNjI1MjA4MjQzMzQ2LTUzNTQ0MjQyNjJjNzgyODczY2Y1YjYxNjA3ZmQ0MGFhODhkYzQ4M2RjMGM1YWM3YWU5MDM0ZjdiNTQ4MmQ0ZDk).
 
 ## Getting Started
 The best way to learn how to use is to have a look at the [tutorial notebook](notebooks/tutorial_delira.ipynb).
