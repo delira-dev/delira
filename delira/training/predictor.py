@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 from ..data_loading import BaseDataManager
 from .train_utils import convert_batch_to_numpy_identity
+from ..utils.config import LookupConfig
 
 logger = logging.getLogger(__name__)
 
@@ -195,8 +196,12 @@ class Predictor(object):
 
                 preds = self.predict(batch_dict)
 
+                preds_batch = LookupConfig()
+                preds_batch.update(batch_dict)
+                preds_batch.update(preds)
+
                 # calculate metrics for predicted batch
-                _metric_vals = self.calc_metrics({**batch_dict, **preds},
+                _metric_vals = self.calc_metrics(preds_batch,
                                                  metrics=metrics,
                                                  metric_keys=metric_keys)
 
@@ -267,13 +272,13 @@ class Predictor(object):
             super().__setattr__(key, value)
 
     @staticmethod
-    def calc_metrics(batch_dict, metrics={}, metric_keys=None):
+    def calc_metrics(batch: LookupConfig, metrics={}, metric_keys=None):
         """
         Compute metrics
 
         Parameters
         ----------
-        batch_dict : dict
+        batch: LookupConfig
             dictionary containing the whole batch 
             (including predictions)
         metrics: dict
@@ -292,5 +297,5 @@ class Predictor(object):
         if metric_keys is None:
             metric_keys = {k: ("pred", "label") for k in metrics.keys()}
 
-        return {key: metric_fn(*[batch_dict[k] for k in metric_keys[key]])
+        return {key: metric_fn(*[batch.nested_get(k) for k in metric_keys[key]])
                 for key, metric_fn in metrics.items()}
