@@ -215,27 +215,81 @@ class Predictor(object):
         batchgen._finish()
 
         # convert predictions from list of dicts to dict of lists
+
         new_predictions_all = {}
-        for preds in predictions_all:
-            for k, v in preds.items():
 
-                # check if v is scalar and convert to npy-array if necessary.
-                # Otherwise concatenation might fail
-                if np.isscalar(v):
-                    v = np.array(v)
+        def __convert_dict(old_dict, new_dict):
+            """
+            Function to recursively convert dicts
 
-                # check for zero-sized arrays and reshape if necessary.
-                # Otherwise concatenation might fail
-                if v.shape == ():
-                    v = v.reshape(1)
-                if k in new_predictions_all:
-                    new_predictions_all[k].append(v)
+            Parameters
+            ----------
+            old_dict : dict
+                the old nested dict
+            new_dict : dict
+                the new nested dict
+
+            Returns
+            -------
+            dict
+                the updated new nested dict
+            """
+            for k, v in old_dict.items():
+
+                # apply same function again on item if item is dict
+                if isinstance(v, dict):
+                    if k not in new_dict:
+                        new_dict[k] = {}
+
+                    new_dict[k] = __convert_dict(v, new_dict[k])
+
                 else:
-                    new_predictions_all[k] = [v]
+
+                    # check if v is scalar and convert to npy-array if necessary.
+                    # Otherwise concatenation might fail
+                    if np.isscalar(v):
+                        v = np.array(v)
+
+                    # check for zero-sized arrays and reshape if necessary.
+                    # Otherwise concatenation might fail
+                    if v.shape == ():
+                        v = v.reshape(1)
+                    if k in new_dict:
+                        new_predictions_all[k].append(v)
+                    else:
+                        new_predictions_all[k] = [v]
+
+            return new_dict
+
+        # recursively convert all nested dicts
+        for preds in predictions_all:
+            new_predictions_all = __convert_dict(preds, new_predictions_all)
+
+        def __concatenate_dict_items(dict_like: dict):
+            """
+            Function to recursively concatenate dict-items
+
+            Parameters
+            ----------
+            dict_like : dict
+                the (nested) dict, whoose items should be concatenated
+
+            Returns
+            -------
+
+            """
+            for k, v in dict_like.items():
+                if isinstance(v, dict):
+                    v = __concatenate_dict_items(v)
+                else:
+                    v = np.concatenate(v)
+
+                dict_like[k] = v
+
+                return dict_like
 
         # concatenate lists to single arrays
-        predictions_all = {k: np.concatenate(_outputs)
-                           for k, _outputs in new_predictions_all.items()}
+        predictions_all = __concatenate_dict_items(new_predictions_all)
 
         for k, v in metric_vals.items():
             metric_vals[k] = np.array(v)
