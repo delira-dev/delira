@@ -5,9 +5,6 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, \
 from sklearn.preprocessing import label_binarize
 
 import numpy as np
-from scipy.special import softmax
-
-from delira import get_backends
 
 
 class SklearnClassificationMetric(object):
