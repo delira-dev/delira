@@ -152,9 +152,6 @@ if "TORCH" in get_backends():
 if "TF" in get_backends():
     import tensorflow as tf
 
-    def tf_convert_to_numpy(*args):
-        return tuple(_x for _x in args)
-
     def create_optims_default_tf(optim_cls, **optim_params):
         """
         Function to create a optimizer dictionary

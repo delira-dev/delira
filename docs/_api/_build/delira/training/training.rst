@@ -10,4 +10,5 @@ training routines and wrapping experiments.
     Experiment <experiment>
     Callbacks <callbacks>
     Losses <losses>
+    Metrics <metrics>
     Utilities <utils>

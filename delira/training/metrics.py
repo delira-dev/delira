@@ -75,7 +75,7 @@ class SklearnBalancedAccuracyScore(SklearnClassificationMetric):
                          **kwargs)
 
 
-class SklearnF1ScoreScore(SklearnClassificationMetric):
+class SklearnF1Score(SklearnClassificationMetric):
     """
     F1 Score
     """

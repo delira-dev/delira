@@ -12,6 +12,11 @@ basic way to load data from nii-files:
 
 .. currentmodule:: delira.data_loading.nii
 
+:hidden:`load_nii`
+~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: load_nii
+
 :hidden:`BaseLabelGenerator`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -24,3 +29,4 @@ basic way to load data from nii-files:
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: load_sample_nii
+

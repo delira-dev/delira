@@ -69,14 +69,13 @@ def get_backends():
     """
     Return List of currently available backends
 
+    Returns
+    -------
+    list
+        list of strings containing the currently installed backends
+
     """
 
     if not __BACKENDS:
         _determine_backends()
     return __BACKENDS
-
-
-# if "TORCH" in get_backends():
-#     from .io import torch_load_checkpoint, torch_save_checkpoint
-#     from .models import AbstractPyTorchNetwork
-#     from .data_loading import TorchvisionClassificationDataset

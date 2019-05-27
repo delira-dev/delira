@@ -153,7 +153,7 @@ class AbstractDataset:
         """
         split dataset into train and test data
 
-        .. deprecated:: 0.3
+        .. deprecated-removed:: 0.3 0.4
             method will be removed in next major release
 
         Parameters
