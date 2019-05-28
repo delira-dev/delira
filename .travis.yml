@@ -5,39 +5,51 @@ services:
 
 matrix:
   include:
-    - python: 3.5
+    - name: "Unittests Python 3.5"
+      python: 3.5
       dist: xenial
-    - python: 3.6
+      env:
+      - TEST_TYPE="unittests"
+    - name: "Unittests Python 3.6"
+      python: 3.6
       dist: xenial
-    - python: 3.7
+      env:
+      - TEST_TYPE="unittests"
+    - name: "Unittests Python 3.7"
+      python: 3.7
       dist: xenial
-
+      env:
+      - TEST_TYPE="unittests"
+    - name: "Static Style Checks"
+      python: 3.7
+      dist: xenial
+      env:
+      - TEST_TYPE="style-check"
 
 # command to install dependencies
 before_install:
-  - pip install -U pip wheel
-  - pip install -r requirements.txt
-  - pip install -r requirements_extra_tf.txt
-  - pip uninstall -y tensorflow-gpu
-  - pip install tensorflow==1.13.1
-  - pip install -r requirements_extra_torch.txt
-  - pip install coverage
-  - pip install codecov
-  - pip install -r docs/requirements.txt
+  - if [[ "$TEST_TYPE" == "unittests" ]]; then
+      bash scripts/ci/install_before_tests.sh;
+    else
+      bash scripts/ci/install_before_style_check.sh;
+    fi
 
 install:
-  - pip install .
+  - pip install --no-deps .
   
 # command to run tests
 script:
-  - coverage run -m unittest
-  - codecov
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.7" ]]; then
-      cd ./docs;
-      make html;
-      make html;
-      make html;
-      touch _build/html/.nojekyll;
+  # run tests or stylechecks
+  - if [[ "$TEST_TYPE" == "unittests" ]]; then
+      bash scripts/ci/run_tests.sh;
+      
+      # build docs if python == 3.7
+      if [[ "$TRAVIS_PYTHON_VERSION" == "3.7" ]]; then
+        bash scripts/ci/build_docs.sh;
+      fi
+    
+    else
+      bash scripts/ci/install_before_style_check.sh;
     fi
     
 before_deploy:
@@ -50,7 +62,7 @@ deploy:
     keep-history: true
     on:
       branch: master
-      condition: "$TRAVIS_PYTHON_VERSION = 3.7"
+      condition: "$TRAVIS_PYTHON_VERSION = 3.7" && "$TEST_TYPE" = "unittests"
     local_dir: docs/_build/html
   - provider: pypi
     user: $PYPI_USERNAME
