@@ -3,7 +3,7 @@ import numpy as np
 import typing
 import inspect
 from batchgenerators.dataloading import SlimDataLoaderBase, \
-    MultiThreadedAugmenter
+    MultiThreadedAugmenter, SingleThreadedAugmenter
 from batchgenerators.transforms import AbstractTransform
 from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset, \
     ConcatDataset
@@ -11,8 +11,86 @@ from .data_loader import BaseDataLoader
 from .load_utils import default_load_fn_2d
 from .sampler import SequentialSampler, AbstractSampler
 from ..utils.decorators import make_deprecated
+from delira import get_current_debug_mode
 
 logger = logging.getLogger(__name__)
+
+
+class Augmenter(object):
+    def __init__(self, data_loader: SlimDataLoaderBase, transforms,
+                 n_process_augmentation=None, num_cached_per_queue = 2,
+                 seeds=None, **kwargs):
+        if get_current_debug_mode():
+            augmenter = SingleThreadedAugmenter(data_loader, transforms)
+
+        else:
+            assert isinstance(n_process_augmentation, int)
+            if seeds is None:
+                seeds = 1
+
+            if isinstance(seeds, int):
+                seeds = [seeds] * n_process_augmentation
+            augmenter = MultiThreadedAugmenter(
+                data_loader, transforms,
+                num_processes=n_process_augmentation,
+                num_cached_per_queue=num_cached_per_queue,
+                seeds=seeds,
+                **kwargs)
+
+        self._augmenter = augmenter
+
+    @property
+    def __iter__(self):
+        return self._augmenter.__iter__
+
+    @property
+    def __next__(self):
+        return self._augmenter.__next__
+
+    @staticmethod
+    def __identity_fn(*args, **kwargs):
+        return
+
+    def _fn_checker(self, function_name):
+        # same as:
+        # if hasattr(self._augmenter, function_name):
+        #     return getattr(self._augmenter, functionname)
+        # else:
+        #     return self.__identity_fn
+        # but one less getattr call, because hasattr also calls getattr and
+        # handles AttributeError
+        try:
+            return getattr(self._augmenter, function_name)
+        except AttributeError:
+            return self.__identity_fn
+
+    @property
+    def _start(self):
+        return self._fn_checker("_start")
+
+    def restart(self):
+        return self._fn_checker("restart")
+
+    @property
+    def _finish(self):
+        return self._fn_checker("_finish")
+
+    @property
+    def num_batches(self):
+        if isinstance(self._augmenter, MultiThreadedAugmenter):
+            return self._augmenter.generator.num_batches
+
+        return self._augmenter.data_loader.num_batches
+
+    @property
+    def num_processes(self):
+        if isinstance(self._augmenter, MultiThreadedAugmenter):
+            return self._augmenter.num_processes
+
+        return 1
+
+    def __del__(self):
+        del self._augmenter
 
 
 class BaseDataManager(object):
@@ -69,7 +147,7 @@ class BaseDataManager(object):
         :class:`AbstractDataset`
 
         """
-        
+
         # Instantiate Hidden variables for property access
         self._batch_size = None
         self._n_process_augmentation = None
@@ -113,9 +191,9 @@ class BaseDataManager(object):
                     "dataset_cls must be subclass of AbstractDataset"
 
             self.dataset = dataset_cls(data, load_fn, **kwargs)
-        
+
         assert inspect.isclass(sampler_cls) and issubclass(sampler_cls,
-                                                            AbstractSampler)
+                                                           AbstractSampler)
         self.sampler = sampler_cls.from_dataset(self.dataset, **sampler_kwargs)
 
     def get_batchgen(self, seed=1):
@@ -129,7 +207,7 @@ class BaseDataManager(object):
 
         Returns
         -------
-        MultiThreadedAugmenter
+        Augmenter
             Batchgenerator
 
         Raises
@@ -147,10 +225,10 @@ class BaseDataManager(object):
                                            sampler=self.sampler
                                            )
 
-        return MultiThreadedAugmenter(data_loader, self.transforms,
-                                      self.n_process_augmentation,
-                                      num_cached_per_queue=2,
-                                      seeds=self.n_process_augmentation*[seed])
+        return Augmenter(data_loader, self.transforms,
+                         self.n_process_augmentation,
+                         num_cached_per_queue=2,
+                         seeds=self.n_process_augmentation*[seed])
 
     def get_subset(self, indices):
         """
@@ -216,7 +294,7 @@ class BaseDataManager(object):
                                                     self.n_process_augmentation)
         # update data_loader_cls if specified
         self.data_loader_cls = new_state.pop("data_loader_cls",
-                                                self.data_loader_cls)
+                                             self.data_loader_cls)
         # update
         new_sampler = new_state.pop("sampler", None)
         if new_sampler is not None:
@@ -227,7 +305,7 @@ class BaseDataManager(object):
 
         if new_state:
             raise KeyError("Invalid Keys in new_state given: %s"
-                            % (','.join(map(str, new_state.keys()))))
+                           % (','.join(map(str, new_state.keys()))))
 
     @make_deprecated("BaseDataManager.get_subset")
     def train_test_split(self, *args, **kwargs):
@@ -294,7 +372,7 @@ class BaseDataManager(object):
         """
 
         self._batch_size = int(new_batch_size)
-       
+
     @property
     def n_process_augmentation(self):
         """
@@ -337,7 +415,7 @@ class BaseDataManager(object):
         """
 
         return self._transforms
-    
+
     @transforms.setter
     def transforms(self, new_transforms):
         """
@@ -383,7 +461,7 @@ class BaseDataManager(object):
         """
 
         assert inspect.isclass(new_loader_cls) and issubclass(new_loader_cls,
-                                                        SlimDataLoaderBase)
+                                                              SlimDataLoaderBase)
         self._data_loader_cls = new_loader_cls
 
     @property
@@ -448,7 +526,7 @@ class BaseDataManager(object):
         """
 
         if inspect.isclass(new_sampler) and issubclass(new_sampler,
-                                                        AbstractSampler):
+                                                       AbstractSampler):
             self._sampler = new_sampler.from_dataset(self.dataset)
 
         elif isinstance(new_sampler, AbstractSampler):
@@ -457,7 +535,7 @@ class BaseDataManager(object):
         else:
             raise ValueError("Given Sampler is neither a subclass of \
                             AbstractSampler, nor an instance of a sampler ")
-                            
+
     @property
     def n_samples(self):
         """

@@ -1,9 +1,5 @@
 __version__ = '0.3.3'
 
-# from .models import AbstractNetwork
-# from .logging import TrixiHandler, MultiStreamHandler
-# from .data_loading import BaseCacheDataset, BaseLazyDataset, BaseDataManager, \
-#     RandomSampler, SequentialSampler
 import json
 import os
 import warnings
@@ -17,6 +13,8 @@ warnings.simplefilter('ignore', ImportWarning)
 # it will be considered as 'tf' later on
 __POSSIBLE_BACKENDS = [("torch", "torch"), ("tensorflow", "tf")]
 __BACKENDS = []
+
+__DEBUG_MODE = False
 
 
 def _determine_backends():
@@ -79,3 +77,16 @@ def get_backends():
     if not __BACKENDS:
         _determine_backends()
     return __BACKENDS
+
+
+def get_current_debug_mode():
+    return __DEBUG_MODE
+
+
+def switch_debug_mode():
+    set_debug_mode(not get_current_debug_mode())
+
+
+def set_debug_mode(mode: bool):
+    global __DEBUG_MODE
+    __DEBUG_MODE = mode

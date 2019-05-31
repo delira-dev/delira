@@ -84,3 +84,20 @@ if "TORCH" in get_backends():
 
         def add_param_group(self, param_group):
             return self._optimizer.add_param_group(param_group)
+
+    from delira import get_current_debug_mode, set_debug_mode
+
+    class WithDebugMode(object):
+        def __init__(self, mode):
+            self._mode = mode
+
+        def _switch_to_new_mode(self):
+            prev_mode = get_current_debug_mode()
+            set_debug_mode(self._mode)
+            self._mode = prev_mode
+
+        def __enter__(self):
+            self._switch_to_new_mode()
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self._switch_to_new_mode()

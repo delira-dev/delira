@@ -160,7 +160,7 @@ class Predictor(object):
 
         predictions_all, metric_vals = [], {k: [] for k in metrics.keys()}
 
-        n_batches = batchgen.generator.num_batches * batchgen.num_processes
+        n_batches = batchgen.num_batches * batchgen.num_processes
 
         if verbose:
             iterable = tqdm(enumerate(batchgen), unit=' sample',

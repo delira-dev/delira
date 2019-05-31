@@ -3,7 +3,7 @@ import logging
 import pickle
 import typing
 
-from batchgenerators.dataloading import MultiThreadedAugmenter
+from ..data_loading.data_manager import Augmenter
 
 from .predictor import Predictor
 from .callbacks import AbstractCallback
@@ -280,14 +280,14 @@ class BaseNetworkTrainer(Predictor):
             self.save_state(os.path.join(self.save_path,
                                          "checkpoint_best"))
 
-    def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch,
+    def _train_single_epoch(self, batchgen: Augmenter, epoch,
                             verbose=False):
         """
         Trains the network a single epoch
 
         Parameters
         ----------
-        batchgen : MultiThreadedAugmenter
+        batchgen : :class:`Augmenter`
             Generator yielding the training batches
         epoch : int
             current epoch
@@ -296,7 +296,7 @@ class BaseNetworkTrainer(Predictor):
 
         metrics, losses = [], []
 
-        n_batches = batchgen.generator.num_batches * batchgen.num_processes
+        n_batches = batchgen.num_batches * batchgen.num_processes
         if verbose:
             iterable = tqdm(enumerate(batchgen), unit=' batch', total=n_batches,
                             desc='Epoch %d' % epoch)
