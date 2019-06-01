@@ -3,7 +3,7 @@ import numpy as np
 import typing
 import inspect
 from batchgenerators.dataloading import MultiThreadedAugmenter, \
-    SingleThreadedAugmenter
+    SingleThreadedAugmenter, SlimDataLoaderBase
 from batchgenerators.transforms import AbstractTransform
 from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset, \
     ConcatDataset
@@ -23,6 +23,7 @@ class Augmenter(object):
     inside the dataloading pipeline
 
     """
+
     def __init__(self, data_loader: BaseDataLoader, transforms,
                  n_process_augmentation=None, num_cached_per_queue=2,
                  seeds=None, **kwargs):
@@ -362,12 +363,12 @@ class BaseDataManager(object):
         return Augmenter(data_loader, self.transforms,
                          self.n_process_augmentation,
                          num_cached_per_queue=2,
-                         seeds=self.n_process_augmentation*[seed])
+                         seeds=self.n_process_augmentation * [seed])
 
     def get_subset(self, indices):
         """
         Returns a Subset of the current datamanager based on given indices
-        
+
         Parameters
         ----------
         indices : iterable
@@ -377,7 +378,7 @@ class BaseDataManager(object):
         -------
         :class:`BaseDataManager`
             manager containing the subset
-        
+
         """
 
         subset_kwargs = {
@@ -397,7 +398,7 @@ class BaseDataManager(object):
         """
         Updates internal state and therfore the behavior from dict.
         If a key is not specified, the old attribute value will be used
-        
+
         Parameters
         ----------
         new_state : dict
@@ -418,7 +419,7 @@ class BaseDataManager(object):
         ------
         KeyError
             Invalid keys are specified
-        
+
         """
 
         # update batch_size if specified
@@ -458,7 +459,7 @@ class BaseDataManager(object):
         **kwargs :
             keyword arguments for 
             ``sklearn.model_selection.train_test_split``
-        
+
         """
 
         trainset, valset = self.dataset.train_test_split(*args, **kwargs)
@@ -483,7 +484,7 @@ class BaseDataManager(object):
     def batch_size(self):
         """
         Property to access the batchsize
-        
+
         Returns
         -------
         int
@@ -496,13 +497,13 @@ class BaseDataManager(object):
     def batch_size(self, new_batch_size):
         """
         Setter for current batchsize, casts to int before setting the attribute
-        
+
         Parameters
         ----------
         new_batch_size : int, Any
             the new batchsize; should be int but can be of any type that can be 
             casted to an int
-        
+
         """
 
         self._batch_size = int(new_batch_size)
@@ -511,7 +512,7 @@ class BaseDataManager(object):
     def n_process_augmentation(self):
         """
         Property to access the number of augmentation processes
-        
+
         Returns
         -------
         int
@@ -525,13 +526,13 @@ class BaseDataManager(object):
         """
         Setter for number of augmentation processes, casts to int before setting
         the attribute
-        
+
         Parameters
         ----------
         new_process_number : int, Any
             new number of augmentation processes; should be int but can be of 
             any type that can be casted to an int
-        
+
         """
 
         self._n_process_augmentation = int(new_process_number)
@@ -540,7 +541,7 @@ class BaseDataManager(object):
     def transforms(self):
         """
         Property to access the current data transforms
-        
+
         Returns
         -------
         None, ``AbstractTransform``
@@ -555,12 +556,12 @@ class BaseDataManager(object):
         """
         Setter for data transforms, assert if transforms are of valid type 
         (either None or instance of ``AbstractTransform``)
-        
+
         Parameters
         ----------
         new_transforms : None, ``AbstractTransform``
             the new transforms
-        
+
         """
 
         assert new_transforms is None or isinstance(new_transforms,
@@ -572,7 +573,7 @@ class BaseDataManager(object):
     def data_loader_cls(self):
         """
         Property to access the current data loader class
-        
+
         Returns
         -------
         type
@@ -586,12 +587,12 @@ class BaseDataManager(object):
         """
         Setter for current data loader class, asserts if class is of valid type
         (must be a class and a subclass of ``SlimDataLoaderBase``)
-        
+
         Parameters
         ----------
         new_loader_cls : type
             the new data loader class
-        
+
         """
 
         assert inspect.isclass(new_loader_cls) and issubclass(new_loader_cls,
@@ -602,7 +603,7 @@ class BaseDataManager(object):
     def dataset(self):
         """
         Property to access the current dataset
-        
+
         Returns
         -------
         :class:`AbstractDataset`
@@ -616,11 +617,11 @@ class BaseDataManager(object):
     def dataset(self, new_dataset):
         """
         Setter for new dataset
-        
+
         Parameters
         ----------
         new_dataset : :class:`AbstractDataset`
-            
+
         """
 
         assert isinstance(new_dataset, AbstractDataset)
@@ -646,17 +647,17 @@ class BaseDataManager(object):
         Setter for current sampler.
         If a valid class instance is passed, the sampler is simply assigned, if 
         a valid class type is passed, the sampler is created from the dataset
-        
+
         Parameters
         ----------
         new_sampler : :class:`AbstractSampler`, type
             instance or class object of new sampler
-        
+
         Raises
         ------
         ValueError
             Neither a valid class instance nor a valid class type is given
-        
+
         """
 
         if inspect.isclass(new_sampler) and issubclass(new_sampler,
