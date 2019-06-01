@@ -82,7 +82,7 @@ class Predictor(object):
         self._convert_to_npy_fn = convert_batch_args_kwargs_to_npy_fn
         self._prepare_batch = prepare_batch_fn
 
-    def __call__(self, data: dict):
+    def __call__(self, data: dict, **kwargs):
         """
         Method to call the class.
         Returns the predictions corresponding to the given data 
@@ -98,11 +98,25 @@ class Predictor(object):
         dict
             predicted data
         """
-        return self.predict(data)
+        return self.predict(data, **kwargs)
 
-    def predict(self, data: dict):
+    def predict(self, data: dict, **kwargs):
+        """
+        Predict single batch
+        Returns the predictions corresponding to the given data 
+        obtained by the model
 
-        data = self._prepare_batch(data)
+        Parameters
+        ----------
+        data : dict
+            batch dictionary
+
+        Returns
+        -------
+        dict
+            predicted data
+        """
+        data = self._prepare_batch(data, **kwargs)
 
         mapped_data = {
             k: data[v] for k, v in self.key_mapping.items()}
@@ -119,7 +133,7 @@ class Predictor(object):
         )[1]
 
     def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
-                         metric_keys=None, verbose=False):
+                         metric_keys=None, verbose=False, **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator
 
@@ -137,6 +151,8 @@ class Predictor(object):
             the ``batch_dict`` items to use for metric calculation
         verbose : bool
             whether to show a progress-bar or not, default: False
+        kwargs :
+            keyword arguments passed to :func:`prepare_batch_fn`
 
         Returns
         -------
@@ -194,7 +210,7 @@ class Predictor(object):
                 for key, val_list in batch_dict.items():
                     batch_dict[key] = np.concatenate(val_list)
 
-                preds = self.predict(batch_dict)
+                preds = self.predict(batch_dict, **kwargs)
 
                 preds_batch = LookupConfig()
                 preds_batch.update(batch_dict)
