@@ -88,8 +88,8 @@ python test/run_test.py
 
 or run individual test files, like `python test/test_dummy.py`, for individual test suites.
 
-### Better local unit tests with pytest
-Testing is done with a `pytest` suite
+### Better local unit tests with unittest
+Testing is done with a `unittest` suite
 
 ## Writing documentation
 
