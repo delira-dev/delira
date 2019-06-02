@@ -39,7 +39,7 @@ Currently the only available backends are [PyTorch](https://pytorch.org) and [Te
 The easiest way to use `delira` is via docker (with the [nvidia-runtime](https://github.com/NVIDIA/nvidia-docker) for GPU-support) and using the [Dockerfile](docker/Dockerfile) or the [prebuild-images](https://cloud.docker.com/u/justusschock/repository/docker/justusschock/delira).
 
 ### Chat
-We have a [community chat on slack](https://deliradev.slack.com). If you need an invitation, just fill out [this link](https://join.slack.com/t/deliradev/shared_invite/enQtNjI1MjA4MjQzMzQ2LTUzNTQ0MjQyNjJjNzgyODczY2Y1YjYxNjA3ZmQ0MGFhODhkYzQ4M2RjMGM1YWM3YWU5MDM0ZjdiNTQ4MmQ0ZDk).
+We have a [community chat on slack](https://deliradev.slack.com). If you need an invitation, just follow [this link](https://join.slack.com/t/deliradev/shared_invite/enQtNjI1MjA4MjQzMzQ2LTUzNTQ0MjQyNjJjNzgyODczY2Y1YjYxNjA3ZmQ0MGFhODhkYzQ4M2RjMGM1YWM3YWU5MDM0ZjdiNTQ4MmQ0ZDk).
 
 ## Getting Started
 The best way to learn how to use is to have a look at the [tutorial notebook](notebooks/tutorial_delira.ipynb).
