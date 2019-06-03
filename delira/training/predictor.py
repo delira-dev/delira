@@ -46,6 +46,8 @@ class Predictor(object):
             function converting a batch-tensor to the framework specific 
             tensor-type and pushing it to correct device, default: identity 
             function
+        **kwargs :
+            additional keyword arguments
 
         """
 
@@ -119,7 +121,7 @@ class Predictor(object):
         )[1]
 
     def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
-                         metric_keys=None, verbose=False):
+                         metric_keys=None, verbose=False, as_generator=False):
         """
         Defines a routine to predict data obtained from a batchgenerator
 
@@ -137,13 +139,28 @@ class Predictor(object):
             the ``batch_dict`` items to use for metric calculation
         verbose : bool
             whether to show a progress-bar or not, default: False
+        as_generator : bool
+            if True: Returns
 
         Returns
         -------
         dict
-            a dictionary containing all predictions
+            a dictionary containing all predictions;
+            if ``as_generator`` is False
         dict
-            a dictionary containing all validation metrics (maybe empty)
+            a dictionary containing all validation metrics (maybe empty);
+            if ``as_generator`` is False
+        None
+            if ``as_generator`` is True
+
+        Yields
+        ------
+        dict
+            a dictionary containing all predictions of the current batch
+            if ``as_generator`` is True
+        dict
+            a dictionary containing all metrics of the current batch
+            if ``as_generator`` is True
 
         """
 
@@ -158,7 +175,8 @@ class Predictor(object):
 
         batchgen = datamgr.get_batchgen()
 
-        predictions_all, metric_vals = [], {k: [] for k in metrics.keys()}
+        if not as_generator:
+            predictions_all, metric_vals = [], {k: [] for k in metrics.keys()}
 
         n_batches = batchgen.generator.num_batches * batchgen.num_processes
 
@@ -196,6 +214,10 @@ class Predictor(object):
 
                 preds = self.predict(batch_dict)
 
+                # convert batchdict back to numpy (self.predict may convert it
+                # to backend-specific tensor type) - no-op if already numpy
+                batch_dict = self._convert_to_npy_fn(**batch_dict)[1]
+
                 preds_batch = LookupConfig()
                 preds_batch.update(batch_dict)
                 preds_batch.update(preds)
@@ -205,17 +227,24 @@ class Predictor(object):
                                                  metrics=metrics,
                                                  metric_keys=metric_keys)
 
-                for k, v in _metric_vals.items():
-                    metric_vals[k].append(v)
+                if as_generator:
+                    yield preds, _metric_vals
+                else:
+                    for k, v in _metric_vals.items():
+                        metric_vals[k].append(v)
 
-                predictions_all.append(preds)
+                    predictions_all.append(preds)
 
                 batch_list = []
 
         batchgen._finish()
+        datamgr.batch_size = orig_batch_size
+        datamgr.n_process_augmentation = orig_num_aug_processes
+
+        if as_generator:
+            return
 
         # convert predictions from list of dicts to dict of lists
-
         new_predictions_all = {}
 
         def __convert_dict(old_dict, new_dict):
@@ -293,9 +322,6 @@ class Predictor(object):
 
         for k, v in metric_vals.items():
             metric_vals[k] = np.array(v)
-
-        datamgr.batch_size = orig_batch_size
-        datamgr.n_process_augmentation = orig_num_aug_processes
 
         return predictions_all, metric_vals
 
