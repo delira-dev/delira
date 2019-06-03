@@ -3,7 +3,7 @@
 # based onhttps://gist.github.com/MichaelCurrie/802ce28c993ff2dd632c
 
 # find pep8 errors and ignore E402 module level import not at top of file due to logging
-num_errors_before=`find . -name \*.py -exec pep8 --ignore=E402 {} + | wc -l`;
+num_errors_before=`find . -name \*.py -exec pycodestyle --ignore=E402 {} + | wc -l`;
 echo $num_errors_before;
 
 cd "$TRAVIS_BUILD_DIR";
@@ -25,4 +25,4 @@ fi
 
 cd "$TRAVIS_BUILD_DIR";
 # List remaining errors, which have to be fixed manually
-find . -name \*.py -exec pep8 --ignore=E402 {} +;
+find . -name \*.py -exec pycodestyle --ignore=E402 {} +;
