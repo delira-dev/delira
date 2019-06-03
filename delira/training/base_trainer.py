@@ -163,7 +163,7 @@ class BaseNetworkTrainer(Predictor):
     def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                key_mapping, convert_batch_to_npy_fn, prepare_batch_fn):
 
-        super()._setup(network, key_mapping, convert_batch_to_npy_fn, 
+        super()._setup(network, key_mapping, convert_batch_to_npy_fn,
                        prepare_batch_fn)
 
         self.closure_fn = network.closure
@@ -427,10 +427,13 @@ class BaseNetworkTrainer(Predictor):
 
             # validate network
             if datamgr_valid is not None and (epoch % self.val_freq == 0):
-                val_predictions, val_metrics = self.predict_data_mgr(
+                # next must be called here because self.predict_data_mgr
+                # returns a generator (of size 1) and we want to get the first
+                # (and only) item
+                val_predictions, val_metrics = next(self.predict_data_mgr(
                     datamgr_valid, datamgr_valid.batch_size,
                     metrics=val_metric_fns, metric_keys=val_metric_keys,
-                    verbose=verbose)
+                    verbose=verbose, lazy_gen=False))
 
                 total_metrics.update(val_metrics)
 
@@ -458,7 +461,7 @@ class BaseNetworkTrainer(Predictor):
 
                 # set best_val_score to new_val_score if is_best
                 best_val_score = int(is_best) * new_val_score + \
-                    (1 - int(is_best)) * best_val_score
+                                 (1 - int(is_best)) * best_val_score
 
                 if is_best and verbose:
                     logging.info("New Best Value at Epoch %03d : %03.3f" %
@@ -532,12 +535,12 @@ class BaseNetworkTrainer(Predictor):
 
         """
         assertion_str = "Given callback is not valid; Must be instance of " \
-            "AbstractCallback or provide functions " \
-            "'at_epoch_begin' and 'at_epoch_end'"
+                        "AbstractCallback or provide functions " \
+                        "'at_epoch_begin' and 'at_epoch_end'"
 
         assert isinstance(callback, AbstractCallback) or \
-            (hasattr(callback, "at_epoch_begin")
-             and hasattr(callback, "at_epoch_end")), assertion_str
+               (hasattr(callback, "at_epoch_begin")
+                and hasattr(callback, "at_epoch_end")), assertion_str
 
         self._callbacks.append(callback)
 

@@ -138,7 +138,7 @@ class Predictor(object):
         )[1]
 
     def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
-                         metric_keys=None, verbose=False, as_generator=False,
+                         metric_keys=None, verbose=False, lazy_gen=False,
                          **kwargs):
 
         """
@@ -158,32 +158,27 @@ class Predictor(object):
             the ``batch_dict`` items to use for metric calculation
         verbose : bool
             whether to show a progress-bar or not, default: False
-        as_generator : bool
+        lazy_gen : bool
             if True: Yields results instead of returning them; should be
             specified if predicting on a low-memory device or when results
             should be saved immediately
         kwargs :
             keyword arguments passed to :func:`prepare_batch_fn`
 
-        Returns
-        -------
-        dict
-            a dictionary containing all predictions;
-            if ``as_generator`` is False
-        dict
-            a dictionary containing all validation metrics (maybe empty);
-            if ``as_generator`` is False
-        None
-            if ``as_generator`` is True
-
         Yields
         ------
         dict
             a dictionary containing all predictions of the current batch
-            if ``as_generator`` is True
+            if ``lazy_gen`` is True
         dict
             a dictionary containing all metrics of the current batch
-            if ``as_generator`` is True
+            if ``lazy_gen`` is True
+        dict
+            a dictionary containing all predictions;
+            if ``lazy_gen`` is False
+        dict
+            a dictionary containing all validation metrics (maybe empty);
+            if ``lazy_gen`` is False
 
         """
 
@@ -198,7 +193,7 @@ class Predictor(object):
 
         batchgen = datamgr.get_batchgen()
 
-        if not as_generator:
+        if not lazy_gen:
             predictions_all, metric_vals = [], {k: [] for k in metrics.keys()}
 
         n_batches = batchgen.generator.num_batches * batchgen.num_processes
@@ -250,7 +245,7 @@ class Predictor(object):
                                                  metrics=metrics,
                                                  metric_keys=metric_keys)
 
-                if as_generator:
+                if lazy_gen:
                     yield preds, _metric_vals
                 else:
                     for k, v in _metric_vals.items():
@@ -264,7 +259,8 @@ class Predictor(object):
         datamgr.batch_size = orig_batch_size
         datamgr.n_process_augmentation = orig_num_aug_processes
 
-        if as_generator:
+        if lazy_gen:
+            # triggers stopiteration
             return
 
         # convert predictions from list of dicts to dict of lists
@@ -346,7 +342,13 @@ class Predictor(object):
         for k, v in metric_vals.items():
             metric_vals[k] = np.array(v)
 
-        return predictions_all, metric_vals
+        # must yield these instead of returning them,
+        # because every function with a yield in it's body returns a
+        # generator object (even if the yield is never triggered)
+        yield predictions_all, metric_vals
+
+        # triggers stopiteration
+        return
 
     def __setattr__(self, key, value):
         """
