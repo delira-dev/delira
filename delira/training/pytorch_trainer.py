@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 if "TORCH" in get_backends():
     import torch
     from .train_utils import pytorch_batch_to_numpy
-    from .train_utils import create_optims_default_pytorch as create_optims_default
+    from .train_utils import create_optims_default_pytorch \
+        as create_optims_default
     from ..io.torch import load_checkpoint, save_checkpoint
 
     class PyTorchNetworkTrainer(AbstractNetworkTrainer):
@@ -60,7 +61,8 @@ if "TORCH" in get_backends():
             criterions : dict
                 dictionary containing the training criterions
             optimizer_cls : subclass of torch.optim.Optimizer
-                optimizer class implementing the optimization algorithm of choice
+                optimizer class implementing the optimization algorithm of
+                choice
             optimizer_params : dict
                 keyword arguments passed to optimizer during construction
             metrics : dict
@@ -96,7 +98,8 @@ if "TORCH" in get_backends():
             self.save_path = save_path
             if os.path.isdir(save_path):
                 logger.warning(
-                    "Save Path already exists. Saved Models may be overwritten")
+                    "Save Path already exists. Saved Models may be overwritten"
+                )
             else:
                 os.makedirs(save_path)
 
@@ -131,7 +134,8 @@ if "TORCH" in get_backends():
             optim_fn : function
                 creates a dictionary containing all necessary optimizers
             optimizer_cls : subclass of torch.optim.Optimizer
-                optimizer class implementing the optimization algorithm of choice
+                optimizer class implementing the optimization algorithm of
+                choice
             optimizer_params : dict
             lr_scheduler_cls : Any
                 learning rate schedule class: must implement step() method
@@ -188,14 +192,15 @@ if "TORCH" in get_backends():
                 # check all files in directory starting with "checkpoint" and not
                 # ending with "_best.pth"
                 files = [x for x in os.listdir(self.save_path)
-                         if os.path.isfile(os.path.join(self.save_path, x))
-                         and x.startswith("checkpoint")
-                         and not x.endswith("_best.pth")]
+                         if (os.path.isfile(os.path.join(self.save_path, x))
+                             and x.startswith("checkpoint")
+                             and not x.endswith("_best.pth"))]
 
                 # if list is not empty: load previous state
                 if files:
 
-                    latest_epoch = max([int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
+                    latest_epoch = max([int(x.rsplit("_",
+                                                     1)[-1].rsplit(".", 1)[0])
                                         for x in files])
 
                     latest_state_path = os.path.join(self.save_path,
@@ -264,8 +269,8 @@ if "TORCH" in get_backends():
             Returns
             -------
             :class:`AbstractPyTorchNetwork`
-                Best model (if `val_score_key` is not a valid key the model of the
-                last epoch will be returned)
+                Best model (if `val_score_key` is not a valid key the model of
+                the last epoch will be returned)
 
             """
 
@@ -301,20 +306,24 @@ if "TORCH" in get_backends():
                 if datamgr_valid:
                     # validate with batchsize 1 and 1 augmentation processs to
                     # avoid dropping of last elements
-                    orig_num_aug_processes = datamgr_valid.n_process_augmentation
+                    orig_num_aug_processes = \
+                        datamgr_valid.n_process_augmentation
                     orig_batch_size = datamgr_valid.batch_size
 
                     datamgr_valid.batch_size = 1
                     datamgr_valid.n_process_augmentation = 1
 
                     pred_val, labels_val, metrics_val = self.predict(
-                        datamgr_valid.get_batchgen(), batch_size=orig_batch_size)
+                        datamgr_valid.get_batchgen(),
+                        batch_size=orig_batch_size)
 
                     # reset old values
                     datamgr_valid.batch_size = orig_batch_size
-                    datamgr_valid.n_process_augmentation = orig_num_aug_processes
+                    datamgr_valid.n_process_augmentation = \
+                        orig_num_aug_processes
 
-                    # ToDO: Move decision, if current model is best to callback
+                    # ToDO: Move decision,
+                    #  if current model is best to callback
                     if val_score_key in metrics_val.keys():
                         curr_val_score = metrics_val[val_score_key]
                         is_best = self._is_better_val_scores(best_val_score,
@@ -324,7 +333,8 @@ if "TORCH" in get_backends():
                     else:
                         logger.warning(
                             "Validation score key not in metric dict. "
-                            "Logging metrics but can't decide which model is best")
+                            "Logging metrics but can't decide which model is "
+                            "best")
 
                         is_best = False
 
@@ -371,9 +381,9 @@ if "TORCH" in get_backends():
 
             """
             if os.path.isfile(
-                os.path.join(
-                    self.save_path,
-                    'checkpoint_best.pth')):
+                    os.path.join(
+                        self.save_path,
+                        'checkpoint_best.pth')):
 
                 # load best model and return it
                 self.update_state(os.path.join(self.save_path,
@@ -390,8 +400,8 @@ if "TORCH" in get_backends():
                 num_epochs,
                 **kwargs):
             """
-            Defines behaviour at beginning of each epoch: Executes all callbacks's
-            `at_epoch_begin` method
+            Defines behaviour at beginning of each epoch: Executes all
+            callbacks's `at_epoch_begin` method
 
             Parameters
             ----------
@@ -420,8 +430,9 @@ if "TORCH" in get_backends():
         def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
                           **kwargs):
             """
-            Defines behaviour at beginning of each epoch: Executes all callbacks's
-            `at_epoch_end` method and saves current state if necessary
+            Defines behaviour at beginning of each epoch:
+            Executes all callbacks's `at_epoch_end` method and saves current
+            state if necessary
 
             Parameters
             ----------
@@ -644,7 +655,8 @@ if "TORCH" in get_backends():
         @staticmethod
         def load_state(file_name, **kwargs):
             """
-            Loads the new state from file via :func:`delira.io.torch.load_checkpoint`
+            Loads the new state from file via
+            :func:`delira.io.torch.load_checkpoint`
 
             Parameters
             ----------

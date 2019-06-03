@@ -2,13 +2,13 @@ from .abstract_callback import AbstractCallback
 from delira import get_backends
 
 if 'TORCH' in get_backends():
-    from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingLR, \
-        ExponentialLR, LambdaLR, MultiStepLR, StepLR
+    from torch.optim.lr_scheduler import ReduceLROnPlateau, \
+        CosineAnnealingLR, ExponentialLR, LambdaLR, MultiStepLR, StepLR
 
     class DefaultPyTorchSchedulerCallback(AbstractCallback):
         """
-        Implements a Callback, which `at_epoch_end` function is suitable for most
-        schedulers
+        Implements a Callback, which `at_epoch_end` function is suitable for
+        most schedulers
 
         """
 

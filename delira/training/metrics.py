@@ -56,8 +56,8 @@ if "TORCH" in get_backends():
         Metric to Calculate Accuracy
 
         .. deprecated:: 0.1
-            :class:`AccuracyMetricPyTorch` will be removed in next release and is
-            deprecated in favor of ``trixi.logging`` Modules
+            :class:`AccuracyMetricPyTorch` will be removed in next release and
+            is deprecated in favor of ``trixi.logging`` Modules
 
         .. warning::
             class:`AccuracyMetricPyTorch` will be removed in next release

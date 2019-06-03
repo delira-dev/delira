@@ -79,8 +79,10 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         else:
             os.makedirs(save_path)
 
-        # remove prior Trixihandlers and ensure logging of training results to self.save_path
-        # This facilitates visualization of multiple splits/fold inside one tensorboard-instance by means of
+        # remove prior Trixihandlers and ensure logging of training results to
+        # self.save_path
+        # This facilitates visualization of multiple splits/fold inside one
+        # tensorboard-instance by means of
         # different tf.Summary.FileWriters()
         root_logger = logging.getLogger()
         for handler in root_logger.handlers:
@@ -147,10 +149,9 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         self.closure_fn = network.closure
 
         # TODO: implement multi-GPU and single GPU training with help of
-        #  https://www.tensorflow.org/api_docs/python/tf/keras/utils/multi_gpu_model
-        #  note: might be bugged in combination with sess.run https://github.com/tensorflow/tensorflow/issues/21788
-        # and
-        # https://www.tensorflow.org/api_docs/python/tf/keras/models/clone_model
+        #  keras multi-gpu model
+        #  note: might be bugged in combination with sess.run
+        #  https://github.com/tensorflow/tensorflow/issues/21788
 
         """
         if gpu_ids and tf.test.is_gpu_available():

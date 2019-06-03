@@ -14,7 +14,8 @@ import numpy as np
 
 import pickle
 from abc import abstractmethod
-from sklearn.model_selection import KFold, StratifiedKFold, StratifiedShuffleSplit
+from sklearn.model_selection import KFold, StratifiedKFold, \
+    StratifiedShuffleSplit
 from sklearn.model_selection import train_test_split
 from datetime import datetime
 from inspect import signature
@@ -637,8 +638,8 @@ if "TORCH" in get_backends():
             Raises
             ------
             ValueError
-                Class has no Attribute ``params`` and no parameters were given as
-                function argument
+                Class has no Attribute ``params`` and no parameters were given
+                as function argument
 
             """
 
@@ -929,8 +930,8 @@ if "TF" in get_backends():
             Raises
             ------
             ValueError
-                Class has no Attribute ``params`` and no parameters were given as
-                function argument
+                Class has no Attribute ``params`` and no parameters were given
+                as function argument
             """
 
             if params is None:
@@ -1029,8 +1030,11 @@ if "TF" in get_backends():
             if random_seed is not None:
                 tf.set_random_seed(random_seed)
 
-            return super().stratified_kfold_predict(num_epochs, data, split_val, num_splits,
-                                                    shuffle, random_seed, label_key, train_kwargs, test_kwargs, **kwargs)
+            return super().stratified_kfold_predict(num_epochs, data,
+                                                    split_val, num_splits,
+                                                    shuffle, random_seed,
+                                                    label_key, train_kwargs,
+                                                    test_kwargs, **kwargs)
 
         def test(self,
                  params: Parameters,

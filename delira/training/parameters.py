@@ -279,8 +279,8 @@ class Parameters(LookupConfig):
                     dict_like_variability_on_top = dict_like.variability_on_top
                     dict_like = dict_like.permute_variability_on_top()
                 else:
-                    if not ("fixed" in dict_like.keys()
-                            or "variable" in dict_like.keys()):
+                    if (not ("fixed" in dict_like.keys()
+                             or "variable" in dict_like.keys())):
                         raise RuntimeError("Unsafe to Update from dict with "
                                            "another structre as current "
                                            "parameters")
@@ -290,8 +290,8 @@ class Parameters(LookupConfig):
                     dict_like_variability_on_top = dict_like.variability_on_top
                     dict_like = dict_like.permute_training_on_top()
                 else:
-                    if not ("model" in dict_like.keys()
-                            or "training" in dict_like.keys()):
+                    if (not ("model" in dict_like.keys()
+                             or "training" in dict_like.keys())):
                         raise RuntimeError("Unsafe to Update from dict with "
                                            "another structre as current "
                                            "parameters")

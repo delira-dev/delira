@@ -293,9 +293,9 @@ class AbstractNetworkTrainer(object):
                         "AbstractCallback or provide functions " \
                         "'at_epoch_begin' and 'at_epoch_end'"
 
-        assert isinstance(callback, AbstractCallback) or \
-            (hasattr(callback, "at_epoch_begin")
-             and hasattr(callback, "at_epoch_end")), assertion_str
+        assert (isinstance(callback, AbstractCallback) or
+                (hasattr(callback, "at_epoch_begin")
+                 and hasattr(callback, "at_epoch_end"))), assertion_str
 
         self._callbacks.append(callback)
 
