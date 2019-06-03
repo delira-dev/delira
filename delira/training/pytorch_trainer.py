@@ -27,16 +27,28 @@ if "TORCH" in get_backends():
 
         """
 
-        def __init__(self, network, save_path,
-                     criterions: dict, optimizer_cls,
-                     optimizer_params={}, metrics={}, lr_scheduler_cls=None,
-                     lr_scheduler_params={}, gpu_ids=[], save_freq=1,
-                     optim_fn=create_optims_default,
-                     fold=0, callbacks=[], start_epoch=1, mixed_precision=False,
-                     mixed_precision_kwargs={"enable_caching": True,
-                                             "verbose": False,
-                                             "allow_banned": False},
-                     **kwargs):
+        def __init__(
+                self,
+                network,
+                save_path,
+                criterions: dict,
+                optimizer_cls,
+                optimizer_params={},
+                metrics={},
+                lr_scheduler_cls=None,
+                lr_scheduler_params={},
+                gpu_ids=[],
+                save_freq=1,
+                optim_fn=create_optims_default,
+                fold=0,
+                callbacks=[],
+                start_epoch=1,
+                mixed_precision=False,
+                mixed_precision_kwargs={
+                    "enable_caching": True,
+                    "verbose": False,
+                    "allow_banned": False},
+                **kwargs):
             """
 
             Parameters
@@ -142,29 +154,34 @@ if "TORCH" in get_backends():
 
             except ImportError:
                 if mixed_precision:
-                    logger.warning("Apex was not found found, trying to continue \
+                    logger.warning(
+                        "Apex was not found found, trying to continue \
                                     in full precision instead")
                 from ..utils.context_managers import DefaultOptimWrapperTorch
                 wrap_fn = DefaultOptimWrapperTorch
 
             # wrap optimizers by half_precision_optimizer via apex if necessary
-            self.optimizers = {k: wrap_fn(
-                v, num_loss=len(self.criterions)) for k, v
-                in optim_fn(network, optimizer_cls, **optimizer_params).items()}
+            self.optimizers = {
+                k: wrap_fn(
+                    v, num_loss=len(
+                        self.criterions)) for k, v in optim_fn(
+                    network, optimizer_cls, **optimizer_params).items()}
 
             # schedulers
             if lr_scheduler_cls is not None:
                 for key, optim in self.optimizers.items():
                     if not issubclass(lr_scheduler_cls, AbstractCallback):
                         logger.warning("lr_scheduler_cls is not a callback.")
-                    # access actual optimizer by calling wrapped optimizer from wrapper
-                    self.register_callback(lr_scheduler_cls(optim._optimizer,
-                                                            **lr_scheduler_params))
-                    
+                    # access actual optimizer by calling wrapped optimizer from
+                    # wrapper
+                    self.register_callback(
+                        lr_scheduler_cls(
+                            optim._optimizer,
+                            **lr_scheduler_params))
+
             # store network in self.module to load previous state
             # (will be overwritten later)
             self.module = network
-
 
             # Load latest epoch file if available
             if os.path.isdir(self.save_path):
@@ -265,11 +282,14 @@ if "TORCH" in get_backends():
 
             curr_val_score = best_val_score
 
-            self.save_state(os.path.join(self.save_path, "checkpoint_epoch_0.pth"),
-                            self.start_epoch)
+            self.save_state(
+                os.path.join(
+                    self.save_path,
+                    "checkpoint_epoch_0.pth"),
+                self.start_epoch)
             metrics_val = {}
 
-            for epoch in range(self.start_epoch, num_epochs+1):
+            for epoch in range(self.start_epoch, num_epochs + 1):
 
                 self._at_epoch_begin(metrics_val, val_score_key, epoch,
                                      num_epochs)
@@ -350,7 +370,10 @@ if "TORCH" in get_backends():
                 best network
 
             """
-            if os.path.isfile(os.path.join(self.save_path, 'checkpoint_best.pth')):
+            if os.path.isfile(
+                os.path.join(
+                    self.save_path,
+                    'checkpoint_best.pth')):
 
                 # load best model and return it
                 self.update_state(os.path.join(self.save_path,
@@ -359,8 +382,13 @@ if "TORCH" in get_backends():
 
             return self.module
 
-        def _at_epoch_begin(self, metrics_val, val_score_key, epoch, num_epochs,
-                            **kwargs):
+        def _at_epoch_begin(
+                self,
+                metrics_val,
+                val_score_key,
+                epoch,
+                num_epochs,
+                **kwargs):
             """
             Defines behaviour at beginning of each epoch: Executes all callbacks's
             `at_epoch_begin` method
@@ -382,9 +410,12 @@ if "TORCH" in get_backends():
 
             # execute all callbacks
             for cb in self._callbacks:
-                self._update_state(cb.at_epoch_begin(self, val_metrics=metrics_val,
-                                                     val_score_key=val_score_key,
-                                                     curr_epoch=epoch))
+                self._update_state(
+                    cb.at_epoch_begin(
+                        self,
+                        val_metrics=metrics_val,
+                        val_score_key=val_score_key,
+                        curr_epoch=epoch))
 
         def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
                           **kwargs):
@@ -410,14 +441,20 @@ if "TORCH" in get_backends():
             """
 
             for cb in self._callbacks:
-                self._update_state(cb.at_epoch_end(self, val_metrics=metrics_val,
-                                                   val_score_key=val_score_key,
-                                                   curr_epoch=epoch))
+                self._update_state(
+                    cb.at_epoch_end(
+                        self,
+                        val_metrics=metrics_val,
+                        val_score_key=val_score_key,
+                        curr_epoch=epoch))
 
             if epoch % self.save_freq == 0:
-                self.save_state(os.path.join(self.save_path,
-                                             "checkpoint_epoch_%d.pth" % epoch),
-                                epoch)
+                self.save_state(
+                    os.path.join(
+                        self.save_path,
+                        "checkpoint_epoch_%d.pth" %
+                        epoch),
+                    epoch)
 
             if is_best:
                 self.save_state(os.path.join(self.save_path,

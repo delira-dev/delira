@@ -24,7 +24,8 @@ if "TORCH" in get_backends():
             the converted batch
 
         """
-        return np.array([pytorch_tensor_to_numpy(tmp[0]) for tmp in tensor.split(1)])
+        return np.array([pytorch_tensor_to_numpy(tmp[0])
+                         for tmp in tensor.split(1)])
 
     @torch_tensor_func
     def pytorch_tensor_to_numpy(tensor: torch.Tensor):
@@ -130,7 +131,6 @@ if "TF" in get_backends():
         """
         return {"default": optim_cls(**optim_params)}
 
-
     def initialize_uninitialized(sess):
         """
         Function to initialize only uninitialized variables in a session graph
@@ -142,8 +142,14 @@ if "TF" in get_backends():
         """
 
         global_vars = tf.global_variables()
-        is_not_initialized = sess.run([tf.is_variable_initialized(var) for var in global_vars])
-        not_initialized_vars = [v for (v, f) in zip(global_vars, is_not_initialized) if not f]
+        is_not_initialized = sess.run(
+            [tf.is_variable_initialized(var) for var in global_vars])
+        not_initialized_vars = [
+            v for (
+                v,
+                f) in zip(
+                global_vars,
+                is_not_initialized) if not f]
 
         if not_initialized_vars:
             sess.run(tf.variables_initializer(not_initialized_vars))

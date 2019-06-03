@@ -56,11 +56,16 @@ class TfExperimentTest(unittest.TestCase):
             def _build_model(n_outputs):
                 return tf.keras.models.Sequential(
                     layers=[
-                        tf.keras.layers.Dense(64, input_shape=(
-                            32,), bias_initializer='glorot_uniform'),
+                        tf.keras.layers.Dense(
+                            64,
+                            input_shape=(
+                                32,
+                            ),
+                            bias_initializer='glorot_uniform'),
                         tf.keras.layers.ReLU(),
-                        tf.keras.layers.Dense(n_outputs, bias_initializer='glorot_uniform')]
-                )
+                        tf.keras.layers.Dense(
+                            n_outputs,
+                            bias_initializer='glorot_uniform')])
 
         class DummyDataset(AbstractDataset):
             def __init__(self, length):

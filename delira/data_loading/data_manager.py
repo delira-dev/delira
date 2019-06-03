@@ -69,7 +69,7 @@ class BaseDataManager(object):
         :class:`AbstractDataset`
 
         """
-        
+
         # Instantiate Hidden variables for property access
         self._batch_size = None
         self._n_process_augmentation = None
@@ -113,9 +113,9 @@ class BaseDataManager(object):
                     "dataset_cls must be subclass of AbstractDataset"
 
             self.dataset = dataset_cls(data, load_fn, **kwargs)
-        
+
         assert inspect.isclass(sampler_cls) and issubclass(sampler_cls,
-                                                            AbstractSampler)
+                                                           AbstractSampler)
         self.sampler = sampler_cls.from_dataset(self.dataset, **sampler_kwargs)
 
     def get_batchgen(self, seed=1):
@@ -147,15 +147,18 @@ class BaseDataManager(object):
                                            sampler=self.sampler
                                            )
 
-        return MultiThreadedAugmenter(data_loader, self.transforms,
-                                      self.n_process_augmentation,
-                                      num_cached_per_queue=2,
-                                      seeds=self.n_process_augmentation*[seed])
+        return MultiThreadedAugmenter(
+            data_loader,
+            self.transforms,
+            self.n_process_augmentation,
+            num_cached_per_queue=2,
+            seeds=self.n_process_augmentation *
+            [seed])
 
     def get_subset(self, indices):
         """
         Returns a Subset of the current datamanager based on given indices
-        
+
         Parameters
         ----------
         indices : iterable
@@ -165,7 +168,7 @@ class BaseDataManager(object):
         -------
         :class:`BaseDataManager`
             manager containing the subset
-        
+
         """
 
         subset_kwargs = {
@@ -179,13 +182,15 @@ class BaseDataManager(object):
             "from_disc": True
         }
 
-        return self.__class__(self.dataset.get_subset(indices), **subset_kwargs)
+        return self.__class__(
+            self.dataset.get_subset(indices),
+            **subset_kwargs)
 
     def update_state_from_dict(self, new_state: dict):
         """
         Updates internal state and therfore the behavior from dict.
         If a key is not specified, the old attribute value will be used
-        
+
         Parameters
         ----------
         new_state : dict
@@ -199,24 +204,24 @@ class BaseDataManager(object):
                 * ``sampling_kwargs``
                 * ``transforms``
 
-            If a key is not specified, the old value of the corresponding 
+            If a key is not specified, the old value of the corresponding
             attribute will be used
 
         Raises
         ------
         KeyError
             Invalid keys are specified
-        
+
         """
 
         # update batch_size if specified
         self.batch_size = new_state.pop("batch_size", self.batch_size)
         # update n_process_augmentation if specified
-        self.n_process_augmentation = new_state.pop("n_process_augmentation",
-                                                    self.n_process_augmentation)
+        self.n_process_augmentation = new_state.pop(
+            "n_process_augmentation", self.n_process_augmentation)
         # update data_loader_cls if specified
         self.data_loader_cls = new_state.pop("data_loader_cls",
-                                                self.data_loader_cls)
+                                             self.data_loader_cls)
         # update
         new_sampler = new_state.pop("sampler", None)
         if new_sampler is not None:
@@ -227,12 +232,12 @@ class BaseDataManager(object):
 
         if new_state:
             raise KeyError("Invalid Keys in new_state given: %s"
-                            % (','.join(map(str, new_state.keys()))))
+                           % (','.join(map(str, new_state.keys()))))
 
     @make_deprecated("BaseDataManager.get_subset")
     def train_test_split(self, *args, **kwargs):
         """
-        Calls :method:`AbstractDataset.train_test_split` and returns 
+        Calls :method:`AbstractDataset.train_test_split` and returns
         a manager for each subset with same configuration as current manager
 
         .. deprecation:: 0.3
@@ -240,13 +245,13 @@ class BaseDataManager(object):
 
         Parameters
         ----------
-        *args : 
-            positional arguments for 
+        *args :
+            positional arguments for
             ``sklearn.model_selection.train_test_split``
         **kwargs :
-            keyword arguments for 
+            keyword arguments for
             ``sklearn.model_selection.train_test_split``
-        
+
         """
 
         trainset, valset = self.dataset.train_test_split(*args, **kwargs)
@@ -271,7 +276,7 @@ class BaseDataManager(object):
     def batch_size(self):
         """
         Property to access the batchsize
-        
+
         Returns
         -------
         int
@@ -284,22 +289,22 @@ class BaseDataManager(object):
     def batch_size(self, new_batch_size):
         """
         Setter for current batchsize, casts to int before setting the attribute
-        
+
         Parameters
         ----------
         new_batch_size : int, Any
-            the new batchsize; should be int but can be of any type that can be 
+            the new batchsize; should be int but can be of any type that can be
             casted to an int
-        
+
         """
 
         self._batch_size = int(new_batch_size)
-       
+
     @property
     def n_process_augmentation(self):
         """
         Property to access the number of augmentation processes
-        
+
         Returns
         -------
         int
@@ -313,13 +318,13 @@ class BaseDataManager(object):
         """
         Setter for number of augmentation processes, casts to int before setting
         the attribute
-        
+
         Parameters
         ----------
         new_process_number : int, Any
-            new number of augmentation processes; should be int but can be of 
+            new number of augmentation processes; should be int but can be of
             any type that can be casted to an int
-        
+
         """
 
         self._n_process_augmentation = int(new_process_number)
@@ -328,27 +333,27 @@ class BaseDataManager(object):
     def transforms(self):
         """
         Property to access the current data transforms
-        
+
         Returns
         -------
         None, ``AbstractTransform``
-            The transformation, can either be None or an instance of 
+            The transformation, can either be None or an instance of
             ``AbstractTransform``
         """
 
         return self._transforms
-    
+
     @transforms.setter
     def transforms(self, new_transforms):
         """
-        Setter for data transforms, assert if transforms are of valid type 
+        Setter for data transforms, assert if transforms are of valid type
         (either None or instance of ``AbstractTransform``)
-        
+
         Parameters
         ----------
         new_transforms : None, ``AbstractTransform``
             the new transforms
-        
+
         """
 
         assert new_transforms is None or isinstance(new_transforms,
@@ -360,7 +365,7 @@ class BaseDataManager(object):
     def data_loader_cls(self):
         """
         Property to access the current data loader class
-        
+
         Returns
         -------
         type
@@ -374,23 +379,23 @@ class BaseDataManager(object):
         """
         Setter for current data loader class, asserts if class is of valid type
         (must be a class and a subclass of ``SlimDataLoaderBase``)
-        
+
         Parameters
         ----------
         new_loader_cls : type
             the new data loader class
-        
+
         """
 
-        assert inspect.isclass(new_loader_cls) and issubclass(new_loader_cls,
-                                                        SlimDataLoaderBase)
+        assert inspect.isclass(new_loader_cls) and issubclass(
+            new_loader_cls, SlimDataLoaderBase)
         self._data_loader_cls = new_loader_cls
 
     @property
     def dataset(self):
         """
         Property to access the current dataset
-        
+
         Returns
         -------
         :class:`AbstractDataset`
@@ -404,11 +409,11 @@ class BaseDataManager(object):
     def dataset(self, new_dataset):
         """
         Setter for new dataset
-        
+
         Parameters
         ----------
         new_dataset : :class:`AbstractDataset`
-            
+
         """
 
         assert isinstance(new_dataset, AbstractDataset)
@@ -432,23 +437,23 @@ class BaseDataManager(object):
     def sampler(self, new_sampler):
         """
         Setter for current sampler.
-        If a valid class instance is passed, the sampler is simply assigned, if 
+        If a valid class instance is passed, the sampler is simply assigned, if
         a valid class type is passed, the sampler is created from the dataset
-        
+
         Parameters
         ----------
         new_sampler : :class:`AbstractSampler`, type
             instance or class object of new sampler
-        
+
         Raises
         ------
         ValueError
             Neither a valid class instance nor a valid class type is given
-        
+
         """
 
         if inspect.isclass(new_sampler) and issubclass(new_sampler,
-                                                        AbstractSampler):
+                                                       AbstractSampler):
             self._sampler = new_sampler.from_dataset(self.dataset)
 
         elif isinstance(new_sampler, AbstractSampler):
@@ -457,7 +462,7 @@ class BaseDataManager(object):
         else:
             raise ValueError("Given Sampler is neither a subclass of \
                             AbstractSampler, nor an instance of a sampler ")
-                            
+
     @property
     def n_samples(self):
         """
@@ -494,9 +499,11 @@ class BaseDataManager(object):
         elif self.n_process_augmentation > 1:
             if (self.n_samples / self.batch_size) < self.n_process_augmentation:
                 self.n_process_augmentation = 1
-                logger.warning('Too few samples for n_process_augmentation={}. '
-                               'Forcing n_process_augmentation={} '
-                               'instead'.format(self.n_process_augmentation, 1))
+                logger.warning(
+                    'Too few samples for n_process_augmentation={}. '
+                    'Forcing n_process_augmentation={} '
+                    'instead'.format(
+                        self.n_process_augmentation, 1))
             n_batches = int(np.floor(self.n_samples / self.batch_size /
                                      self.n_process_augmentation))
         else:

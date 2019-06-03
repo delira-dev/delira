@@ -7,6 +7,7 @@ class AbstractSampler(object):
     Class to define an abstract Sampling API
 
     """
+
     def __init__(self, indices=None):
         pass
 

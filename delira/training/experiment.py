@@ -131,10 +131,16 @@ class AbstractExperiment(TrixiExperiment):
         """
         raise NotImplementedError()
 
-    def kfold(self, num_epochs: int,
-              data: BaseDataManager,
-              num_splits=None, shuffle=False, random_seed=None, train_kwargs={},
-              test_kwargs={}, **kwargs):
+    def kfold(
+            self,
+            num_epochs: int,
+            data: BaseDataManager,
+            num_splits=None,
+            shuffle=False,
+            random_seed=None,
+            train_kwargs={},
+            test_kwargs={},
+            **kwargs):
         """
         Runs K-Fold Crossvalidation
         The supported scenario is:
@@ -264,8 +270,8 @@ class AbstractExperiment(TrixiExperiment):
         fold = StratifiedKFold(n_splits=num_splits, shuffle=shuffle,
                                random_state=random_seed)
 
-        for idx, (train_idxs, test_idxs) in enumerate(fold.split(split_idxs,
-                                                                 split_labels)):
+        for idx, (train_idxs, test_idxs) in enumerate(
+                fold.split(split_idxs, split_labels)):
             # extract data from single manager
             train_data = data.get_subset(train_idxs)
             test_data = data.get_subset(test_idxs)
@@ -278,12 +284,18 @@ class AbstractExperiment(TrixiExperiment):
                      fold=idx,
                      **kwargs)
 
-    def stratified_kfold_predict(self, num_epochs: int,
-                                 data: BaseDataManager,
-                                 split_val=0.2,
-                                 num_splits=None, shuffle=False, random_seed=None,
-                                 label_key="label", train_kwargs={}, test_kwargs={},
-                                 **kwargs):
+    def stratified_kfold_predict(
+            self,
+            num_epochs: int,
+            data: BaseDataManager,
+            split_val=0.2,
+            num_splits=None,
+            shuffle=False,
+            random_seed=None,
+            label_key="label",
+            train_kwargs={},
+            test_kwargs={},
+            **kwargs):
         """
         Runs stratified K-Fold Crossvalidation
         The supported supported scenario is:
@@ -344,8 +356,8 @@ class AbstractExperiment(TrixiExperiment):
         fold = StratifiedKFold(n_splits=num_splits, shuffle=shuffle,
                                random_state=random_seed)
 
-        for idx, (_train_idxs, test_idxs) in enumerate(fold.split(split_idxs,
-                                                                  split_labels)):
+        for idx, (_train_idxs, test_idxs) in enumerate(
+                fold.split(split_idxs, split_labels)):
             # extract data from single manager
             _train_data = data.get_subset(_train_idxs)
             _split_idxs = list(range(len(_train_data.dataset)))
@@ -356,7 +368,8 @@ class AbstractExperiment(TrixiExperiment):
                                               test_size=split_val,
                                               random_state=random_seed)
 
-            for train_idxs, val_idx in val_fold.split(_split_idxs, _split_labels):
+            for train_idxs, val_idx in val_fold.split(
+                    _split_idxs, _split_labels):
                 train_data = _train_data.get_subset(train_idxs)
                 val_data = _train_data.get_subset(val_idx)
 
@@ -446,6 +459,7 @@ class AbstractExperiment(TrixiExperiment):
         """
         raise NotImplementedError()
 
+
 if "TORCH" in get_backends():
 
     import torch
@@ -483,7 +497,7 @@ if "TORCH" in get_backends():
             model_cls :
                 the class to instantiate models
             name : str
-                the experiment's name, 
+                the experiment's name,
                 default: None -> "UnnamedExperiment"
             save_path : str
                 the path to save the experiment to
@@ -749,11 +763,17 @@ if "TORCH" in get_backends():
             super().kfold(num_epochs, data, num_splits, shuffle, random_seed,
                           train_kwargs, test_kwargs, **kwargs)
 
-        def stratified_kfold(self, num_epochs: int,
-                             data: BaseDataManager,
-                             num_splits=None, shuffle=False, random_seed=None,
-                             label_key="label", train_kwargs={}, test_kwargs={},
-                             **kwargs):
+        def stratified_kfold(
+                self,
+                num_epochs: int,
+                data: BaseDataManager,
+                num_splits=None,
+                shuffle=False,
+                random_seed=None,
+                label_key="label",
+                train_kwargs={},
+                test_kwargs={},
+                **kwargs):
 
             if random_seed is not None:
                 torch.manual_seed(random_seed)
@@ -977,11 +997,17 @@ if "TF" in get_backends():
             super().kfold(num_epochs, data, num_splits, shuffle, random_seed,
                           train_kwargs, test_kwargs, **kwargs)
 
-        def stratified_kfold(self, num_epochs: int,
-                             data: BaseDataManager,
-                             num_splits=None, shuffle=False, random_seed=None,
-                             label_key="label", train_kwargs={}, test_kwargs={},
-                             **kwargs):
+        def stratified_kfold(
+                self,
+                num_epochs: int,
+                data: BaseDataManager,
+                num_splits=None,
+                shuffle=False,
+                random_seed=None,
+                label_key="label",
+                train_kwargs={},
+                test_kwargs={},
+                **kwargs):
 
             if random_seed is not None:
                 tf.set_random_seed(random_seed)
@@ -1003,9 +1029,8 @@ if "TF" in get_backends():
             if random_seed is not None:
                 tf.set_random_seed(random_seed)
 
-            return super().stratified_kfold_predict(num_epochs, data, split_val, num_splits, shuffle,
-                                                    random_seed, label_key, train_kwargs,
-                                                    test_kwargs, **kwargs)
+            return super().stratified_kfold_predict(num_epochs, data, split_val, num_splits,
+                                                    shuffle, random_seed, label_key, train_kwargs, test_kwargs, **kwargs)
 
         def test(self,
                  params: Parameters,

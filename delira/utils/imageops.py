@@ -22,7 +22,7 @@ def calculate_origin_offset(new_spacing, old_spacing):
     np.ndarray
         origin offset
     """
-    return np.subtract(new_spacing, old_spacing)/2
+    return np.subtract(new_spacing, old_spacing) / 2
 
 
 @sitk_img_func

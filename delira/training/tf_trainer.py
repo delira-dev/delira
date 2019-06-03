@@ -32,7 +32,6 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
                  optim_fn=create_optims_default,
                  fold=0, callbacks=[], start_epoch=1,
                  **kwargs):
-
         """
 
         Parameters
@@ -87,8 +86,13 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         for handler in root_logger.handlers:
             handler.close()
         root_logger.handlers = []
-        logging.basicConfig(level=logging.INFO,
-                            handlers=[TrixiHandler(TensorboardXLogger, 0, self.save_path)])
+        logging.basicConfig(
+            level=logging.INFO,
+            handlers=[
+                TrixiHandler(
+                    TensorboardXLogger,
+                    0,
+                    self.save_path)])
 
         self.losses = losses
 
@@ -145,7 +149,8 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         # TODO: implement multi-GPU and single GPU training with help of
         #  https://www.tensorflow.org/api_docs/python/tf/keras/utils/multi_gpu_model
         #  note: might be bugged in combination with sess.run https://github.com/tensorflow/tensorflow/issues/21788
-        #  and https://www.tensorflow.org/api_docs/python/tf/keras/models/clone_model
+        # and
+        # https://www.tensorflow.org/api_docs/python/tf/keras/models/clone_model
 
         """
         if gpu_ids and tf.test.is_gpu_available():
@@ -215,7 +220,7 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         self.save_state(os.path.join(self.save_path, "checkpoint_epoch_0"))
         metrics_val = {}
 
-        for epoch in range(self.start_epoch, num_epochs+1):
+        for epoch in range(self.start_epoch, num_epochs + 1):
 
             self._at_epoch_begin(metrics_val, val_score_key, epoch,
                                  num_epochs)
@@ -296,7 +301,10 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
             best network
 
         """
-        if os.path.isfile(os.path.join(self.save_path, 'checkpoint_best.meta')):
+        if os.path.isfile(
+            os.path.join(
+                self.save_path,
+                'checkpoint_best.meta')):
 
             # load best model and return it. Since the state is hidden in the graph, we don't actually need to use
             # self.update_state.
@@ -534,7 +542,6 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
             filename to save the state to
         """
         tf_save_checkpoint(file_name, self.module)
-
 
     def load_state(self, file_name):
         """

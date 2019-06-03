@@ -25,7 +25,7 @@ class LookupConfig(Config):
         Raises
         ------
         KeyError
-            Multiple Values are found for key 
+            Multiple Values are found for key
             (unclear which value should be returned)
             OR
             No Value was found for key and no default value was given
@@ -65,7 +65,7 @@ class LookupConfig(Config):
 
         """
 
-        if type(value) == dict or type(value) == Config:
+        if isinstance(value, dict) or isinstance(value, Config):
             new_config = LookupConfig()
             new_config.update(value, deep=False)
             super().__setattr__(key, new_config)

@@ -10,6 +10,7 @@ if "TORCH" in get_backends():
     import torch
 
     from .train_utils import pytorch_tensor_to_numpy, float_to_pytorch_tensor
+
     class AurocMetricPyTorch(torch.nn.Module):
         """
         Metric to Calculate AuROC
@@ -47,14 +48,13 @@ if "TORCH" in get_backends():
             if outputs.dim() == 2:
                 outputs = torch.argmax(outputs, dim=1)
             score = roc_auc_score(pytorch_tensor_to_numpy(targets),
-                                pytorch_tensor_to_numpy(outputs))
+                                  pytorch_tensor_to_numpy(outputs))
             return float_to_pytorch_tensor(score)
-
 
     class AccuracyMetricPyTorch(torch.nn.Module):
         """
         Metric to Calculate Accuracy
-        
+
         .. deprecated:: 0.1
             :class:`AccuracyMetricPyTorch` will be removed in next release and is
             deprecated in favor of ``trixi.logging`` Modules
@@ -103,6 +103,6 @@ if "TORCH" in get_backends():
             if outputs.dim() == 2:
                 outputs = torch.argmax(outputs, dim=1)
             score = accuracy_score(pytorch_tensor_to_numpy(targets),
-                                pytorch_tensor_to_numpy(outputs),
-                                self.normalize, self.sample_weight)
+                                   pytorch_tensor_to_numpy(outputs),
+                                   self.normalize, self.sample_weight)
             return float_to_pytorch_tensor(score)

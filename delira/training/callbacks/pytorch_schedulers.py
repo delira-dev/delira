@@ -103,9 +103,17 @@ if 'TORCH' in get_backends():
 
             """
             super().__init__()
-            self.scheduler = ReduceLROnPlateau(optimizer, mode, factor, patience,
-                                               verbose, threshold, threshold_mode,
-                                               cooldown, min_lr, eps)
+            self.scheduler = ReduceLROnPlateau(
+                optimizer,
+                mode,
+                factor,
+                patience,
+                verbose,
+                threshold,
+                threshold_mode,
+                cooldown,
+                min_lr,
+                eps)
 
         def at_epoch_end(self, trainer,
                          **kwargs):
@@ -125,8 +133,12 @@ if 'TORCH' in get_backends():
                 modified trainer
 
             """
-            metrics = kwargs.get("val_metrics", {}).get(kwargs.get("val_score_key",
-                                                                   None))
+            metrics = kwargs.get(
+                "val_metrics",
+                {}).get(
+                kwargs.get(
+                    "val_score_key",
+                    None))
             self.scheduler.step(metrics=metrics)
 
             return {}

@@ -12,7 +12,7 @@ class DummyDataset(AbstractDataset):
         self._data = [np.random.rand(1, 28, 28) for i in range(length)]
         _labels = []
         for idx, weight in enumerate(class_weights):
-            _labels += [idx] * int(length*weight)
+            _labels += [idx] * int(length * weight)
 
         self._labels = _labels
 

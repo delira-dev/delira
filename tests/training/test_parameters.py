@@ -71,7 +71,7 @@ class ParametersTest(unittest.TestCase):
                     "variable": variable_model_params
                 }))
 
-                self.assertEqual(params.training,  to_lookup_config({
+                self.assertEqual(params.training, to_lookup_config({
                     "fixed": fixed_training_params,
                     "variable": variable_training_params
                 }))

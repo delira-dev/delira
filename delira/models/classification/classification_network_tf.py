@@ -70,7 +70,8 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         else:
             self._losses = {}
             for name, _loss in losses.items():
-                self._losses[name] = _loss(self.inputs[-1], self.outputs_train[0])
+                self._losses[name] = _loss(
+                    self.inputs[-1], self.outputs_train[0])
 
             total_loss = tf.reduce_mean(list(self._losses.values()), axis=0)
 
@@ -167,7 +168,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             metric_vals[key] = metric_fn(
                 preds, *data_dict.values())
 
-        if model.training == False:
+        if not model.training:
             # add prefix "val" in validation mode
             eval_loss_vals, eval_metrics_vals = {}, {}
             for key in loss_vals.keys():
@@ -186,6 +187,6 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
                                     "env_appendix": "_%02d" % fold
                                     }})
 
-        #logging.info({'image_grid': {"image_array": inputs, "name": image_names,
+        # logging.info({'image_grid': {"image_array": inputs, "name": image_names,
         #                             "title": "input_images", "env_appendix": "_%02d" % fold}})
         return metric_vals, loss_vals, [preds]

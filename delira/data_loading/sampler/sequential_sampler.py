@@ -8,6 +8,7 @@ class SequentialSampler(AbstractSampler):
     """
     Implements Sequential Sampling from whole Dataset
     """
+
     def __init__(self, indices):
         """
 
@@ -188,6 +189,7 @@ class StoppingPrevalenceSequentialSampler(AbstractSampler):
     first class have been sampled
 
     """
+
     def __init__(self, indices, shuffle_batch=True):
         """
 
@@ -258,7 +260,7 @@ class StoppingPrevalenceSequentialSampler(AbstractSampler):
             list of sampled indices
 
         """
-        samples_per_class = int(n_indices/self._n_classes)
+        samples_per_class = int(n_indices / self._n_classes)
         _samples = []
 
         for key, idx_list in self._indices.items():

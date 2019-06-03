@@ -186,6 +186,7 @@ class _DatasetIter(object):
     """
     Iterator for dataset
     """
+
     def __init__(self, dset):
         """
 
@@ -691,7 +692,6 @@ class Nii3DCacheDatset(BaseCacheDataset):
 if "TORCH" in get_backends():
     from torchvision.datasets import CIFAR10, CIFAR100, EMNIST, MNIST, FashionMNIST
 
-
     class TorchvisionClassificationDataset(AbstractDataset):
         """
         Wrapper for torchvision classification datasets to provide consistent API
@@ -827,8 +827,12 @@ if "TORCH" in get_backends():
                         labels = np.asarray(labels)
                     assert isinstance(labels, np.ndarray)
                     if len(labels.shape) > 1:
-                        one_hot = np.zeros(shape=(list(labels.shape) + [num_classes]),
-                                           dtype=labels.dtype)
+                        one_hot = np.zeros(
+                            shape=(
+                                list(
+                                    labels.shape) +
+                                [num_classes]),
+                            dtype=labels.dtype)
                         for i, c in enumerate(np.arange(num_classes)):
                             one_hot[..., i][labels == c] = 1
                     else:
@@ -839,7 +843,8 @@ if "TORCH" in get_backends():
                                 one_hot[i] = 1
                     return one_hot
 
-                data_dict['label'] = make_onehot(self.num_classes, data_dict['label'])
+                data_dict['label'] = make_onehot(
+                    self.num_classes, data_dict['label'])
 
             img = data_dict["data"]
 

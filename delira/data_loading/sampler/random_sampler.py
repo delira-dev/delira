@@ -10,6 +10,7 @@ class RandomSampler(AbstractSampler):
     """
     Implements Random Sampling from whole Dataset
     """
+
     def __init__(self, indices):
         """
 
@@ -71,6 +72,7 @@ class PrevalenceRandomSampler(AbstractSampler):
     number of samplers per batch for each class
 
     """
+
     def __init__(self, indices, shuffle_batch=True):
         """
 

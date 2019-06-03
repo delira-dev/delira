@@ -9,7 +9,6 @@ if "TORCH" in get_backends():
     import logging
     from ..abstract_network import AbstractPyTorchNetwork
 
-
     class UNet2dPyTorch(AbstractPyTorchNetwork):
         """
         The :class:`UNet2dPyTorch` is a convolutional encoder-decoder neural
@@ -44,8 +43,8 @@ if "TORCH" in get_backends():
         """
 
         def __init__(self, num_classes, in_channels=1, depth=5,
-                    start_filts=64, up_mode='transpose',
-                    merge_mode='concat'):
+                     start_filts=64, up_mode='transpose',
+                     merge_mode='concat'):
             """
 
             Parameters
@@ -84,24 +83,24 @@ if "TORCH" in get_backends():
                 self.up_mode = up_mode
             else:
                 raise ValueError("\"{}\" is not a valid mode for "
-                                "upsampling. Only \"transpose\" and "
-                                "\"upsample\" are allowed.".format(up_mode))
+                                 "upsampling. Only \"transpose\" and "
+                                 "\"upsample\" are allowed.".format(up_mode))
 
             if merge_mode in ('concat', 'add'):
                 self.merge_mode = merge_mode
             else:
                 raise ValueError("\"{}\" is not a valid mode for"
-                                "merging up and down paths. "
-                                "Only \"concat\" and "
-                                "\"add\" are allowed.".format(up_mode))
+                                 "merging up and down paths. "
+                                 "Only \"concat\" and "
+                                 "\"add\" are allowed.".format(up_mode))
 
             # NOTE: up_mode 'upsample' is incompatible with merge_mode 'add'
             if self.up_mode == 'upsample' and self.merge_mode == 'add':
                 raise ValueError("up_mode \"upsample\" is incompatible "
-                                "with merge_mode \"add\" at the moment "
-                                "because it doesn't make sense to use "
-                                "nearest neighbour to reduce "
-                                "depth channels (by half).")
+                                 "with merge_mode \"add\" at the moment "
+                                 "because it doesn't make sense to use "
+                                 "nearest neighbour to reduce "
+                                 "depth channels (by half).")
 
             self.num_classes = num_classes
             self.in_channels = in_channels
@@ -272,7 +271,7 @@ if "TORCH" in get_backends():
             return metric_vals, loss_vals, [preds]
 
         def _build_model(self, num_classes, in_channels=3, depth=5,
-                        start_filts=64):
+                         start_filts=64):
             """
             Builds the actual model
 
@@ -365,7 +364,7 @@ if "TORCH" in get_backends():
                 """
 
                 def __init__(self, in_channels, out_channels,
-                            merge_mode='concat', up_mode='transpose'):
+                             merge_mode='concat', up_mode='transpose'):
                     super(UpConv, self).__init__()
 
                     self.in_channels = in_channels
@@ -373,8 +372,8 @@ if "TORCH" in get_backends():
                     self.merge_mode = merge_mode
                     self.up_mode = up_mode
 
-                    self.upconv = upconv2x2(self.in_channels, self.out_channels,
-                                            mode=self.up_mode)
+                    self.upconv = upconv2x2(
+                        self.in_channels, self.out_channels, mode=self.up_mode)
 
                     if self.merge_mode == 'concat':
                         self.conv1 = conv3x3(
@@ -382,7 +381,7 @@ if "TORCH" in get_backends():
                     else:
                         # num of input channels to conv2 is same
                         self.conv1 = conv3x3(self.out_channels,
-                                            self.out_channels)
+                                             self.out_channels)
                     self.conv2 = conv3x3(self.out_channels, self.out_channels)
 
                 def forward(self, from_down, from_up):
@@ -411,7 +410,7 @@ if "TORCH" in get_backends():
                 ins = outs
                 outs = ins // 2
                 up_conv = UpConv(ins, outs, up_mode=self.up_mode,
-                                merge_mode=self.merge_mode)
+                                 merge_mode=self.merge_mode)
                 self.up_convs.append(up_conv)
 
             self.conv_final = conv1x1(outs, num_classes)
@@ -448,12 +447,11 @@ if "TORCH" in get_backends():
             for key, vals in batch.items():
                 if key == "label" and len(vals.shape) == 4:
                     vals = vals[:, 0]  # remove first axis if to many axis
-                                    # (channel dimension)
+                    # (channel dimension)
                 return_dict[key] = torch.from_numpy(vals).to(output_device).to(
                     torch.long)
 
             return return_dict
-
 
     class UNet3dPyTorch(AbstractPyTorchNetwork):
         """
@@ -490,8 +488,8 @@ if "TORCH" in get_backends():
         """
 
         def __init__(self, num_classes, in_channels=3, depth=5,
-                    start_filts=64, up_mode='transpose',
-                    merge_mode='concat'):
+                     start_filts=64, up_mode='transpose',
+                     merge_mode='concat'):
             """
 
             Parameters
@@ -529,24 +527,24 @@ if "TORCH" in get_backends():
                 self.up_mode = up_mode
             else:
                 raise ValueError("\"{}\" is not a valid mode for "
-                                "upsampling. Only \"transpose\" and "
-                                "\"upsample\" are allowed.".format(up_mode))
+                                 "upsampling. Only \"transpose\" and "
+                                 "\"upsample\" are allowed.".format(up_mode))
 
             if merge_mode in ('concat', 'add'):
                 self.merge_mode = merge_mode
             else:
                 raise ValueError("\"{}\" is not a valid mode for"
-                                "merging up and down paths. "
-                                "Only \"concat\" and "
-                                "\"add\" are allowed.".format(up_mode))
+                                 "merging up and down paths. "
+                                 "Only \"concat\" and "
+                                 "\"add\" are allowed.".format(up_mode))
 
             # NOTE: up_mode 'upsample' is incompatible with merge_mode 'add'
             if self.up_mode == 'upsample' and self.merge_mode == 'add':
                 raise ValueError("up_mode \"upsample\" is incompatible "
-                                "with merge_mode \"add\" at the moment "
-                                "because it doesn't make sense to use "
-                                "nearest neighbour to reduce "
-                                "depth channels (by half).")
+                                 "with merge_mode \"add\" at the moment "
+                                 "because it doesn't make sense to use "
+                                 "nearest neighbour to reduce "
+                                 "depth channels (by half).")
 
             self.num_classes = num_classes
             self.in_channels = in_channels
@@ -717,7 +715,7 @@ if "TORCH" in get_backends():
             return metric_vals, loss_vals, [preds]
 
         def _build_model(self, num_classes, in_channels=3, depth=5,
-                        start_filts=64):
+                         start_filts=64):
             """
             Builds the actual model
 
@@ -744,7 +742,7 @@ if "TORCH" in get_backends():
             """
 
             def conv3x3x3(in_channels, out_channels, stride=1,
-                        padding=1, bias=True, groups=1):
+                          padding=1, bias=True, groups=1):
                 return torch.nn.Conv3d(
                     in_channels,
                     out_channels,
@@ -790,7 +788,8 @@ if "TORCH" in get_backends():
                     self.pooling = pooling
 
                     self.conv1 = conv3x3x3(self.in_channels, self.out_channels)
-                    self.conv2 = conv3x3x3(self.out_channels, self.out_channels)
+                    self.conv2 = conv3x3x3(
+                        self.out_channels, self.out_channels)
 
                     if self.pooling:
                         self.pool = torch.nn.MaxPool3d(kernel_size=2, stride=2)
@@ -810,7 +809,7 @@ if "TORCH" in get_backends():
                 """
 
                 def __init__(self, in_channels, out_channels,
-                            merge_mode='concat', up_mode='transpose'):
+                             merge_mode='concat', up_mode='transpose'):
                     super(UpConv, self).__init__()
 
                     self.in_channels = in_channels
@@ -818,8 +817,8 @@ if "TORCH" in get_backends():
                     self.merge_mode = merge_mode
                     self.up_mode = up_mode
 
-                    self.upconv = upconv2x2x2(self.in_channels, self.out_channels,
-                                            mode=self.up_mode)
+                    self.upconv = upconv2x2x2(
+                        self.in_channels, self.out_channels, mode=self.up_mode)
 
                     if self.merge_mode == 'concat':
                         self.conv1 = conv3x3x3(
@@ -827,8 +826,9 @@ if "TORCH" in get_backends():
                     else:
                         # num of input channels to conv2 is same
                         self.conv1 = conv3x3x3(self.out_channels,
-                                            self.out_channels)
-                    self.conv2 = conv3x3x3(self.out_channels, self.out_channels)
+                                               self.out_channels)
+                    self.conv2 = conv3x3x3(
+                        self.out_channels, self.out_channels)
 
                 def forward(self, from_down, from_up):
                     from_up = self.upconv(from_up)
@@ -856,7 +856,7 @@ if "TORCH" in get_backends():
                 ins = outs
                 outs = ins // 2
                 up_conv = UpConv(ins, outs, up_mode=self.up_mode,
-                                merge_mode=self.merge_mode)
+                                 merge_mode=self.merge_mode)
                 self.up_convs.append(up_conv)
 
             self.conv_final = conv1x1x1(outs, num_classes)

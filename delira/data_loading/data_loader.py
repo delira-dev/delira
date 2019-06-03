@@ -10,6 +10,7 @@ class BaseDataLoader(SlimDataLoaderBase):
     Class to create a data batch out of data samples
 
     """
+
     def __init__(self, dataset: AbstractDataset,
                  batch_size=1, num_batches=None, seed=1,
                  sampler=None):
@@ -118,4 +119,3 @@ class BaseDataLoader(SlimDataLoaderBase):
             Returned Data
         """
         return self._data[index]
-

@@ -1,7 +1,7 @@
+from delira import get_backends
 import logging
 file_logger = logging.getLogger(__name__)
 
-from delira import get_backends
 
 if "TORCH" in get_backends():
     import torch
@@ -33,7 +33,8 @@ if "TORCH" in get_backends():
                 number of outputs (usually same as number of classes)
 
             """
-            # register params by passing them as kwargs to parent class __init__
+            # register params by passing them as kwargs to parent class
+            # __init__
             super().__init__(in_channels=in_channels,
                              n_outputs=n_outputs,
                              **kwargs)

@@ -6,7 +6,7 @@ from copy import deepcopy, copy
 
 class Parameters(LookupConfig):
     """
-    Class Containing all variable and fixed parameters for training and model 
+    Class Containing all variable and fixed parameters for training and model
     instantiation
 
     See Also

@@ -53,7 +53,7 @@ def load_sample_nii(files, label_load_cls):
         img = img.astype(np.float32)
         assert img.max() <= 511
         assert img.max() > 1
-        img = img/511
+        img = img / 511
         img_list.append(img)
     label_gen = label_load_cls(files['label'])
     label = label_gen.get_labels()
