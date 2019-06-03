@@ -59,8 +59,8 @@ if "TORCH" in get_backends():
 
         def forward(self, real_image_batch):
             """
-            Create fake images by feeding noise through generator and feed results
-            and real images through discriminator
+            Create fake images by feeding noise through generator and feed
+            results and real images through discriminator
 
             Parameters
             ----------
@@ -163,7 +163,8 @@ if "TORCH" in get_backends():
                     loss_vals[key + "_discr_fake"] = _loss_val.detach()
                     total_loss_discr_fake += _loss_val
 
-                total_loss_discr = total_loss_discr_fake + total_loss_discr_real
+                total_loss_discr = total_loss_discr_fake + \
+                                   total_loss_discr_real
 
                 if optimizers:
 
@@ -232,12 +233,6 @@ if "TORCH" in get_backends():
                                         "env_appendix": "_%02d" % fold
                                         }})
 
-#             logging.info({'image_grid': {"images": batch, "name": "real_images",
-#                                         "env_appendix": "_%02d" % fold}})
-#             logging.info({"image_grid": {"images": fake_image_batch,
-#                                         "name": "fake_images",
-#                                         "env_appendix": "_%02d" % fold}})
-
             return metric_vals, loss_vals, [fake_image_batch, discr_pred_fake,
                                             discr_pred_real]
 
@@ -249,8 +244,8 @@ if "TORCH" in get_backends():
             Parameters
             ----------
             in_channels : int
-                number of channels for generated images by generator and inputs of
-                discriminator
+                number of channels for generated images by generator and inputs
+                of discriminator
             noise_length : int
                 length of noise vector (generator input)
             **kwargs :

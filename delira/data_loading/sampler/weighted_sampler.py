@@ -21,7 +21,8 @@ class WeightedRandomSampler(AbstractSampler):
             data index and the value at a certain index indicates the
              corresponding class
         weights : Any or None
-            sampling weights; for more details see numpy.random.choice (parameter ``p``
+            sampling weights; for more details see numpy.random.choice
+            (parameter ``p``)
 
         """
         super().__init__()

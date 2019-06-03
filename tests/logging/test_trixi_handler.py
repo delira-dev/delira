@@ -20,7 +20,8 @@ class TrixiHandlerTest(unittest.TestCase):
 
         with self.assertLogs(__name__, level='INFO'):
             logger.info(
-                {'image': {"image": np.random.rand(28, 28), "name": "test_img"}})
+                {'image': {"image": np.random.rand(28, 28),
+                           "name": "test_img"}})
 
 
 if __name__ == '__main__':

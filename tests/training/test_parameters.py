@@ -77,7 +77,8 @@ class ParametersTest(unittest.TestCase):
                 }))
 
                 params_copy = params.deepcopy()
-                params = params.permute_variability_on_top().permute_training_on_top()
+                params = params.permute_variability_on_top(
+                ).permute_training_on_top()
                 self.assertEqual(params_copy, params)
 
                 self.assertEqual(params.nested_get(

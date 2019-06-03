@@ -22,9 +22,11 @@ if "TORCH" in get_backends():
         -----
         Differences to the original paper:
 
-            * padding is used in 3x3 convolutions to prevent loss of border pixels
+            * padding is used in 3x3 convolutions to prevent loss of border
+                pixels
             * merging outputs does not require cropping due to (1)
-            * residual connections can be used by specifying ``merge_mode='add'``
+            * residual connections can be used by specifying
+                ``merge_mode='add'``
             * if non-parametric upsampling is used in the decoder pathway (
                 specified by upmode='upsample'), then an additional 1x1 2d
                 convolution occurs after upsampling to reduce channel
@@ -246,7 +248,8 @@ if "TORCH" in get_backends():
             if optimizers:
                 optimizers['default'].zero_grad()
                 # perform loss scaling via apex if half precision is enabled
-                with optimizers["default"].scale_loss(total_loss) as scaled_loss:
+                with optimizers["default"].scale_loss(total_loss) \
+                        as scaled_loss:
                     scaled_loss.backward()
                 optimizers['default'].step()
 
@@ -359,7 +362,8 @@ if "TORCH" in get_backends():
 
             class UpConv(torch.nn.Module):
                 """
-                A helper Module that performs 2 convolutions and 1 UpConvolution.
+                A helper Module that performs 2 convolutions and 1
+                UpConvolution.
                 A ReLU activation follows each convolution.
                 """
 
@@ -422,8 +426,8 @@ if "TORCH" in get_backends():
         @staticmethod
         def prepare_batch(batch: dict, input_device, output_device):
             """
-            Helper Function to prepare Network Inputs and Labels (convert them to
-            correct type and shape and push them to correct devices)
+            Helper Function to prepare Network Inputs and Labels (convert them
+            to correct type and shape and push them to correct devices)
 
             Parameters
             ----------
@@ -437,8 +441,8 @@ if "TORCH" in get_backends():
             Returns
             -------
             dict
-                dictionary containing data in correct type and shape and on correct
-                device
+                dictionary containing data in correct type and shape and on
+                correct device
 
             """
             return_dict = {"data": torch.from_numpy(batch.pop("data")).to(
@@ -469,7 +473,8 @@ if "TORCH" in get_backends():
             * padding is used in 3x3x3 convolutions to prevent loss of border
                 pixels
             * merging outputs does not require cropping due to (1)
-            * residual connections can be used by specifying ``merge_mode='add'``
+            * residual connections can be used by specifying
+                ``merge_mode='add'``
             * if non-parametric upsampling is used in the decoder pathway (
                 specified by upmode='upsample'), then an additional 1x1x1 3d
                 convolution occurs after upsampling to reduce channel
@@ -690,7 +695,8 @@ if "TORCH" in get_backends():
             if optimizers:
                 optimizers['default'].zero_grad()
                 # perform loss scaling via apex if half precision is enabled
-                with optimizers["default"].scale_loss(total_loss) as scaled_loss:
+                with optimizers["default"].scale_loss(total_loss) \
+                        as scaled_loss:
                     scaled_loss.backward()
                 optimizers['default'].step()
 
@@ -804,7 +810,8 @@ if "TORCH" in get_backends():
 
             class UpConv(torch.nn.Module):
                 """
-                A helper Module that performs 2 convolutions and 1 UpConvolution.
+                A helper Module that performs 2 convolutions and 1
+                UpConvolution.
                 A ReLU activation follows each convolution.
                 """
 
@@ -868,8 +875,8 @@ if "TORCH" in get_backends():
         @staticmethod
         def prepare_batch(batch: dict, input_device, output_device):
             """
-            Helper Function to prepare Network Inputs and Labels (convert them to
-            correct type and shape and push them to correct devices)
+            Helper Function to prepare Network Inputs and Labels (convert them
+            to correct type and shape and push them to correct devices)
 
             Parameters
             ----------
@@ -883,8 +890,8 @@ if "TORCH" in get_backends():
             Returns
             -------
             dict
-                dictionary containing data in correct type and shape and on correct
-                device
+                dictionary containing data in correct type and shape and on
+                correct device
 
             """
             return_dict = {"data": torch.from_numpy(batch.pop("data")).to(

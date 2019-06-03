@@ -58,7 +58,8 @@ class RandomSampler(AbstractSampler):
 
         indices = choice(self._indices,
                          size=new_global_idx - self._global_index)
-        # indices = choices(self._indices, k=new_global_idx - self._global_index)
+        # indices = choices(
+        #   self._indices, k=new_global_idx - self._global_index)
         self._global_index = new_global_idx
         return indices
 

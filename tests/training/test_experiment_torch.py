@@ -17,7 +17,8 @@ class TorchExperimentTest(unittest.TestCase):
 
         from delira.training import PyTorchExperiment, Parameters
         from delira.training.callbacks import ReduceLROnPlateauCallbackPyTorch
-        from delira.models.classification import ClassificationNetworkBasePyTorch
+        from delira.models.classification import \
+            ClassificationNetworkBasePyTorch
         from delira.data_loading import AbstractDataset, BaseDataManager
         import torch
 

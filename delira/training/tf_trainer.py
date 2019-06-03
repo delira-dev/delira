@@ -155,7 +155,8 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
 
         """
         if gpu_ids and tf.test.is_gpu_available():
-            assert len(gpu_ids) <= len(get_available_gpus()), "more GPUs specified than available"
+            assert len(gpu_ids) <= len(get_available_gpus()), 
+            "more GPUs specified than available"
             self.use_gpu = True
             if len(gpu_ids) > 1:
                 logger.warning(
@@ -307,7 +308,8 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
                 self.save_path,
                 'checkpoint_best.meta')):
 
-            # load best model and return it. Since the state is hidden in the graph, we don't actually need to use
+            # load best model and return it. Since the state is hidden in the
+            # graph, we don't actually need to use
             # self.update_state.
             self.update_state(os.path.join(self.save_path,
                                            'checkpoint_best')

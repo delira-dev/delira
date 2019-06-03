@@ -152,8 +152,8 @@ class BaseDataManager(object):
             self.transforms,
             self.n_process_augmentation,
             num_cached_per_queue=2,
-            seeds=self.n_process_augmentation *
-            [seed])
+            seeds=self.n_process_augmentation * [seed]
+        )
 
     def get_subset(self, indices):
         """
@@ -316,8 +316,8 @@ class BaseDataManager(object):
     @n_process_augmentation.setter
     def n_process_augmentation(self, new_process_number):
         """
-        Setter for number of augmentation processes, casts to int before setting
-        the attribute
+        Setter for number of augmentation processes, casts to int before
+        setting the attribute
 
         Parameters
         ----------
@@ -497,15 +497,17 @@ class BaseDataManager(object):
         if self.n_process_augmentation == 1:
             n_batches = int(np.floor(self.n_samples / self.batch_size))
         elif self.n_process_augmentation > 1:
-            if (self.n_samples / self.batch_size) < self.n_process_augmentation:
+            if (self.n_samples / self.batch_size) < \
+                    self.n_process_augmentation:
                 self.n_process_augmentation = 1
                 logger.warning(
                     'Too few samples for n_process_augmentation={}. '
                     'Forcing n_process_augmentation={} '
                     'instead'.format(
                         self.n_process_augmentation, 1))
-            n_batches = int(np.floor(self.n_samples / self.batch_size /
-                                     self.n_process_augmentation))
+            n_batches = int(np.floor(
+                self.n_samples / self.batch_size / self.n_process_augmentation)
+            )
         else:
             raise ValueError('Invalid value for n_process_augmentation')
         return n_batches

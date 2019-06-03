@@ -31,8 +31,8 @@ if "TORCH" in get_backends():
         @contextlib.contextmanager
         def scale_loss(self, loss):
             """
-            Function which scales the loss in ``apex`` and yields the unscaled loss
-            here to mirror the API
+            Function which scales the loss in ``apex`` and yields the unscaled
+            loss here to mirror the API
 
             Parameters
             ----------

@@ -55,7 +55,8 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
     def _add_losses(self, losses: dict):
         """
-        Adds losses to model that are to be used by optimizers or during evaluation
+        Adds losses to model that are to be used by optimizers or during
+        evaluation
 
         Parameters
         ----------
@@ -81,12 +82,14 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
     def _add_optims(self, optims: dict):
         """
-        Adds optims to model that are to be used by optimizers or during training
+        Adds optims to model that are to be used by optimizers or during
+        training
 
         Parameters
         ----------
         optim: dict
-            dictionary containing all optimizers, optimizers should be of Type[tf.train.Optimizer]
+            dictionary containing all optimizers, optimizers should be of
+            Type[tf.train.Optimizer]
         """
         if self._optims is not None and len(optims) != 0:
             logging.warning('Change of optims is not yet supported')
@@ -146,7 +149,8 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
                 dict
                     Metric values (with same keys as input dict metrics)
                 dict
-                    Loss values (with same keys as those initially passed to model.init).
+                    Loss values (with same keys as those initially passed to
+                    model.init).
                     Additionally, a total_loss key is added
                 list
                     Arbitrary number of predictions as np.array
@@ -187,6 +191,4 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
                                     "env_appendix": "_%02d" % fold
                                     }})
 
-        # logging.info({'image_grid': {"image_array": inputs, "name": image_names,
-        #                             "title": "input_images", "env_appendix": "_%02d" % fold}})
         return metric_vals, loss_vals, [preds]

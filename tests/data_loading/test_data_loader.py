@@ -22,7 +22,8 @@ class DataLoaderTest(unittest.TestCase):
         self.assertIn("data", loader.generate_train_batch())
 
         self.assertEqual(
-            len(set([_tmp for _tmp in loader.generate_train_batch()["label"]])),
+            len(set([_tmp
+                     for _tmp in loader.generate_train_batch()["label"]])),
             1)
 
 
