@@ -39,9 +39,8 @@ script:
     # run tests or stylechecks
     - if [[ "$TEST_TYPE" == "unittests" ]]; then
           bash scripts/ci/run_tests.sh;
-
       else
-          bash scripts/ci/install_before_style_check.sh;
+          bash scripts/ci/run_style_checks.sh;
       fi
     
     # build docs if python == 3.7
