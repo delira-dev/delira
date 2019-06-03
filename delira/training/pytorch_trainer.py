@@ -191,10 +191,18 @@ if "TORCH" in get_backends():
             if os.path.isdir(self.save_path):
                 # check all files in directory starting with "checkpoint" and
                 # not ending with "_best.pth"
-                files = [x for x in os.listdir(self.save_path)
-                         if (os.path.isfile(os.path.join(self.save_path, x))
-                             and (x.startswith("checkpoint")
-                                  and not x.endswith("_best.pth")))]
+                files = []
+                for _file in os.listdir(self.save_path):
+                    if not os.path.isfile(os.path.join(self.save_path, _file)):
+                        continue
+
+                    if not _file.startswith("checkpoint"):
+                        continue
+
+                    if _file.endswith("_best.pth"):
+                        continue
+
+                    files.append(_file)
 
                 # if list is not empty: load previous state
                 if files:

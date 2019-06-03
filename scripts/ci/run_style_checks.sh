@@ -13,7 +13,7 @@ git checkout $TRAVIS_BRANCH;
 
 # fix pep8 erros in place if possible
 find . -name \*.py -exec autopep8 --recursive --aggressive --aggressive --in-place {} +;
-num_errors_after=`find . -name \*.py -exec pep8 --ignore=E402 {} + | wc -l`;
+num_errors_after=`find . -name \*.py -exec pycodestyle --ignore=E402 {} + | wc -l`;
 echo $num_errors_after;
 
 if (( $num_errors_after < $num_errors_before )); then
