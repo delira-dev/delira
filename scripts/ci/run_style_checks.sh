@@ -8,8 +8,7 @@ echo $num_errors_before;
 
 cd "$TRAVIS_BUILD_DIR";
 # try with combination of maintainer email and github token
-git config --global user.email "justus.schock@rwth-aachen.de"
-git config --global user.name "Travis AutoPEP8 Fixes";
+git config user.name "Travis AutoPEP8 Fixes";
 git checkout $TRAVIS_BRANCH;
 
 # fix pep8 erros in place if possible
@@ -22,7 +21,7 @@ if (( $num_errors_after < $num_errors_before )); then
     git config --global push.default simple; # Push only to the current branch.  
     # Make sure to make the output quiet, or else the API token will 
     # leak!  This works because the API key can replace your password.
-    git push --quiet;
+    git push https://$GITHUB_TOKEN@github.com/justusschock/delira.git;
 fi
 
 cd "$TRAVIS_BUILD_DIR";
