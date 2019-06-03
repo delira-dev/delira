@@ -94,7 +94,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         if self._optims is not None and len(optims) != 0:
             logging.warning('Change of optims is not yet supported')
             pass
-            #raise NotImplementedError()
+            # raise NotImplementedError()
         elif self._optims is not None and len(optims) == 0:
             pass
         else:
@@ -127,35 +127,35 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
     def closure(model: typing.Type[AbstractTfNetwork], data_dict: dict,
                 metrics={}, fold=0, **kwargs):
         """
-                closure method to do a single prediction.
-                This is followed by backpropagation or not based state of
-                on model.train
+        closure method to do a single prediction.
+        This is followed by backpropagation or not based state of
+        on model.train
 
-                Parameters
-                ----------
-                model: AbstractTfNetwork
-                    AbstractTfNetwork or its child-clases
-                data_dict : dict
-                    dictionary containing the data
-                metrics : dict
-                    dict holding the metrics to calculate
-                fold : int
-                    Current Fold in Crossvalidation (default: 0)
-                **kwargs:
-                    additional keyword arguments
+        Parameters
+        ----------
+        model: AbstractTfNetwork
+            AbstractTfNetwork or its child-clases
+        data_dict : dict
+            dictionary containing the data
+        metrics : dict
+            dict holding the metrics to calculate
+        fold : int
+            Current Fold in Crossvalidation (default: 0)
+        **kwargs:
+            additional keyword arguments
 
-                Returns
-                -------
-                dict
-                    Metric values (with same keys as input dict metrics)
-                dict
-                    Loss values (with same keys as those initially passed to
-                    model.init).
-                    Additionally, a total_loss key is added
-                list
-                    Arbitrary number of predictions as np.array
+        Returns
+        -------
+        dict
+            Metric values (with same keys as input dict metrics)
+        dict
+            Loss values (with same keys as those initially passed to
+            model.init).
+            Additionally, a total_loss key is added
+        list
+            Arbitrary number of predictions as np.array
 
-                """
+        """
 
         loss_vals = {}
         metric_vals = {}

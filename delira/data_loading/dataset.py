@@ -454,7 +454,8 @@ class BaseExtendCacheDataset(BaseCacheDataset):
         data_path : str or list
             if data_path is a string, _sample_fn is called for all items inside
             the specified directory
-            if data_path is a list, _sample_fn is called for elements in the list
+            if data_path is a list, _sample_fn is called for elements in the
+            list
         load_fn : function
             function to load a multiple data samples at once. Needs to return
             an iterable which extends the internal list.
@@ -711,7 +712,8 @@ if "TORCH" in get_backends():
                 must be one of
                 ['mnist', 'emnist', 'fashion_mnist', 'cifar10', 'cifar100']
             root : str
-                path dataset (If download is True: dataset will be extracted here;
+                path dataset (If download is True: dataset will be extracted
+                here;
                 else: path to extracted dataset)
             train : bool
                 whether to use the train or the testset
