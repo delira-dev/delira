@@ -37,17 +37,17 @@ install:
 # command to run tests
 script:
     # run tests or stylechecks
-    if [[ "$TEST_TYPE" == "unittests" ]]; then
-        bash scripts/ci/run_tests.sh;
-      
-          # build docs if python == 3.7
-        if [[ "$TRAVIS_PYTHON_VERSION" == "3.7" ]]; then
-            bash scripts/ci/build_docs.sh;
-        fi
+    - if [[ "$TEST_TYPE" == "unittests" ]]; then
+          bash scripts/ci/run_tests.sh;
 
-    else
-        bash scripts/ci/install_before_style_check.sh;
-    fi
+      else
+          bash scripts/ci/install_before_style_check.sh;
+      fi
+    
+    # build docs if python == 3.7
+    - if [[ "$TRAVIS_PYTHON_VERSION" == 3.7 ]] && [[ "$TEST_TYPE" == "unittests" ]]; then
+          bash scripts/ci/build_docs.sh;
+      fi
 
 before_deploy:
     - cd $TRAVIS_BUILD_DIR
@@ -59,7 +59,7 @@ deploy:
           keep-history: true
           on:
               branch: master
-              condition: "$TRAVIS_PYTHON_VERSION = 3.7" && "$TEST_TYPE" = "unittests"
+              condition: ("$TRAVIS_PYTHON_VERSION = 3.7") AND ("$TEST_TYPE" = "unittests")
               local_dir: docs/_build/html
         - provider: pypi
           user: $PYPI_USERNAME
@@ -67,4 +67,4 @@ deploy:
           on:
               tags: true
               distributions: "sdist bdist_wheel"
-skip_existing: true
+              skip_existing: true
