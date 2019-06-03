@@ -7,6 +7,8 @@ num_errors_before=`find . -name \*.py -exec pycodestyle --ignore=E402 {} + | wc 
 echo $num_errors_before;
 
 cd "$TRAVIS_BUILD_DIR";
+# try with combination of maintainer email and github token
+git config --global user.email "justus.schock@rwth-aachen.de"
 git config --global user.name "Travis AutoPEP8 Fixes";
 git checkout $TRAVIS_BRANCH;
 
