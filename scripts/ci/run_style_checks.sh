@@ -8,7 +8,7 @@ echo $num_errors_before;
 
 cd "$TRAVIS_BUILD_DIR";
 git config --global user.name "Travis AutoPEP8 Fixes";
-git checkpit $TRAVIS_BRANCH;
+git checkout $TRAVIS_BRANCH;
 
 # fix pep8 erros in place if possible
 find . -name \*.py -exec autopep8 --recursive --aggressive --aggressive --in-place {} +;
