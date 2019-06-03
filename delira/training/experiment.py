@@ -388,8 +388,9 @@ class BaseExperiment(TrixiExperiment):
                                convert_batch_to_npy_fn=convert_fn,
                                prepare_batch_fn=prepare_batch, **kwargs)
 
-        return predictor.predict_data_mgr(test_data, 1, metrics,
-                                          metric_keys, verbose)
+        # return first item of generator
+        return next(predictor.predict_data_mgr(test_data, 1, metrics,
+                                               metric_keys, verbose))
 
     def kfold(self, data: BaseDataManager, metrics: dict, num_epochs=None,
               num_splits=None, shuffle=False, random_seed=None,
