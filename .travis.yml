@@ -1,74 +1,74 @@
 language: python
 
 services:
-  - docker
+    - docker
 
 matrix:
-  include:
-    - name: "Unittests Python 3.5"
-      python: 3.5
-      dist: xenial
-      env:
-      - TEST_TYPE="unittests"
-    - name: "Unittests Python 3.6"
-      python: 3.6
-      dist: xenial
-      env:
-      - TEST_TYPE="unittests"
-    - name: "Unittests Python 3.7"
-      python: 3.7
-      dist: xenial
-      env:
-      - TEST_TYPE="unittests"
-    - name: "Static Style Checks"
-      python: 3.7
-      dist: xenial
-      env:
-      - TEST_TYPE="style-check"
+    include:
+        - name: "Unittests Python 3.5"
+          python: 3.5
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+        - name: "Unittests Python 3.6"
+          python: 3.6
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+        - name: "Unittests Python 3.7"
+          python: 3.7
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+        - name: "Static Style Checks"
+          python: 3.7
+          dist: xenial
+          env:
+              - TEST_TYPE="style-check"
 
 # command to install dependencies
 before_install:
-  - if [[ "$TEST_TYPE" == "unittests" ]]; then
-      bash scripts/ci/install_before_tests.sh;
-    else
-      bash scripts/ci/install_before_style_check.sh;
-    fi
+    - if [[ "$TEST_TYPE" == "unittests" ]]; then
+          bash scripts/ci/install_before_tests.sh;
+      else
+          bash scripts/ci/install_before_style_check.sh;
+      fi
 
 install:
-  - pip install --no-deps .
+    - pip install --no-deps .
   
 # command to run tests
 script:
-  # run tests or stylechecks
-  - if [[ "$TEST_TYPE" == "unittests" ]]; then
-      bash scripts/ci/run_tests.sh;
+    # run tests or stylechecks
+    - if [[ "$TEST_TYPE" == "unittests" ]]; then
+          bash scripts/ci/run_tests.sh;
       
-      # build docs if python == 3.7
-      if [[ "$TRAVIS_PYTHON_VERSION" == "3.7" ]]; then
-        bash scripts/ci/build_docs.sh;
+          # build docs if python == 3.7
+          if [[ "$TRAVIS_PYTHON_VERSION" == "3.7" ]]; then
+              bash scripts/ci/build_docs.sh;
+          fi
+
+      else
+          bash scripts/ci/install_before_style_check.sh;
       fi
 
-    else
-      bash scripts/ci/install_before_style_check.sh;
-    fi
-
 before_deploy:
-  - cd $TRAVIS_BUILD_DIR
+    - cd $TRAVIS_BUILD_DIR
 
 deploy:
-  - provider: pages
-    skip_cleanup: true
-    github_token: $GITHUB_TOKEN  # Set in travis-ci.org dashboard, marked secure
-    keep-history: true
-    on:
-      branch: master
-      condition: "$TRAVIS_PYTHON_VERSION = 3.7" && "$TEST_TYPE" = "unittests"
-    local_dir: docs/_build/html
-  - provider: pypi
-    user: $PYPI_USERNAME
-    password: $PYPI_PASSWORD
-    on:
-      tags: true
-    distributions: "sdist bdist_wheel"
-    skip_existing: true
+        - provider: pages
+          skip_cleanup: true
+          github_token: $GITHUB_TOKEN  # Set in travis-ci.org dashboard, marked secure
+          keep-history: true
+          on:
+              branch: master
+              condition: "$TRAVIS_PYTHON_VERSION = 3.7" && "$TEST_TYPE" = "unittests"
+              local_dir: docs/_build/html
+        - provider: pypi
+          user: $PYPI_USERNAME
+          password: $PYPI_PASSWORD
+          on:
+              tags: true
+              distributions: "sdist bdist_wheel"
+              skip_existing: true
 
