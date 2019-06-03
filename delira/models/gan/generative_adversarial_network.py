@@ -164,7 +164,7 @@ if "TORCH" in get_backends():
                     total_loss_discr_fake += _loss_val
 
                 total_loss_discr = total_loss_discr_fake + \
-                                   total_loss_discr_real
+                    total_loss_discr_real
 
                 if optimizers:
 

@@ -155,7 +155,7 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
 
         """
         if gpu_ids and tf.test.is_gpu_available():
-            assert len(gpu_ids) <= len(get_available_gpus()), 
+            assert len(gpu_ids) <= len(get_available_gpus()),
             "more GPUs specified than available"
             self.use_gpu = True
             if len(gpu_ids) > 1:
