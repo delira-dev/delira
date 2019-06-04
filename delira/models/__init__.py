@@ -11,6 +11,6 @@ if "TORCH" in get_backends():
     from .gan import GenerativeAdversarialNetworkBasePyTorch
 
 if "TF" in get_backends():
-
     from .abstract_network import AbstractTfNetwork, AbstractTfEagerNetwork
     from .classification import ClassificationNetworkBaseTf
+

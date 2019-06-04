@@ -520,6 +520,63 @@ class ExperimentTest(unittest.TestCase):
         if self._testMethodName.endswith("tf_eager") and "TF" in get_backends():
             switch_tf_execution_mode("graph")
 
+    @unittest.skipIf("TF" not in get_backends(),
+                     reason="No TF Backend installed")
+    def test_experiment_run_tf_eager(self):
+
+        from delira.training import TfEagerExperiment
+        from delira.data_loading import BaseDataManager
+
+        for case in self._test_cases_tf_eager:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 network_cls) = case
+
+                exp = TfEagerExperiment(params, network_cls,
+                                        key_mapping={"x": "data"})
+
+                dset_train = DummyDataset(dataset_length_train)
+                dset_test = DummyDataset(dataset_length_test)
+
+                dmgr_train = BaseDataManager(dset_train, 16, 4, None)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                exp.run(dmgr_train, dmgr_test)
+
+    @unittest.skipIf("TF" not in get_backends(),
+                     reason="No TF Backend installed")
+    def test_experiment_test_tf_eager(self):
+        from delira.training import TfEagerExperiment
+        from delira.data_loading import BaseDataManager
+
+        import tensorflow as tf
+        if not tf.executing_eagerly():
+            tf.enable_eager_execution()
+
+        for case in self._test_cases_tf_eager:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 network_cls) = case
+
+                exp = TfEagerExperiment(params, network_cls,
+                                        key_mapping={"x": "data"},
+                                        )
+
+                model = network_cls()
+
+                dset_test = DummyDataset(dataset_length_test)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                exp.test(model, dmgr_test,
+                         params.nested_get("val_metrics"),
+                         prepare_batch=partial(model.prepare_batch,
+                                               output_device="/cpu:0",
+                                               input_device="/cpu:0"))
+
+    def tearDown(self) -> None:
+        if self._testMethodName.endswith("tf_eager") and "TF" in get_backends():
+            switch_tf_execution_mode("graph")
+
 
 if __name__ == '__main__':
     unittest.main()
