@@ -12,5 +12,5 @@ if "TORCH" in get_backends():
         TorchScriptNetworkTrainer
 
 if "TF" in get_backends():
-    from .experiment import TfExperiment
-    from .tf_trainer import TfNetworkTrainer
+    from .experiment import TfExperiment, TfEagerExperiment
+    from .tf_trainer import TfNetworkTrainer, TfEagerNetworkTrainer

@@ -1,12 +1,16 @@
 
 from delira import get_backends
 import unittest
+import typing
 
 import numpy as np
 from functools import partial
 from delira.training import Parameters
 
 from delira.data_loading import AbstractDataset
+
+if "TF" in get_backends():
+    from delira.training.train_utils import switch_tf_execution_mode
 
 
 class DummyDataset(AbstractDataset):
@@ -28,11 +32,19 @@ class DummyDataset(AbstractDataset):
 class ExperimentTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        test_cases_torch, test_cases_torchscript, test_cases_tf = [], [], []
+        test_cases = {
+            "torch": [],
+            "torchscript": [],
+            "tf": [],
+            "tf_eager": []
+
+        }
+
+        test_cases_torch, test_cases_tf, test_cases_tf_eager = [], [], []
         from sklearn.metrics import mean_absolute_error
 
         # setup torch testcases
-        if "TORCH" in get_backends():
+        if "TORCH" in get_backends() and self._testMethodName.endswith("torch"):
             import torch
             from delira.models.classification import \
                 ClassificationNetworkBasePyTorch
@@ -64,7 +76,7 @@ class ExperimentTest(unittest.TestCase):
                                                       ).to(output_device,
                                                            torch.float)}
 
-            test_cases_torch.append((
+            test_cases["torch"].append((
                 Parameters(fixed_params={
                     "model": {},
                     "training": {
@@ -83,8 +95,6 @@ class ExperimentTest(unittest.TestCase):
                 "mae",
                 "lowest",
                 DummyNetworkTorch))
-
-            self._test_cases_torch = test_cases_torch
 
             # setup TorchScript testcases
             from delira.models import AbstractTorchScriptNetwork
@@ -116,7 +126,7 @@ class ExperimentTest(unittest.TestCase):
                         torch.nn.Linear(64, n_outputs)
                     )
 
-            test_cases_torchscript.append((
+            test_cases["torchscript"].append((
                 Parameters(fixed_params={
                     "model": {},
                     "training": {
@@ -136,52 +146,141 @@ class ExperimentTest(unittest.TestCase):
                 "lowest",
                 DummyNetworkTorchScript))
 
-            self._test_cases_torchscript = test_cases_torchscript
-
         # setup tf tescases
         if "TF" in get_backends():
-            from delira.models import ClassificationNetworkBaseTf, \
-                AbstractTfNetwork
-
             import tensorflow as tf
 
-            class DummyNetworkTf(ClassificationNetworkBaseTf):
-                def __init__(self):
-                    AbstractTfNetwork.__init__(self)
-                    self.model = self._build_model(1)
+            # test graph mode execution backend
+            if self._testMethodName.endswith("tf"):
+                # enable graph mode
+                switch_tf_execution_mode("graph")
+                from delira.models import ClassificationNetworkBaseTf, \
+                    AbstractTfNetwork
 
-                    images = tf.placeholder(shape=[None, 32],
-                                            dtype=tf.float32)
-                    labels = tf.placeholder_with_default(
-                        tf.zeros([tf.shape(images)[0], 1]), shape=[None, 1])
+                class DummyNetworkTf(ClassificationNetworkBaseTf):
+                    def __init__(self):
+                        AbstractTfNetwork.__init__(self)
+                        self.model = self._build_model(1)
 
-                    preds_train = self.model(images, training=True)
-                    preds_eval = self.model(images, training=False)
+                        images = tf.placeholder(shape=[None, 32],
+                                                dtype=tf.float32)
+                        labels = tf.placeholder_with_default(
+                            tf.zeros([tf.shape(images)[0], 1]), shape=[None, 1])
 
-                    self.inputs["images"] = images
-                    self.inputs["labels"] = labels
-                    self.outputs_train["pred"] = preds_train
-                    self.outputs_eval["pred"] = preds_eval
+                        preds_train = self.model(images, training=True)
+                        preds_eval = self.model(images, training=False)
 
-                @staticmethod
-                def _build_model(n_outputs):
-                    return tf.keras.models.Sequential(
-                        layers=[
-                            tf.keras.layers.Dense(64, input_shape=(
-                                32,), bias_initializer='glorot_uniform'),
-                            tf.keras.layers.ReLU(),
-                            tf.keras.layers.Dense(
-                                n_outputs,
-                                bias_initializer='glorot_uniform')]
-                    )
+                        self.inputs["images"] = images
+                        self.inputs["labels"] = labels
+                        self.outputs_train["pred"] = preds_train
+                        self.outputs_eval["pred"] = preds_eval
 
-            test_cases_tf.append(
-                (
+                    @staticmethod
+                    def _build_model(n_outputs):
+                        return tf.keras.models.Sequential(
+                            layers=[
+                                tf.keras.layers.Dense(64, input_shape=(
+                                    32,), bias_initializer='glorot_uniform'),
+                                tf.keras.layers.ReLU(),
+                                tf.keras.layers.Dense(
+                                    n_outputs,
+                                    bias_initializer='glorot_uniform')]
+                        )
+
+                test_cases["tf"].append(
+                    (
+                        Parameters(fixed_params={
+                            "model": {},
+                            "training": {
+                                "losses": {"CE":
+                                           tf.losses.softmax_cross_entropy},
+                                "optimizer_cls": tf.train.AdamOptimizer,
+                                "optimizer_params": {"learning_rate": 1e-3},
+                                "num_epochs": 2,
+                                "val_metrics": {"mae": mean_absolute_error},
+                                "lr_sched_cls": None,
+                                "lr_sched_params": {}}
+                        }
+                        ),
+                        500,
+                        50,
+                        DummyNetworkTf)
+                )
+
+            elif self._testMethodName.endswith("tf_eager"):
+                # test eager execution backend
+                from delira.models import AbstractTfEagerNetwork
+
+                # enable eager mode
+                switch_tf_execution_mode("eager")
+
+                class DummyEagerNetwork(AbstractTfEagerNetwork):
+                    def __init__(self):
+                        super().__init__()
+
+                        self.dense_1 = tf.keras.layers.Dense(64,
+                                                             activation="relu")
+                        self.dense_2 = tf.keras.layers.Dense(1,
+                                                             activation="relu")
+
+                    def call(self, x: tf.Tensor):
+                        return {"pred": self.dense_2(self.dense_1(x))}
+
+                    @staticmethod
+                    def closure(model: AbstractTfEagerNetwork,
+                                data_dict: dict,
+                                optimizers: typing.Dict[str,
+                                                        tf.train.Optimizer],
+                                losses={},
+                                metrics={},
+                                fold=0,
+                                **kwargs):
+
+                        loss_vals, metric_vals = {}, {}
+
+                        # calculate loss with graph created by gradient taping
+                        with tf.GradientTape() as tape:
+                            preds = model(data_dict["data"])
+                            total_loss = 0
+                            for k, loss_fn in losses.items():
+                                _loss_val = loss_fn(preds["pred"],
+                                                    data_dict["label"])
+                                loss_vals[k] = _loss_val.numpy()
+                                total_loss += _loss_val
+
+                        # calculate gradients
+                        grads = tape.gradient(total_loss,
+                                              model.trainable_variables)
+
+                        for k, metric_fn in metrics.items():
+                            metric_vals[k] = metric_fn(
+                                preds["pred"],
+                                data_dict["label"]).numpy()
+
+                        if optimizers:
+                            # perform optimization step
+                            optimizers["default"].apply_gradients(
+                                zip(grads, model.trainable_variables))
+                        else:
+                            # add prefix "val" in validation mode
+                            eval_losses, eval_metrics = {}, {}
+                            for key in loss_vals.keys():
+                                eval_losses["val_" + str(key)] = loss_vals[key]
+
+                            for key in metric_vals:
+                                eval_metrics["val_" +
+                                             str(key)] = metric_vals[key]
+
+                            loss_vals = eval_losses
+                            metric_vals = eval_metrics
+
+                        return metric_vals, loss_vals, preds
+
+                test_cases["tf_eager"].append((
                     Parameters(fixed_params={
                         "model": {},
                         "training": {
-                            "losses": {"CE":
-                                       tf.losses.softmax_cross_entropy},
+                            "losses": {"L1": tf.losses.absolute_difference},
                             "optimizer_cls": tf.train.AdamOptimizer,
                             "optimizer_params": {"learning_rate": 1e-3},
                             "num_epochs": 2,
@@ -192,10 +291,10 @@ class ExperimentTest(unittest.TestCase):
                     ),
                     500,
                     50,
-                    DummyNetworkTf)
-            )
+                    DummyEagerNetwork)
+                )
 
-        self._test_cases_tf = test_cases_tf
+        self._test_cases = test_cases
 
     @unittest.skipIf("TORCH" not in get_backends(),
                      reason="No TORCH Backend installed")
@@ -204,7 +303,7 @@ class ExperimentTest(unittest.TestCase):
         from delira.training import PyTorchExperiment
         from delira.data_loading import BaseDataManager
 
-        for case in self._test_cases_torch:
+        for case in self._test_cases["torch"]:
             with self.subTest(case=case):
 
                 (params, dataset_length_train, dataset_length_test,
@@ -229,7 +328,7 @@ class ExperimentTest(unittest.TestCase):
         from delira.training import PyTorchExperiment
         from delira.data_loading import BaseDataManager
 
-        for case in self._test_cases_torch:
+        for case in self._test_cases["torch"]:
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
                  val_score_key, val_score_mode, network_cls) = case
@@ -261,7 +360,7 @@ class ExperimentTest(unittest.TestCase):
         from copy import deepcopy
 
         # all test cases
-        for case in self._test_cases_torch:
+        for case in self._test_cases["torch"]:
             with self.subTest(case=case):
                 (params, dataset_length_train,
                  dataset_length_test, val_score_key,
@@ -327,7 +426,7 @@ class ExperimentTest(unittest.TestCase):
         from delira.training import TorchScriptExperiment
         from delira.data_loading import BaseDataManager
 
-        for case in self._test_cases_torchscript:
+        for case in self._test_cases["torchscript"]:
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
                  val_score_key, val_score_mode, network_cls) = case
@@ -351,62 +450,7 @@ class ExperimentTest(unittest.TestCase):
         from delira.training import TorchScriptExperiment
         from delira.data_loading import BaseDataManager
 
-        for case in self._test_cases_torchscript:
-            with self.subTest(case=case):
-                (params, dataset_length_train, dataset_length_test,
-                 val_score_key, val_score_mode, network_cls) = case
-
-                exp = TorchScriptExperiment(params, network_cls,
-                                            key_mapping={"x": "data"},
-                                            val_score_key=val_score_key,
-                                            val_score_mode=val_score_mode)
-
-                model = network_cls()
-
-                dset_test = DummyDataset(dataset_length_test)
-                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
-
-                prepare_batch = partial(
-                    model.prepare_batch,
-                    output_device="cpu",
-                    input_device="cpu")
-
-                exp.test(model, dmgr_test,
-                         params.nested_get("val_metrics"),
-                         prepare_batch=prepare_batch)
-
-    @unittest.skipIf("TORCH" not in get_backends(),
-                     reason="No TORCH Backend installed")
-    def test_experiment_run_torchscript(self):
-
-        from delira.training import TorchScriptExperiment
-        from delira.data_loading import BaseDataManager
-
-        for case in self._test_cases_torchscript:
-            with self.subTest(case=case):
-                (params, dataset_length_train, dataset_length_test,
-                 val_score_key, val_score_mode, network_cls) = case
-
-                exp = TorchScriptExperiment(params, network_cls,
-                                            key_mapping={"x": "data"},
-                                            val_score_key=val_score_key,
-                                            val_score_mode=val_score_mode)
-
-                dset_train = DummyDataset(dataset_length_train)
-                dset_test = DummyDataset(dataset_length_test)
-
-                dmgr_train = BaseDataManager(dset_train, 16, 4, None)
-                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
-
-                exp.run(dmgr_train, dmgr_test)
-
-    @unittest.skipIf("TORCH" not in get_backends(),
-                     reason="No TORCH Backend installed")
-    def test_experiment_test_torchscript(self):
-        from delira.training import TorchScriptExperiment
-        from delira.data_loading import BaseDataManager
-
-        for case in self._test_cases_torchscript:
+        for case in self._test_cases["torchscript"]:
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
                  val_score_key, val_score_mode, network_cls) = case
@@ -437,7 +481,7 @@ class ExperimentTest(unittest.TestCase):
         from delira.training import TfExperiment
         from delira.data_loading import BaseDataManager
 
-        for case in self._test_cases_tf:
+        for case in self._test_cases["tf"]:
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
                  network_cls) = case
@@ -459,7 +503,7 @@ class ExperimentTest(unittest.TestCase):
         from delira.training import TfExperiment
         from delira.data_loading import BaseDataManager
 
-        for case in self._test_cases_tf:
+        for case in self._test_cases["tf"]:
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
                  network_cls) = case
@@ -473,8 +517,7 @@ class ExperimentTest(unittest.TestCase):
                 dset_test = DummyDataset(dataset_length_test)
                 dmgr_test = BaseDataManager(dset_test, 16, 1, None)
 
-                exp.test(model, dmgr_test, params,
-                         params.nested_get("val_metrics"))
+                exp.test(model, dmgr_test, params.nested_get("val_metrics"))
 
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF Backend installed")
@@ -483,7 +526,7 @@ class ExperimentTest(unittest.TestCase):
         from delira.data_loading import BaseDataManager
 
         # all test cases
-        for case in self._test_cases_tf:
+        for case in self._test_cases["tf"]:
             with self.subTest(case=case):
 
                 # both split_types
@@ -534,6 +577,63 @@ class ExperimentTest(unittest.TestCase):
                                     val_split=val_split,
                                     num_splits=2,
                                 )
+
+    @unittest.skipIf("TF" not in get_backends(),
+                     reason="No TF Backend installed")
+    def test_experiment_run_tf_eager(self):
+
+        from delira.training import TfEagerExperiment
+        from delira.data_loading import BaseDataManager
+
+
+        for case in self._test_cases["tf_eager"]:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 network_cls) = case
+
+                exp = TfEagerExperiment(params, network_cls,
+                                        key_mapping={"x": "data"})
+
+                dset_train = DummyDataset(dataset_length_train)
+                dset_test = DummyDataset(dataset_length_test)
+
+                dmgr_train = BaseDataManager(dset_train, 16, 4, None)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                exp.run(dmgr_train, dmgr_test)
+
+    @unittest.skipIf("TF" not in get_backends(),
+                     reason="No TF Backend installed")
+    def test_experiment_test_tf_eager(self):
+        from delira.training import TfEagerExperiment
+        from delira.data_loading import BaseDataManager
+        import tensorflow as tf
+        switch_tf_execution_mode("eager")
+
+        for case in self._test_cases["tf_eager"]:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 network_cls) = case
+
+                exp = TfEagerExperiment(params, network_cls,
+                                        key_mapping={"x": "data"}
+                                       )
+
+                model = network_cls()
+
+                dset_test = DummyDataset(dataset_length_test)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                exp.test(model, dmgr_test,
+                         params.nested_get("val_metrics"),
+                         prepare_batch=partial(model.prepare_batch,
+                                               output_device="/cpu:0",
+                                               input_device="/cpu:0"))
+
+    def tearDown(self) -> None:
+        if self._testMethodName.endswith(
+                "tf_eager") and "TF" in get_backends():
+            switch_tf_execution_mode("graph")
 
 
 if __name__ == '__main__':
