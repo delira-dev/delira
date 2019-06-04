@@ -366,8 +366,10 @@ class ExperimentTest(unittest.TestCase):
                 dset_test = DummyDataset(dataset_length_test)
                 dmgr_test = BaseDataManager(dset_test, 16, 1, None)
 
-                prepare_batch = partial(model.prepare_batch,
-                                        output_device="cpu", input_device="cpu")
+                prepare_batch = partial(
+                    model.prepare_batch,
+                    output_device="cpu",
+                    input_device="cpu")
 
                 exp.test(model, dmgr_test,
                          params.nested_get("val_metrics"),
@@ -419,8 +421,10 @@ class ExperimentTest(unittest.TestCase):
                 dset_test = DummyDataset(dataset_length_test)
                 dmgr_test = BaseDataManager(dset_test, 16, 1, None)
 
-                prepare_batch = partial(model.prepare_batch,
-                                        output_device="cpu", input_device="cpu")
+                prepare_batch = partial(
+                    model.prepare_batch,
+                    output_device="cpu",
+                    input_device="cpu")
 
                 exp.test(model, dmgr_test,
                          params.nested_get("val_metrics"),

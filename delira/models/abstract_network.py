@@ -231,7 +231,6 @@ if "TORCH" in get_backends():
 
             return return_dict
 
-
     class AbstractTorchScriptNetwork(AbstractNetwork, torch.jit.ScriptModule):
 
         """
