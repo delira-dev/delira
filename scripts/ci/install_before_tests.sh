@@ -9,8 +9,6 @@ if [[ "$BACKEND" == "TF" ]]; then
     pip install tensorflow==1.13.1;
 elif [[ "$BACKEND" == "Torch" ]]; then
     pip install -r requirements_extra_torch.txt;
-elif [[ "$BACKEND" == "Docs" ]]; then
-    pip install -r docs/requirements.txt;
 fi
 
 pip install coverage;
