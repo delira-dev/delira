@@ -114,20 +114,20 @@ if "TORCH" in get_backends():
             start_epoch : int
                 epoch to start training at
             metric_keys : dict
-                dict specifying which batch_dict entry to use for which metric as
-                target; default: None, which will result in key "label" for all
-                metrics
+                dict specifying which batch_dict entry to use for which metric
+                as target; default: None, which will result in key "label"
+                for all metrics
             convert_batch_to_npy_fn : type, optional
-                function converting a batch-tensor to numpy, per default this is
-                a function, which detaches the tensor, moves it to cpu and the
-                calls ``.numpy()`` on it
+                function converting a batch-tensor to numpy, per default this
+                is a function, which detaches the tensor, moves it to cpu and
+                then calls ``.numpy()`` on it
             mixed_precision : bool
                 whether to use mixed precision or not (False per default)
             mixed_precision_kwargs : dict
                 additional keyword arguments for mixed precision
             val_freq : int
-                validation frequency specifying how often to validate the trained
-                model (a value of 1 denotes validating every epoch,
+                validation frequency specifying how often to validate the
+                trained model (a value of 1 denotes validating every epoch,
                 a value of 2 denotes validating every second epoch etc.);
                 defaults to 1
             **kwargs :

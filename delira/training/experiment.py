@@ -1224,7 +1224,8 @@ if "TF" in get_backends():
                 ``network``'s ``prepare_batch`` with CPU devices
             convert_fn : function
                 function to convert a batch of tensors to numpy
-                if not specified defaults to :func:`convert_torch_tensor_to_npy`
+                if not specified defaults to
+                :func:`convert_torch_tensor_to_npy`
             **kwargs :
                 additional keyword arguments
 
