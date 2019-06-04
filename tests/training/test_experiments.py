@@ -512,6 +512,51 @@ class ExperimentTest(unittest.TestCase):
 
                 exp.test(model, dmgr_test, params.nested_get("val_metrics"))
 
+    @unittest.skipIf("CHAINER" not in get_backends(),
+                     reason="No CHAINER Backend installed")
+    def test_experiment_run_chainer(self):
+
+        from delira.training import ChainerExperiment
+        from delira.data_loading import BaseDataManager
+
+        for case in self._test_cases_chainer:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 network_cls) = case
+
+                exp = ChainerExperiment(params, network_cls,
+                                        key_mapping={"x": "data"})
+
+                dset_train = DummyDataset(dataset_length_train)
+                dset_test = DummyDataset(dataset_length_test)
+
+                dmgr_train = BaseDataManager(dset_train, 16, 4, None)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                exp.run(dmgr_train, dmgr_test)
+
+    @unittest.skipIf("CHAINER" not in get_backends(),
+                     reason="No CHAINER Backend installed")
+    def test_experiment_test_chainer(self):
+        from delira.training import ChainerExperiment
+        from delira.data_loading import BaseDataManager
+
+        for case in self._test_cases_chainer:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 network_cls) = case
+
+                exp = ChainerExperiment(params, network_cls,
+                                        key_mapping={"x": "data"},
+                                        )
+
+                model = network_cls()
+
+                dset_test = DummyDataset(dataset_length_test)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                exp.test(model, dmgr_test, params.nested_get("val_metrics"))
+
 
 if __name__ == '__main__':
     unittest.main()
