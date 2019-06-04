@@ -20,12 +20,19 @@ logger = logging.getLogger(__name__)
 if "TORCH" in get_backends():
     import torch
     from .train_utils import convert_torch_tensor_to_npy
+
     from .train_utils import create_optims_default_pytorch as \
         create_optims_default
     from ..io.torch import load_checkpoint_torch, save_checkpoint_torch, \
         save_checkpoint_torchscript, load_checkpoint_torchscript
     from ..models import AbstractPyTorchNetwork, AbstractTorchScriptNetwork
 
+
+    from .train_utils import create_optims_default_pytorch as \
+        create_optims_default
+    from ..io.torch import load_checkpoint_torch, save_checkpoint_torch, \
+        save_checkpoint_torchscript, load_checkpoint_torchscript
+    from ..models import AbstractPyTorchNetwork, AbstractTorchScriptNetwork
 
     class PyTorchNetworkTrainer(BaseNetworkTrainer):
         """
@@ -277,6 +284,45 @@ if "TORCH" in get_backends():
             self._prepare_batch = partial(
                 self._prepare_batch, input_device=self.input_device,
                 output_device=self.output_device)
+
+        def try_resume_training(self):
+            """
+            Load the latest checkpoint of a previous training if possible
+
+            """
+            # Load latest epoch file if available
+            if os.path.isdir(self.save_path):
+                # check all files in directory starting with "checkpoint" and
+                # not ending with "_best.pth"
+                files = [x for x in os.listdir(self.save_path)
+                         if os.path.isfile(os.path.join(self.save_path, x))
+                         and x.startswith("checkpoint")
+                         and not (x.endswith("_best.pth")
+                                  or x.endswith("_best.pt"))]
+
+                # if list is not empty: load previous state
+                if files:
+
+                    latest_epoch = max([
+                        int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
+                        for x in files])
+
+                    latest_state_path = os.path.join(self.save_path,
+                                                     "checkpoint_epoch_%d.pth"
+                                                     % latest_epoch)
+
+                    # if pth file does not exist, load pt file instead
+                    if not os.path.isfile(latest_state_path):
+                        latest_state_path = latest_state_path[:-1]
+
+                    logger.info("Attempting to load state from previous \
+                                training from %s" % latest_state_path)
+                    try:
+                        self.update_state(latest_state_path)
+                    except KeyError:
+                        logger.warning("Previous State could not be loaded, \
+                                        although it exists.Training will be \
+                                        restarted")
 
         def _at_training_begin(self, *args, **kwargs):
             """
