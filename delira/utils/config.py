@@ -64,12 +64,12 @@ class LookupConfig(Config):
 
         """
 
-        if (type(value,
-                 dict) or isinstance(value,
-                                     Config)) and not isinstance(value,
-                                                                 LookupConfig):
-            update_val = LookupConfig()
-            update_val.update(value, deep=False)
+        if isinstance(value, dict) or isinstance(value, Config):
+            if isinstance(value, LookupConfig):
+                update_val = LookupConfig()
+                update_val.update(value, deep=False)
+            else:
+                update_val = value
         else:
             update_val = value
 
