@@ -210,9 +210,8 @@ if "SKLEARN" in get_backends():
             dset = dmgr.dataset
 
             if verbose:
-                iterable = tqdm(enumerate(dset), unit=' sample', total=len(dset),
-                                desc="Creating unique targets to estimate "
-                                     "classes")
+                iterable = tqdm(enumerate(dset), unit=' sample', total=len(
+                    dset), desc="Creating unique targets to estimate " "classes")
             else:
                 iterable = enumerate(dset)
 
@@ -286,11 +285,12 @@ if "SKLEARN" in get_backends():
                 # that only one epoch consisting of one batch (which holds the
                 # whole dataset) is used for training
                 if num_epochs > 1:
-                    logging.info("An epoch number greater than 1 is given, "
-                                 "but the current module does not support "
-                                 "iterative training. Falling back to usual "
-                                 "dataset fitting. For huge datasets, this "
-                                 "might easily result in out of memory errors!")
+                    logging.info(
+                        "An epoch number greater than 1 is given, "
+                        "but the current module does not support "
+                        "iterative training. Falling back to usual "
+                        "dataset fitting. For huge datasets, this "
+                        "might easily result in out of memory errors!")
                     num_epochs = 1
 
             return super().train(num_epochs, datamgr_train, datamgr_valid,
@@ -341,14 +341,20 @@ if "SKLEARN" in get_backends():
             """
 
             for cb in self._callbacks:
-                self._update_state(cb.at_epoch_end(self, val_metrics=metrics_val,
-                                                   val_score_key=val_score_key,
-                                                   curr_epoch=epoch))
+                self._update_state(
+                    cb.at_epoch_end(
+                        self,
+                        val_metrics=metrics_val,
+                        val_score_key=val_score_key,
+                        curr_epoch=epoch))
 
             if epoch % self.save_freq == 0:
-                self.save_state(os.path.join(self.save_path,
-                                             "checkpoint_epoch_%d.pkl" % epoch),
-                                epoch)
+                self.save_state(
+                    os.path.join(
+                        self.save_path,
+                        "checkpoint_epoch_%d.pkl" %
+                        epoch),
+                    epoch)
 
             if is_best:
                 self.save_state(os.path.join(self.save_path,

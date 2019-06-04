@@ -1403,4 +1403,3 @@ if "SKLEARN" in get_backends():
 
             return super()._setup_test(params, model, convert_batch_to_npy_fn,
                                        prepare_batch_fn, **kwargs)
-

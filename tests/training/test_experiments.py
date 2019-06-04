@@ -158,11 +158,11 @@ class ExperimentTest(unittest.TestCase):
                         "val_metrics": {"mae": mean_absolute_error}
                     }
                 }),
-                 500,
-                 50,
-                 "mae",
-                 "lowest",
-                 DecisionTreeClassifier
+                    500,
+                    50,
+                    "mae",
+                    "lowest",
+                    DecisionTreeClassifier
                 ))
 
             test_cases_sklearn.append(
@@ -173,11 +173,11 @@ class ExperimentTest(unittest.TestCase):
                         "val_metrics": {"mae": mean_absolute_error}
                     }
                 }),
-                 500,
-                 50,
-                 "mae",
-                 "lowest",
-                 MLPClassifier
+                    500,
+                    50,
+                    "mae",
+                    "lowest",
+                    MLPClassifier
                 ))
 
             self._test_cases_sklearn = test_cases_sklearn
