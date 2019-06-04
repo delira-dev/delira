@@ -548,7 +548,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
         return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
 
     def predict_data_mgr(self, datamgr, batch_size=None, metrics={},
-                         metric_keys={}, verbose=False):
+                         metric_keys={}, verbose=False, **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator
 
@@ -566,12 +566,14 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
             the ``batch_dict`` items to use for metric calculation
         verbose : bool
             whether to show a progress-bar or not, default: False
-
+        **kwargs :
+            additional keword arguments
+            
         """
         self.module.trainable = False
 
         return super().predict_data_mgr(datamgr, batch_size, metrics,
-                                        metric_keys, verbose=verbose)
+                                        metric_keys, verbose=verbose, **kwargs)
 
     def save_state(self, file_name, *args, **kwargs):
         """
