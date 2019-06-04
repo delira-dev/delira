@@ -1,7 +1,9 @@
 import logging
-file_logger = logging.getLogger(__name__)
 
 from delira import get_backends
+
+file_logger = logging.getLogger(__name__)
+
 
 if "TORCH" in get_backends():
     import torch
@@ -33,7 +35,8 @@ if "TORCH" in get_backends():
                 number of outputs (usually same as number of classes)
 
             """
-            # register params by passing them as kwargs to parent class __init__
+            # register params by passing them as kwargs to parent class
+            # __init__
             super().__init__(in_channels=in_channels,
                              n_outputs=n_outputs,
                              **kwargs)
@@ -138,7 +141,8 @@ if "TORCH" in get_backends():
             if optimizers:
                 optimizers['default'].zero_grad()
                 # perform loss scaling via apex if half precision is enabled
-                with optimizers["default"].scale_loss(total_loss) as scaled_loss:
+                with optimizers["default"].scale_loss(total_loss) \
+                        as scaled_loss:
                     scaled_loss.backward()
                 optimizers['default'].step()
 
@@ -193,8 +197,8 @@ if "TORCH" in get_backends():
         @staticmethod
         def prepare_batch(batch: dict, input_device, output_device):
             """
-            Helper Function to prepare Network Inputs and Labels (convert them to
-            correct type and shape and push them to correct devices)
+            Helper Function to prepare Network Inputs and Labels (convert them
+            to correct type and shape and push them to correct devices)
 
             Parameters
             ----------
@@ -208,8 +212,8 @@ if "TORCH" in get_backends():
             Returns
             -------
             dict
-                dictionary containing data in correct type and shape and on correct
-                device
+                dictionary containing data in correct type and shape and on
+                correct device
 
             """
             return_dict = {"data": torch.from_numpy(batch.pop("data")).to(

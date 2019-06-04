@@ -1,6 +1,6 @@
 from logging import Handler, NOTSET
-from trixi.logger import AbstractLogger as AbstractTrixiLogger
 
+from trixi.logger import AbstractLogger as AbstractTrixiLogger
 
 TRIXI_PREFIXES = ["show_", "plot_", "save_", "get_", ""]
 

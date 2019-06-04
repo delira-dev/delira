@@ -1,5 +1,6 @@
 import abc
 import logging
+
 from delira import get_backends
 
 file_logger = logging.getLogger(__name__)
@@ -134,6 +135,7 @@ class AbstractNetwork(object):
         """
         return self._init_kwargs
 
+
 if "TORCH" in get_backends():
     import torch
 
@@ -200,8 +202,8 @@ if "TORCH" in get_backends():
         @staticmethod
         def prepare_batch(batch: dict, input_device, output_device):
             """
-            Helper Function to prepare Network Inputs and Labels (convert them to
-            correct type and shape and push them to correct devices)
+            Helper Function to prepare Network Inputs and Labels (convert them
+            to correct type and shape and push them to correct devices)
 
             Parameters
             ----------
@@ -215,8 +217,8 @@ if "TORCH" in get_backends():
             Returns
             -------
             dict
-                dictionary containing data in correct type and shape and on correct
-                device
+                dictionary containing data in correct type and shape and on
+                correct device
 
             """
             return_dict = {"data": torch.from_numpy(batch.pop("data")).to(
@@ -304,12 +306,14 @@ if "TF" in get_backends():
 
         def run(self, *args):
             """
-            Evaluates `self.outputs_train` or `self.outputs_eval` based on `self.training`
+            Evaluates `self.outputs_train` or `self.outputs_eval` based on
+            `self.training`
 
             Parameters
             ----------
             *args :
-                arguments to feed as `self.inputs`. Must have same length as `self.inputs`
+                arguments to feed as `self.inputs`. Must have same length as
+                `self.inputs`
 
             Returns
             -------

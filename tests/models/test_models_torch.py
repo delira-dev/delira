@@ -1,10 +1,11 @@
-from delira import get_backends
-import numpy as np
 import time
-import gc
-import sys
-from psutil import virtual_memory
 import unittest
+
+import gc
+import numpy as np
+from psutil import virtual_memory
+
+from delira import get_backends
 
 
 class TorchModelTest(unittest.TestCase):
@@ -14,12 +15,12 @@ class TorchModelTest(unittest.TestCase):
     @unittest.skipIf("TORCH" not in get_backends(),
                      reason="torch backend not installed")
     def test_pytorch_model_default(self):
-        from delira.models import AbstractPyTorchNetwork, UNet2dPyTorch, \
+        from delira.models import UNet2dPyTorch, \
             UNet3dPyTorch, ClassificationNetworkBasePyTorch, \
             VGG3DClassificationNetworkPyTorch, \
             GenerativeAdversarialNetworkBasePyTorch
-        from delira.training.train_utils import create_optims_default_pytorch, \
-            create_optims_gan_default_pytorch
+        from delira.training.train_utils import \
+            create_optims_default_pytorch, create_optims_gan_default_pytorch
         from delira.utils.context_managers import DefaultOptimWrapperTorch
         import torch
 

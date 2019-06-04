@@ -71,13 +71,14 @@ class ParametersTest(unittest.TestCase):
                     "variable": variable_model_params
                 }))
 
-                self.assertEqual(params.training,  to_lookup_config({
+                self.assertEqual(params.training, to_lookup_config({
                     "fixed": fixed_training_params,
                     "variable": variable_training_params
                 }))
 
                 params_copy = params.deepcopy()
-                params = params.permute_variability_on_top().permute_training_on_top()
+                params = params.permute_variability_on_top(
+                ).permute_training_on_top()
                 self.assertEqual(params_copy, params)
 
                 self.assertEqual(params.nested_get(

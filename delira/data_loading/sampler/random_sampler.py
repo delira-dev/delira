@@ -1,15 +1,17 @@
 from collections import OrderedDict
-from ..dataset import AbstractDataset
-from .abstract_sampler import AbstractSampler
 
-from numpy.random import choice, shuffle
 from numpy import concatenate
+from numpy.random import choice, shuffle
+
+from .abstract_sampler import AbstractSampler
+from ..dataset import AbstractDataset
 
 
 class RandomSampler(AbstractSampler):
     """
     Implements Random Sampling from whole Dataset
     """
+
     def __init__(self, indices):
         """
 
@@ -57,7 +59,8 @@ class RandomSampler(AbstractSampler):
 
         indices = choice(self._indices,
                          size=new_global_idx - self._global_index)
-        # indices = choices(self._indices, k=new_global_idx - self._global_index)
+        # indices = choices(
+        #   self._indices, k=new_global_idx - self._global_index)
         self._global_index = new_global_idx
         return indices
 
@@ -71,6 +74,7 @@ class PrevalenceRandomSampler(AbstractSampler):
     number of samplers per batch for each class
 
     """
+
     def __init__(self, indices, shuffle_batch=True):
         """
 

@@ -22,9 +22,12 @@ if "TORCH" in get_backends():
                 focusing parameter
             reduction : str
                 Specifies the reduction to apply to the output: ‘none’ |
-                ‘elementwise_mean’ | ‘sum’. ‘none’: no reduction will be applied,
-                ‘elementwise_mean’: the sum of the output will be divided by the
-                number of elements in the output, ‘sum’: the output will be summed
+                ‘elementwise_mean’ | ‘sum’.
+                    ‘none’: no reduction will be
+                        applied,
+                    ‘elementwise_mean’: the sum of the output will be divided
+                        by the number of elements in the output,
+                    ‘sum’: the output will be summed
             (further information about parameters above can be found in pytorch
             documentation)
 
@@ -85,9 +88,11 @@ if "TORCH" in get_backends():
                 focusing parameter
             reduction : str
                 Specifies the reduction to apply to the output: ‘none’ |
-                ‘elementwise_mean’ | ‘sum’. ‘none’: no reduction will be applied,
-                ‘elementwise_mean’: the sum of the output will be divided by the
-                number of elements in the output, ‘sum’: the output will be summed
+                ‘elementwise_mean’ | ‘sum’.
+                    ‘none’: no reduction will be applied,
+                    ‘elementwise_mean’: the sum of the output will be divided
+                        by the number of elements in the output,
+                    ‘sum’: the output will be summed
             (further information about parameters above can be found in pytorch
             documentation)
 

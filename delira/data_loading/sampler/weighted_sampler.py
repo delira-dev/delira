@@ -1,8 +1,8 @@
-from ..dataset import AbstractDataset
-from .abstract_sampler import AbstractSampler
-
-from numpy.random import choice
 import numpy as np
+from numpy.random import choice
+
+from .abstract_sampler import AbstractSampler
+from ..dataset import AbstractDataset
 
 
 class WeightedRandomSampler(AbstractSampler):
@@ -10,6 +10,7 @@ class WeightedRandomSampler(AbstractSampler):
     Implements Weighted Random Sampling
 
     """
+
     def __init__(self, indices, weights=None):
         """
 
@@ -20,7 +21,8 @@ class WeightedRandomSampler(AbstractSampler):
             data index and the value at a certain index indicates the
              corresponding class
         weights : Any or None
-            sampling weights; for more details see numpy.random.choice (parameter ``p``
+            sampling weights; for more details see numpy.random.choice
+            (parameter ``p``)
 
         """
         super().__init__()
@@ -84,7 +86,7 @@ class WeightedRandomSampler(AbstractSampler):
         samples = choice(self._indices,
                          size=new_global_idx - self._global_index,
                          p=self._weights)
-        
+
         self._global_index = new_global_idx
         return samples
 
@@ -109,10 +111,10 @@ class WeightedPrevalenceRandomSampler(WeightedRandomSampler):
         classes, classes_count = np.unique(indices, return_counts=True)
 
         # compute probabilities
-        target_prob = 1/classes.shape[0]
+        target_prob = 1 / classes.shape[0]
 
         # generate weight matrix
         for i, c in enumerate(classes):
-            weights[weights == c] = (target_prob/classes_count[i])
+            weights[weights == c] = (target_prob / classes_count[i])
 
         super().__init__(indices, weights=weights)

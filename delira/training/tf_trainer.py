@@ -1,16 +1,17 @@
-import os
 import logging
+import os
+
 import numpy as np
-from tqdm.auto import tqdm
-import tensorflow as tf
 from batchgenerators.dataloading import MultiThreadedAugmenter
-from .callbacks import AbstractCallback
+from tqdm.auto import tqdm
+from trixi.logger.tensorboard.tensorboardxlogger import TensorboardXLogger
+
+from delira.logging import TrixiHandler
 from .abstract_trainer import AbstractNetworkTrainer
+from .callbacks import AbstractCallback
 from .train_utils import create_optims_default_tf as create_optims_default
 from .train_utils import initialize_uninitialized
 from ..io import tf_load_checkpoint, tf_save_checkpoint
-from delira.logging import TrixiHandler
-from trixi.logger.tensorboard.tensorboardxlogger import TensorboardXLogger
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,6 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
                  optim_fn=create_optims_default,
                  fold=0, callbacks=[], start_epoch=1,
                  **kwargs):
-
         """
 
         Parameters
@@ -80,15 +80,22 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         else:
             os.makedirs(save_path)
 
-        # remove prior Trixihandlers and ensure logging of training results to self.save_path
-        # This facilitates visualization of multiple splits/fold inside one tensorboard-instance by means of
+        # remove prior Trixihandlers and ensure logging of training results to
+        # self.save_path
+        # This facilitates visualization of multiple splits/fold inside one
+        # tensorboard-instance by means of
         # different tf.Summary.FileWriters()
         root_logger = logging.getLogger()
         for handler in root_logger.handlers:
             handler.close()
         root_logger.handlers = []
-        logging.basicConfig(level=logging.INFO,
-                            handlers=[TrixiHandler(TensorboardXLogger, 0, self.save_path)])
+        logging.basicConfig(
+            level=logging.INFO,
+            handlers=[
+                TrixiHandler(
+                    TensorboardXLogger,
+                    0,
+                    self.save_path)])
 
         self.losses = losses
 
@@ -143,13 +150,14 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         self.closure_fn = network.closure
 
         # TODO: implement multi-GPU and single GPU training with help of
-        #  https://www.tensorflow.org/api_docs/python/tf/keras/utils/multi_gpu_model
-        #  note: might be bugged in combination with sess.run https://github.com/tensorflow/tensorflow/issues/21788
-        #  and https://www.tensorflow.org/api_docs/python/tf/keras/models/clone_model
+        #  keras multi-gpu model
+        #  note: might be bugged in combination with sess.run
+        #  https://github.com/tensorflow/tensorflow/issues/21788
 
         """
         if gpu_ids and tf.test.is_gpu_available():
-            assert len(gpu_ids) <= len(get_available_gpus()), "more GPUs specified than available"
+            assert len(gpu_ids) <= len(get_available_gpus()),
+            "more GPUs specified than available"
             self.use_gpu = True
             if len(gpu_ids) > 1:
                 logger.warning(
@@ -215,7 +223,7 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
         self.save_state(os.path.join(self.save_path, "checkpoint_epoch_0"))
         metrics_val = {}
 
-        for epoch in range(self.start_epoch, num_epochs+1):
+        for epoch in range(self.start_epoch, num_epochs + 1):
 
             self._at_epoch_begin(metrics_val, val_score_key, epoch,
                                  num_epochs)
@@ -296,9 +304,13 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
             best network
 
         """
-        if os.path.isfile(os.path.join(self.save_path, 'checkpoint_best.meta')):
+        if os.path.isfile(
+            os.path.join(
+                self.save_path,
+                'checkpoint_best.meta')):
 
-            # load best model and return it. Since the state is hidden in the graph, we don't actually need to use
+            # load best model and return it. Since the state is hidden in the
+            # graph, we don't actually need to use
             # self.update_state.
             self.update_state(os.path.join(self.save_path,
                                            'checkpoint_best')
@@ -534,7 +546,6 @@ class TfNetworkTrainer(AbstractNetworkTrainer):
             filename to save the state to
         """
         tf_save_checkpoint(file_name, self.module)
-
 
     def load_state(self, file_name):
         """

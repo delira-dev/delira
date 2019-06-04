@@ -1,8 +1,9 @@
 import logging
 
+from delira import get_backends
+
 file_logger = logging.getLogger(__name__)
 
-from delira import get_backends
 
 if "TORCH" in get_backends():
     import torch.nn as nn

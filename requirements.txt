@@ -1,4 +1,6 @@
 numpy>=1.15.0
+# fix due to trixi problems. Will fail on python 3.7 Must await new trixi release
+scipy==1.0.0
 scikit-image>=0.14.0
 scikit-learn>=0.20.0
 jupyter>=1.0.0

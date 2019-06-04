@@ -1,14 +1,14 @@
-from .abstract_callback import AbstractCallback
 from delira import get_backends
+from .abstract_callback import AbstractCallback
 
 if 'TORCH' in get_backends():
-    from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingLR, \
-        ExponentialLR, LambdaLR, MultiStepLR, StepLR
+    from torch.optim.lr_scheduler import ReduceLROnPlateau, \
+        CosineAnnealingLR, ExponentialLR, LambdaLR, MultiStepLR, StepLR
 
     class DefaultPyTorchSchedulerCallback(AbstractCallback):
         """
-        Implements a Callback, which `at_epoch_end` function is suitable for most
-        schedulers
+        Implements a Callback, which `at_epoch_end` function is suitable for
+        most schedulers
 
         """
 
@@ -103,9 +103,17 @@ if 'TORCH' in get_backends():
 
             """
             super().__init__()
-            self.scheduler = ReduceLROnPlateau(optimizer, mode, factor, patience,
-                                               verbose, threshold, threshold_mode,
-                                               cooldown, min_lr, eps)
+            self.scheduler = ReduceLROnPlateau(
+                optimizer,
+                mode,
+                factor,
+                patience,
+                verbose,
+                threshold,
+                threshold_mode,
+                cooldown,
+                min_lr,
+                eps)
 
         def at_epoch_end(self, trainer,
                          **kwargs):
@@ -125,8 +133,12 @@ if 'TORCH' in get_backends():
                 modified trainer
 
             """
-            metrics = kwargs.get("val_metrics", {}).get(kwargs.get("val_score_key",
-                                                                   None))
+            metrics = kwargs.get(
+                "val_metrics",
+                {}).get(
+                kwargs.get(
+                    "val_score_key",
+                    None))
             self.scheduler.step(metrics=metrics)
 
             return {}

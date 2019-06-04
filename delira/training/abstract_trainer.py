@@ -1,11 +1,10 @@
-from abc import abstractmethod
 import logging
 import pickle
+from abc import abstractmethod
 
 from batchgenerators.dataloading import MultiThreadedAugmenter
 
 from .callbacks import AbstractCallback
-
 
 logger = logging.getLogger(__name__)
 
@@ -293,9 +292,12 @@ class AbstractNetworkTrainer(object):
                         "AbstractCallback or provide functions " \
                         "'at_epoch_begin' and 'at_epoch_end'"
 
-        assert isinstance(callback, AbstractCallback) or \
-            (hasattr(callback, "at_epoch_begin")
-             and hasattr(callback, "at_epoch_end")), assertion_str
+        instance_check = isinstance(callback, AbstractCallback)
+        attr_check_begin = hasattr(callback, "at_epoch_begin")
+        attr_check_end = hasattr(callback, "at_epoch_end")
+        attr_check_both = attr_check_begin and attr_check_end
+
+        assert instance_check and attr_check_both, assertion_str
 
         self._callbacks.append(callback)
 

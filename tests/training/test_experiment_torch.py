@@ -1,12 +1,8 @@
-
-
-from delira import get_backends
-import pytest
-import os
-import delira
 import unittest
 
 import numpy as np
+
+import delira
 
 
 class TorchExperimentTest(unittest.TestCase):
@@ -16,8 +12,8 @@ class TorchExperimentTest(unittest.TestCase):
     def test_experiment(self):
 
         from delira.training import PyTorchExperiment, Parameters
-        from delira.training.callbacks import ReduceLROnPlateauCallbackPyTorch
-        from delira.models.classification import ClassificationNetworkBasePyTorch
+        from delira.models.classification import \
+            ClassificationNetworkBasePyTorch
         from delira.data_loading import AbstractDataset, BaseDataManager
         import torch
 

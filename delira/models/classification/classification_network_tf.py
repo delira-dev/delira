@@ -1,6 +1,8 @@
 import logging
-import tensorflow as tf
 import typing
+
+import tensorflow as tf
+
 from delira.models.abstract_network import AbstractTfNetwork
 from delira.models.classification.ResNet18 import ResNet18
 
@@ -55,7 +57,8 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
     def _add_losses(self, losses: dict):
         """
-        Adds losses to model that are to be used by optimizers or during evaluation
+        Adds losses to model that are to be used by optimizers or during
+        evaluation
 
         Parameters
         ----------
@@ -70,7 +73,8 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         else:
             self._losses = {}
             for name, _loss in losses.items():
-                self._losses[name] = _loss(self.inputs[-1], self.outputs_train[0])
+                self._losses[name] = _loss(
+                    self.inputs[-1], self.outputs_train[0])
 
             total_loss = tf.reduce_mean(list(self._losses.values()), axis=0)
 
@@ -80,17 +84,19 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
     def _add_optims(self, optims: dict):
         """
-        Adds optims to model that are to be used by optimizers or during training
+        Adds optims to model that are to be used by optimizers or during
+        training
 
         Parameters
         ----------
         optim: dict
-            dictionary containing all optimizers, optimizers should be of Type[tf.train.Optimizer]
+            dictionary containing all optimizers, optimizers should be of
+            Type[tf.train.Optimizer]
         """
         if self._optims is not None and len(optims) != 0:
             logging.warning('Change of optims is not yet supported')
             pass
-            #raise NotImplementedError()
+            # raise NotImplementedError()
         elif self._optims is not None and len(optims) == 0:
             pass
         else:
@@ -123,34 +129,35 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
     def closure(model: typing.Type[AbstractTfNetwork], data_dict: dict,
                 metrics={}, fold=0, **kwargs):
         """
-                closure method to do a single prediction.
-                This is followed by backpropagation or not based state of
-                on model.train
+        closure method to do a single prediction.
+        This is followed by backpropagation or not based state of
+        on model.train
 
-                Parameters
-                ----------
-                model: AbstractTfNetwork
-                    AbstractTfNetwork or its child-clases
-                data_dict : dict
-                    dictionary containing the data
-                metrics : dict
-                    dict holding the metrics to calculate
-                fold : int
-                    Current Fold in Crossvalidation (default: 0)
-                **kwargs:
-                    additional keyword arguments
+        Parameters
+        ----------
+        model: AbstractTfNetwork
+            AbstractTfNetwork or its child-clases
+        data_dict : dict
+            dictionary containing the data
+        metrics : dict
+            dict holding the metrics to calculate
+        fold : int
+            Current Fold in Crossvalidation (default: 0)
+        **kwargs:
+            additional keyword arguments
 
-                Returns
-                -------
-                dict
-                    Metric values (with same keys as input dict metrics)
-                dict
-                    Loss values (with same keys as those initially passed to model.init).
-                    Additionally, a total_loss key is added
-                list
-                    Arbitrary number of predictions as np.array
+        Returns
+        -------
+        dict
+            Metric values (with same keys as input dict metrics)
+        dict
+            Loss values (with same keys as those initially passed to
+            model.init).
+            Additionally, a total_loss key is added
+        list
+            Arbitrary number of predictions as np.array
 
-                """
+        """
 
         loss_vals = {}
         metric_vals = {}
@@ -167,7 +174,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             metric_vals[key] = metric_fn(
                 preds, *data_dict.values())
 
-        if model.training == False:
+        if not model.training:
             # add prefix "val" in validation mode
             eval_loss_vals, eval_metrics_vals = {}, {}
             for key in loss_vals.keys():
@@ -186,6 +193,4 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
                                     "env_appendix": "_%02d" % fold
                                     }})
 
-        #logging.info({'image_grid': {"image_array": inputs, "name": image_names,
-        #                             "title": "input_images", "env_appendix": "_%02d" % fold}})
         return metric_vals, loss_vals, [preds]
