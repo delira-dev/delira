@@ -709,11 +709,11 @@ if "TORCH" in get_backends():
                 keyword arguments
 
             """
-            if file_name.endswith(".pt") or file_name.endswith(".pth"):
+            if file_name.endswith(".ptj"):
                 file_name = file_name.rsplit(".", 1)[0]
 
-            save_checkpoint_torchscript(file_name, self.module, self.optimizers,
-                                        **kwargs)
+            save_checkpoint_torchscript(file_name, self.module,
+                                        self.optimizers, **kwargs)
 
         @staticmethod
         def load_state(file_name, **kwargs):

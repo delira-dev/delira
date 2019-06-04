@@ -110,7 +110,13 @@ if "TORCH" in get_backends():
 
         # remove file extension if given
         if any([file.endswith(ext) for ext in [".pth", ".pt", ".ptj"]]):
-            file = file.rsplit(".", 1)[0]
+
+            file, old_ext = file.rsplit(".", 1)
+
+            if old_ext != "ptj":
+                logger.info("File extension was changed from %s to ptj to "
+                            "indicate that the current module is a "
+                            "torchscript module (including the graph)")
 
         if isinstance(model, AbstractTorchScriptNetwork):
             torch.jit.save(model, file + "_model.ptj")
@@ -139,15 +145,12 @@ if "TORCH" in get_backends():
             checkpoint state_dict
 
         """
-        # remove file extensions
-        if any([file.endswith(ext) for ext in [".pth", ".pt", ".ptj"]]):
-            file = file.rsplit(".", 1)[0]
 
         # load model
-        if os.path.isfile(file + ".ptj"):
+        if os.path.isfile(file):
             model_file = file
-        elif os.path.isfile(file + "_model.ptj"):
-            model_file = file + "_model.ptj"
+        elif os.path.isfile(file.replace(".ptj", "_model.ptj")):
+            model_file = file.replace(".ptj", "_model.ptj")
         else:
             raise ValueError("No Model File found for %s" % file)
 
