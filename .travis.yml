@@ -53,7 +53,7 @@ matrix:
 before_install:
     - if [[ "$TEST_TYPE" == "unittests" ]]; then
           bash scripts/ci/install_before_tests.sh;
-      elif [[ "$TEST_TYPE" == "docs"]]; then
+      elif [[ "$TEST_TYPE" == "docs" ]]; then
           bash scripts/ci/install_before_docs.sh
       else
           bash scripts/ci/install_before_style_check.sh;
