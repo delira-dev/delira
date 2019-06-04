@@ -292,7 +292,8 @@ class Predictor(object):
 
                 else:
 
-                    # check if v is scalar and convert to npy-array if necessary.
+                    # check if v is scalar and convert to npy-array if
+                    # necessary.
                     # Otherwise concatenation might fail
                     if np.isscalar(v):
                         v = np.array(v)
@@ -401,5 +402,6 @@ class Predictor(object):
         if metric_keys is None:
             metric_keys = {k: ("pred", "label") for k in metrics.keys()}
 
-        return {key: metric_fn(*[batch.nested_get(k) for k in metric_keys[key]])
+        return {key: metric_fn(*[batch.nested_get(k)
+                                 for k in metric_keys[key]])
                 for key, metric_fn in metrics.items()}

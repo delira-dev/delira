@@ -383,13 +383,17 @@ class BaseNetworkTrainer(Predictor):
         new_val_score = best_val_score
 
         if reduce_mode == 'mean':
-            def reduce_fn(batch): return np.mean(batch)
+            def reduce_fn(batch):
+                return np.mean(batch)
         elif reduce_mode == 'sum':
-            def reduce_fn(batch): return np.sum(batch)
+            def reduce_fn(batch):
+                return np.sum(batch)
         elif reduce_mode == 'first_only':
-            def reduce_fn(batch): return batch[0]
+            def reduce_fn(batch):
+                return batch[0]
         elif reduce_mode == 'last_only':
-            def reduce_fn(batch): return batch[-1]
+            def reduce_fn(batch):
+                return batch[-1]
         else:
             raise ValueError("No valid reduce mode given")
 
@@ -542,10 +546,12 @@ class BaseNetworkTrainer(Predictor):
         assertion_str = "Given callback is not valid; Must be instance of " \
                         "AbstractCallback or provide functions " \
                         "'at_epoch_begin' and 'at_epoch_end'"
+        instance_check = isinstance(callback, AbstractCallback)
+        attr_check_begin = hasattr(callback, "at_epoch_begin")
+        attr_check_end = hasattr(callback, "at_epoch_end")
+        attr_check_both = attr_check_begin and attr_check_end
 
-        assert isinstance(callback, AbstractCallback) or \
-            (hasattr(callback, "at_epoch_begin")
-             and hasattr(callback, "at_epoch_end")), assertion_str
+        assert instance_check or attr_check_both, assertion_str
 
         self._callbacks.append(callback)
 
@@ -698,7 +704,8 @@ class BaseNetworkTrainer(Predictor):
             _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
                 "_%02d" % self.fold
 
-        # remove prior Trixihandlers and reinitialize it with given logging type
+        # remove prior Trixihandlers and reinitialize it with given logging
+        # type
         # This facilitates visualization of multiple splits/fold inside one
         # tensorboard-instance by means of
         # different tf.Summary.FileWriters()
@@ -718,3 +725,58 @@ class BaseNetworkTrainer(Predictor):
         )
         logging.basicConfig(level=logging.INFO,
                             handlers=new_handlers)
+
+    @staticmethod
+    def _search_for_prev_state(path, extensions=[]):
+        """
+        Helper function to search in a given path for previous epoch states
+        (indicated by extensions)
+
+        Parameters
+        ----------
+        path : str
+            the path to search in
+        extensions : list
+            list of strings containing valid file extensions for checkpoint
+            files
+
+        Returns
+        -------
+        str
+            the file containing the latest checkpoint (if available)
+        None
+            if no latst checkpoint was found
+        int
+            the latest epoch (1 if no checkpoint was found)
+
+        """
+        files = []
+        for file in os.listdir(path):
+            for ext in extensions:
+                if not ext.startswith("."):
+                    ext = "." + ext
+
+                if not file.endswith(ext):
+                    continue
+
+                if not file.startswith("checkpoint"):
+                    continue
+
+                if file.endswith("_best" + ext):
+                    continue
+
+                files.append(file)
+                break
+
+        if files:
+            latest_epoch = max([
+                int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
+                for x in files])
+
+            latest_state_path = [x for x in files
+                                 if x.startswith("checkpoint_%d"
+                                                 % latest_epoch)][0]
+
+            return latest_state_path, latest_epoch
+
+        return None, 1

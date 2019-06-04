@@ -73,7 +73,8 @@ class BaseExperiment(object):
         val_score_key : str or None
             key defining which metric to use for validation (determining best
             model and scheduling lr); if None: No validation-based operations
-            will be done (model might still get validated, but validation metrics
+            will be done (model might still get validated, but validation
+            metrics
             can only be logged and not used further)
         optim_builder : function
             Function returning a dict of backend-specific optimizers
@@ -363,8 +364,8 @@ class BaseExperiment(object):
         metric_keys : dict of tuples
             the batch_dict keys to use for each metric to calculate.
             Should contain a value for each key in ``metrics``.
-            If no values are given for a key, per default ``pred`` and ``label``
-             will be used for metric calculation
+            If no values are given for a key, per default ``pred`` and
+            ``label`` will be used for metric calculation
         verbose : bool
             verbosity of the test process
         prepare_batch : function
@@ -444,8 +445,8 @@ class BaseExperiment(object):
         metric_keys : dict of tuples
             the batch_dict keys to use for each metric to calculate.
             Should contain a value for each key in ``metrics``.
-            If no values are given for a key, per default ``pred`` and ``label``
-             will be used for metric calculation
+            If no values are given for a key, per default ``pred`` and
+            ``label`` will be used for metric calculation
         test_kwargs : dict or None
             kwargs to update the behavior of the :class:`BaseDataManager`
             containing the test and validation data.
@@ -548,8 +549,8 @@ class BaseExperiment(object):
             val_data = None
             if val_split is not None:
                 if split_type == "random":
-                    # split_labels are ignored for random splitting, set them to
-                    # split_idxs just ensures same length
+                    # split_labels are ignored for random splitting, set them
+                    # to split_idxs just ensures same length
                     train_labels = train_idxs
                 elif split_type == "stratified":
                     # iterate over dataset to get labels for stratified
@@ -650,15 +651,11 @@ class BaseExperiment(object):
         If the same argument is given in both params,
         the one from the currently given parameters is used here
 
-<<<<<<< HEAD
         Parameters
         ----------
         params : :class:`Parameters` or None
             the parameters to merge with ``self.params``
-=======
 
-if "TORCH" in get_backends():
->>>>>>> origin/parallel_master
 
         Returns
         -------
@@ -807,9 +804,9 @@ if "TORCH" in get_backends():
                 the number of splits to extract from ``data``.
                 If None: uses a default of 10
             shuffle : bool
-                whether to shuffle the data before splitting or not (implemented
-                by index-shuffling rather than actual data-shuffling to retain
-                potentially lazy-behavior of datasets)
+                whether to shuffle the data before splitting or not
+                (implemented by index-shuffling rather than actual
+                data-shuffling to retain potentially lazy-behavior of datasets)
             random_seed : None
                 seed to seed numpy, the splitting functions and the used
                 backend-framework
@@ -819,9 +816,9 @@ if "TORCH" in get_backends():
                 if 'stratified': uses stratified data splitting. Stratification
                 will be based on ``label_key``
             val_split : float or None
-                the fraction of the train data to use as validation set. If None:
-                No validation will be done during training; only testing for
-                each fold after the training is complete
+                the fraction of the train data to use as validation set.
+                If None: No validation will be done during training; only
+                testing for each fold after the training is complete
             label_key : str
                 the label to use for stratification. Will be ignored unless
                 ``split_type`` is 'stratified'. Default: 'label'
@@ -935,7 +932,8 @@ if "TORCH" in get_backends():
                 ``network``'s ``prepare_batch`` with CPU devices
             convert_fn : function
                 function to convert a batch of tensors to numpy
-                if not specified defaults to :func:`convert_torch_tensor_to_npy`
+                if not specified defaults to
+                :func:`convert_torch_tensor_to_npy`
             **kwargs :
                 additional keyword arguments
 
@@ -1098,9 +1096,9 @@ if "TF" in get_backends():
                 the number of splits to extract from ``data``.
                 If None: uses a default of 10
             shuffle : bool
-                whether to shuffle the data before splitting or not (implemented
-                by index-shuffling rather than actual data-shuffling to retain
-                potentially lazy-behavior of datasets)
+                whether to shuffle the data before splitting or not
+                (implemented by index-shuffling rather than actual
+                data-shuffling to retain potentially lazy-behavior of datasets)
             random_seed : None
                 seed to seed numpy, the splitting functions and the used
                 backend-framework
@@ -1110,9 +1108,9 @@ if "TF" in get_backends():
                 if 'stratified': uses stratified data splitting. Stratification
                 will be based on ``label_key``
             val_split : float or None
-                the fraction of the train data to use as validation set. If None:
-                No validation will be done during training; only testing for
-                each fold after the training is complete
+                the fraction of the train data to use as validation set.
+                If None: No validation will be done during training; only
+                testing for each fold after the training is complete
             label_key : str
                 the label to use for stratification. Will be ignored unless
                 ``split_type`` is 'stratified'. Default: 'label'

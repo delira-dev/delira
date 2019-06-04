@@ -249,7 +249,6 @@ class ExperimentTest(unittest.TestCase):
                                 # is present
                                 _params = deepcopy(params)
                                 if val_split is None:
-                                    # _params = _params.permute_training_on_top()
                                     _params["fixed"]["training"
                                                      ]["lr_sched_cls"] = None
                                 exp = PyTorchExperiment(
