@@ -83,7 +83,6 @@ if "TORCH" in get_backends():
             return checkpoint['state_dict']
         return checkpoint
 
-
     def save_checkpoint_torchscript(file: str, model=None, optimizers={},
                                     epoch=None, **kwargs):
         """
@@ -166,4 +165,3 @@ if "TORCH" in get_backends():
         trainer_state.update({"model": torch.jit.load(model_file)})
 
         return trainer_state
-

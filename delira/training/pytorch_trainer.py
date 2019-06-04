@@ -565,7 +565,6 @@ if "TORCH" in get_backends():
             """
             return super(path, extensions)
 
-
     class TorchScriptNetworkTrainer(PyTorchNetworkTrainer):
         def __init__(self,
                      network: AbstractTorchScriptNetwork,

@@ -713,7 +713,7 @@ if "TORCH" in get_backends():
     from .train_utils import create_optims_default_pytorch, \
         convert_torch_tensor_to_npy
     from .pytorch_trainer import PyTorchNetworkTrainer as PTNetworkTrainer, \
-       TorchScriptNetworkTrainer
+        TorchScriptNetworkTrainer
     from ..models import AbstractPyTorchNetwork, AbstractTorchScriptNetwork
     import torch
 
