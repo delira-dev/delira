@@ -29,7 +29,8 @@ if "CHAINER" in get_backends():
     from delira.models import AbstractChainerNetwork
     import chainer
 
-    # define this outside, because it has to be pickleable, which it won't be, wehn defined inside a function
+    # define this outside, because it has to be pickleable, which it won't be,
+    # wehn defined inside a function
     class DummyNetworkChainer(AbstractChainerNetwork):
         def __init__(self):
             super().__init__()

@@ -5,7 +5,6 @@ if "CHAINER" in get_backends():
     import chainer
     import numpy as np
 
-
     def save_checkpoint(file, model=None, optimizers=None, epoch=None):
         """
         Saves the given checkpoint
@@ -37,7 +36,6 @@ if "CHAINER" in get_backends():
         # check if save_state is not empty (saving an empty state is useless)
         if save_state:
             chainer.serializers.save_npz(file, save_state)
-
 
     def load_checkpoint(file):
         """

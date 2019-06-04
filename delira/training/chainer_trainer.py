@@ -190,9 +190,10 @@ if "CHAINER" in get_backends():
                         int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
                         for x in files])
 
-                    latest_state_path = os.path.join(self.save_path,
-                                                     "checkpoint_epoch_%d.chain"
-                                                     % latest_epoch)
+                    latest_state_path = os.path.join(
+                        self.save_path,
+                        "checkpoint_epoch_%d.chain" %
+                        latest_epoch)
 
                     # if pth file does not exist, load pt file instead
                     if not os.path.isfile(latest_state_path):
@@ -224,7 +225,8 @@ if "CHAINER" in get_backends():
                             self.input_device = chainer.get_device(
                                 gpu_device_prefix + str(gpu_ids[0]))
 
-                            # Train on multiple GPUs and use GPU 0 as output device
+                            # Train on multiple GPUs and use GPU 0 as output
+                            # device
                             self.module = DataParallel(
                                 self.module.to_device("@numpy"),
                                 devices=[chainer.get_device(
@@ -341,14 +343,20 @@ if "CHAINER" in get_backends():
             """
 
             for cb in self._callbacks:
-                self._update_state(cb.at_epoch_end(self, val_metrics=metrics_val,
-                                                   val_score_key=val_score_key,
-                                                   curr_epoch=epoch))
+                self._update_state(
+                    cb.at_epoch_end(
+                        self,
+                        val_metrics=metrics_val,
+                        val_score_key=val_score_key,
+                        curr_epoch=epoch))
 
             if epoch % self.save_freq == 0:
-                self.save_state(os.path.join(self.save_path,
-                                             "checkpoint_epoch_%d.chain" % epoch),
-                                epoch)
+                self.save_state(
+                    os.path.join(
+                        self.save_path,
+                        "checkpoint_epoch_%d.chain" %
+                        epoch),
+                    epoch)
 
             if is_best:
                 self.save_state(os.path.join(self.save_path,
