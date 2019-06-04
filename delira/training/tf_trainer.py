@@ -476,8 +476,8 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
                 self.input_device = "/cpu:0"
                 self.output_device = "/cpu:0"
             else:
-                self.input_device = "/gpu:0"
-                self.output_device = "/gpu:0"
+                self.input_device = "/gpu:%d" % gpu_ids[0]
+                self.output_device = "/gpu:%d" % gpu_ids[0]
         else:
             self.use_gpu = False
             self.input_device = "/cpu:0"
