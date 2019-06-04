@@ -151,12 +151,8 @@ if "TORCH" in get_backends():
                 batch = data_dict.pop("data")
 
                 # predict batch
-<<<<<<< HEAD
+
                 preds = model(batch)
-=======
-                fake_image_batch, discr_pred_fake, discr_pred_real = model(
-                    batch)
->>>>>>> origin/parallel_master
 
                 # train discr with prediction from real image
                 for key, crit_fn in losses.items():
@@ -179,11 +175,8 @@ if "TORCH" in get_backends():
 
                     # actual backpropagation
                     optimizers["discr"].zero_grad()
-<<<<<<< HEAD
-                    # perform loss scaling via apex if mixed precision is 
-=======
-                    # perform loss scaling via apex if half precision is
->>>>>>> origin/parallel_master
+
+                    # perform loss scaling via apex if mixed precision is
                     # enabled
                     with optimizers["discr"].scale_loss(
                             total_loss_discr) as scaled_loss:
@@ -199,22 +192,15 @@ if "TORCH" in get_backends():
 
                 with torch.no_grad():
                     for key, metric_fn in metrics.items():
-<<<<<<< HEAD
-                        # calculate metrics for discriminator with real 
-=======
+
                         # calculate metrics for discriminator with real
->>>>>>> origin/parallel_master
                         # prediction
                         metric_vals[key + "_discr_real"] = metric_fn(
                             preds["discr_real"],
                             torch.ones_like(
                                 preds["discr_real"])).item()
 
-<<<<<<< HEAD
-                        # calculate metrics for discriminator with fake 
-=======
                         # calculate metrics for discriminator with fake
->>>>>>> origin/parallel_master
                         # prediction
                         metric_vals[key + "_discr_fake"] = metric_fn(
                             preds["discr_fake"],
@@ -249,18 +235,8 @@ if "TORCH" in get_backends():
                     loss_vals = eval_loss_vals
                     metric_vals = eval_metrics_vals
 
-<<<<<<< HEAD
             return metric_vals, loss_vals, {k: v.detach()
                                             for k, v in preds.items()}
-=======
-            for key, val in {**metric_vals, **loss_vals}.items():
-                logging.info({"value": {"value": val.item(), "name": key,
-                                        "env_appendix": "_%02d" % fold
-                                        }})
-
-            return metric_vals, loss_vals, [fake_image_batch, discr_pred_fake,
-                                            discr_pred_real]
->>>>>>> origin/parallel_master
 
         @staticmethod
         def _build_models(in_channels, noise_length, **kwargs):
