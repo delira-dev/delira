@@ -248,7 +248,6 @@ if "TF" in get_backends():
             kwargs[k] = convert_fn(v)
         return convert_batch_to_numpy_identity(*args, **kwargs)
 
-
     from tensorflow.python.eager.context import context, EAGER_MODE, GRAPH_MODE
 
     # hacky switch function from
