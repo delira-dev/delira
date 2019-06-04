@@ -568,7 +568,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
             whether to show a progress-bar or not, default: False
         **kwargs :
             additional keword arguments
-            
+
         """
         self.module.trainable = False
 

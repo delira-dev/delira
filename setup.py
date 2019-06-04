@@ -56,7 +56,7 @@ requirement_files = {"base": "requirements.txt",
                      "torch": "requirements_extra_torch.txt",
                      "torchscript": "requirements_extra_torch.txt",
                      "tf": "requirements_extra_tf.txt",
-                     "tf_eager": "requirements_extra_tf"
+                     "tf_eager": "requirements_extra_tf.txt"
                      }
 
 
