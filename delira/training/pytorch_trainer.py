@@ -563,7 +563,7 @@ if "TORCH" in get_backends():
                 the latest epoch (1 if no checkpoint was found)
 
             """
-            return super(path, extensions)
+            return BaseNetworkTrainer._search_for_prev_state(path, extensions)
 
     class TorchScriptNetworkTrainer(PyTorchNetworkTrainer):
         def __init__(self,
@@ -816,4 +816,4 @@ if "TORCH" in get_backends():
                 the latest epoch (1 if no checkpoint was found)
 
             """
-            return super()._search_for_prev_state(path, extensions)
+            return BaseNetworkTrainer._search_for_prev_state(path, extensions)
