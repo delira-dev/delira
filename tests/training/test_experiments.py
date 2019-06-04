@@ -40,6 +40,7 @@ class ExperimentTest(unittest.TestCase):
 
         }
 
+        test_cases_torch, test_cases_tf, test_cases_tf_eager = [], [], []
         from sklearn.metrics import mean_absolute_error
 
         # setup torch testcases
@@ -97,7 +98,6 @@ class ExperimentTest(unittest.TestCase):
 
             # setup TorchScript testcases
             from delira.models import AbstractTorchScriptNetwork
-
 
             class DummyNetworkTorchScript(AbstractTorchScriptNetwork):
                 __constants__ = ["module"]
@@ -584,6 +584,7 @@ class ExperimentTest(unittest.TestCase):
 
         from delira.training import TfEagerExperiment
         from delira.data_loading import BaseDataManager
+
 
         for case in self._test_cases["tf_eager"]:
             with self.subTest(case=case):

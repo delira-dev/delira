@@ -4,6 +4,7 @@ import os
 import numpy as np
 from batchgenerators.dataloading import MultiThreadedAugmenter
 import tensorflow as tf
+
 from .callbacks import AbstractCallback
 from functools import partial
 from .base_trainer import BaseNetworkTrainer

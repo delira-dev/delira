@@ -423,6 +423,7 @@ if "TF" in get_backends():
                      name=None, dtype=None, **kwargs):
             tf.keras.layers.Layer.__init__(self, trainable=trainable,
                                            name=name, dtype=dtype)
+
             AbstractNetwork.__init__(self, **kwargs)
 
             self.data_format = data_format
