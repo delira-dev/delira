@@ -35,7 +35,7 @@ def unify_requirements(base_requirements: list, *additional_requirement_lists):
         for req in reqs:
             if req not in base_requirements:
                 base_requirements.append(req)
-                
+
     return base_requirements
 
 
@@ -45,18 +45,18 @@ def parse_all_requirements(backend_requirement_dict: dict):
         _reqs = resolve_requirements(
             os.path.join(os.path.dirname(__file__), requirement_file))
         backend_requirements[backend_name] = _reqs
-        
+
         backend_requirements["full"] = unify_requirements(
             backend_requirements["full"], _reqs)
-    
+
     return backend_requirements
-                                                          
+
 
 requirement_files = {"base": "requirements.txt",
                      "torch": "requirements_extra_torch.txt",
                      "torchscript": "requirements_extra.txt",
                      "tf": "requirements_extra_tf.txt"
-                    }
+                     }
 
 
 requirement_dict = parse_all_requirements(requirement_files)
