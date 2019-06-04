@@ -291,9 +291,9 @@ if "TORCH" in get_backends():
             Notes
             -----
             The Helper functions and classes are defined within this function
-            because ``delira`` once offered a possibility to save the source 
-            code along the weights to completely recover the network without 
-            needing a manually created network instance and these helper 
+            because ``delira`` once offered a possibility to save the source
+            code along the weights to completely recover the network without
+            needing a manually created network instance and these helper
             functions had to be saved too.
 
             """
@@ -681,7 +681,7 @@ if "TORCH" in get_backends():
                 if data_dict:
 
                     for key, crit_fn in losses.items():
-                        _loss_val = crit_fn(preds["pred"], 
+                        _loss_val = crit_fn(preds["pred"],
                                             *data_dict.values())
                         loss_vals[key] = _loss_val.item()
                         total_loss += _loss_val
@@ -735,9 +735,9 @@ if "TORCH" in get_backends():
             Notes
             -----
             The Helper functions and classes are defined within this function
-            because ``delira`` once offered a possibility to save the source 
-            code along the weights to completely recover the network without 
-            needing a manually created network instance and these helper 
+            because ``delira`` once offered a possibility to save the source
+            code along the weights to completely recover the network without
+            needing a manually created network instance and these helper
             functions had to be saved too.
 
             """

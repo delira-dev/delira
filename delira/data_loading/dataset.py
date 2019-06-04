@@ -697,7 +697,6 @@ if "TORCH" in get_backends():
         FashionMNIST
     import torch
 
-
     class TorchvisionClassificationDataset(AbstractDataset):
         """
         Wrapper for torchvision classification datasets to provide consistent

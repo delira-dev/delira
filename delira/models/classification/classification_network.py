@@ -1,9 +1,8 @@
+from delira import get_backends
+from delira.utils.decorators import make_deprecated
 import logging
 
 file_logger = logging.getLogger(__name__)
-
-from delira.utils.decorators import make_deprecated
-from delira import get_backends
 
 
 if "TORCH" in get_backends():
@@ -163,7 +162,7 @@ if "TORCH" in get_backends():
 
             return metric_vals, loss_vals, {k: v.detach()
                                             for k, v in preds.items()}
-            
+
         @staticmethod
         def _build_model(in_channels: int, n_outputs: int, **kwargs):
             """

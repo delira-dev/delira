@@ -72,10 +72,10 @@ if "TORCH" in get_backends():
             save_path : str
                 path to save networks to
             key_mapping : dict
-                a dictionary containing the mapping from the ``data_dict`` to 
+                a dictionary containing the mapping from the ``data_dict`` to
                 the actual model's inputs.
-                E.g. if a model accepts one input named 'x' and the data_dict 
-                contains one entry named 'data' this argument would have to 
+                E.g. if a model accepts one input named 'x' and the data_dict
+                contains one entry named 'data' this argument would have to
                 be ``{'x': 'data'}``
             losses : dict
                 dictionary containing the training losses
@@ -119,7 +119,7 @@ if "TORCH" in get_backends():
                 metrics
             convert_batch_to_npy_fn : type, optional
                 function converting a batch-tensor to numpy, per default this is
-                a function, which detaches the tensor, moves it to cpu and the 
+                a function, which detaches the tensor, moves it to cpu and the
                 calls ``.numpy()`` on it
             mixed_precision : bool
                 whether to use mixed precision or not (False per default)
@@ -219,7 +219,7 @@ if "TORCH" in get_backends():
                 from ..utils.context_managers import DefaultOptimWrapperTorch
                 wrap_fn = DefaultOptimWrapperTorch
 
-            # wrap optimizers by half_precision_optimizer via apex if 
+            # wrap optimizers by half_precision_optimizer via apex if
             # necessary
             self.optimizers = {k: wrap_fn(
                 v, num_loss=len(self.losses)) for k, v
@@ -227,7 +227,7 @@ if "TORCH" in get_backends():
 
             # Load latest epoch file if available
             if os.path.isdir(self.save_path):
-                # check all files in directory starting with "checkpoint" and 
+                # check all files in directory starting with "checkpoint" and
                 # not ending with "_best.pth"
                 files = [x for x in os.listdir(self.save_path)
                          if os.path.isfile(os.path.join(self.save_path, x))
@@ -307,7 +307,7 @@ if "TORCH" in get_backends():
 
         def _at_training_end(self):
             """
-            Defines Behaviour at end of training: Loads best model if 
+            Defines Behaviour at end of training: Loads best model if
             available
 
             Returns
@@ -324,7 +324,6 @@ if "TORCH" in get_backends():
                                                'checkpoint_best.pt'))
 
             return self.module
-
 
         def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
                           **kwargs):

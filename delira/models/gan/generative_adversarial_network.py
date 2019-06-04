@@ -88,8 +88,8 @@ if "TORCH" in get_backends():
             discr_pred_fake = self.discr(fake_image_batch)
             discr_pred_real = self.discr(real_image_batch)
 
-            return {"fake_images": fake_image_batch, 
-                    "discr_fake": discr_pred_fake, 
+            return {"fake_images": fake_image_batch,
+                    "discr_fake": discr_pred_fake,
                     "discr_real": discr_pred_real}
 
         @staticmethod
@@ -151,12 +151,12 @@ if "TORCH" in get_backends():
                 batch = data_dict.pop("data")
 
                 # predict batch
-<<<<<<< HEAD
+<< << << < HEAD
                 preds = model(batch)
-=======
+== == == =
                 fake_image_batch, discr_pred_fake, discr_pred_real = model(
                     batch)
->>>>>>> origin/parallel_master
+>>>>>> > origin / parallel_master
 
                 # train discr with prediction from real image
                 for key, crit_fn in losses.items():
@@ -179,11 +179,11 @@ if "TORCH" in get_backends():
 
                     # actual backpropagation
                     optimizers["discr"].zero_grad()
-<<<<<<< HEAD
-                    # perform loss scaling via apex if mixed precision is 
-=======
+<< << << < HEAD
+                    # perform loss scaling via apex if mixed precision is
+== == == =
                     # perform loss scaling via apex if half precision is
->>>>>>> origin/parallel_master
+>>>>>> > origin / parallel_master
                     # enabled
                     with optimizers["discr"].scale_loss(
                             total_loss_discr) as scaled_loss:

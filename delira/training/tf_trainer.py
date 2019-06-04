@@ -48,7 +48,6 @@ class TfNetworkTrainer(BaseNetworkTrainer):
                  val_freq=1,
                  **kwargs
                  ):
-
         """
 
         Parameters
@@ -58,10 +57,10 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         save_path : str
             path to save networks to
         key_mapping : dict
-            a dictionary containing the mapping from the ``data_dict`` to 
+            a dictionary containing the mapping from the ``data_dict`` to
             the actual model's inputs.
-            E.g. if a model accepts one input named 'x' and the data_dict 
-            contains one entry named 'data' this argument would have to 
+            E.g. if a model accepts one input named 'x' and the data_dict
+            contains one entry named 'data' this argument would have to
             be ``{'x': 'data'}``
         losses : dict
             dictionary containing the training losses
@@ -70,10 +69,10 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         optimizer_params : dict
             keyword arguments passed to optimizer during construction
         train_metrics : dict, optional
-            metrics, which will be evaluated during train phase 
+            metrics, which will be evaluated during train phase
             (should work on numpy arrays)
         val_metrics : dict, optional
-            metrics, which will be evaluated during test phase 
+            metrics, which will be evaluated during test phase
             (should work on numpy arrays)
         lr_scheduler_cls : Any
             learning rate schedule class: must implement step() method
@@ -99,8 +98,8 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         start_epoch : int
             epoch to start training at
         metric_keys : dict
-            dict specifying which batch_dict entry to use for which metric as 
-            target; default: None, which will result in key "label" for all 
+            dict specifying which batch_dict entry to use for which metric as
+            target; default: None, which will result in key "label" for all
             metrics
         convert_batch_to_npy_fn : type, optional
             function converting a batch-tensor to numpy, per default this is
@@ -162,7 +161,7 @@ class TfNetworkTrainer(BaseNetworkTrainer):
 
         """
         if gpu_ids and tf.test.is_gpu_available():
-            assert len(gpu_ids) <= len(get_available_gpus()), "more GPUs 
+            assert len(gpu_ids) <= len(get_available_gpus()), "more GPUs
             specified than available"
             self.use_gpu = True
             if len(gpu_ids) > 1:
@@ -301,7 +300,6 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         tf_save_checkpoint(file_name, self.module)
 
     def load_state(self, file_name, *args, **kwargs):
-
         """
         Loads the new state from file via :func:`delira.io.tf.load_checkpoint`
 

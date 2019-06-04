@@ -81,7 +81,6 @@ class ResBlock(tf.keras.Model):
         return x
 
 
-
 class ResNet18(tf.keras.Model):
     @make_deprecated("own repository to be announced")
     def __init__(self, num_classes=None, bias=False):

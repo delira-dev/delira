@@ -63,6 +63,7 @@ class SklearnAccuracyScore(SklearnClassificationMetric):
     """
     Accuracy Metric
     """
+
     def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
         super().__init__(accuracy_score, gt_logits, pred_logits, **kwargs)
 
@@ -71,6 +72,7 @@ class SklearnBalancedAccuracyScore(SklearnClassificationMetric):
     """
     Balanced Accuracy Metric
     """
+
     def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
         super().__init__(balanced_accuracy_score, gt_logits, pred_logits,
                          **kwargs)
@@ -80,6 +82,7 @@ class SklearnF1Score(SklearnClassificationMetric):
     """
     F1 Score
     """
+
     def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
         super().__init__(f1_score, gt_logits, pred_logits, **kwargs)
 
@@ -88,6 +91,7 @@ class SklearnFBetaScore(SklearnClassificationMetric):
     """
     F-Beta Score (Generalized F1)
     """
+
     def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
         super().__init__(fbeta_score, gt_logits, pred_logits, **kwargs)
 
@@ -96,6 +100,7 @@ class SklearnHammingLoss(SklearnClassificationMetric):
     """
     Hamming Loss
     """
+
     def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
         super().__init__(hamming_loss, gt_logits, pred_logits, **kwargs)
 
@@ -104,6 +109,7 @@ class SklearnJaccardSimilarityScore(SklearnClassificationMetric):
     """
     Jaccard Similarity Score
     """
+
     def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
         super().__init__(jaccard_similarity_score, gt_logits, pred_logits,
                          **kwargs)
@@ -113,6 +119,7 @@ class SklearnLogLoss(SklearnClassificationMetric):
     """
     Log Loss (NLL)
     """
+
     def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
         super().__init__(log_loss, gt_logits, pred_logits, **kwargs)
 
@@ -121,6 +128,7 @@ class SklearnMatthewsCorrCoeff(SklearnClassificationMetric):
     """
     Matthews Correlation Coefficient
     """
+
     def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
         super().__init__(matthews_corrcoef, gt_logits, pred_logits, **kwargs)
 
@@ -129,6 +137,7 @@ class SklearnPrecisionScore(SklearnClassificationMetric):
     """
     Precision Score
     """
+
     def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
         super().__init__(precision_score, gt_logits, pred_logits, **kwargs)
 
@@ -137,6 +146,7 @@ class SklearnRecallScore(SklearnClassificationMetric):
     """
     Recall Score
     """
+
     def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
         super().__init__(recall_score, gt_logits, pred_logits, **kwargs)
 
@@ -145,6 +155,7 @@ class SklearnZeroOneLoss(SklearnClassificationMetric):
     """
     Zero One Loss
     """
+
     def __init__(self, gt_logits=False, pred_logits=True, **kwargs):
         super().__init__(zero_one_loss, gt_logits, pred_logits, **kwargs)
 

@@ -34,17 +34,17 @@ class Predictor(object):
         model : :class:`AbstractNetwork`
             the model to predict from
         key_mapping : dict
-            a dictionary containing the mapping from the ``data_dict`` to 
+            a dictionary containing the mapping from the ``data_dict`` to
             the actual model's inputs.
-            E.g. if a model accepts one input named 'x' and the data_dict 
-            contains one entry named 'data' this argument would have to 
+            E.g. if a model accepts one input named 'x' and the data_dict
+            contains one entry named 'data' this argument would have to
             be ``{'x': 'data'}``
         convert_batch_args_kwargs_to_npy_fn : type, optional
             a callable function to convert tensors in positional and keyword
             arguments to numpy; default: identity function
         prepare_batch_fn : type, optional
-            function converting a batch-tensor to the framework specific 
-            tensor-type and pushing it to correct device, default: identity 
+            function converting a batch-tensor to the framework specific
+            tensor-type and pushing it to correct device, default: identity
             function
         **kwargs :
             additional keyword arguments
@@ -65,10 +65,10 @@ class Predictor(object):
         network : :class:`AbstractNetwork`
             the network to predict from
         key_mapping : dict
-            a dictionary containing the mapping from the ``data_dict`` to 
+            a dictionary containing the mapping from the ``data_dict`` to
             the actual model's inputs.
-            E.g. if a model accepts one input named 'x' and the data_dict 
-            contains one entry named 'data' this argument would have to 
+            E.g. if a model accepts one input named 'x' and the data_dict
+            contains one entry named 'data' this argument would have to
             be ``{'x': 'data'}``
         convert_batch_to_npy_fn : type
             a callable function to convert tensors in positional and keyword
@@ -87,7 +87,7 @@ class Predictor(object):
     def __call__(self, data: dict, **kwargs):
         """
         Method to call the class.
-        Returns the predictions corresponding to the given data 
+        Returns the predictions corresponding to the given data
         obtained by the model
 
         Parameters
@@ -105,7 +105,7 @@ class Predictor(object):
     def predict(self, data: dict, **kwargs):
         """
         Predict single batch
-        Returns the predictions corresponding to the given data 
+        Returns the predictions corresponding to the given data
         obtained by the model
 
         Parameters
@@ -140,7 +140,6 @@ class Predictor(object):
     def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
                          metric_keys=None, verbose=False, lazy_gen=False,
                          **kwargs):
-
         """
         Defines a routine to predict data obtained from a batchgenerator
 
@@ -384,14 +383,14 @@ class Predictor(object):
         Parameters
         ----------
         batch: LookupConfig
-            dictionary containing the whole batch 
+            dictionary containing the whole batch
             (including predictions)
         metrics: dict
             dict with metrics
         metric_keys : dict
-            dict of tuples which contains hashables for specifying the items 
+            dict of tuples which contains hashables for specifying the items
             to use for calculating the respective metric.
-            If not specified for a metric, the keys "pred" and "label" 
+            If not specified for a metric, the keys "pred" and "label"
             are used per default
 
         Returns

@@ -49,9 +49,9 @@ class TestPredictor(unittest.TestCase):
                 images = tf.placeholder(shape=[None, 32],
                                         dtype=tf.float32)
                 labels = tf.placeholder_with_default(
-                            tf.zeros(
-                                [tf.shape(images)[0], 1]),
-                            shape=[None, 1])
+                    tf.zeros(
+                        [tf.shape(images)[0], 1]),
+                    shape=[None, 1])
 
                 preds_train = self.model(images, training=True)
                 preds_eval = self.model(images, training=False)
@@ -65,12 +65,16 @@ class TestPredictor(unittest.TestCase):
             def _build_model(n_outputs):
                 return tf.keras.models.Sequential(
                     layers=[
-                        tf.keras.layers.Dense(64, input_shape=(
-                            32,), bias_initializer='glorot_uniform'),
+                        tf.keras.layers.Dense(
+                            64,
+                            input_shape=(
+                                32,
+                            ),
+                            bias_initializer='glorot_uniform'),
                         tf.keras.layers.ReLU(),
-                        tf.keras.layers.Dense(n_outputs,
-                                              bias_initializer='glorot_uniform')]
-                )
+                        tf.keras.layers.Dense(
+                            n_outputs,
+                            bias_initializer='glorot_uniform')])
 
         net = DummyNetwork()
         initialize_uninitialized(net._sess)
@@ -91,7 +95,6 @@ class TestPredictor(unittest.TestCase):
         pred = predictor.predict(batch)
 
         pred_dmgr = predictor.predict_data_mgr(self.dmgr)
-
 
     @unittest.skipIf("TORCH" not in get_backends(),
                      reason="No Torch Backend Installed")

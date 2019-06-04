@@ -144,6 +144,7 @@ class LoadSample:
     """
     Provides a callable to load a single sample from multiple files in a folder
     """
+
     def __init__(self,
                  sample_ext: dict,
                  sample_fn: collections.abc.Callable,

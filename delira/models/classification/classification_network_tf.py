@@ -80,7 +80,6 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
                 self._losses[name] = _loss(self.inputs['labels'],
                                            self.outputs_train['pred'])
 
-
             total_loss = tf.reduce_mean(list(self._losses.values()), axis=0)
 
             self._losses['total'] = total_loss
@@ -163,7 +162,6 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             outputs of `model.run`
 
         """
-
 
         loss_vals = {}
         metric_vals = {}
