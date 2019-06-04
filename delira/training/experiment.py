@@ -87,7 +87,8 @@ class BaseExperiment(object):
 
         """
 
-        # params could also be a file containing a pickled instance of parameters
+        # params could also be a file containing a pickled instance of
+        # parameters
         if isinstance(params, str):
             with open(params, "rb") as f:
                 params = pickle.load(f)
@@ -337,8 +338,12 @@ class BaseExperiment(object):
         :class:`BaseNetworkTrainer` for training itself
 
         """
-        return self.run(train_data=train_data, val_data=val_data, params=params,
-                        save_path=save_path, **kwargs)
+        return self.run(
+            train_data=train_data,
+            val_data=val_data,
+            params=params,
+            save_path=save_path,
+            **kwargs)
 
     def test(self, network, test_data: BaseDataManager,
              metrics: dict, metric_keys=None,
@@ -530,8 +535,8 @@ class BaseExperiment(object):
             np.random.seed(random_seed)
 
         # iterate over folds
-        for idx, (train_idxs, test_idxs) in enumerate(fold.split(split_idxs,
-                                                                 split_labels)):
+        for idx, (train_idxs, test_idxs) in enumerate(
+                fold.split(split_idxs, split_labels)):
 
             # extract data from single manager
             train_data = data.get_subset(train_idxs)
@@ -547,7 +552,8 @@ class BaseExperiment(object):
                     # split_idxs just ensures same length
                     train_labels = train_idxs
                 elif split_type == "stratified":
-                    # iterate over dataset to get labels for stratified splitting
+                    # iterate over dataset to get labels for stratified
+                    # splitting
                     train_labels = [train_data.dataset[_idx][label_key]
                                     for _idx in train_idxs]
                 else:
@@ -713,10 +719,9 @@ if "TORCH" in get_backends():
     from ..models import AbstractPyTorchNetwork
     import torch
 
-
     class PyTorchExperiment(BaseExperiment):
         def __init__(self,
-                     params:typing.Union[str, Parameters],
+                     params: typing.Union[str, Parameters],
                      model_cls: AbstractPyTorchNetwork,
                      n_epochs=None,
                      name=None,
@@ -882,15 +887,22 @@ if "TORCH" in get_backends():
             if random_seed is not None:
                 torch.manual_seed(random_seed)
 
-            return super().kfold(data=data, metrics=metrics,
-                                 num_epochs=num_epochs,
-                                 num_splits=num_splits, shuffle=shuffle,
-                                 random_seed=random_seed, split_type=split_type,
-                                 val_split=val_split, label_key=label_key,
-                                 train_kwargs=train_kwargs,
-                                 test_kwargs=test_kwargs,
-                                 metric_keys=metric_keys, params=params,
-                                 verbose=verbose, **kwargs)
+            return super().kfold(
+                data=data,
+                metrics=metrics,
+                num_epochs=num_epochs,
+                num_splits=num_splits,
+                shuffle=shuffle,
+                random_seed=random_seed,
+                split_type=split_type,
+                val_split=val_split,
+                label_key=label_key,
+                train_kwargs=train_kwargs,
+                test_kwargs=test_kwargs,
+                metric_keys=metric_keys,
+                params=params,
+                verbose=verbose,
+                **kwargs)
 
         def test(self, network, test_data: BaseDataManager,
                  metrics: dict, metric_keys=None,
@@ -1166,21 +1178,27 @@ if "TF" in get_backends():
             if random_seed is not None:
                 tf.set_random_seed(random_seed)
 
-            return super().kfold(data=data, metrics=metrics,
-                                 num_epochs=num_epochs,
-                                 num_splits=num_splits, shuffle=shuffle,
-                                 random_seed=random_seed, split_type=split_type,
-                                 val_split=val_split, label_key=label_key,
-                                 train_kwargs=train_kwargs,
-                                 test_kwargs=test_kwargs,
-                                 metric_keys=metric_keys, params=params,
-                                 verbose=verbose, **kwargs)
+            return super().kfold(
+                data=data,
+                metrics=metrics,
+                num_epochs=num_epochs,
+                num_splits=num_splits,
+                shuffle=shuffle,
+                random_seed=random_seed,
+                split_type=split_type,
+                val_split=val_split,
+                label_key=label_key,
+                train_kwargs=train_kwargs,
+                test_kwargs=test_kwargs,
+                metric_keys=metric_keys,
+                params=params,
+                verbose=verbose,
+                **kwargs)
 
         def test(self, network, test_data: BaseDataManager,
                  metrics: dict, metric_keys=None,
                  verbose=False, prepare_batch=lambda x: x,
                  convert_fn=None, **kwargs):
-
             """
             Setup and run testing on a given network
 

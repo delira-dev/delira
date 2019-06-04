@@ -89,10 +89,10 @@ class BaseNetworkTrainer(Predictor):
         optim_fn : function
             creates a dictionary containing all necessary optimizers
         key_mapping : dict
-            a dictionary containing the mapping from the ``data_dict`` to 
+            a dictionary containing the mapping from the ``data_dict`` to
             the actual model's inputs.
-            E.g. if a model accepts one input named 'x' and the data_dict 
-            contains one entry named 'data' this argument would have to 
+            E.g. if a model accepts one input named 'x' and the data_dict
+            contains one entry named 'data' this argument would have to
             be ``{'x': 'data'}``
         logging_type : str or callable
             the type of logging. If string: it must be one of
@@ -298,8 +298,12 @@ class BaseNetworkTrainer(Predictor):
 
         n_batches = batchgen.generator.num_batches * batchgen.num_processes
         if verbose:
-            iterable = tqdm(enumerate(batchgen), unit=' batch', total=n_batches,
-                            desc='Epoch %d' % epoch)
+            iterable = tqdm(
+                enumerate(batchgen),
+                unit=' batch',
+                total=n_batches,
+                desc='Epoch %d' %
+                epoch)
         else:
             iterable = enumerate(batchgen)
 
@@ -410,7 +414,7 @@ class BaseNetworkTrainer(Predictor):
 
                 val_metric_keys[k] = v
 
-        for epoch in range(self.start_epoch, num_epochs+1):
+        for epoch in range(self.start_epoch, num_epochs + 1):
 
             self._at_epoch_begin(metrics_val, val_score_key, epoch,
                                  num_epochs)
@@ -444,7 +448,8 @@ class BaseNetworkTrainer(Predictor):
             if val_score_key is not None:
                 if val_score_key not in total_metrics:
                     if "val_" + val_score_key not in total_metrics:
-                        logger.warning("val_score_key '%s' not a valid key for \
+                        logger.warning(
+                            "val_score_key '%s' not a valid key for \
                                     validation metrics ")
 
                         new_val_score = best_val_score
@@ -461,7 +466,7 @@ class BaseNetworkTrainer(Predictor):
 
                 # set best_val_score to new_val_score if is_best
                 best_val_score = int(is_best) * new_val_score + \
-                                 (1 - int(is_best)) * best_val_score
+                    (1 - int(is_best)) * best_val_score
 
                 if is_best and verbose:
                     logging.info("New Best Value at Epoch %03d : %03.3f" %
@@ -539,8 +544,8 @@ class BaseNetworkTrainer(Predictor):
                         "'at_epoch_begin' and 'at_epoch_end'"
 
         assert isinstance(callback, AbstractCallback) or \
-               (hasattr(callback, "at_epoch_begin")
-                and hasattr(callback, "at_epoch_end")), assertion_str
+            (hasattr(callback, "at_epoch_begin")
+             and hasattr(callback, "at_epoch_end")), assertion_str
 
         self._callbacks.append(callback)
 
@@ -691,7 +696,7 @@ class BaseNetworkTrainer(Predictor):
 
         if "exp_name" in _logging_kwargs.keys():
             _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
-                                          "_%02d" % self.fold
+                "_%02d" % self.fold
 
         # remove prior Trixihandlers and reinitialize it with given logging type
         # This facilitates visualization of multiple splits/fold inside one

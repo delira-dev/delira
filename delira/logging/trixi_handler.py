@@ -112,6 +112,7 @@ class VisdomLoggingHandler(TrixiHandler):
     Logging Handler to log with Visdom (via Trixi)
 
     """
+
     def __init__(self, exp_name, server="http://localhost", port=8080,
                  level=NOTSET, **kwargs):
         """

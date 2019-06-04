@@ -88,8 +88,8 @@ if "TORCH" in get_backends():
             discr_pred_fake = self.discr(fake_image_batch)
             discr_pred_real = self.discr(real_image_batch)
 
-            return {"fake_images": fake_image_batch, 
-                    "discr_fake": discr_pred_fake, 
+            return {"fake_images": fake_image_batch,
+                    "discr_fake": discr_pred_fake,
                     "discr_real": discr_pred_real}
 
         @staticmethod
@@ -176,7 +176,7 @@ if "TORCH" in get_backends():
                     # actual backpropagation
                     optimizers["discr"].zero_grad()
 
-                    # perform loss scaling via apex if mixed precision is
+                    # perform loss scaling via apex if half precision is
                     # enabled
                     with optimizers["discr"].scale_loss(
                             total_loss_discr) as scaled_loss:
