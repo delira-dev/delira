@@ -22,7 +22,7 @@ def scale_loss(loss,
     else:
         with amp.scale_loss(loss=loss, optimizers=optimizers,
                             loss_id=loss_id, model=model,
-                            delay_unscale=delay_unscale, 
+                            delay_unscale=delay_unscale,
                             **kwargs) as _loss:
             yield _loss
     return
