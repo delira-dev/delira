@@ -1,18 +1,15 @@
+import unittest
+
+import numpy as np
+
 from delira.data_loading.sampler import LambdaSampler, \
     PrevalenceRandomSampler, \
     PrevalenceSequentialSampler, \
     RandomSampler, \
     SequentialSampler, \
     StoppingPrevalenceRandomSampler, \
-    StoppingPrevalenceSequentialSampler, \
     WeightedRandomSampler
-
-
-import numpy as np
 from . import DummyDataset
-
-
-import unittest
 
 
 class SamplerTest(unittest.TestCase):

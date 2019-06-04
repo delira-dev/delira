@@ -1,8 +1,8 @@
-import os
-import delira
 import unittest
 
 import numpy as np
+
+import delira
 
 
 class TfExperimentTest(unittest.TestCase):

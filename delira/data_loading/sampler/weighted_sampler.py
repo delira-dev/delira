@@ -1,8 +1,8 @@
-from ..dataset import AbstractDataset
-from .abstract_sampler import AbstractSampler
-
-from numpy.random import choice
 import numpy as np
+from numpy.random import choice
+
+from .abstract_sampler import AbstractSampler
+from ..dataset import AbstractDataset
 
 
 class WeightedRandomSampler(AbstractSampler):

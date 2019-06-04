@@ -1,8 +1,9 @@
-from delira.data_loading import BaseDataLoader, SequentialSampler
+import unittest
 
 import numpy as np
+
+from delira.data_loading import BaseDataLoader, SequentialSampler
 from . import DummyDataset
-import unittest
 
 
 class DataLoaderTest(unittest.TestCase):

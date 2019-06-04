@@ -1,5 +1,6 @@
-from random import shuffle
 from collections import OrderedDict
+from random import shuffle
+
 from .abstract_sampler import AbstractSampler
 from ..dataset import AbstractDataset
 

@@ -1,6 +1,6 @@
-from delira import get_backends
-import pytest
 import unittest
+
+from delira import get_backends
 
 
 class FocalLossTestPyTorch(unittest.TestCase):

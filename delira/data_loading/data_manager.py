@@ -1,13 +1,13 @@
-import logging
-import numpy as np
-import typing
 import inspect
+import logging
+
+import numpy as np
 from batchgenerators.dataloading import SlimDataLoaderBase, \
     MultiThreadedAugmenter
 from batchgenerators.transforms import AbstractTransform
-from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset, \
-    ConcatDataset
+
 from .data_loader import BaseDataLoader
+from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset
 from .load_utils import default_load_fn_2d
 from .sampler import SequentialSampler, AbstractSampler
 from ..utils.decorators import make_deprecated

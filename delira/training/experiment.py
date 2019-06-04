@@ -1,32 +1,25 @@
 
-
-from ..utils import now
-from ..data_loading import BaseDataManager, BaseLazyDataset
-from delira import __version__ as delira_version
-from .parameters import Parameters
-from ..models import AbstractNetwork
-from .abstract_trainer import AbstractNetworkTrainer
-from trixi.experiment import Experiment as TrixiExperiment
-import os
 import logging
-import typing
-import numpy as np
-
+import os
 import pickle
+import typing
 from abc import abstractmethod
+from datetime import datetime
+
+import numpy as np
 from sklearn.model_selection import KFold, StratifiedKFold, \
     StratifiedShuffleSplit
-from sklearn.model_selection import train_test_split
-from datetime import datetime
-from inspect import signature
-from functools import partial
 
 from delira import get_backends
+from .abstract_trainer import AbstractNetworkTrainer
+from .parameters import Parameters
+from ..data_loading import BaseDataManager, BaseLazyDataset
+from ..models import AbstractNetwork
 
 logger = logging.getLogger(__name__)
 
 
-class AbstractExperiment(TrixiExperiment):
+class AbstractExperiment(object):
     """
     Abstract Class Representing a single Experiment (must be subclassed for
     each Backend)

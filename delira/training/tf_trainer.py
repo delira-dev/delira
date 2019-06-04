@@ -1,16 +1,17 @@
-import os
 import logging
+import os
+
 import numpy as np
-from tqdm.auto import tqdm
-import tensorflow as tf
 from batchgenerators.dataloading import MultiThreadedAugmenter
-from .callbacks import AbstractCallback
+from tqdm.auto import tqdm
+from trixi.logger.tensorboard.tensorboardxlogger import TensorboardXLogger
+
+from delira.logging import TrixiHandler
 from .abstract_trainer import AbstractNetworkTrainer
+from .callbacks import AbstractCallback
 from .train_utils import create_optims_default_tf as create_optims_default
 from .train_utils import initialize_uninitialized
 from ..io import tf_load_checkpoint, tf_save_checkpoint
-from delira.logging import TrixiHandler
-from trixi.logger.tensorboard.tensorboardxlogger import TensorboardXLogger
 
 logger = logging.getLogger(__name__)
 

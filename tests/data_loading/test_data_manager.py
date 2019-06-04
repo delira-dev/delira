@@ -1,11 +1,10 @@
-import numpy as np
-from . import DummyDataset
+import unittest
 
-from delira.data_loading import BaseDataManager
-from delira.data_loading import BaseDataLoader, SequentialSampler
+import numpy as np
 from batchgenerators.dataloading import MultiThreadedAugmenter
 
-import unittest
+from delira.data_loading import BaseDataManager
+from . import DummyDataset
 
 
 class DataManagerTest(unittest.TestCase):

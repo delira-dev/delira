@@ -1,6 +1,6 @@
 import numpy as np
 from batchgenerators.dataloading.data_loader import SlimDataLoaderBase
-from multiprocessing import Pool
+
 from .dataset import AbstractDataset
 from .sampler import AbstractSampler, SequentialSampler
 

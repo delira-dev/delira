@@ -1,10 +1,9 @@
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import accuracy_score
-from ..utils.decorators import make_deprecated
-
 import trixi
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import roc_auc_score
 
 from delira import get_backends
+from ..utils.decorators import make_deprecated
 
 if "TORCH" in get_backends():
     import torch

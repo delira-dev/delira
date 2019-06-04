@@ -1,11 +1,12 @@
-from delira import get_backends
 import logging
+
+from delira import get_backends
+
 logger = logging.getLogger(__name__)
 
 
 if "TORCH" in get_backends():
     import torch
-    from torchvision import models as t_models
 
     from delira.models.abstract_network import AbstractPyTorchNetwork
 

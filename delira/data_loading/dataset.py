@@ -1,12 +1,13 @@
 import abc
 import os
 import typing
+
 import numpy as np
-from tqdm import tqdm
 from skimage.transform import resize
 from sklearn.model_selection import train_test_split
-from delira import get_backends
+from tqdm import tqdm
 
+from delira import get_backends
 from ..utils import subdirs
 from ..utils.decorators import make_deprecated
 

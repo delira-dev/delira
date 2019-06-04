@@ -1,11 +1,10 @@
+import unittest
+
 import numpy as np
 
 from delira.data_loading import ConcatDataset, BaseCacheDataset, \
-    BaseExtendCacheDataset, BaseLazyDataset, LoadSample, LoadSampleLabel, \
-    AbstractDataset
+    BaseExtendCacheDataset, BaseLazyDataset, LoadSample, LoadSampleLabel
 from delira.data_loading.load_utils import norm_zero_mean_unit_std
-
-import unittest
 
 
 class DataSubsetConcatTest(unittest.TestCase):

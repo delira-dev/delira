@@ -1,7 +1,7 @@
 import numpy as np
-from ..utils.decorators import dtype_func
 
 from delira import get_backends
+from ..utils.decorators import dtype_func
 
 if "TORCH" in get_backends():
     import torch

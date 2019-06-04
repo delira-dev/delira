@@ -1,6 +1,5 @@
-from trixi.util import Config
 from nested_lookup import nested_lookup
-from typing import Optional
+from trixi.util import Config
 
 
 class LookupConfig(Config):

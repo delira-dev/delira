@@ -1,8 +1,7 @@
-from .parameters import Parameters
-from .experiment import AbstractExperiment
-from .abstract_trainer import AbstractNetworkTrainer
-
 from delira import get_backends
+from .abstract_trainer import AbstractNetworkTrainer
+from .experiment import AbstractExperiment
+from .parameters import Parameters
 
 if "TORCH" in get_backends():
     from .experiment import PyTorchExperiment

@@ -1,5 +1,6 @@
-from delira import get_backends
 import logging
+
+from delira import get_backends
 
 file_logger = logging.getLogger(__name__)
 

@@ -1,6 +1,7 @@
-from delira.data_loading import AbstractDataset
-import numpy as np
 import math
+import numpy as np
+
+from delira.data_loading import AbstractDataset
 
 
 class DummyDataset(AbstractDataset):

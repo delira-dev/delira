@@ -1,6 +1,7 @@
-from scipy.ndimage import zoom
 import SimpleITK as sitk
 import numpy as np
+from scipy.ndimage import zoom
+
 from .decorators import dtype_func
 
 sitk_img_func = dtype_func(sitk.Image)

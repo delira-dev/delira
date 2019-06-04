@@ -1,7 +1,9 @@
-from ..utils import LookupConfig
 import pickle
-import yaml
 from copy import deepcopy, copy
+
+import yaml
+
+from ..utils import LookupConfig
 
 
 class Parameters(LookupConfig):

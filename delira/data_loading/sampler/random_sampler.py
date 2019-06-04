@@ -1,9 +1,10 @@
 from collections import OrderedDict
-from ..dataset import AbstractDataset
-from .abstract_sampler import AbstractSampler
 
-from numpy.random import choice, shuffle
 from numpy import concatenate
+from numpy.random import choice, shuffle
+
+from .abstract_sampler import AbstractSampler
+from ..dataset import AbstractDataset
 
 
 class RandomSampler(AbstractSampler):

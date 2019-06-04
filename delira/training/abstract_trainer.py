@@ -1,11 +1,10 @@
-from abc import abstractmethod
 import logging
 import pickle
+from abc import abstractmethod
 
 from batchgenerators.dataloading import MultiThreadedAugmenter
 
 from .callbacks import AbstractCallback
-
 
 logger = logging.getLogger(__name__)
 

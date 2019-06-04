@@ -1,5 +1,7 @@
 import logging
+
 import tensorflow as tf
+
 logger = logging.getLogger(__name__)
 
 

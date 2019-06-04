@@ -1,13 +1,13 @@
-import os
 import logging
+import os
+
 import numpy as np
-from tqdm.auto import tqdm
-from collections import OrderedDict
 from batchgenerators.dataloading import MultiThreadedAugmenter
-from .callbacks import AbstractCallback
-from .abstract_trainer import AbstractNetworkTrainer
+from tqdm.auto import tqdm
 
 from delira import get_backends
+from .abstract_trainer import AbstractNetworkTrainer
+from .callbacks import AbstractCallback
 
 logger = logging.getLogger(__name__)
 

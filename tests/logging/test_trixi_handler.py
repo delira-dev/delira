@@ -1,10 +1,10 @@
-from delira.logging import TrixiHandler
-
-from trixi.logger import NumpyPlotFileLogger
 import logging
-import numpy as np
-import os
 import unittest
+
+import numpy as np
+from trixi.logger import NumpyPlotFileLogger
+
+from delira.logging import TrixiHandler
 
 
 class TrixiHandlerTest(unittest.TestCase):

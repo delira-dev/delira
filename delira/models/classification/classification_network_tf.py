@@ -1,6 +1,8 @@
 import logging
-import tensorflow as tf
 import typing
+
+import tensorflow as tf
+
 from delira.models.abstract_network import AbstractTfNetwork
 from delira.models.classification.ResNet18 import ResNet18
 
