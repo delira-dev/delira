@@ -43,11 +43,19 @@ matrix:
           dist: xenial
           env:
               - TEST_TYPE="style-check"
+        - name: "Documentation"
+          python: 3.7
+          dist: xenial
+          env:
+              - TEST_TYPE="docs"
+              - BACKEND="Docs"
 
 # command to install dependencies
 before_install:
     - if [[ "$TEST_TYPE" == "unittests" ]]; then
           bash scripts/ci/install_before_tests.sh;
+      elif [[ "$TEST_TYPE" == "docs"]]; then
+          bash scripts/ci/install_before_docs.sh
       else
           bash scripts/ci/install_before_style_check.sh;
       fi
@@ -60,13 +68,10 @@ script:
     # run tests or stylechecks
     - if [[ "$TEST_TYPE" == "unittests" ]]; then
           bash scripts/ci/run_tests.sh;
+      elif [[ "$TEST_TYPE" == "docs" ]]; then
+          bash scripts/ci/build_docs.sh;
       else
           bash scripts/ci/run_style_checks.sh;
-      fi
-    
-    # build docs if python == 3.7
-    - if [[ "$TRAVIS_PYTHON_VERSION" == 3.7 ]] && [[ "$TEST_TYPE" == "unittests" ]]; then
-          bash scripts/ci/build_docs.sh;
       fi
 
 before_deploy:
@@ -79,7 +84,7 @@ deploy:
           keep-history: true
           on:
               branch: master
-              condition: $TRAVIS_PYTHON_VERSION = 3.7 AND $TEST_TYPE = unittests
+              condition: $TEST_TYPE = Docs
               local_dir: docs/_build/html
         - provider: pypi
           user: $PYPI_USERNAME
