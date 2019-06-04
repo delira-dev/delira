@@ -98,7 +98,7 @@ class BaseExperiment(object):
             n_epochs = params.nested_get("n_epochs",
                                          params.nested_get("num_epochs"))
 
-        super().__init__(n_epochs)
+        self.n_epochs = n_epochs
 
         if name is None:
             name = "UnnamedExperiment"
