@@ -28,7 +28,8 @@ def find_version(file):
                               re.M)
     if version_match:
         return version_match.group(1)
-    
+
+
 def unify_requirements(base_requirements: list, *additional_requirement_lists):
     for reqs in additional_requirement_lists:
         for req in reqs:
@@ -37,6 +38,7 @@ def unify_requirements(base_requirements: list, *additional_requirement_lists):
                 
     return base_requirements
 
+
 def parse_all_requirements(backend_requirement_dict: dict):
     backend_requirements = {"full": []}
     for backend_name, requirement_file in backend_requirement_dict.items():
@@ -44,14 +46,15 @@ def parse_all_requirements(backend_requirement_dict: dict):
             os.path.join(os.path.dirname(__file__), requirement_file))
         backend_requirements[backend_name] = _reqs
         
-        backend_requirements["full"] = unify_requirements[backend_requirements["full"], _reqs)
+        backend_requirements["full"] = unify_requirements(
+            backend_requirements["full"], _reqs)
     
     return backend_requirements
                                                           
 
 requirement_files = {"base": "requirements.txt",
                      "torch": "requirements_extra_torch.txt",
-                     "torchscript": "requirements_extra.txt"
+                     "torchscript": "requirements_extra.txt",
                      "tf": "requirements_extra_tf.txt"
                     }
 

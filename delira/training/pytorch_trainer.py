@@ -27,7 +27,6 @@ if "TORCH" in get_backends():
         save_checkpoint_torchscript, load_checkpoint_torchscript
     from ..models import AbstractPyTorchNetwork, AbstractTorchScriptNetwork
 
-
     from .train_utils import create_optims_default_pytorch as \
         create_optims_default
     from ..io.torch import load_checkpoint_torch, save_checkpoint_torch, \
