@@ -66,9 +66,14 @@ if "TORCH" in get_backends():
                      metric_keys=None,
                      convert_batch_to_npy_fn=convert_torch_tensor_to_npy,
                      mixed_precision=False,
-                     mixed_precision_kwargs={"enable_caching": True,
-                                             "verbose": False,
-                                             "allow_banned": False},
+                     mixed_precision_kwargs={"opt_level": "o1",
+                                             "cast_model_type": None,
+                                             "patch_torch_functions": None,
+                                             "master_weights": None,
+                                             "loss_scale": None,
+                                             "cast_model_outputs": None,
+                                             "num_losses": 1,
+                                             "verbosity": 1},
                      criterions=None,
                      val_freq=1,
                      ** kwargs):
@@ -134,6 +139,50 @@ if "TORCH" in get_backends():
                 whether to use mixed precision or not (False per default)
             mixed_precision_kwargs : dict
                 additional keyword arguments for mixed precision
+                from apex.amp.frontend:
+                    opt_level : str
+                        Pure or mixed precision optimization level. Accepted
+                        values are "O0", "O1", "O2", and "O3":
+                            O0:  Pure FP32 training.
+                            O1:  Insert automatic casts around Pytorch
+                                functions and Tensor methods.
+                            O2:  FP16 training with FP32 batchnorm and FP32
+                                master weights
+                            O3:  Pure FP16 training.
+
+                    cast_model_type : :class:`torch.dtype`
+                        Optional property override for model dtype;
+                        default: None
+                    patch_torch_functions : bool
+                        Optional property override.
+                    keep_batchnorm_fp32 : bool or str
+                        Optional property override.  If passed as a string,
+                        must be the string "True" or "False".
+                    master_weights : bool
+                        Optional property override; whether to create master
+                        weights or not
+                    loss_scale : float or str
+                        Optional property override.  If passed as a string,
+                        must be a string representing a number, e.g., "128.0",
+                        or the string "dynamic".
+                    cast_model_outputs : :class:`torch.dtype`
+                        Option to ensure that the outputs of your model(s)
+                        are always cast to a particular type regardless
+                        of ``opt_level``.
+                    num_losses : int
+                        Option to tell Amp in advance how many losses/backward
+                        passes you plan to use.  When used in conjunction with
+                        the ``loss_id`` argument to ``amp.scale_loss``, enables
+                        Amp to use a different loss scale per loss/backward
+                        pass, which can improve stability. See
+                        "Multiple models/optimizers/losses" under
+                        "Advanced Amp Usage" for examples.  If ``num_losses``
+                        is left to 1, Amp will still support multiple
+                        losses/backward passes, but use a single global
+                        loss scale for all of them; default: 1
+                    verbosity : int
+                        Set to 0 to suppress Amp-related output; default: 1
+
             val_freq : int
                 validation frequency specifying how often to validate the
                 trained model (a value of 1 denotes validating every epoch,
@@ -215,25 +264,6 @@ if "TORCH" in get_backends():
                            gpu_ids, key_mapping, convert_batch_to_npy_fn,
                            network.prepare_batch)
 
-            try:
-                from apex import amp
-                self._amp_handle = amp.init(mixed_precision,
-                                            *mixed_precision_kwargs)
-                wrap_fn = self._amp_handle.wrap_optimizer
-
-            except ImportError:
-                if mixed_precision:
-                    logger.warning("Apex was not found found, trying to \
-                                    continue in full precision instead")
-                from ..utils.context_managers import DefaultOptimWrapperTorch
-                wrap_fn = DefaultOptimWrapperTorch
-
-            # wrap optimizers by half_precision_optimizer via apex if
-            # necessary
-            self.optimizers = {k: wrap_fn(
-                v, num_loss=len(self.losses)) for k, v
-                in self.optimizers.items()}
-
             # Load latest epoch file if available
             if os.path.isdir(self.save_path):
                 latest_state_path, latest_epoch = self._search_for_prev_state(
@@ -284,45 +314,6 @@ if "TORCH" in get_backends():
             self._prepare_batch = partial(
                 self._prepare_batch, input_device=self.input_device,
                 output_device=self.output_device)
-
-        def try_resume_training(self):
-            """
-            Load the latest checkpoint of a previous training if possible
-
-            """
-            # Load latest epoch file if available
-            if os.path.isdir(self.save_path):
-                # check all files in directory starting with "checkpoint" and
-                # not ending with "_best.pth"
-                files = [x for x in os.listdir(self.save_path)
-                         if os.path.isfile(os.path.join(self.save_path, x))
-                         and x.startswith("checkpoint")
-                         and not (x.endswith("_best.pth")
-                                  or x.endswith("_best.pt"))]
-
-                # if list is not empty: load previous state
-                if files:
-
-                    latest_epoch = max([
-                        int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
-                        for x in files])
-
-                    latest_state_path = os.path.join(self.save_path,
-                                                     "checkpoint_epoch_%d.pth"
-                                                     % latest_epoch)
-
-                    # if pth file does not exist, load pt file instead
-                    if not os.path.isfile(latest_state_path):
-                        latest_state_path = latest_state_path[:-1]
-
-                    logger.info("Attempting to load state from previous \
-                                training from %s" % latest_state_path)
-                    try:
-                        self.update_state(latest_state_path)
-                    except KeyError:
-                        logger.warning("Previous State could not be loaded, \
-                                        although it exists.Training will be \
-                                        restarted")
 
         def _at_training_begin(self, *args, **kwargs):
             """
@@ -654,19 +645,20 @@ if "TORCH" in get_backends():
             start_epoch : int
                 epoch to start training at
             metric_keys : dict
-                dict specifying which batch_dict entry to use for which metric as
-                target; default: None, which will result in key "label" for all
-                metrics
+                dict specifying which batch_dict entry to use for which metric
+                as target; default: None, which will result in key "label" for
+                all metrics
             convert_batch_to_npy_fn : type, optional
-                function converting a batch-tensor to numpy, per default this is
-                a function, which detaches the tensor, moves it to cpu and the
-                calls ``.numpy()`` on it
+                function converting a batch-tensor to numpy, per default this
+                is a function, which detaches the tensor, moves it to cpu and
+                then calls ``.numpy()`` on it
             mixed_precision : bool
                 whether to use mixed precision or not (False per default)
             mixed_precision_kwargs : dict
                 additional keyword arguments for mixed precision
             val_freq : int
-                validation frequency specifying how often to validate the trained
+                validation frequency specifying how often to validate the
+                trained
                 model (a value of 1 denotes validating every epoch,
                 a value of 2 denotes validating every second epoch etc.);
                 defaults to 1
@@ -681,7 +673,8 @@ if "TORCH" in get_backends():
                 gpu_ids = [gpu_ids[0]]
                 logging.warning("Multiple GPUs specified. Torch JIT currently "
                                 "supports only single-GPU training. "
-                                "Switching to use only the first GPU for now...")
+                                "Switching to use only the first GPU "
+                                "for now...")
 
             super().__init__(network=network, save_path=save_path,
                              key_mapping=key_mapping, losses=losses,
