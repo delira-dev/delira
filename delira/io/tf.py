@@ -1,12 +1,10 @@
+from ..models import AbstractTfEagerNetwork
+import typing
 import logging
 
 import tensorflow as tf
 
 logger = logging.getLogger(__name__)
-
-import typing
-
-from ..models import AbstractTfEagerNetwork
 
 
 def save_checkpoint(file: str, model=None):
@@ -55,8 +53,10 @@ def _create_varlist(model: AbstractTfEagerNetwork = None,
     return variable_list
 
 
-def save_checkpoint_eager(file, model: AbstractTfEagerNetwork = None,
-                          optimizer: typing.Dict[str, tf.train.Optimizer] = None,
+def save_checkpoint_eager(file,
+                          model: AbstractTfEagerNetwork = None,
+                          optimizer: typing.Dict[str,
+                                                 tf.train.Optimizer] = None,
                           epoch=None):
     variable_list = _create_varlist(model, optimizer)
 
@@ -71,9 +71,10 @@ def save_checkpoint_eager(file, model: AbstractTfEagerNetwork = None,
                     "network yet, this is not an error, but expected behavior")
 
 
-def load_checkpoint_eager(file, model: AbstractTfEagerNetwork = None,
-                          optimizer: typing.Dict[str, tf.train.Optimizer] = None
-                          ):
+def load_checkpoint_eager(file,
+                          model: AbstractTfEagerNetwork = None,
+                          optimizer: typing.Dict[str,
+                                                 tf.train.Optimizer] = None):
 
     variable_list = _create_varlist(model, optimizer)
 
@@ -83,7 +84,8 @@ def load_checkpoint_eager(file, model: AbstractTfEagerNetwork = None,
 
         return {"model": model, "optimizer": optimizer}
 
-    raise RuntimeError("No Variables found to restore, probably no variables "
-                       "exist, because they aren't yet created. Make sure, you "
-                       "have at least once forwarded an input through your "
-                       "model!")
+    raise RuntimeError(
+        "No Variables found to restore, probably no variables "
+        "exist, because they aren't yet created. Make sure, you "
+        "have at least once forwarded an input through your "
+        "model!")

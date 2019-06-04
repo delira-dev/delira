@@ -496,23 +496,11 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
         if os.path.isdir(self.save_path):
             # check all files in directory starting with "checkpoint" and
             # not ending with "_best.meta"
-            files = [x for x in os.listdir(self.save_path)
-                     if os.path.isfile(os.path.join(self.save_path, x))
-                     and x.startswith("checkpoint")
-                     and x.endswith(".meta")
-                     and not (x.endswith("_best.meta")
-                              or x.endswith("_best.meta"))]
+            latest_state_path, latest_epoch = self._search_for_prev_state(
+                self.save_path, [".meta"]
+            )
 
-            # if list is not empty: load previous state
-            if files:
-                latest_epoch = max([
-                    int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
-                    for x in files])
-
-                latest_state_path = os.path.join(
-                    self.save_path, "checkpoint_epoch_%d.meta"
-                                    % latest_epoch)
-
+            if latest_state_path is not None:
                 logger.info("Attempting to load state from previous \
                                 training from %s" % latest_state_path)
 

@@ -75,13 +75,13 @@ class IoTfTest(unittest.TestCase):
                 return tf.keras.models.Sequential(
                     layers=[
                         tf.keras.layers.Dense(
-                            64, input_shape=in_channels,
+                            64,
+                            input_shape=in_channels,
                             bias_initializer='glorot_uniform'),
                         tf.keras.layers.ReLU(),
-                        tf.keras.layers.Dense(n_outputs,
-                                              bias_initializer='glorot_uniform')
-                    ]
-                )
+                        tf.keras.layers.Dense(
+                            n_outputs,
+                            bias_initializer='glorot_uniform')])
 
             def call(self, inputs):
                 return self.net(inputs)

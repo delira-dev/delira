@@ -193,7 +193,7 @@ class ExperimentTest(unittest.TestCase):
                             "model": {},
                             "training": {
                                 "losses": {"CE":
-                                               tf.losses.softmax_cross_entropy},
+                                           tf.losses.softmax_cross_entropy},
                                 "optimizer_cls": tf.train.AdamOptimizer,
                                 "optimizer_params": {"learning_rate": 1e-3},
                                 "num_epochs": 2,
@@ -227,9 +227,14 @@ class ExperimentTest(unittest.TestCase):
                         return {"pred": self.dense_2(self.dense_1(x))}
 
                     @staticmethod
-                    def closure(model: AbstractTfEagerNetwork, data_dict: dict,
-                                optimizers: typing.Dict[str, tf.train.Optimizer],
-                                losses={}, metrics={}, fold=0, **kwargs):
+                    def closure(model: AbstractTfEagerNetwork,
+                                data_dict: dict,
+                                optimizers: typing.Dict[str,
+                                                        tf.train.Optimizer],
+                                losses={},
+                                metrics={},
+                                fold=0,
+                                **kwargs):
 
                         loss_vals, metric_vals = {}, {}
 
@@ -263,7 +268,8 @@ class ExperimentTest(unittest.TestCase):
                                 eval_losses["val_" + str(key)] = loss_vals[key]
 
                             for key in metric_vals:
-                                eval_metrics["val_" + str(key)] = metric_vals[key]
+                                eval_metrics["val_" +
+                                             str(key)] = metric_vals[key]
 
                             loss_vals = eval_losses
                             metric_vals = eval_metrics
@@ -624,7 +630,8 @@ class ExperimentTest(unittest.TestCase):
                                                input_device="/cpu:0"))
 
     def tearDown(self) -> None:
-        if self._testMethodName.endswith("tf_eager") and "TF" in get_backends():
+        if self._testMethodName.endswith(
+                "tf_eager") and "TF" in get_backends():
             switch_tf_execution_mode("graph")
 
 
