@@ -8,7 +8,7 @@ How To: Integrate your own Computation Backend
 
 This howto will take you on a trip through the ``delira`` internals,
 while we will see, how to add a custom computation backend on the
-examplaric case of the ``torch.jit`` or ``TorchScript`` backend)
+examplaric case of the ``torch.jit`` or ``TorchScript`` backend
 
 Model Definitions
 -----------------
