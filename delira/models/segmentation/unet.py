@@ -252,13 +252,9 @@ if "TORCH" in get_backends():
             if optimizers:
                 optimizers['default'].zero_grad()
                 # perform loss scaling via apex if half precision is enabled
-<<<<<<< HEAD
-                with optimizers["default"].scale_loss(total_loss) \
-                        as scaled_loss:
-=======
+
                 with scale_loss(total_loss,
                                 optimizers["default"]) as scaled_loss:
->>>>>>> Move to new APEX.amp API
                     scaled_loss.backward()
                 optimizers['default'].step()
 
@@ -701,13 +697,9 @@ if "TORCH" in get_backends():
             if optimizers:
                 optimizers['default'].zero_grad()
                 # perform loss scaling via apex if half precision is enabled
-<<<<<<< HEAD
-                with optimizers["default"].scale_loss(total_loss) \
-                        as scaled_loss:
-=======
+
                 with scale_loss(total_loss,
                                 optimizers["default"]) as scaled_loss:
->>>>>>> Move to new APEX.amp API
                     scaled_loss.backward()
                 optimizers['default'].step()
 
