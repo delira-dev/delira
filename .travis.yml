@@ -2,21 +2,42 @@ language: python
 
 matrix:
     include:
-        - name: "Unittests Python 3.5"
+        - name: "Unittests Python 3.5 TF Backend"
           python: 3.5
           dist: xenial
           env:
               - TEST_TYPE="unittests"
-        - name: "Unittests Python 3.6"
+              - BACKEND="TF"
+        - name: "Unittests Python 3.6 TF Backend"
           python: 3.6
           dist: xenial
           env:
               - TEST_TYPE="unittests"
-        - name: "Unittests Python 3.7"
+              - BACKEND="TF"
+        - name: "Unittests Python 3.7 TF Backend"
           python: 3.7
           dist: xenial
           env:
               - TEST_TYPE="unittests"
+              - BACKEND="TF"
+        - name: "Unittests Python 3.5 Torch Backend"
+          python: 3.5
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Torch"
+        - name: "Unittests Python 3.6 Torch Backend"
+          python: 3.6
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Torch"
+        - name: "Unittests Python 3.7 Torch Backend"
+          python: 3.7
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Torch"
         - name: "Static Style Checks"
           python: 3.7
           dist: xenial
