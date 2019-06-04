@@ -36,7 +36,8 @@ class IoTorchTest(unittest.TestCase):
     @unittest.skipIf("TORCH" not in get_backends(),
                      reason="No TORCH Backend Installed")
     def test_torchscript_save(self):
-        from delira.io import jit_save_checkpoint, jit_load_checkpoint
+        from delira.io import torchscript_save_checkpoint, \
+            torchscript_load_checkpoint
         from delira.models import AbstractTorchScriptNetwork
         import torch
 
@@ -51,8 +52,8 @@ class IoTorchTest(unittest.TestCase):
                 return self.dense(x)
 
         net = DummyNetwork()
-        jit_save_checkpoint("./model_jit.ptj", model=net)
-        self.assertTrue(jit_load_checkpoint("./model_jit.ptj"))
+        torchscript_save_checkpoint("./model_jit.ptj", model=net)
+        self.assertTrue(torchscript_load_checkpoint("./model_jit.ptj"))
 
 
 if __name__ == '__main__':
