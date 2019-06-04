@@ -57,9 +57,14 @@ if "TORCH" in get_backends():
                      metric_keys=None,
                      convert_batch_to_npy_fn=convert_torch_tensor_to_npy,
                      mixed_precision=False,
-                     mixed_precision_kwargs={"enable_caching": True,
-                                             "verbose": False,
-                                             "allow_banned": False},
+                     mixed_precision_kwargs={"opt_level": "o1",
+                                             "cast_model_type": None,
+                                             "patch_torch_functions": None,
+                                             "master_weights": None,
+                                             "loss_scale": None,
+                                             "cast_model_outputs": None,
+                                             "num_losses": 1,
+                                             "verbosity": 1},
                      criterions=None,
                      val_freq=1,
                      ** kwargs):
@@ -125,6 +130,50 @@ if "TORCH" in get_backends():
                 whether to use mixed precision or not (False per default)
             mixed_precision_kwargs : dict
                 additional keyword arguments for mixed precision
+                from https://github.com/NVIDIA/apex/blob/master/apex/amp/frontend.py:
+                    opt_level : str
+                        Pure or mixed precision optimization level. Accepted
+                        values are "O0", "O1", "O2", and "O3":
+                            O0:  Pure FP32 training.
+                            O1:  Insert automatic casts around Pytorch functions
+                                and Tensor methods.
+                            O2:  FP16 training with FP32 batchnorm and FP32
+                                master weights
+                            O3:  Pure FP16 training.
+
+                    cast_model_type : :class:`torch.dtype`
+                        Optional property override for model dtype;
+                        default: None
+                    patch_torch_functions : bool
+                        Optional property override.
+                    keep_batchnorm_fp32 : bool or str
+                        Optional property override.  If passed as a string,
+                        must be the string "True" or "False".
+                    master_weights : bool
+                        Optional property override; whether to create master
+                        weights or not
+                    loss_scale : float or str
+                        Optional property override.  If passed as a string,
+                        must be a string representing a number, e.g., "128.0",
+                        or the string "dynamic".
+                    cast_model_outputs : :class:`torch.dtype`
+                        Option to ensure that the outputs of your model(s)
+                        are always cast to a particular type regardless
+                        of ``opt_level``.
+                    num_losses : int
+                        Option to tell Amp in advance how many losses/backward
+                        passes you plan to use.  When used in conjunction with
+                        the ``loss_id`` argument to ``amp.scale_loss``, enables
+                        Amp to use a different loss scale per loss/backward
+                        pass, which can improve stability. See
+                        "Multiple models/optimizers/losses" under
+                        "Advanced Amp Usage" for examples.  If ``num_losses``
+                        is left to 1, Amp will still support multiple
+                        losses/backward passes, but use a single global
+                        loss scale for all of them; default: 1
+                    verbosity : int
+                        Set to 0 to suppress Amp-related output; default: 1
+
             val_freq : int
                 validation frequency specifying how often to validate the
                 trained model (a value of 1 denotes validating every epoch,
@@ -206,25 +255,6 @@ if "TORCH" in get_backends():
                            gpu_ids, key_mapping, convert_batch_to_npy_fn,
                            network.prepare_batch)
 
-            try:
-                from apex import amp
-                self._amp_handle = amp.init(mixed_precision,
-                                            *mixed_precision_kwargs)
-                wrap_fn = self._amp_handle.wrap_optimizer
-
-            except ImportError:
-                if mixed_precision:
-                    logger.warning("Apex was not found found, trying to \
-                                    continue in full precision instead")
-                from ..utils.context_managers import DefaultOptimWrapperTorch
-                wrap_fn = DefaultOptimWrapperTorch
-
-            # wrap optimizers by half_precision_optimizer via apex if
-            # necessary
-            self.optimizers = {k: wrap_fn(
-                v, num_loss=len(self.losses)) for k, v
-                in self.optimizers.items()}
-
             # Load latest epoch file if available
             if os.path.isdir(self.save_path):
                 latest_state_path, latest_epoch = self._search_for_prev_state(
@@ -275,6 +305,31 @@ if "TORCH" in get_backends():
             self._prepare_batch = partial(
                 self._prepare_batch, input_device=self.input_device,
                 output_device=self.output_device)
+
+            try:
+                # use apex for mixed precision if installed
+                from apex import amp
+
+                # extract optimizers and corresponding keys
+                # (in case dict is not ordered)
+                _optim_keys = list(self.optimizers.keys())
+                _optims = list(self.optimizers[k] for k in _optim_keys)
+
+                # wrap model and register optimizers for mixed precision
+                self.module, _optims = amp.initialize(self.module, _optims,
+                                                      mixed_precision,
+                                                      **mixed_precision_kwargs)
+                for k, v in zip(_optim_keys, _optims):
+                    self.optimizers[k] = v
+
+            except (ImportError, RuntimeError) as e:
+
+                logging.debug(
+                    "Either APEX can't be imported correctly or a value "
+                    "missmatch occured. Switching to default FP32 "
+                    "training insted. The following Exception occured:"
+                    "\n%s" %
+                    str(e))
 
         def _at_training_begin(self, *args, **kwargs):
             """

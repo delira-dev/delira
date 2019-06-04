@@ -1,6 +1,7 @@
 import contextlib
 
 from delira import get_backends
+from .decorators import make_deprecated
 
 if "TORCH" in get_backends():
     import torch
@@ -12,6 +13,9 @@ if "TORCH" in get_backends():
 
         """
 
+        @make_deprecated(
+            "'delira.models.model_utils.scale_loss' combined with "
+            "new apex.amp API (https://github.com/NVIDIA/apex)")
         def __init__(self, optimizer: torch.optim.Optimizer, *args, **kwargs):
             """
 
