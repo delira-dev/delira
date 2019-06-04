@@ -58,7 +58,7 @@ deploy:
           keep-history: true
           on:
               branch: master
-              condition: "$TRAVIS_PYTHON_VERSION = 3.7" AND "$TEST_TYPE = unittests"
+              condition: $TRAVIS_PYTHON_VERSION = 3.7 AND $TEST_TYPE = unittests
               local_dir: docs/_build/html
         - provider: pypi
           user: $PYPI_USERNAME
