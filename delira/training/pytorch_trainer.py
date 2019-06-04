@@ -624,7 +624,8 @@ if "TORCH" in get_backends():
             gpu_ids : list
                 list containing ids of GPUs to use; if empty: use cpu instead
                 Currently ``torch.jit`` only supports single GPU-Training,
-                thus only the first GPU will be used if multiple GPUs are passed
+                thus only the first GPU will be used if multiple GPUs are
+                passed
             save_freq : int
                 integer specifying how often to save the current model's state.
                 State is saved every state_freq epochs
@@ -691,45 +692,6 @@ if "TORCH" in get_backends():
                              mixed_precision=False, mixed_precision_kwargs={},
                              criterions=criterions, val_freq=val_freq, **kwargs
                              )
-
-        def try_resume_training(self):
-            """
-            Load the latest state of a previous training if possible
-
-            """
-            # Load latest epoch file if available
-            if os.path.isdir(self.save_path):
-                # check all files in directory starting with "checkpoint" and
-                # not ending with "_best.pth"
-                files = [x for x in os.listdir(self.save_path)
-                         if os.path.isfile(os.path.join(self.save_path, x))
-                         and x.startswith("checkpoint")
-                         and not x.endswith("_best.ptj")
-                         ]
-
-                # if list is not empty: load previous state
-                if files:
-
-                    latest_epoch = max([
-                        int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
-                        for x in files])
-
-                    latest_state_path = os.path.join(self.save_path,
-                                                     "checkpoint_epoch_%d.ptj"
-                                                     % latest_epoch)
-
-                    # if pth file does not exist, load pt file instead
-                    if not os.path.isfile(latest_state_path):
-                        latest_state_path = latest_state_path[:-1]
-
-                    logger.info("Attempting to load state from previous \
-                                training from %s" % latest_state_path)
-                    try:
-                        self.update_state(latest_state_path)
-                    except KeyError:
-                        logger.warning("Previous State could not be loaded, \
-                                        although it exists.Training will be \
-                                        restarted")
 
         def save_state(self, file_name, epoch, **kwargs):
             """

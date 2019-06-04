@@ -252,7 +252,8 @@ if "TORCH" in get_backends():
             optimize : bool
                 whether to optimize the network graph or not; default: True
             **kwargs :
-                additional keyword arguments (passed to :class:`AbstractNetwork`)
+                additional keyword arguments
+                (passed to :class:`AbstractNetwork`)
             """
             torch.jit.ScriptModule.__init__(self, optimize=optimize)
             AbstractNetwork.__init__(self, **kwargs)
