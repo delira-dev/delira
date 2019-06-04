@@ -48,7 +48,6 @@ matrix:
           dist: xenial
           env:
               - TEST_TYPE="docs"
-              - BACKEND="Docs"
 
 # command to install dependencies
 before_install:
