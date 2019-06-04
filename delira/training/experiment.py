@@ -1419,7 +1419,6 @@ if "CHAINER" in get_backends():
         convert_chainer_tensor_to_npy
     from .chainer_trainer import ChainerNetworkTrainer
 
-
     class ChainerExperiment(BaseExperiment):
         def __init__(self,
                      params: typing.Union[str, Parameters],

@@ -72,7 +72,7 @@ if "CHAINER" in get_backends():
         # iterating until the minimum of num_devices and inputs.shape[dim] -1
         # ensures that if the batchsize is too small to be scattered across all
         # devices, we will only scatter across as many devices as possible
-        for i in range(min(num_devices, inputs.shape[dim])-1):
+        for i in range(min(num_devices, inputs.shape[dim]) - 1):
             start, end = i * samples_per_device, i + 1 * samples_per_device
             scattered_inputs.append(_slice_inputs(inputs, dim,
                                                   num_dims, start, end,
@@ -177,8 +177,9 @@ if "CHAINER" in get_backends():
                 return None
             if isinstance(out, dict):
                 if not all((len(out) == len(d) for d in outputs)):
-                    raise ValueError('All dicts must have the same number '
-                                     'of keys')
+                    raise ValueError(
+                        'All dicts must have the same number of keys')
+
                 return type(out)(((k, gather_map([d[k] for d in outputs]))
                                   for k in out))
             return type(out)(map(gather_map, zip(*outputs)))
@@ -190,12 +191,12 @@ if "CHAINER" in get_backends():
         finally:
             gather_map = None
 
-
     class DataParallel(chainer.Chain):
         """
         A Wrapper around a ``chainer.Chain`` instance to implement parallel
         training by splitting the batches
         """
+
         def __init__(self, module: chainer.Chain, devices: list,
                      batch_dim=0):
             """
@@ -253,9 +254,11 @@ if "CHAINER" in get_backends():
                                                              self.dim)
 
             predictions = []
+
             for _args, _kwargs, _module in zip(scattered_args,
                                                scattered_kwargs,
                                                self.modules):
+
                 predictions.append(_module(*_args, **_kwargs))
 
             predictions = self._gather(predictions, self.dim,
@@ -377,7 +380,6 @@ if "CHAINER" in get_backends():
                 for module in optimizer.target.modules[1:]:
                     optimizer.target.modules[0].addgrads(module)
 
-
     class ParallelOptimizerUpdateModelParameters(object):
         """
         A hook to replicate all parameters from the root model, to all
@@ -402,6 +404,7 @@ if "CHAINER" in get_backends():
         and :class:`ParallelOptimizerCumulateGradientsHook` as a pre-update hook)
 
         """
+
         def __init__(self, optimizer):
             """
 

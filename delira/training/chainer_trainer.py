@@ -348,6 +348,7 @@ if "CHAINER" in get_backends():
             """
 
             for cb in self._callbacks:
+
                 self._update_state(cb.at_epoch_end(self,
                                                    val_metrics=metrics_val,
                                                    val_score_key=val_score_key,

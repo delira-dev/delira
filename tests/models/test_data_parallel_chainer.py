@@ -24,7 +24,9 @@ class TestDataParallel(unittest.TestCase):
                         self.dense_2 = chainer.links.Linear(32, 2)
 
                 def forward(self, x):
-                    return self.dense_2(chainer.functions.relu(self.dense_1(x)))
+                    return self.dense_2(
+                        chainer.functions.relu(
+                            self.dense_1(x)))
 
             self.model = DataParallel(SimpleModel(),
                                       devices=["@numpy", "@numpy"])
@@ -47,7 +49,7 @@ class TestDataParallel(unittest.TestCase):
 
         preds = self.model(input_tensor)
 
-        loss = chainer.functions.sum(preds-label_tensor)
+        loss = chainer.functions.sum(preds - label_tensor)
 
         self.model.cleargrads()
         loss.backward()
