@@ -28,7 +28,7 @@ class DummyDataset(AbstractDataset):
 class ExperimentTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        test_cases_torch, test_cases_tf = [], []
+        test_cases_torch, test_cases_torchscript, test_cases_tf = [], [], []
         from sklearn.metrics import mean_absolute_error
 
         # setup torch testcases
@@ -68,8 +68,7 @@ class ExperimentTest(unittest.TestCase):
                 Parameters(fixed_params={
                     "model": {},
                     "training": {
-                        "losses": {"CE":
-                                   torch.nn.BCEWithLogitsLoss()},
+                        "losses": {"CE": torch.nn.BCEWithLogitsLoss()},
                         "optimizer_cls": torch.optim.Adam,
                         "optimizer_params": {"lr": 1e-3},
                         "num_epochs": 2,
@@ -86,6 +85,58 @@ class ExperimentTest(unittest.TestCase):
                 DummyNetworkTorch))
 
             self._test_cases_torch = test_cases_torch
+
+            # setup TorchScript testcases
+            from delira.models import AbstractTorchScriptNetwork
+
+            class DummyNetworkTorchScript(AbstractTorchScriptNetwork):
+                __constants__ = ["module"]
+
+                def __init__(self):
+                    super().__init__()
+                    self.module = self._build_model(32, 1)
+
+                @torch.jit.script_method
+                def forward(self, x):
+                    return {"pred": self.module(x)}
+
+                @staticmethod
+                def prepare_batch(*args, **kwargs):
+                    return DummyNetworkTorch.prepare_batch(*args, **kwargs)
+
+                @staticmethod
+                def closure(*args, **kwargs):
+                    return DummyNetworkTorch.closure(*args, **kwargs)
+
+                @staticmethod
+                def _build_model(in_channels, n_outputs):
+                    return torch.nn.Sequential(
+                        torch.nn.Linear(in_channels, 64),
+                        torch.nn.ReLU(),
+                        torch.nn.Linear(64, n_outputs)
+                    )
+
+            test_cases_torchscript.append((
+                Parameters(fixed_params={
+                    "model": {},
+                    "training": {
+                        "losses": {"CE": torch.nn.BCEWithLogitsLoss()},
+                        "optimizer_cls": torch.optim.Adam,
+                        "optimizer_params": {"lr": 1e-3},
+                        "num_epochs": 2,
+                        "val_metrics": {"mae": mean_absolute_error},
+                        "lr_sched_cls": ReduceLROnPlateauCallbackPyTorch,
+                        "lr_sched_params": {"mode": "min"}
+                    }
+                }
+                ),
+                500,
+                50,
+                "mae",
+                "lowest",
+                DummyNetworkTorchScript))
+
+            self._test_cases_torchscript = test_cases_torchscript
 
         # setup tf tescases
         if "TF" in get_backends():
@@ -268,6 +319,116 @@ class ExperimentTest(unittest.TestCase):
                                     split_type=split_type,
                                     val_split=val_split,
                                     num_splits=2)
+
+    @unittest.skipIf("TORCH" not in get_backends(),
+                     reason="No TORCH Backend installed")
+    def test_experiment_run_torchscript(self):
+
+        from delira.training import TorchScriptExperiment
+        from delira.data_loading import BaseDataManager
+
+        for case in self._test_cases_torchscript:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 val_score_key, val_score_mode, network_cls) = case
+
+                exp = TorchScriptExperiment(params, network_cls,
+                                            key_mapping={"x": "data"},
+                                            val_score_key=val_score_key,
+                                            val_score_mode=val_score_mode)
+
+                dset_train = DummyDataset(dataset_length_train)
+                dset_test = DummyDataset(dataset_length_test)
+
+                dmgr_train = BaseDataManager(dset_train, 16, 4, None)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                exp.run(dmgr_train, dmgr_test)
+
+    @unittest.skipIf("TORCH" not in get_backends(),
+                     reason="No TORCH Backend installed")
+    def test_experiment_test_torchscript(self):
+        from delira.training import TorchScriptExperiment
+        from delira.data_loading import BaseDataManager
+
+        for case in self._test_cases_torchscript:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 val_score_key, val_score_mode, network_cls) = case
+
+                exp = TorchScriptExperiment(params, network_cls,
+                                            key_mapping={"x": "data"},
+                                            val_score_key=val_score_key,
+                                            val_score_mode=val_score_mode)
+
+                model = network_cls()
+
+                dset_test = DummyDataset(dataset_length_test)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                prepare_batch = partial(
+                    model.prepare_batch,
+                    output_device="cpu",
+                    input_device="cpu")
+
+                exp.test(model, dmgr_test,
+                         params.nested_get("val_metrics"),
+                         prepare_batch=prepare_batch)
+
+    @unittest.skipIf("TORCH" not in get_backends(),
+                     reason="No TORCH Backend installed")
+    def test_experiment_run_torchscript(self):
+
+        from delira.training import TorchScriptExperiment
+        from delira.data_loading import BaseDataManager
+
+        for case in self._test_cases_torchscript:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 val_score_key, val_score_mode, network_cls) = case
+
+                exp = TorchScriptExperiment(params, network_cls,
+                                            key_mapping={"x": "data"},
+                                            val_score_key=val_score_key,
+                                            val_score_mode=val_score_mode)
+
+                dset_train = DummyDataset(dataset_length_train)
+                dset_test = DummyDataset(dataset_length_test)
+
+                dmgr_train = BaseDataManager(dset_train, 16, 4, None)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                exp.run(dmgr_train, dmgr_test)
+
+    @unittest.skipIf("TORCH" not in get_backends(),
+                     reason="No TORCH Backend installed")
+    def test_experiment_test_torchscript(self):
+        from delira.training import TorchScriptExperiment
+        from delira.data_loading import BaseDataManager
+
+        for case in self._test_cases_torchscript:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 val_score_key, val_score_mode, network_cls) = case
+
+                exp = TorchScriptExperiment(params, network_cls,
+                                            key_mapping={"x": "data"},
+                                            val_score_key=val_score_key,
+                                            val_score_mode=val_score_mode)
+
+                model = network_cls()
+
+                dset_test = DummyDataset(dataset_length_test)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                prepare_batch = partial(
+                    model.prepare_batch,
+                    output_device="cpu",
+                    input_device="cpu")
+
+                exp.test(model, dmgr_test,
+                         params.nested_get("val_metrics"),
+                         prepare_batch=prepare_batch)
 
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF Backend installed")

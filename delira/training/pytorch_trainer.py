@@ -1,6 +1,7 @@
 import logging
-import os
 
+import typing
+import os
 import numpy as np
 
 from tqdm.auto import tqdm
@@ -19,11 +20,18 @@ logger = logging.getLogger(__name__)
 if "TORCH" in get_backends():
     import torch
     from .train_utils import convert_torch_tensor_to_npy
+
     from .train_utils import create_optims_default_pytorch as \
         create_optims_default
+    from ..io.torch import load_checkpoint_torch, save_checkpoint_torch, \
+        save_checkpoint_torchscript, load_checkpoint_torchscript
+    from ..models import AbstractPyTorchNetwork, AbstractTorchScriptNetwork
 
-    from ..io.torch import load_checkpoint, save_checkpoint
-    from ..models import AbstractPyTorchNetwork
+    from .train_utils import create_optims_default_pytorch as \
+        create_optims_default
+    from ..io.torch import load_checkpoint_torch, save_checkpoint_torch, \
+        save_checkpoint_torchscript, load_checkpoint_torchscript
+    from ..models import AbstractPyTorchNetwork, AbstractTorchScriptNetwork
 
     class PyTorchNetworkTrainer(BaseNetworkTrainer):
         """
@@ -72,7 +80,7 @@ if "TORCH" in get_backends():
 
             Parameters
             ----------
-            network : :class:`AbstractTfNetwork`
+            network : :class:`AbstractPyTorchNetwork`
                 the network to train
             save_path : str
                 path to save networks to
@@ -130,13 +138,13 @@ if "TORCH" in get_backends():
                 whether to use mixed precision or not (False per default)
             mixed_precision_kwargs : dict
                 additional keyword arguments for mixed precision
-                from https://github.com/NVIDIA/apex/blob/master/apex/amp/frontend.py:
+                from apex.amp.frontend:
                     opt_level : str
                         Pure or mixed precision optimization level. Accepted
                         values are "O0", "O1", "O2", and "O3":
                             O0:  Pure FP32 training.
-                            O1:  Insert automatic casts around Pytorch functions
-                                and Tensor methods.
+                            O1:  Insert automatic casts around Pytorch
+                                functions and Tensor methods.
                             O2:  FP16 training with FP32 batchnorm and FP32
                                 master weights
                             O3:  Pure FP16 training.
@@ -258,7 +266,7 @@ if "TORCH" in get_backends():
             # Load latest epoch file if available
             if os.path.isdir(self.save_path):
                 latest_state_path, latest_epoch = self._search_for_prev_state(
-                    self.save_path, [".pt", ".pth"])
+                    self.save_path)
 
                 if latest_state_path is not None:
 
@@ -305,31 +313,6 @@ if "TORCH" in get_backends():
             self._prepare_batch = partial(
                 self._prepare_batch, input_device=self.input_device,
                 output_device=self.output_device)
-
-            try:
-                # use apex for mixed precision if installed
-                from apex import amp
-
-                # extract optimizers and corresponding keys
-                # (in case dict is not ordered)
-                _optim_keys = list(self.optimizers.keys())
-                _optims = list(self.optimizers[k] for k in _optim_keys)
-
-                # wrap model and register optimizers for mixed precision
-                self.module, _optims = amp.initialize(self.module, _optims,
-                                                      mixed_precision,
-                                                      **mixed_precision_kwargs)
-                for k, v in zip(_optim_keys, _optims):
-                    self.optimizers[k] = v
-
-            except (ImportError, RuntimeError) as e:
-
-                logging.debug(
-                    "Either APEX can't be imported correctly or a value "
-                    "missmatch occured. Switching to default FP32 "
-                    "training insted. The following Exception occured:"
-                    "\n%s" %
-                    str(e))
 
         def _at_training_begin(self, *args, **kwargs):
             """
@@ -472,16 +455,14 @@ if "TORCH" in get_backends():
                 filename to save the state to
             epoch : int
                 current epoch (will be saved for mapping back)
-            *args :
-                positional arguments
             **kwargs :
                 keyword arguments
 
             """
             if not (file_name.endswith(".pth") or file_name.endswith(".pt")):
                 file_name = file_name + ".pt"
-            save_checkpoint(file_name, self.module, self.optimizers,
-                            **kwargs)
+            save_checkpoint_torch(file_name, self.module, self.optimizers,
+                                  **kwargs)
 
         @staticmethod
         def load_state(file_name, **kwargs):
@@ -505,7 +486,7 @@ if "TORCH" in get_backends():
             if not (file_name.endswith(".pth") or file_name.endswith(".pt")):
                 file_name = file_name + ".pt"
 
-            return load_checkpoint(file_name, **kwargs)
+            return load_checkpoint_torch(file_name, **kwargs)
 
         def update_state(self, file_name, *args, **kwargs):
             """
@@ -557,3 +538,244 @@ if "TORCH" in get_backends():
                 self.start_epoch = new_state.pop("epoch")
 
             return super()._update_state(new_state)
+
+        @staticmethod
+        def _search_for_prev_state(path, extensions=[".pt", ".pth"]):
+            """
+            Helper function to search in a given path for previous epoch states
+            (indicated by extensions)
+
+            Parameters
+            ----------
+            path : str
+                the path to search in
+            extensions : list
+                list of strings containing valid file extensions for checkpoint
+                files
+
+            Returns
+            -------
+            str
+                the file containing the latest checkpoint (if available)
+            None
+                if no latst checkpoint was found
+            int
+                the latest epoch (1 if no checkpoint was found)
+
+            """
+            return BaseNetworkTrainer._search_for_prev_state(path, extensions)
+
+    class TorchScriptNetworkTrainer(PyTorchNetworkTrainer):
+        def __init__(self,
+                     network: AbstractTorchScriptNetwork,
+                     save_path: str,
+                     key_mapping,
+                     losses=None,
+                     optimizer_cls=None,
+                     optimizer_params={},
+                     train_metrics={},
+                     val_metrics={},
+                     lr_scheduler_cls=None,
+                     lr_scheduler_params={},
+                     gpu_ids=[],
+                     save_freq=1,
+                     optim_fn=create_optims_default,
+                     logging_type="tensorboardx",
+                     logging_kwargs={},
+                     fold=0,
+                     callbacks=[],
+                     start_epoch=1,
+                     metric_keys=None,
+                     convert_batch_to_npy_fn=convert_torch_tensor_to_npy,
+                     criterions=None,
+                     val_freq=1,
+                     **kwargs):
+            """
+
+            Parameters
+            ----------
+            network : :class:`AbstractPyTorchJITNetwork`
+                the network to train
+            save_path : str
+                path to save networks to
+            key_mapping : dict
+                a dictionary containing the mapping from the ``data_dict`` to
+                the actual model's inputs.
+                E.g. if a model accepts one input named 'x' and the data_dict
+                contains one entry named 'data' this argument would have to
+                be ``{'x': 'data'}``
+            losses : dict
+                dictionary containing the training losses
+            optimizer_cls : subclass of tf.train.Optimizer
+                optimizer class implementing the optimization algorithm of
+                choice
+            optimizer_params : dict
+                keyword arguments passed to optimizer during construction
+            train_metrics : dict, optional
+                metrics, which will be evaluated during train phase
+                (should work on framework's tensor types)
+            val_metrics : dict, optional
+                metrics, which will be evaluated during test phase
+                (should work on numpy arrays)
+            lr_scheduler_cls : Any
+                learning rate schedule class: must implement step() method
+            lr_scheduler_params : dict
+                keyword arguments passed to lr scheduler during construction
+            gpu_ids : list
+                list containing ids of GPUs to use; if empty: use cpu instead
+                Currently ``torch.jit`` only supports single GPU-Training,
+                thus only the first GPU will be used if multiple GPUs are
+                passed
+            save_freq : int
+                integer specifying how often to save the current model's state.
+                State is saved every state_freq epochs
+            optim_fn : function
+                creates a dictionary containing all necessary optimizers
+            logging_type : str or callable
+                the type of logging. If string: it must be one of
+                ["visdom", "tensorboardx"]
+                If callable: it must be a logging handler class
+            logging_kwargs : dict
+                dictionary containing all logging keyword arguments
+            fold : int
+                current cross validation fold (0 per default)
+            callbacks : list
+                initial callbacks to register
+            start_epoch : int
+                epoch to start training at
+            metric_keys : dict
+                dict specifying which batch_dict entry to use for which metric
+                as target; default: None, which will result in key "label" for
+                all metrics
+            convert_batch_to_npy_fn : type, optional
+                function converting a batch-tensor to numpy, per default this
+                is a function, which detaches the tensor, moves it to cpu and
+                then calls ``.numpy()`` on it
+            mixed_precision : bool
+                whether to use mixed precision or not (False per default)
+            mixed_precision_kwargs : dict
+                additional keyword arguments for mixed precision
+            val_freq : int
+                validation frequency specifying how often to validate the
+                trained
+                model (a value of 1 denotes validating every epoch,
+                a value of 2 denotes validating every second epoch etc.);
+                defaults to 1
+            **kwargs :
+                additional keyword arguments
+
+            """
+
+            if len(gpu_ids) > 1:
+                # only use first GPU due to
+                # https://github.com/pytorch/pytorch/issues/15421
+                gpu_ids = [gpu_ids[0]]
+                logging.warning("Multiple GPUs specified. Torch JIT currently "
+                                "supports only single-GPU training. "
+                                "Switching to use only the first GPU "
+                                "for now...")
+
+            super().__init__(network=network, save_path=save_path,
+                             key_mapping=key_mapping, losses=losses,
+                             optimizer_cls=optimizer_cls,
+                             optimizer_params=optimizer_params,
+                             train_metrics=train_metrics,
+                             val_metrics=val_metrics,
+                             lr_scheduler_cls=lr_scheduler_cls,
+                             lr_scheduler_params=lr_scheduler_params,
+                             gpu_ids=gpu_ids, save_freq=save_freq,
+                             optim_fn=optim_fn, logging_type=logging_type,
+                             logging_kwargs=logging_kwargs, fold=fold,
+                             callbacks=callbacks,
+                             start_epoch=start_epoch, metric_keys=metric_keys,
+                             convert_batch_to_npy_fn=convert_batch_to_npy_fn,
+                             mixed_precision=False, mixed_precision_kwargs={},
+                             criterions=criterions, val_freq=val_freq, **kwargs
+                             )
+
+        def save_state(self, file_name, epoch, **kwargs):
+            """
+            saves the current state via
+            :func:`delira.io.torch.save_checkpoint_jit`
+
+            Parameters
+            ----------
+            file_name : str
+                filename to save the state to
+            epoch : int
+                current epoch (will be saved for mapping back)
+            **kwargs :
+                keyword arguments
+
+            """
+            if file_name.endswith(".ptj"):
+                file_name = file_name.rsplit(".", 1)[0]
+
+            save_checkpoint_torchscript(file_name, self.module,
+                                        self.optimizers, **kwargs)
+
+        @staticmethod
+        def load_state(file_name, **kwargs):
+            """
+            Loads the new state from file via
+            :func:`delira.io.torch.load_checkpoint:jit`
+
+            Parameters
+            ----------
+            file_name : str
+                the file to load the state from
+            **kwargs : keyword arguments
+
+            Returns
+            -------
+            dict
+                new state
+
+            """
+            return load_checkpoint_torchscript(file_name, **kwargs)
+
+        def _update_state(self, new_state):
+            """
+            Update the state from a given new state
+
+            Parameters
+            ----------
+            new_state : dict
+                new state to update internal state from
+
+            Returns
+            -------
+            :class:`PyTorchNetworkJITTrainer`
+                the trainer with a modified state
+
+            """
+            if "model" in new_state:
+                self.module = new_state.pop("model").to(self.input_device)
+
+            return super()._update_state(new_state)
+
+        @staticmethod
+        def _search_for_prev_state(path, extensions=[".ptj"]):
+            """
+            Helper function to search in a given path for previous epoch states
+            (indicated by extensions)
+
+            Parameters
+            ----------
+            path : str
+                the path to search in
+            extensions : list
+                list of strings containing valid file extensions for checkpoint
+                files
+
+            Returns
+            -------
+            str
+                the file containing the latest checkpoint (if available)
+            None
+                if no latst checkpoint was found
+            int
+                the latest epoch (1 if no checkpoint was found)
+
+            """
+            return BaseNetworkTrainer._search_for_prev_state(path, extensions)
