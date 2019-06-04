@@ -1,9 +1,9 @@
-import os
 import logging
+import os
+
 import numpy as np
-from tqdm.auto import tqdm
-import tensorflow as tf
 from batchgenerators.dataloading import MultiThreadedAugmenter
+
 from .callbacks import AbstractCallback
 from .base_trainer import BaseNetworkTrainer
 from .train_utils import create_optims_default_tf as create_optims_default
@@ -48,6 +48,7 @@ class TfNetworkTrainer(BaseNetworkTrainer):
                  val_freq=1,
                  **kwargs
                  ):
+
         """
 
         Parameters
@@ -155,9 +156,9 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         """
 
         # TODO: implement multi-GPU and single GPU training with help of
-        #  https://www.tensorflow.org/api_docs/python/tf/keras/utils/multi_gpu_model
-        #  note: might be bugged in combination with sess.run https://github.com/tensorflow/tensorflow/issues/21788
-        #  and https://www.tensorflow.org/api_docs/python/tf/keras/models/clone_model
+        #  keras multi-gpu model
+        #  note: might be bugged in combination with sess.run
+        #  https://github.com/tensorflow/tensorflow/issues/21788
 
         """
         if gpu_ids and tf.test.is_gpu_available():
@@ -229,12 +230,14 @@ class TfNetworkTrainer(BaseNetworkTrainer):
             best network
 
         """
+
         if os.path.isfile(os.path.join(self.save_path,
                                        'checkpoint_best.meta')):
 
             # load best model and return it. Since the state is hidden in the
             # graph, we don't actually need to use
             # self._update_state.
+
             self.update_state(os.path.join(self.save_path,
                                            'checkpoint_best')
                               )
@@ -298,6 +301,7 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         tf_save_checkpoint(file_name, self.module)
 
     def load_state(self, file_name, *args, **kwargs):
+
         """
         Loads the new state from file via :func:`delira.io.tf.load_checkpoint`
 

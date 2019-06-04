@@ -1,5 +1,6 @@
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, \
-    fbeta_score, hamming_loss, jaccard_similarity_score, log_loss, \
+
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, \
+    f1_score, fbeta_score, hamming_loss, jaccard_similarity_score, log_loss, \
     matthews_corrcoef, precision_score, recall_score, zero_one_loss, \
     roc_auc_score
 from sklearn.preprocessing import label_binarize

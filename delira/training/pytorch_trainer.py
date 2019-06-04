@@ -1,6 +1,8 @@
-import os
 import logging
+import os
+
 import numpy as np
+
 from tqdm.auto import tqdm
 import warnings
 from collections import OrderedDict
@@ -10,13 +12,16 @@ from .base_trainer import BaseNetworkTrainer
 from functools import partial
 
 from delira import get_backends
+from .callbacks import AbstractCallback
 
 logger = logging.getLogger(__name__)
 
 if "TORCH" in get_backends():
     import torch
     from .train_utils import convert_torch_tensor_to_npy
-    from .train_utils import create_optims_default_pytorch as create_optims_default
+    from .train_utils import create_optims_default_pytorch as \
+        create_optims_default
+
     from ..io.torch import load_checkpoint, save_checkpoint
     from ..models import AbstractPyTorchNetwork
 
@@ -75,7 +80,7 @@ if "TORCH" in get_backends():
             losses : dict
                 dictionary containing the training losses
             optimizer_cls : subclass of tf.train.Optimizer
-                optimizer class implementing the optimization algorithm of 
+                optimizer class implementing the optimization algorithm of
                 choice
             optimizer_params : dict
                 keyword arguments passed to optimizer during construction
@@ -139,7 +144,6 @@ if "TORCH" in get_backends():
                          be removed in next release to unify APIs across \
                          backends. Use 'losses' instead "))
                     crits = criterions
-
             else:
                 crits = losses
                 warnings.warn(
@@ -152,7 +156,7 @@ if "TORCH" in get_backends():
                 network, save_path, crits, optimizer_cls, optimizer_params,
                 train_metrics, val_metrics, lr_scheduler_cls,
                 lr_scheduler_params, gpu_ids, save_freq, optim_fn, key_mapping,
-                logging_type, logging_kwargs, fold, callbacks, start_epoch, 
+                logging_type, logging_kwargs, fold, callbacks, start_epoch,
                 metric_keys, convert_batch_to_npy_fn, val_freq)
 
             self._setup(network, optim_fn, optimizer_cls, optimizer_params,
@@ -177,7 +181,8 @@ if "TORCH" in get_backends():
             optim_fn : function
                 creates a dictionary containing all necessary optimizers
             optimizer_cls : subclass of torch.optim.Optimizer
-                optimizer class implementing the optimization algorithm of choice
+                optimizer class implementing the optimization algorithm of
+                choice
             optimizer_params : dict
             lr_scheduler_cls : Any
                 learning rate schedule class: must implement step() method
@@ -311,7 +316,7 @@ if "TORCH" in get_backends():
                 best network
 
             """
-            if os.path.isfile(os.path.join(self.save_path, 
+            if os.path.isfile(os.path.join(self.save_path,
                                            'checkpoint_best.pt')):
 
                 # load best model and return it
@@ -320,11 +325,13 @@ if "TORCH" in get_backends():
 
             return self.module
 
+
         def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
                           **kwargs):
             """
-            Defines behaviour at beginning of each epoch: Executes all callbacks's
-            `at_epoch_end` method and saves current state if necessary
+            Defines behaviour at beginning of each epoch:
+            Executes all callbacks's `at_epoch_end` method and saves current
+            state if necessary
 
             Parameters
             ----------
@@ -344,9 +351,12 @@ if "TORCH" in get_backends():
             """
 
             for cb in self._callbacks:
-                self._update_state(cb.at_epoch_end(self, val_metrics=metrics_val,
-                                                   val_score_key=val_score_key,
-                                                   curr_epoch=epoch))
+                self._update_state(
+                    cb.at_epoch_end(
+                        self,
+                        val_metrics=metrics_val,
+                        val_score_key=val_score_key,
+                        curr_epoch=epoch))
 
             if epoch % self.save_freq == 0:
                 self.save_state(os.path.join(self.save_path,
@@ -374,7 +384,7 @@ if "TORCH" in get_backends():
 
             self.module.train()
 
-            return super()._train_single_epoch(batchgen, epoch, 
+            return super()._train_single_epoch(batchgen, epoch,
                                                verbose=verbose)
 
         def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
@@ -436,7 +446,8 @@ if "TORCH" in get_backends():
         @staticmethod
         def load_state(file_name, **kwargs):
             """
-            Loads the new state from file via :func:`delira.io.torch.load_checkpoint`
+            Loads the new state from file via
+            :func:`delira.io.torch.load_checkpoint`
 
             Parameters
             ----------

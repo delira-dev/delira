@@ -1,15 +1,15 @@
 import logging
-logger = logging.getLogger(__name__)
 
 from delira import get_backends
 from delira.utils.decorators import make_deprecated
 
+logger = logging.getLogger(__name__)
+
+
 if "TORCH" in get_backends():
     import torch
-    from torchvision import models as t_models
 
     from delira.models.abstract_network import AbstractPyTorchNetwork
-
 
     class GenerativeAdversarialNetworkBasePyTorch(AbstractPyTorchNetwork):
         """Implementation of Vanilla DC-GAN to create 64x64 pixel images
@@ -44,10 +44,11 @@ if "TORCH" in get_backends():
 
             """
 
-            # register params by passing them as kwargs to parent class __init__
+            # register params by passing them as kwargs to parent class
+            # __init__
             super().__init__(n_channels=n_channels,
-                            noise_length=noise_length,
-                            **kwargs)
+                             noise_length=noise_length,
+                             **kwargs)
 
             gen, discr = self._build_models(n_channels, noise_length, **kwargs)
 
@@ -61,8 +62,8 @@ if "TORCH" in get_backends():
 
         def forward(self, real_image_batch):
             """
-            Create fake images by feeding noise through generator and feed results
-            and real images through discriminator
+            Create fake images by feeding noise through generator and feed
+            results and real images through discriminator
 
             Parameters
             ----------
@@ -150,7 +151,12 @@ if "TORCH" in get_backends():
                 batch = data_dict.pop("data")
 
                 # predict batch
+<<<<<<< HEAD
                 preds = model(batch)
+=======
+                fake_image_batch, discr_pred_fake, discr_pred_real = model(
+                    batch)
+>>>>>>> origin/parallel_master
 
                 # train discr with prediction from real image
                 for key, crit_fn in losses.items():
@@ -173,7 +179,11 @@ if "TORCH" in get_backends():
 
                     # actual backpropagation
                     optimizers["discr"].zero_grad()
+<<<<<<< HEAD
                     # perform loss scaling via apex if mixed precision is 
+=======
+                    # perform loss scaling via apex if half precision is
+>>>>>>> origin/parallel_master
                     # enabled
                     with optimizers["discr"].scale_loss(
                             total_loss_discr) as scaled_loss:
@@ -189,14 +199,22 @@ if "TORCH" in get_backends():
 
                 with torch.no_grad():
                     for key, metric_fn in metrics.items():
+<<<<<<< HEAD
                         # calculate metrics for discriminator with real 
+=======
+                        # calculate metrics for discriminator with real
+>>>>>>> origin/parallel_master
                         # prediction
                         metric_vals[key + "_discr_real"] = metric_fn(
                             preds["discr_real"],
                             torch.ones_like(
                                 preds["discr_real"])).item()
 
+<<<<<<< HEAD
                         # calculate metrics for discriminator with fake 
+=======
+                        # calculate metrics for discriminator with fake
+>>>>>>> origin/parallel_master
                         # prediction
                         metric_vals[key + "_discr_fake"] = metric_fn(
                             preds["discr_fake"],
@@ -212,7 +230,8 @@ if "TORCH" in get_backends():
                 if optimizers:
                     # actual backpropagation
                     optimizers["gen"].zero_grad()
-                    # perform loss scaling via apex if half precision is enabled
+                    # perform loss scaling via apex if half precision is
+                    # enabled
                     with optimizers["gen"].scale_loss(
                             total_loss_gen) as scaled_loss:
                         scaled_loss.backward()
@@ -230,8 +249,18 @@ if "TORCH" in get_backends():
                     loss_vals = eval_loss_vals
                     metric_vals = eval_metrics_vals
 
+<<<<<<< HEAD
             return metric_vals, loss_vals, {k: v.detach()
                                             for k, v in preds.items()}
+=======
+            for key, val in {**metric_vals, **loss_vals}.items():
+                logging.info({"value": {"value": val.item(), "name": key,
+                                        "env_appendix": "_%02d" % fold
+                                        }})
+
+            return metric_vals, loss_vals, [fake_image_batch, discr_pred_fake,
+                                            discr_pred_real]
+>>>>>>> origin/parallel_master
 
         @staticmethod
         def _build_models(in_channels, noise_length, **kwargs):
@@ -241,8 +270,8 @@ if "TORCH" in get_backends():
             Parameters
             ----------
             in_channels : int
-                number of channels for generated images by generator and inputs of
-                discriminator
+                number of channels for generated images by generator and inputs
+                of discriminator
             noise_length : int
                 length of noise vector (generator input)
             **kwargs :
@@ -256,47 +285,48 @@ if "TORCH" in get_backends():
                 discriminator
             """
             gen = torch.nn.Sequential(
-                    # input is Z, going into a convolution
-                    torch.nn.ConvTranspose2d(noise_length, 64 * 8, 4, 1, 0, bias=False),
-                    torch.nn.BatchNorm2d(64 * 8),
-                    torch.nn.ReLU(True),
-                    # state size. (64*8) x 4 x 4
-                    torch.nn.ConvTranspose2d(64 * 8, 64 * 4, 4, 2, 1, bias=False),
-                    torch.nn.BatchNorm2d(64 * 4),
-                    torch.nn.ReLU(True),
-                    # state size. (64*4) x 8 x 8
-                    torch.nn.ConvTranspose2d(64 * 4, 64 * 2, 4, 2, 1, bias=False),
-                    torch.nn.BatchNorm2d(64 * 2),
-                    torch.nn.ReLU(True),
-                    # state size. (64*2) x 16 x 16
-                    torch.nn.ConvTranspose2d(64 * 2, 64, 4, 2, 1, bias=False),
-                    torch.nn.BatchNorm2d(64),
-                    torch.nn.ReLU(True),
-                    # state size. (64) x 32 x 32
-                    torch.nn.ConvTranspose2d(64, in_channels, 4, 2, 1, bias=False),
-                    torch.nn.Tanh()
-                    # state size. (nc) x 64 x 64
-                )
+                # input is Z, going into a convolution
+                torch.nn.ConvTranspose2d(
+                    noise_length, 64 * 8, 4, 1, 0, bias=False),
+                torch.nn.BatchNorm2d(64 * 8),
+                torch.nn.ReLU(True),
+                # state size. (64*8) x 4 x 4
+                torch.nn.ConvTranspose2d(64 * 8, 64 * 4, 4, 2, 1, bias=False),
+                torch.nn.BatchNorm2d(64 * 4),
+                torch.nn.ReLU(True),
+                # state size. (64*4) x 8 x 8
+                torch.nn.ConvTranspose2d(64 * 4, 64 * 2, 4, 2, 1, bias=False),
+                torch.nn.BatchNorm2d(64 * 2),
+                torch.nn.ReLU(True),
+                # state size. (64*2) x 16 x 16
+                torch.nn.ConvTranspose2d(64 * 2, 64, 4, 2, 1, bias=False),
+                torch.nn.BatchNorm2d(64),
+                torch.nn.ReLU(True),
+                # state size. (64) x 32 x 32
+                torch.nn.ConvTranspose2d(64, in_channels, 4, 2, 1, bias=False),
+                torch.nn.Tanh()
+                # state size. (nc) x 64 x 64
+            )
 
             discr = torch.nn.Sequential(
-                        # input is (nc) x 64 x 64
-                        torch.nn.Conv2d(in_channels, 64, 4, 2, 1, bias=False),
-                        torch.nn.LeakyReLU(0.2, inplace=True),
-                        # state size. (64) x 32 x 32
-                        torch.nn.Conv2d(64, 64 * 2, 4, 2, 1, bias=False),
-                        torch.nn.BatchNorm2d(64 * 2),
-                        torch.nn.LeakyReLU(0.2, inplace=True),
-                        # state size. (64*2) x 16 x 16
-                        torch.nn.Conv2d(64 * 2, 64 * 4, 4, 2, 1, bias=False),
-                        torch.nn.BatchNorm2d(64 * 4),
-                        torch.nn.LeakyReLU(0.2, inplace=True),
-                        # state size. (64*4) x 8 x 8
-                        torch.nn.Conv2d(64 * 4, 64 * 8, 4, 2, 1, bias=False),
-                        torch.nn.BatchNorm2d(64 * 8),
-                        torch.nn.LeakyReLU(0.2, inplace=True),
-                        # state size. (64*8) x 4 x 4
-                        torch.nn.Conv2d(64 * 8, 1, 4, 1, 0, bias=False),
-                        torch.nn.Sigmoid()
-                    )
+                # input is (nc) x 64 x 64
+                torch.nn.Conv2d(in_channels, 64, 4, 2, 1, bias=False),
+                torch.nn.LeakyReLU(0.2, inplace=True),
+                # state size. (64) x 32 x 32
+                torch.nn.Conv2d(64, 64 * 2, 4, 2, 1, bias=False),
+                torch.nn.BatchNorm2d(64 * 2),
+                torch.nn.LeakyReLU(0.2, inplace=True),
+                # state size. (64*2) x 16 x 16
+                torch.nn.Conv2d(64 * 2, 64 * 4, 4, 2, 1, bias=False),
+                torch.nn.BatchNorm2d(64 * 4),
+                torch.nn.LeakyReLU(0.2, inplace=True),
+                # state size. (64*4) x 8 x 8
+                torch.nn.Conv2d(64 * 4, 64 * 8, 4, 2, 1, bias=False),
+                torch.nn.BatchNorm2d(64 * 8),
+                torch.nn.LeakyReLU(0.2, inplace=True),
+                # state size. (64*8) x 4 x 4
+                torch.nn.Conv2d(64 * 8, 1, 4, 1, 0, bias=False),
+                torch.nn.Sigmoid()
+            )
 
             return gen, discr

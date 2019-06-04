@@ -1,7 +1,7 @@
 import numpy as np
-from ..utils.decorators import dtype_func
 
 from delira import get_backends
+from ..utils.decorators import dtype_func
 
 
 def _check_and_correct_zero_shape(arg):
@@ -184,6 +184,7 @@ if "TF" in get_backends():
         global_vars = tf.global_variables()
         is_not_initialized = sess.run(
             [tf.is_variable_initialized(var) for var in global_vars])
+
         not_initialized_vars = [v for (v, f) in zip(
             global_vars, is_not_initialized) if not f]
 

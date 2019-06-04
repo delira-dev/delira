@@ -1,3 +1,4 @@
+
 import typing
 import logging
 import pickle
@@ -8,7 +9,6 @@ from functools import partial
 import numpy as np
 from sklearn.model_selection import KFold, StratifiedKFold, \
     StratifiedShuffleSplit, ShuffleSplit
-from trixi.experiment import Experiment as TrixiExperiment
 
 from delira import get_backends
 
@@ -22,7 +22,7 @@ from .predictor import Predictor
 logger = logging.getLogger(__name__)
 
 
-class BaseExperiment(TrixiExperiment):
+class BaseExperiment(object):
     """
     Baseclass for Experiments.
 
@@ -644,10 +644,15 @@ class BaseExperiment(TrixiExperiment):
         If the same argument is given in both params,
         the one from the currently given parameters is used here
 
+<<<<<<< HEAD
         Parameters
         ----------
         params : :class:`Parameters` or None
             the parameters to merge with ``self.params``
+=======
+
+if "TORCH" in get_backends():
+>>>>>>> origin/parallel_master
 
         Returns
         -------
@@ -1175,6 +1180,7 @@ if "TF" in get_backends():
                  metrics: dict, metric_keys=None,
                  verbose=False, prepare_batch=lambda x: x,
                  convert_fn=None, **kwargs):
+
             """
             Setup and run testing on a given network
 

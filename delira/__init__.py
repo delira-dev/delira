@@ -1,9 +1,5 @@
 __version__ = '0.3.3'
 
-# from .models import AbstractNetwork
-# from .logging import TrixiHandler, MultiStreamHandler
-# from .data_loading import BaseCacheDataset, BaseLazyDataset, BaseDataManager, \
-#     RandomSampler, SequentialSampler
 import json
 import os
 import warnings

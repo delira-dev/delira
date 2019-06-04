@@ -1,11 +1,11 @@
-import numpy as np
-from . import DummyDataset
+import unittest
 
-from delira.data_loading import BaseDataManager
-from delira.data_loading import BaseDataLoader, SequentialSampler
+import numpy as np
 from batchgenerators.dataloading import MultiThreadedAugmenter
 
-import unittest
+from delira.data_loading import BaseDataManager
+from . import DummyDataset
+
 
 class DataManagerTest(unittest.TestCase):
 
@@ -17,7 +17,7 @@ class DataManagerTest(unittest.TestCase):
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
 
         manager = BaseDataManager(dset, batch_size, n_process_augmentation=1,
-                                transforms=None)
+                                  transforms=None)
 
         self.assertIsInstance(manager.get_batchgen(), MultiThreadedAugmenter)
 
@@ -34,7 +34,7 @@ class DataManagerTest(unittest.TestCase):
 
         for key, val in next(manager.get_batchgen()).items():
             self.assertEqual(len(val), batch_size)
-            
+
 
 if __name__ == '__main__':
     unittest.main()

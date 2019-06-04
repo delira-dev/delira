@@ -1,5 +1,6 @@
 import abc
 import logging
+
 from delira import get_backends
 
 file_logger = logging.getLogger(__name__)
@@ -134,6 +135,7 @@ class AbstractNetwork(object):
         """
         return self._init_kwargs
 
+
 if "TORCH" in get_backends():
     import torch
 
@@ -200,8 +202,8 @@ if "TORCH" in get_backends():
         @staticmethod
         def prepare_batch(batch: dict, input_device, output_device):
             """
-            Helper Function to prepare Network Inputs and Labels (convert them to
-            correct type and shape and push them to correct devices)
+            Helper Function to prepare Network Inputs and Labels (convert them
+            to correct type and shape and push them to correct devices)
 
             Parameters
             ----------
@@ -215,8 +217,8 @@ if "TORCH" in get_backends():
             Returns
             -------
             dict
-                dictionary containing data in correct type and shape and on correct
-                device
+                dictionary containing data in correct type and shape and on
+                correct device
 
             """
             return_dict = {"data": torch.from_numpy(batch.pop("data")).to(
@@ -306,25 +308,29 @@ if "TF" in get_backends():
 
         def run(self, *args, **kwargs):
             """
-            Evaluates `self.outputs_train` or `self.outputs_eval` based on `self.training`
+            Evaluates `self.outputs_train` or `self.outputs_eval` based on
+            `self.training`
 
             Parameters
             ----------
             *args :
                 currently unused, exist for compatibility reasons
             **kwargs :
-                kwargs used to feed as ``self.inputs``. Sam keys as for ``self.inputs`` must be used
+                kwargs used to feed as ``self.inputs``. Same keys as for
+                ``self.inputs`` must be used
 
             Returns
             -------
             dict
-                sames keys as outputs_train or outputs_eval, containing evaluated expressions as values
+                sames keys as outputs_train or outputs_eval,
+                containing evaluated expressions as values
 
             """
             _feed_dict = {}
 
             for feed_key, feed_value in kwargs.items():
-                assert feed_key in self.inputs.keys(), "{} not found in self.inputs".format(feed_key)
+                assert feed_key in self.inputs.keys(), \
+                    "{} not found in self.inputs".format(feed_key)
                 _feed_dict[self.inputs[feed_key]] = feed_value
 
             if self.training:

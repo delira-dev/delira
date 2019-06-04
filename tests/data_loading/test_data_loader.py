@@ -1,8 +1,9 @@
-from delira.data_loading import BaseDataLoader, SequentialSampler
+import unittest
 
 import numpy as np
+
+from delira.data_loading import BaseDataLoader, SequentialSampler
 from . import DummyDataset
-import unittest
 
 
 class DataLoaderTest(unittest.TestCase):
@@ -22,9 +23,9 @@ class DataLoaderTest(unittest.TestCase):
         self.assertIn("data", loader.generate_train_batch())
 
         self.assertEqual(
-            len(set([_tmp for _tmp in loader.generate_train_batch()["label"]])),
+            len(set([_tmp
+                     for _tmp in loader.generate_train_batch()["label"]])),
             1)
-
 
 
 if __name__ == '__main__':
