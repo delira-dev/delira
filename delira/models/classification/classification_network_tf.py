@@ -6,6 +6,8 @@ import tensorflow as tf
 from delira.models.abstract_network import AbstractTfNetwork
 from delira.models.classification.ResNet18 import ResNet18
 
+from delira.utils.decorators import make_deprecated
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,6 +21,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
     """
 
+    @make_deprecated("own repository to be announced")
     def __init__(self, in_channels: int, n_outputs: int, **kwargs):
         """
 
@@ -48,9 +51,10 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         preds_train = self.model(images, training=True)
         preds_eval = self.model(images, training=False)
 
-        self.inputs = [images, labels]
-        self.outputs_train = [preds_train]
-        self.outputs_eval = [preds_eval]
+        self.inputs["images"] = images
+        self.inputs["labels"] = labels
+        self.outputs_train["pred"] = preds_train
+        self.outputs_eval["pred"] = preds_eval
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -73,14 +77,14 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         else:
             self._losses = {}
             for name, _loss in losses.items():
-                self._losses[name] = _loss(
-                    self.inputs[-1], self.outputs_train[0])
+                self._losses[name] = _loss(self.inputs['labels'],
+                                           self.outputs_train['pred'])
 
             total_loss = tf.reduce_mean(list(self._losses.values()), axis=0)
 
             self._losses['total'] = total_loss
-            self.outputs_train.append(self._losses)
-            self.outputs_eval.append(self._losses)
+            self.outputs_train['losses'] = self._losses
+            self.outputs_eval['losses'] = self._losses
 
     def _add_optims(self, optims: dict):
         """
@@ -103,7 +107,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             self._optims = optims['default']
             grads = self._optims.compute_gradients(self._losses['total'])
             step = self._optims.apply_gradients(grads)
-            self.outputs_train.append(step)
+            self.outputs_train['default_optim'] = step
 
     @staticmethod
     def _build_model(n_outputs: int, **kwargs):
@@ -154,8 +158,8 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             Loss values (with same keys as those initially passed to
             model.init).
             Additionally, a total_loss key is added
-        list
-            Arbitrary number of predictions as np.array
+        dict
+            outputs of `model.run`
 
         """
 
@@ -165,7 +169,9 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
         inputs = data_dict.pop('data')
 
-        preds, losses, *_ = model.run(inputs, data_dict['label'])
+        outputs = model.run(images=inputs, labels=data_dict['label'])
+        preds = outputs['pred']
+        losses = outputs['losses']
 
         for key, loss_val in losses.items():
             loss_vals[key] = loss_val
@@ -186,11 +192,4 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             loss_vals = eval_loss_vals
             metric_vals = eval_metrics_vals
 
-            image_names = "val_" + str(image_names)
-
-        for key, val in {**metric_vals, **loss_vals}.items():
-            logging.info({"value": {"value": val.item(), "name": key,
-                                    "env_appendix": "_%02d" % fold
-                                    }})
-
-        return metric_vals, loss_vals, [preds]
+        return metric_vals, loss_vals, outputs

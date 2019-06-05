@@ -4,6 +4,11 @@ Utils
 This package provides utility functions as image operations, various decorators,
 path operations and time operations.
 
+.. automodule:: delira.utils.context_managers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 .. automodule:: delira.utils.decorators
     :members:
     :undoc-members:

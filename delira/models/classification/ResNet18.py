@@ -1,4 +1,5 @@
 import tensorflow as tf
+from delira.utils.decorators import make_deprecated
 
 conv2d = tf.keras.layers.Conv2D
 maxpool2d = tf.keras.layers.MaxPool2D
@@ -81,7 +82,9 @@ class ResBlock(tf.keras.Model):
 
 
 class ResNet18(tf.keras.Model):
+    @make_deprecated("own repository to be announced")
     def __init__(self, num_classes=None, bias=False):
+
         super(ResNet18, self).__init__()
 
         _image_format, _axis = get_image_format_and_axis()

@@ -65,6 +65,11 @@ def get_backends():
     """
     Return List of currently available backends
 
+    Returns
+    -------
+    list
+        list of strings containing the currently installed backends
+
     """
 
     if not __BACKENDS:

@@ -32,6 +32,8 @@ def load_sample_nii(files, label_load_cls):
     """
     Load sample from multiple ITK files
 
+    .. deprecated-removed:: 0.3.4 0.4
+
     Parameters
     ----------
     files : dict with keys `img` and `label`
@@ -71,6 +73,8 @@ def load_sample_nii(files, label_load_cls):
 class BaseLabelGenerator(object):
     """
     Base Class to load labels from json files
+
+    .. deprecated-removed: 0.3.3 0.3.5
 
     """
 

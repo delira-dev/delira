@@ -1,6 +1,7 @@
 # Adapted from https://github.com/jaxony/unet-pytorch/blob/master/model.py
 
 from delira import get_backends
+from delira.utils.decorators import make_deprecated
 
 if "TORCH" in get_backends():
     import torch
@@ -44,6 +45,7 @@ if "TORCH" in get_backends():
 
         """
 
+        @make_deprecated("Own repository to be announced")
         def __init__(self, num_classes, in_channels=1, depth=5,
                      start_filts=64, up_mode='transpose',
                      merge_mode='concat'):
@@ -170,10 +172,10 @@ if "TORCH" in get_backends():
             # torch.nn.CrossEntropyLoss is your training script,
             # as this module includes a softmax already.
             x = self.conv_final(x)
-            return x
+            return {"pred": x}
 
         @staticmethod
-        def closure(model, data_dict: dict, optimizers: dict, criterions={},
+        def closure(model, data_dict: dict, optimizers: dict, losses={},
                     metrics={}, fold=0, **kwargs):
             """
             closure method to do a single backpropagation step
@@ -187,9 +189,9 @@ if "TORCH" in get_backends():
                 dictionary containing the data
             optimizers : dict
                 dictionary of optimizers to optimize model's parameters
-            criterions : dict
-                dict holding the criterions to calculate errors
-                (gradients from different criterions will be accumulated)
+            losses : dict
+                dict holding the losses to calculate errors
+                (gradients from different losses will be accumulated)
             metrics : dict
                 dict holding the metrics to calculate
             fold : int
@@ -202,20 +204,20 @@ if "TORCH" in get_backends():
             dict
                 Metric values (with same keys as input dict metrics)
             dict
-                Loss values (with same keys as input dict criterions)
+                Loss values (with same keys as input dict losses)
             list
                 Arbitrary number of predictions as torch.Tensor
 
             Raises
             ------
             AssertionError
-                if optimizers or criterions are empty or the optimizers are not
+                if optimizers or losses are empty or the optimizers are not
                 specified
 
             """
 
-            assert (optimizers and criterions) or not optimizers, \
-                "Criterion dict cannot be emtpy, if optimizers are passed"
+            assert (optimizers and losses) or not optimizers, \
+                "Loss dict cannot be emtpy, if optimizers are passed"
 
             loss_vals = {}
             metric_vals = {}
@@ -235,15 +237,15 @@ if "TORCH" in get_backends():
 
                 if data_dict:
 
-                    for key, crit_fn in criterions.items():
-                        _loss_val = crit_fn(preds, *data_dict.values())
+                    for key, crit_fn in losses.items():
+                        _loss_val = crit_fn(preds["pred"], *data_dict.values())
                         loss_vals[key] = _loss_val.detach()
                         total_loss += _loss_val
 
                     with torch.no_grad():
                         for key, metric_fn in metrics.items():
                             metric_vals[key] = metric_fn(
-                                preds, *data_dict.values())
+                                preds["pred"], *data_dict.values())
 
             if optimizers:
                 optimizers['default'].zero_grad()
@@ -266,12 +268,8 @@ if "TORCH" in get_backends():
                 loss_vals = eval_loss_vals
                 metric_vals = eval_metrics_vals
 
-            for key, val in {**metric_vals, **loss_vals}.items():
-                logging.info({"value": {"value": val.item(), "name": key,
-                                        "env_appendix": "_%02d" % fold
-                                        }})
-
-            return metric_vals, loss_vals, [preds]
+            return metric_vals, loss_vals, {k: v.detach()
+                                            for k, v in preds.items()}
 
         def _build_model(self, num_classes, in_channels=3, depth=5,
                          start_filts=64):
@@ -293,10 +291,10 @@ if "TORCH" in get_backends():
             Notes
             -----
             The Helper functions and classes are defined within this function
-            because ``delira`` offers a possibility to save the source code
-            along the weights to completely recover the network without needing
-            a manually created network instance and these helper functions have
-            to be saved too.
+            because ``delira`` once offered a possibility to save the source
+            code along the weights to completely recover the network without
+            needing a manually created network instance and these helper
+            functions had to be saved too.
 
             """
 
@@ -617,10 +615,10 @@ if "TORCH" in get_backends():
             # torch.nn.CrossEntropyLoss is your training script,
             # as this module includes a softmax already.
             x = self.conv_final(x)
-            return x
+            return {"pred": x}
 
         @staticmethod
-        def closure(model, data_dict: dict, optimizers: dict, criterions={},
+        def closure(model, data_dict: dict, optimizers: dict, losses={},
                     metrics={}, fold=0, **kwargs):
             """
             closure method to do a single backpropagation step
@@ -634,9 +632,9 @@ if "TORCH" in get_backends():
                 dictionary containing the data
             optimizers : dict
                 dictionary of optimizers to optimize model's parameters
-            criterions : dict
-                dict holding the criterions to calculate errors
-                (gradients from different criterions will be accumulated)
+            losses : dict
+                dict holding the losses to calculate errors
+                (gradients from different losses will be accumulated)
             metrics : dict
                 dict holding the metrics to calculate
             fold : int
@@ -649,20 +647,20 @@ if "TORCH" in get_backends():
             dict
                 Metric values (with same keys as input dict metrics)
             dict
-                Loss values (with same keys as input dict criterions)
+                Loss values (with same keys as input dict losses)
             list
                 Arbitrary number of predictions as torch.Tensor
 
             Raises
             ------
             AssertionError
-                if optimizers or criterions are empty or the optimizers are not
+                if optimizers or losses are empty or the optimizers are not
                 specified
 
             """
 
-            assert (optimizers and criterions) or not optimizers, \
-                "Criterion dict cannot be emtpy, if optimizers are passed"
+            assert (optimizers and losses) or not optimizers, \
+                "Loss dict cannot be emtpy, if optimizers are passed"
 
             loss_vals = {}
             metric_vals = {}
@@ -682,15 +680,16 @@ if "TORCH" in get_backends():
 
                 if data_dict:
 
-                    for key, crit_fn in criterions.items():
-                        _loss_val = crit_fn(preds, *data_dict.values())
-                        loss_vals[key] = _loss_val.detach()
+                    for key, crit_fn in losses.items():
+                        _loss_val = crit_fn(preds["pred"],
+                                            *data_dict.values())
+                        loss_vals[key] = _loss_val.item()
                         total_loss += _loss_val
 
                     with torch.no_grad():
                         for key, metric_fn in metrics.items():
                             metric_vals[key] = metric_fn(
-                                preds, *data_dict.values())
+                                preds["pred"], *data_dict.values()).item()
 
             if optimizers:
                 optimizers['default'].zero_grad()
@@ -713,12 +712,8 @@ if "TORCH" in get_backends():
                 loss_vals = eval_loss_vals
                 metric_vals = eval_metrics_vals
 
-            for key, val in {**metric_vals, **loss_vals}.items():
-                logging.info({"value": {"value": val.item(), "name": key,
-                                        "env_appendix": "_%02d" % fold
-                                        }})
-
-            return metric_vals, loss_vals, [preds]
+            return metric_vals, loss_vals, {k: v.detach()
+                                            for k, v in preds.items()}
 
         def _build_model(self, num_classes, in_channels=3, depth=5,
                          start_filts=64):
@@ -740,10 +735,10 @@ if "TORCH" in get_backends():
             Notes
             -----
             The Helper functions and classes are defined within this function
-            because ``delira`` offers a possibility to save the source code
-            along the weights to completely recover the network without needing
-            a manually created network instance and these helper functions have
-            to be saved too.
+            because ``delira`` once offered a possibility to save the source
+            code along the weights to completely recover the network without
+            needing a manually created network instance and these helper
+            functions had to be saved too.
 
             """
 

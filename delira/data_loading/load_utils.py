@@ -67,11 +67,14 @@ def norm_zero_mean_unit_std(data):
 
 
 @make_deprecated("LoadSample")
-def _is_valid_image_file(fname, img_extensions, gt_extensions):
+def is_valid_image_file(fname, img_extensions, gt_extensions):
     """
     Helper Function to check wheter file is image file and has at least
     one label file
-     Parameters
+
+    .. deprecated-removed:: 0.3.4 0.3.5
+
+    Parameters
     ----------
     fname : str
         filename of image path
@@ -98,6 +101,8 @@ def _is_valid_image_file(fname, img_extensions, gt_extensions):
 def default_load_fn_2d(img_file, *label_files, img_shape, n_channels=1):
     """
     loading single 2d sample with arbitrary number of samples
+
+    .. deprecated-removed:: 0.3.4 0.3.5
 
     Parameters
     ----------
@@ -136,14 +141,16 @@ def default_load_fn_2d(img_file, *label_files, img_shape, n_channels=1):
 
 
 class LoadSample:
+    """
+    Provides a callable to load a single sample from multiple files in a folder
+    """
+
     def __init__(self,
                  sample_ext: dict,
                  sample_fn: collections.abc.Callable,
                  dtype={}, normalize=(), norm_fn=norm_range('-1,1'),
                  **kwargs):
         """
-        Provides a callable to load a single sample from multiple files in a
-        folder
 
         Parameters
         ----------

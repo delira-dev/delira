@@ -8,13 +8,11 @@ NetworkTrainer
 ==============
 The network trainer implements the actual training routine and can be subclassed
  for special routines.
-Subclassing your trainer also means you have to subclass your experiment (to
-use the trainer).
 
-:hidden:`AbstractNetworkTrainer`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:hidden:`BaseNetworkTrainer`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: AbstractNetworkTrainer
+.. autoclass:: BaseNetworkTrainer
     :members:
     :undoc-members:
     :show-inheritance:

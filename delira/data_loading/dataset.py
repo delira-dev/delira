@@ -154,7 +154,7 @@ class AbstractDataset:
         """
         split dataset into train and test data
 
-        .. deprecated:: 0.3
+        .. deprecated-removed:: 0.3 0.4
             method will be removed in next major release
 
         Parameters
@@ -692,8 +692,10 @@ class Nii3DCacheDatset(BaseCacheDataset):
 
 
 if "TORCH" in get_backends():
+
     from torchvision.datasets import CIFAR10, CIFAR100, EMNIST, MNIST, \
         FashionMNIST
+    import torch
 
     class TorchvisionClassificationDataset(AbstractDataset):
         """
@@ -802,8 +804,15 @@ if "TORCH" in get_backends():
             """
 
             data = self.data[index]
+            label = data[1]
+
+            if isinstance(label, torch.Tensor):
+                label = label.numpy()
+            elif isinstance(label, int):
+                label = np.array(label)
             data_dict = {"data": np.array(data[0]),
-                         "label": data[1].reshape(1).astype(np.float32)}
+
+                         "label": label.reshape(1).astype(np.float32)}
 
             if self.one_hot:
                 # TODO: Remove and refer to batchgenerators transform:
