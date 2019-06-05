@@ -68,6 +68,8 @@ class TestDataParallel(unittest.TestCase):
                 self.assertIsNone(updated_param.grad_var)
 
     # test with keyword arguments
+    @unittest.skipIf("CHAINER" not in get_backends(),
+                     "No CHAINER Backend installed")
     def test_keyword_arguments_different_batchsize(self):
         import numpy as np
         import chainer
@@ -86,6 +88,8 @@ class TestDataParallel(unittest.TestCase):
                                  chainer.get_device("@numpy"))
 
     # test with positional arguments
+    @unittest.skipIf("CHAINER" not in get_backends(),
+                     "No CHAINER Backend installed")
     def test_positional_arguments(self):
         import numpy as np
         import chainer
