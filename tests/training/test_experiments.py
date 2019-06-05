@@ -115,15 +115,15 @@ class ExperimentTest(unittest.TestCase):
         # setup torch testcases
         if "TORCH" in get_backends() and self._testMethodName.endswith("torch"):
             import torch
-            from delira.models.classification import \
-                ClassificationNetworkBasePyTorch
+            from delira.models import AbstractPyTorchNetwork
             from delira.training.callbacks import \
                 ReduceLROnPlateauCallbackPyTorch
 
-            class DummyNetworkTorch(ClassificationNetworkBasePyTorch):
+            class DummyNetworkTorch(AbstractPyTorchNetwork):
 
                 def __init__(self):
-                    super().__init__(32, 1)
+                    super().__init__()
+                    self.module = self._build_model(32, 1)
 
                 def forward(self, x):
                     return {"pred": self.module(x)}
@@ -223,13 +223,12 @@ class ExperimentTest(unittest.TestCase):
             if self._testMethodName.endswith("tf"):
                 # enable graph mode
                 switch_tf_execution_mode("graph")
-                from delira.models import ClassificationNetworkBaseTf, \
-                    AbstractTfNetwork
+                from delira.models import AbstractTfGraphNetwork
 
-                class DummyNetworkTf(ClassificationNetworkBaseTf):
+                class DummyNetworkTf(AbstractTfGraphNetwork):
                     def __init__(self):
-                        AbstractTfNetwork.__init__(self)
-                        self.model = self._build_model(1)
+                        super().__init__()
+                        self.model = tf.keras.layers.Dense(1, "relu")
 
                         images = tf.placeholder(shape=[None, 32],
                                                 dtype=tf.float32)
@@ -605,7 +604,7 @@ class ExperimentTest(unittest.TestCase):
                      reason="No TF Backend installed")
     def test_experiment_run_tf(self):
 
-        from delira.training import TfExperiment
+        from delira.training import TfGraphExperiment
         from delira.data_loading import BaseDataManager
 
         for case in self._test_cases["tf"]:
@@ -613,7 +612,7 @@ class ExperimentTest(unittest.TestCase):
                 (params, dataset_length_train, dataset_length_test,
                  network_cls) = case
 
-                exp = TfExperiment(params, network_cls,
+                exp = TfGraphExperiment(params, network_cls,
                                    key_mapping={"images": "data"})
 
                 dset_train = DummyDataset(dataset_length_train)
@@ -649,7 +648,7 @@ class ExperimentTest(unittest.TestCase):
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF Backend installed")
     def test_experiment_kfold_tf(self):
-        from delira.training import TfExperiment
+        from delira.training import TfGraphExperiment
         from delira.data_loading import BaseDataManager
 
         # all test cases
@@ -688,7 +687,7 @@ class ExperimentTest(unittest.TestCase):
                                 (params, dataset_length_train,
                                  dataset_length_test, network_cls) = case
 
-                                exp = TfExperiment(
+                                exp = TfGraphExperiment(
                                     params, network_cls,
                                     key_mapping={"images": "data"})
 
@@ -801,7 +800,7 @@ class ExperimentTest(unittest.TestCase):
     @unittest.skipIf("SKLEARN" not in get_backends(),
                      reason="No SKLEARN Backend installed")
     def test_experiment_run_sklearn(self):
-        from delira.training import SkLearnExperiment
+        from delira.training import SklearnExperiment
         from delira.data_loading import BaseDataManager
 
         for case in self._test_cases["sklearn"]:
@@ -809,7 +808,7 @@ class ExperimentTest(unittest.TestCase):
                 (params, dataset_length_train, dataset_length_test,
                  val_score_key, val_score_mode, network_cls) = case
 
-                exp = SkLearnExperiment(params, network_cls,
+                exp = SklearnExperiment(params, network_cls,
                                         key_mapping={"X": "X"},
                                         val_score_key=val_score_key,
                                         val_score_mode=val_score_mode)
@@ -825,7 +824,7 @@ class ExperimentTest(unittest.TestCase):
     @unittest.skipIf("SKLEARN" not in get_backends(),
                      reason="No SKLEARN Backend installed")
     def test_experiment_test_sklearn(self):
-        from delira.training import SkLearnExperiment
+        from delira.training import SklearnExperiment
         from delira.data_loading import BaseDataManager
 
         for case in self._test_cases["sklearn"]:
@@ -833,7 +832,7 @@ class ExperimentTest(unittest.TestCase):
                 (params, dataset_length_train, dataset_length_test,
                  val_score_key, val_score_mode, network_cls) = case
 
-                exp = SkLearnExperiment(params, network_cls,
+                exp = SklearnExperiment(params, network_cls,
                                         key_mapping={"X": "data"},
                                         val_score_key=val_score_key,
                                         val_score_mode=val_score_mode)

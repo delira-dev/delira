@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import tqdm
 
 from ..data_loading import BaseDataManager
-from .utils import convert_batch_to_numpy_identity
+from .utils import convert_to_numpy_identity
 from ..utils.config import LookupConfig
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class Predictor(object):
 
     def __init__(
             self, model, key_mapping: dict,
-            convert_batch_to_npy_fn=convert_batch_to_numpy_identity,
+            convert_batch_to_npy_fn=convert_to_numpy_identity,
             prepare_batch_fn=lambda **x: x, **kwargs):
         """
 

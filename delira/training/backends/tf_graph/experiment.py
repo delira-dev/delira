@@ -1,7 +1,18 @@
+import typing
+
+from delira.models import AbstractTfGraphNetwork
+
+from delira.training.parameters import Parameters
+from ..tf_eager.experiment import TfEagerExperiment
+from ..tf_eager.utils import create_optims_default
+
+from .trainer import TfGraphNetworkTrainer
+
+
 class TfGraphExperiment(TfEagerExperiment):
     def __init__(self,
                  params: typing.Union[str, Parameters],
-                 model_cls: AbstractTfEagerNetwork,
+                 model_cls: AbstractTfGraphNetwork,
                  n_epochs=None,
                  name=None,
                  save_path=None,

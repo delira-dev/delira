@@ -1,10 +1,4 @@
 import logging
-import os
-from functools import partial
-import warnings
-
-import torch
-from batchgenerators.dataloading import MultiThreadedAugmenter
 
 from delira.io.torch import load_checkpoint_torchscript, \
     save_checkpoint_torchscript
@@ -13,7 +7,7 @@ from delira.models import AbstractTorchScriptNetwork
 from delira.training.base_trainer import BaseNetworkTrainer
 from ..torch.trainer import PyTorchNetworkTrainer
 
-from .utils import convert_to_numpy, create_optims_default
+from ..torch.utils import convert_to_numpy, create_optims_default
 
 
 logger = logging.getLogger(__name__)

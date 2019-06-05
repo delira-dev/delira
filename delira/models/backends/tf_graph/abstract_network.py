@@ -108,3 +108,7 @@ class AbstractTfGraphNetwork(AbstractNetwork, metaclass=abc.ABCMeta):
             return self._sess.run(self.outputs_train, feed_dict=_feed_dict)
         else:
             return self._sess.run(self.outputs_eval, feed_dict=_feed_dict)
+
+    @staticmethod
+    def prepare_batch(batch: dict, input_device, output_device):
+        return batch
