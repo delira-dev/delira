@@ -1,4 +1,5 @@
 import logging
+import copy
 
 import numpy as np
 from tqdm import tqdm
@@ -229,7 +230,7 @@ class Predictor(object):
                 for key, val_list in batch_dict.items():
                     batch_dict[key] = np.concatenate(val_list)
 
-                preds = self.predict(batch_dict, **kwargs)
+                preds = self.predict(copy.copy(batch_dict), **kwargs)
 
                 # convert batchdict back to numpy (self.predict may convert it
                 # to backend-specific tensor type) - no-op if already numpy
