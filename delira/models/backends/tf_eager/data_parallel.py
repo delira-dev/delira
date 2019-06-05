@@ -6,6 +6,7 @@ class DataParallelTfEagerNetwork(AbstractTfEagerNetwork):
     """
     DataParallel Module for the TF eager execution backend
     """
+
     def __init__(self, module, devices):
         """
 

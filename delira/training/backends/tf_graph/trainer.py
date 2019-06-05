@@ -1,16 +1,13 @@
+from .utils import initialize_uninitialized
+from ..tf_eager.utils import create_optims_default, switch_tf_execution_mode
+from delira.training.utils import convert_to_numpy_identity as convert_to_numpy
+from delira.training.base_trainer import BaseNetworkTrainer
+from delira.io.tf import load_checkpoint, save_checkpoint
+from delira.models import AbstractTfGraphNetwork
 import os
 import logging
 
 logger = logging.getLogger(__name__)
-
-from delira.models import AbstractTfGraphNetwork
-from delira.io.tf import load_checkpoint, save_checkpoint
-
-from delira.training.base_trainer import BaseNetworkTrainer
-from delira.training.utils import convert_to_numpy_identity as convert_to_numpy
-from ..tf_eager.utils import create_optims_default, switch_tf_execution_mode
-
-from .utils import initialize_uninitialized
 
 
 class TfGraphNetworkTrainer(BaseNetworkTrainer):

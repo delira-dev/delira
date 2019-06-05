@@ -573,4 +573,3 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
 
         """
         return BaseNetworkTrainer._search_for_prev_state(path, extensions)
-

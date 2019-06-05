@@ -136,4 +136,3 @@ class AbstractNetwork(object):
 
         """
         return self._init_kwargs
-

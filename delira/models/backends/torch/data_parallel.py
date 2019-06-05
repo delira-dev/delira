@@ -9,6 +9,7 @@ class DataParallelPyTorchNetwork(AbstractPyTorchNetwork,
     A Wrapper around a :class:`AbstractPyTorchNetwork` instance to implement parallel
     training by splitting the batches
     """
+
     def __init__(self, module: AbstractPyTorchNetwork,
                  device_ids=None, output_device=None, dim=0):
         """

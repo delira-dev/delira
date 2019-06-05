@@ -71,7 +71,7 @@ def switch_tf_execution_mode(mode: str):
     ------
     ValueError
         If the given mode is not any of the above mentioned
-        
+
     """
     mode = mode.lower()
 

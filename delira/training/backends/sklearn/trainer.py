@@ -1,3 +1,11 @@
+from .utils import create_optims_default
+from delira.training.utils import convert_to_numpy_identity as convert_to_numpy
+from delira.training.base_trainer import BaseNetworkTrainer
+from delira.io.sklearn import save_checkpoint, load_checkpoint
+from delira.models import SklearnEstimator
+from delira.data_loading import BaseDataManager
+from delira.data_loading.sampler import RandomSampler, \
+    RandomSamplerNoReplacement
 import os
 import logging
 import numpy as np
@@ -5,17 +13,6 @@ from tqdm.auto import tqdm
 from functools import partial
 
 logger = logging.getLogger(__name__)
-
-from delira.data_loading.sampler import RandomSampler, \
-    RandomSamplerNoReplacement
-from delira.data_loading import BaseDataManager
-from delira.models import SklearnEstimator
-from delira.io.sklearn import save_checkpoint, load_checkpoint
-
-from delira.training.base_trainer import BaseNetworkTrainer
-from delira.training.utils import convert_to_numpy_identity as convert_to_numpy
-
-from .utils import create_optims_default
 
 
 class SklearnEstimatorTrainer(BaseNetworkTrainer):
