@@ -968,7 +968,8 @@ if "TORCH" in get_backends():
 
 if "TF" in get_backends():
     from .tf_trainer import TfNetworkTrainer
-    from .train_utils import create_optims_default_tf, convert_tf_tensor_to_npy
+    from .train_utils import create_optims_default_tf, \
+        convert_tf_tensor_to_npy, initialize_uninitialized
     from ..models import AbstractTfNetwork
     from .parameters import Parameters
     import tensorflow as tf
@@ -1242,6 +1243,8 @@ if "TF" in get_backends():
             # specify convert_fn to correct backend function
             if convert_fn is None:
                 convert_fn = convert_tf_tensor_to_npy
+
+            initialize_uninitialized(network._sess)
 
             return super().test(network=network, test_data=test_data,
                                 metrics=metrics, metric_keys=metric_keys,
