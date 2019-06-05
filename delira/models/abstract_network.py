@@ -236,7 +236,7 @@ if "SKLEARN" in get_backends():
 
             new_batch = {"X": batch["data"]}
             if "label" in batch:
-                new_batch["y"] = batch["label"]
+                new_batch["y"] = batch["label"].ravel()
 
             return new_batch
 
