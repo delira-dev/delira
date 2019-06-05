@@ -312,8 +312,7 @@ class ExperimentTest(unittest.TestCase):
                 dset_test = DummyDataset(dataset_length_test)
                 dmgr_test = BaseDataManager(dset_test, 16, 1, None)
 
-                exp.test(model, dmgr_test, params,
-                         params.nested_get("val_metrics"))
+                exp.test(model, dmgr_test, params.nested_get("val_metrics"))
 
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF Backend installed")
