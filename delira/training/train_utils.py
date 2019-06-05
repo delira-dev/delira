@@ -212,6 +212,24 @@ if "TF" in get_backends():
         if not_initialized_vars:
             sess.run(tf.variables_initializer(not_initialized_vars))
 
+    def _convert_tensor_to_npy_eager(tensor):
+        """
+        Convert tensor in eager mode to numpy
+
+        Parameters
+        ----------
+        tensor : arraylike or tf.Tensor
+
+        Returns
+        -------
+        arraylike
+            converted tensor
+
+        """
+        if isinstance(tensor, tf.Tensor):
+            return tensor.numpy()
+        return tensor
+
     def convert_tf_tensor_to_npy(*args, **kwargs):
         """
         Function to convert all tf Tensors to numpy arrays
@@ -233,4 +251,39 @@ if "TF" in get_backends():
             all given keyword arguments (converted if necessary)
 
         """
+        eager = tf.executing_eagerly()
+
+        # eager conversion
+        if eager:
+            convert_fn = _convert_tensor_to_npy_eager
+        else:
+            # no conversion needed since tensors should always be numpy arrays
+            def convert_fn(tensor):
+                return tensor
+        args = list(args)
+
+        for idx, _arg in args:
+            args[idx] = convert_fn(_arg)
+
+        for k, v in kwargs.items():
+            kwargs[k] = convert_fn(v)
         return convert_batch_to_numpy_identity(*args, **kwargs)
+
+    from tensorflow.python.eager.context import context, EAGER_MODE, GRAPH_MODE
+
+    # hacky switch function
+    def switch_tf_execution_mode(mode: str):
+        mode = mode.lower()
+
+        mode = mode.replace("_mode", "")
+
+        if mode == "eager":
+            _mode = EAGER_MODE
+        elif mode == "graph":
+            _mode = GRAPH_MODE
+        else:
+            raise ValueError("Invalid Execution mode given: %s" % mode)
+
+        ctx = context()._eager_context
+        ctx.mode = _mode
+        ctx.is_eager = _mode == EAGER_MODE
