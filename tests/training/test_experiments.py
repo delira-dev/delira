@@ -762,7 +762,7 @@ class ExperimentTest(unittest.TestCase):
         from delira.training import ChainerExperiment
         from delira.data_loading import BaseDataManager
 
-        for case in self._test_cases_chainer:
+        for case in self._test_cases["chainer"]:
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
                  network_cls) = case
@@ -784,7 +784,7 @@ class ExperimentTest(unittest.TestCase):
         from delira.training import ChainerExperiment
         from delira.data_loading import BaseDataManager
 
-        for case in self._test_cases_chainer:
+        for case in self._test_cases["chainer"]:
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
                  network_cls) = case
