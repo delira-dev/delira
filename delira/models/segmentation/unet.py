@@ -239,13 +239,13 @@ if "TORCH" in get_backends():
 
                     for key, crit_fn in losses.items():
                         _loss_val = crit_fn(preds["pred"], *data_dict.values())
-                        loss_vals[key] = _loss_val.detach()
+                        loss_vals[key] = _loss_val.item()
                         total_loss += _loss_val
 
                     with torch.no_grad():
                         for key, metric_fn in metrics.items():
                             metric_vals[key] = metric_fn(
-                                preds["pred"], *data_dict.values())
+                                preds["pred"], *data_dict.values()).item()
 
             if optimizers:
                 optimizers['default'].zero_grad()
