@@ -3,7 +3,7 @@ from functools import partial
 
 from delira.models import AbstractChainerNetwork
 from delira.data_loading import BaseDataManager
-from delira.training.experiment import BaseExperiment
+from delira.training.base_experiment import BaseExperiment
 from delira.training.parameters import Parameters
 
 from .utils import create_optims_default, convert_to_numpy

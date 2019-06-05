@@ -4,13 +4,10 @@ import logging
 import pickle
 import os
 from datetime import datetime
-from functools import partial
 
 import numpy as np
 from sklearn.model_selection import KFold, StratifiedKFold, \
     StratifiedShuffleSplit, ShuffleSplit
-
-from delira import get_backends
 
 from ..data_loading import BaseDataManager
 from ..models import AbstractNetwork
@@ -706,13 +703,3 @@ class BaseExperiment(object):
 
     def __setstate__(self, state):
         vars(self).update(state)
-
-if "TF" in get_backends():
-    from .tf_trainer import TfNetworkTrainer, TfEagerNetworkTrainer
-    from .utils import create_optims_default_tf, convert_tf_tensor_to_npy
-    from ..models import AbstractTfNetwork, AbstractTfEagerNetwork
-    from .parameters import Parameters
-    import tensorflow as tf
-
-
-

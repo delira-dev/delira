@@ -5,7 +5,7 @@ import tensorflow as tf
 from delira.data_loading import BaseDataManager
 from delira.models import AbstractTfEagerNetwork
 
-from delira.training.experiment import BaseExperiment
+from delira.training.base_experiment import BaseExperiment
 from delira.training.parameters import Parameters
 
 from .trainer import TfEagerNetworkTrainer
