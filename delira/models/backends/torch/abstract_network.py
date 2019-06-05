@@ -119,7 +119,7 @@ class AbstractPyTorchNetwork(AbstractNetwork, torch.nn.Module):
             Current Fold in Crossvalidation (default: 0)
         **kwargs:
             additional keyword arguments
-            
+
         Returns
         -------
         dict

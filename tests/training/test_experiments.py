@@ -51,8 +51,6 @@ if "CHAINER" in get_backends():
             }
 
 
-
-
 class ExperimentTest(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -249,8 +247,6 @@ class ExperimentTest(unittest.TestCase):
 
                     def call(self, x: tf.Tensor):
                         return {"pred": self.dense_2(self.dense_1(x))}
-
-
 
                 test_cases["tf_eager"].append((
                     Parameters(fixed_params={
