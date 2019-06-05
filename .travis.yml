@@ -2,6 +2,7 @@ language: python
 
 matrix:
     include:
+    # SCIKIT-LEARN BACKEND TESTS
         - name: "Unittests Python 3.5 Sklearn Backend"
           python: 3.5
           dist: xenial
@@ -20,6 +21,8 @@ matrix:
           env:
               - TEST_TYPE="unittests"
               - BACKEND="Sklearn"
+              
+    #TENSORFLOW BACKEND TESTS
         - name: "Unittests Python 3.5 TF Backend"
           python: 3.5
           dist: xenial
@@ -38,6 +41,8 @@ matrix:
           env:
               - TEST_TYPE="unittests"
               - BACKEND="TF"
+              
+      # PYTORCH BACKEND TESTS
         - name: "Unittests Python 3.5 Torch Backend"
           python: 3.5
           dist: xenial
@@ -56,6 +61,27 @@ matrix:
           env:
               - TEST_TYPE="unittests"
               - BACKEND="Torch"
+      # CHAINER BACKEND TESTS
+        - name: "Unittests Python 3.5 Chainer Backend"
+          python: 3.5
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Chainer"
+        - name: "Unittests Python 3.6 Chainer Backend"
+          python: 3.6
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Chainer"
+        - name: "Unittests Python 3.7 Chainer Backend"
+          python: 3.7
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Chainer"
+              
+      # STATIC CHECKS
         - name: "Static Style Checks"
           python: 3.7
           dist: xenial
