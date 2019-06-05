@@ -354,7 +354,6 @@ if "CHAINER" in get_backends():
             for module in self.modules:
                 module.zerograds()
 
-
     class ParallelOptimizerCumulateGradientsHook(object):
         """
         A hook which sums up all replication's gradients in a
