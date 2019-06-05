@@ -705,10 +705,9 @@ class ExperimentTest(unittest.TestCase):
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
                  network_cls) = case
-
                 exp = TfEagerExperiment(params, network_cls,
                                         key_mapping={"x": "data"}
-                                       )
+                                        )
 
                 model = network_cls()
 
@@ -720,7 +719,6 @@ class ExperimentTest(unittest.TestCase):
                          prepare_batch=partial(model.prepare_batch,
                                                output_device="/cpu:0",
                                                input_device="/cpu:0"))
-
 
     @unittest.skipIf("CHAINER" not in get_backends(),
                      reason="No CHAINER Backend installed")

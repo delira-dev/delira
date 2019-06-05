@@ -456,9 +456,11 @@ if "CHAINER" in get_backends():
     import chainer
     import numpy as np
 
-    # Use this Mixin Class to set __call__ to None, because there is an internal check
-    # inside chainer.Link.__call__ for other __call__ methods of parent classes to be not None.
-    # If this would be the case, this function would be executed instead of our forward
+    # Use this Mixin Class to set __call__ to None, because there is an
+    # internal check inside chainer.Link.__call__ for other __call__ methods
+    # of parent classes to be not None. If this would be the case,
+    # this function would be executed instead of our forward
+
     class ChainerMixin(AbstractNetwork):
         __call__ = None
 

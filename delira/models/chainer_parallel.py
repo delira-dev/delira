@@ -158,6 +158,7 @@ if "CHAINER" in get_backends():
         # references to a closure that has a reference to the scatter_map cell
         # (because the fn is recursive). To avoid this reference cycle, we set
         # the function to None, clearing the cell
+
         try:
             return _scatter_map(inputs)
         finally:
@@ -252,7 +253,6 @@ if "CHAINER" in get_backends():
             scattered_args, scattered_kwargs = self._scatter(args, kwargs,
                                                              self.devices,
                                                              self.dim)
-
             predictions = []
 
             for _args, _kwargs, _module in zip(scattered_args,
@@ -353,6 +353,7 @@ if "CHAINER" in get_backends():
         def zerograds(self):
             for module in self.modules:
                 module.zerograds()
+
 
     class ParallelOptimizerCumulateGradientsHook(object):
         """

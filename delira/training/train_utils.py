@@ -302,6 +302,40 @@ if "CHAINER" in get_backends():
 
         return convert_batch_to_numpy_identity(*args, **kwargs)
 
+if "CHAINER" in get_backends():
+    import chainer
+    from ..models.chainer_parallel import DataParallelOptimizer
+
+    def convert_chainer_tensor_to_npy(*args, **kwargs):
+        """
+        Converts all chainer variables in args and kwargs to numpy array
+
+        Parameters
+        ----------
+        *args :
+            positional arguments of arbitrary number and type
+        **kwargs :
+            keyword arguments of arbitrary number and type
+
+        Returns
+        -------
+        list
+            converted positional arguments
+        dict
+            converted keyboard arguments
+        """
+        args = list(args)
+        for idx, arg in enumerate(args):
+            if isinstance(arg, chainer.Variable):
+                args[idx] = arg.to_cpu().array
+
+        for k, v in kwargs.items():
+            if isinstance(v, chainer.Variable):
+                v.to_cpu()
+                kwargs[k] = v.array
+
+        return convert_batch_to_numpy_identity(*args, **kwargs)
+
     def create_optims_default_chainer(model, optim_cls, **optimizer_params):
         """
         Default function to create a single optimizer for chainer
@@ -331,4 +365,3 @@ if "CHAINER" in get_backends():
         optim.setup(model)
 
         return {"default": optim}
-

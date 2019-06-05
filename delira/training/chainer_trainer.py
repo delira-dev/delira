@@ -15,6 +15,7 @@ if "CHAINER" in get_backends():
 
     from .train_utils import create_optims_default_chainer as \
         create_optims_default
+
     from ..io.chainer import load_checkpoint, save_checkpoint
     from ..models import AbstractChainerNetwork
     from ..models.chainer_parallel import DataParallel, DataParallelOptimizer
@@ -355,10 +356,12 @@ if "CHAINER" in get_backends():
                                                    curr_epoch=epoch))
 
             if epoch % self.save_freq == 0:
-                self.save_state(os.path.join(self.save_path,
-                                             "checkpoint_epoch_%d.chain"
-                                             % epoch),
-                                epoch)
+                self.save_state(
+                    os.path.join(
+                        self.save_path,
+                        "checkpoint_epoch_%d.chain" %
+                        epoch),
+                    epoch)
 
             if is_best:
                 self.save_state(os.path.join(self.save_path,

@@ -1517,7 +1517,11 @@ if "CHAINER" in get_backends():
             convert_fn : function
                 function to convert a batch of tensors to numpy
                 if not specified defaults to
+<<<<<<< HEAD
                 :func:`convert_chainer_tensor_to_npy`
+=======
+                :func:`convert_torch_tensor_to_npy`
+>>>>>>> 0ea4e6354ded64add4137cb202eb0a34645f75b0
             **kwargs :
                 additional keyword arguments
 

@@ -52,12 +52,14 @@ def parse_all_requirements(backend_requirement_dict: dict):
     return backend_requirements
 
 
-requirement_files = {"base": "requirements.txt",
-                     "torch": "requirements_extra_torch.txt",
-                     "torchscript": "requirements_extra_torch.txt",
-                     "tf": "requirements_extra_tf.txt",
-                     "tf_eager": "requirements_extra_tf.txt"
-                     }
+requirement_files = {
+    "base": "requirements.txt",
+    "torch": "requirements_extra_torch.txt",
+    "torchscript": "requirements_extra_torch.txt",
+    "tf": "requirements_extra_tf.txt",
+    "tf_eager": "requirements_extra_tf.txt",
+    "chainer": "requirements_extra_chainer.txt"
+}
 
 
 requirement_dict = parse_all_requirements(requirement_files)
