@@ -1,3 +1,8 @@
+from .utils import create_optims_default, convert_to_numpy, \
+    switch_tf_execution_mode
+from delira.training.base_trainer import BaseNetworkTrainer
+from delira.io.tf import save_checkpoint_eager, load_checkpoint_eager
+from delira.models import AbstractTfEagerNetwork
 import logging
 import os
 from functools import partial
@@ -5,14 +10,6 @@ from functools import partial
 import tensorflow as tf
 
 logger = logging.getLogger(__name__)
-
-from delira.models import AbstractTfEagerNetwork
-from delira.io.tf import save_checkpoint_eager, load_checkpoint_eager
-
-from delira.training.base_trainer import BaseNetworkTrainer
-
-from .utils import create_optims_default, convert_to_numpy, \
-    switch_tf_execution_mode
 
 
 class TfEagerNetworkTrainer(BaseNetworkTrainer):

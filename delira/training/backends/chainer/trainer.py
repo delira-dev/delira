@@ -1,17 +1,14 @@
+from .utils import convert_to_numpy, create_optims_default
+from delira.io.chainer import load_checkpoint, save_checkpoint
+from delira.models import AbstractChainerNetwork, DataParallelChainerNetwork, \
+    DataParallelChainerOptimizer
+from delira.training.base_trainer import BaseNetworkTrainer
+import chainer
+from batchgenerators.dataloading import MultiThreadedAugmenter
 import os
 import logging
 from functools import partial
 logger = logging.getLogger(__name__)
-
-from batchgenerators.dataloading import MultiThreadedAugmenter
-import chainer
-
-from delira.training.base_trainer import BaseNetworkTrainer
-from delira.models import AbstractChainerNetwork, DataParallelChainerNetwork, \
-    DataParallelChainerOptimizer
-from delira.io.chainer import load_checkpoint, save_checkpoint
-
-from .utils import convert_to_numpy, create_optims_default
 
 
 class ChainerNetworkTrainer(BaseNetworkTrainer):
