@@ -22,4 +22,3 @@ if "CHAINER" in get_backends():
 if "SKLEARN" in get_backends():
     from .sklearn import load_checkpoint as sklearn_load_checkpoint
     from .sklearn import save_checkpoint as sklearn_save_checkpoint
-

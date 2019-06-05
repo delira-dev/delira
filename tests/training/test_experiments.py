@@ -423,7 +423,6 @@ class ExperimentTest(unittest.TestCase):
 
         self._test_cases = test_cases
 
-
     @unittest.skipIf("TORCH" not in get_backends(),
                      reason="No TORCH Backend installed")
     def test_experiment_run_torch(self):
