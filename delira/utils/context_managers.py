@@ -12,7 +12,6 @@ if "TORCH" in get_backends():
         without depending on it
 
         """
-
         @make_deprecated(
             "'delira.models.model_utils.scale_loss' combined with "
             "new apex.amp API (https://github.com/NVIDIA/apex)")

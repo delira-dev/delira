@@ -14,3 +14,7 @@ if "TORCH" in get_backends():
 if "TF" in get_backends():
     from .experiment import TfExperiment, TfEagerExperiment
     from .tf_trainer import TfNetworkTrainer, TfEagerNetworkTrainer
+
+if "SKLEARN" in get_backends():
+    from .sklearn_trainer import SklearnEstimatorTrainer
+    from .experiment import SkLearnExperiment

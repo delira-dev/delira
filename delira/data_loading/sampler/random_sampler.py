@@ -9,7 +9,7 @@ from ..dataset import AbstractDataset
 
 class RandomSampler(AbstractSampler):
     """
-    Implements Random Sampling from whole Dataset
+    Implements Random Sampling With Replacement from whole Dataset
     """
 
     def __init__(self, indices):
@@ -26,6 +26,7 @@ class RandomSampler(AbstractSampler):
         super().__init__()
         self._indices = list(range(len(indices)))
         self._global_index = 0
+        self._replace = True
 
     def _get_indices(self, n_indices):
         """
@@ -58,14 +59,34 @@ class RandomSampler(AbstractSampler):
             new_global_idx = len(self._indices)
 
         indices = choice(self._indices,
-                         size=new_global_idx - self._global_index)
-        # indices = choices(
-        #   self._indices, k=new_global_idx - self._global_index)
+                         size=new_global_idx - self._global_index,
+                         replace=self._replace)
+
         self._global_index = new_global_idx
         return indices
 
     def __len__(self):
         return len(self._indices)
+
+
+class RandomSamplerNoReplacement(RandomSampler):
+    """
+    Implements Random Sampling Without Replacement from whole Dataset
+    """
+
+    def __init__(self, indices):
+        """
+
+        Parameters
+        ----------
+        indices : list
+            list of classes each sample belongs to. List index corresponds to
+            data index and the value at a certain index indicates the
+            corresponding class
+
+        """
+        super().__init__(indices)
+        self._replace = False
 
 
 class PrevalenceRandomSampler(AbstractSampler):

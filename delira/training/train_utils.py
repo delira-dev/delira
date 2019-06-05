@@ -4,6 +4,27 @@ from delira import get_backends
 from ..utils.decorators import dtype_func
 
 
+def create_empty_optim_dict(*args, **kwargs):
+    """
+    Function returning an empty optimizer dict
+
+    Parameters
+    ----------
+    *args :
+        arbitrary positional arguments (ignored; only provided for api
+        conformity)
+    **kwargs :
+        arbitrary keyword arguments (ignored; only provided for api conformity)
+
+    Returns
+    -------
+    dict
+        empty dictionary
+
+    """
+    return {}
+
+
 def _check_and_correct_zero_shape(arg):
     """
     Corrects the shape of numpy array to be at least 1d and returns the

@@ -14,3 +14,6 @@ if "TORCH" in get_backends():
 if "TF" in get_backends():
     from .abstract_network import AbstractTfNetwork, AbstractTfEagerNetwork
     from .classification import ClassificationNetworkBaseTf
+
+if "SKLEARN" in get_backends():
+    from .abstract_network import SklearnEstimator
