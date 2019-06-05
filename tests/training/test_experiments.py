@@ -613,7 +613,7 @@ class ExperimentTest(unittest.TestCase):
                  network_cls) = case
 
                 exp = TfGraphExperiment(params, network_cls,
-                                   key_mapping={"images": "data"})
+                                        key_mapping={"images": "data"})
 
                 dset_train = DummyDataset(dataset_length_train)
                 dset_test = DummyDataset(dataset_length_test)

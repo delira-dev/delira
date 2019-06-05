@@ -67,7 +67,7 @@ class TestAbstractModels(unittest.TestCase):
                 self.dense = tf.keras.layers.Dense(1, activation="relu")
 
                 data = tf.placeholder(shape=[None, 1],
-                                        dtype=tf.float32)
+                                      dtype=tf.float32)
 
                 labels = tf.placeholder_with_default(
                     tf.zeros([tf.shape(data)[0], 1]), shape=[None, 1])
@@ -193,7 +193,7 @@ class TestAbstractModels(unittest.TestCase):
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF backend installed")
     def test_tf_eager(self):
-                self.run_model_arg("/cpu:0")
+        self.run_model_arg("/cpu:0")
 
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF backend installed")
