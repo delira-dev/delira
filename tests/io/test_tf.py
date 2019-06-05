@@ -10,7 +10,7 @@ class IoTfTest(unittest.TestCase):
     def test_load_save(self):
         from delira.io import tf_load_checkpoint, tf_save_checkpoint
         from delira.models import AbstractTfNetwork
-        from delira.training.train_utils import initialize_uninitialized
+        from delira.training.utils import initialize_uninitialized
         import tensorflow as tf
         import numpy as np
 

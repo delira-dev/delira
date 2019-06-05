@@ -7,10 +7,9 @@ if "TORCH" in get_backends():
     import torch
     import torch.nn.functional as F
     from torch.nn import init
-    import logging
     from ..abstract_network import AbstractPyTorchNetwork
     # use loss scaling if installed, otherwise falls back to "normal" backward
-    from ..model_utils import scale_loss
+    from delira.models.backends.torch.utils import scale_loss
 
     class UNet2dPyTorch(AbstractPyTorchNetwork):
         """

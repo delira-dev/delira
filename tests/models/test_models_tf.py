@@ -16,7 +16,7 @@ class TfModelTest(unittest.TestCase):
                      reason="No TF Backend Installed")
     def test_tf_model_default(self):
         from delira.models import ClassificationNetworkBaseTf
-        from delira.training.train_utils import create_optims_default_tf
+        from delira.training.utils import create_optims_default_tf
         import tensorflow as tf
         test_cases = [(
             ClassificationNetworkBaseTf(1, 10),

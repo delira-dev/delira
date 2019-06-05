@@ -10,7 +10,7 @@ from delira.training import Parameters
 from delira.data_loading import AbstractDataset
 
 if "TF" in get_backends():
-    from delira.training.train_utils import switch_tf_execution_mode
+    from delira.training.utils import switch_tf_execution_mode
 
 
 class DummyDataset(AbstractDataset):

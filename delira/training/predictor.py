@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import tqdm
 
 from ..data_loading import BaseDataManager
-from .train_utils import convert_batch_to_numpy_identity
+from .utils import convert_batch_to_numpy_identity
 from ..utils.config import LookupConfig
 
 logger = logging.getLogger(__name__)

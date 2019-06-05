@@ -11,7 +11,7 @@ class TestDataParallel(unittest.TestCase):
             import chainer.links
             import chainer.functions
             import chainer.optimizers
-            from delira.models.chainer_parallel import DataParallelOptimizer, \
+            from delira.models.backends.chainer.data_parallel import DataParallelChainerOptimizer, \
                 DataParallel
 
             # creating a really simple model to test dataparallel behavior
@@ -31,7 +31,7 @@ class TestDataParallel(unittest.TestCase):
             self.model = DataParallel(SimpleModel(),
                                       devices=["@numpy", "@numpy"])
 
-            self.optimizer = DataParallelOptimizer.from_optimizer_class(
+            self.optimizer = DataParallelChainerOptimizer.from_optimizer_class(
                 chainer.optimizers.Adam
             )
             self.optimizer.setup(self.model)

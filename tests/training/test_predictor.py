@@ -36,7 +36,7 @@ class TestPredictor(unittest.TestCase):
         from delira.training import Predictor
         from delira.models.classification import ClassificationNetworkBaseTf
         from delira.models import AbstractTfNetwork
-        from delira.training.train_utils import convert_tf_tensor_to_npy,\
+        from delira.training.utils import convert_tf_tensor_to_npy,\
             initialize_uninitialized
 
         import tensorflow as tf
@@ -101,7 +101,7 @@ class TestPredictor(unittest.TestCase):
     def test_predictor_torch(self):
         from delira.training import Predictor
         from delira.models import ClassificationNetworkBasePyTorch
-        from delira.training.train_utils import convert_torch_tensor_to_npy
+        from delira.training.utils import convert_torch_tensor_to_npy
 
         import torch
 

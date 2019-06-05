@@ -19,7 +19,7 @@ class TorchModelTest(unittest.TestCase):
             UNet3dPyTorch, ClassificationNetworkBasePyTorch, \
             VGG3DClassificationNetworkPyTorch, \
             GenerativeAdversarialNetworkBasePyTorch
-        from delira.training.train_utils import \
+        from delira.training.utils import \
             create_optims_default_pytorch, create_optims_gan_default_pytorch
         from delira.utils.context_managers import DefaultOptimWrapperTorch
         import torch

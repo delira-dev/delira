@@ -10,7 +10,7 @@ if "TORCH" in get_backends():
     import torch
 
     # use loss scaling if installed, otherwise falls back to "normal" backward
-    from ..model_utils import scale_loss
+    from delira.models.backends.torch.utils import scale_loss
     from delira.models.abstract_network import AbstractPyTorchNetwork
 
     class GenerativeAdversarialNetworkBasePyTorch(AbstractPyTorchNetwork):
