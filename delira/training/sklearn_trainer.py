@@ -192,9 +192,8 @@ if "SKLEARN" in get_backends():
             dset = dmgr.dataset
 
             if verbose:
-                iterable = tqdm(enumerate(dset), unit=' sample', total=len(dset),
-                                desc="Creating unique targets to estimate "
-                                     "classes")
+                iterable = tqdm(enumerate(dset), unit=' sample', total=len(
+                    dset), desc="Creating unique targets to estimate " "classes")
 
             else:
                 iterable = enumerate(dset)

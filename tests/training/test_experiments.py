@@ -306,11 +306,11 @@ class ExperimentTest(unittest.TestCase):
                         "val_metrics": {"mae": mean_absolute_error}
                     }
                 }),
-                 500,
-                 50,
-                 "mae",
-                 "lowest",
-                 DecisionTreeClassifier
+                    500,
+                    50,
+                    "mae",
+                    "lowest",
+                    DecisionTreeClassifier
                 ))
 
             test_cases["sklearn"].append(
@@ -321,15 +321,14 @@ class ExperimentTest(unittest.TestCase):
                         "val_metrics": {"mae": mean_absolute_error}
                     }
                 }),
-                 500,
-                 50,
-                 "mae",
-                 "lowest",
-                 MLPClassifier
+                    500,
+                    50,
+                    "mae",
+                    "lowest",
+                    MLPClassifier
                 ))
 
         self._test_cases = test_cases
-
 
     @unittest.skipIf("TORCH" not in get_backends(),
                      reason="No TORCH Backend installed")
@@ -613,14 +612,12 @@ class ExperimentTest(unittest.TestCase):
                                     num_splits=2,
                                 )
 
-
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF Backend installed")
     def test_experiment_run_tf_eager(self):
 
         from delira.training import TfEagerExperiment
         from delira.data_loading import BaseDataManager
-
 
         for case in self._test_cases["tf_eager"]:
             with self.subTest(case=case):
@@ -652,7 +649,7 @@ class ExperimentTest(unittest.TestCase):
 
                 exp = TfEagerExperiment(params, network_cls,
                                         key_mapping={"x": "data"}
-                                       )
+                                        )
 
                 model = network_cls()
 

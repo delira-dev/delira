@@ -582,7 +582,6 @@ if "TF" in get_backends():
             else:
                 return self._sess.run(self.outputs_eval, feed_dict=_feed_dict)
 
-
     class AbstractTfEagerNetwork(AbstractNetwork, tf.keras.layers.Layer):
         def __init__(self, data_format="channels_first", trainable=True,
                      name=None, dtype=None, **kwargs):
@@ -615,4 +614,3 @@ if "TF" in get_backends():
                     new_batch[k] = tf.convert_to_tensor(v.astype(np.float32))
 
             return new_batch
-

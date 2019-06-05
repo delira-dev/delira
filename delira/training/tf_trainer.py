@@ -600,4 +600,5 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
         -------
 
         """
-        return tf_eager_load_checkpoint(file_name, self.module, self.optimizers)
+        return tf_eager_load_checkpoint(
+            file_name, self.module, self.optimizers)

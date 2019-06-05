@@ -1369,15 +1369,19 @@ if "TF" in get_backends():
             if key_mapping is None:
                 key_mapping = {"x": "data"}
 
-                BaseExperiment.__init__(self, params=params, model_cls=model_cls,
-                                        n_epochs=n_epochs, name=name,
-                                        save_path=save_path,
-                                        key_mapping=key_mapping,
-                                        val_score_key=val_score_key,
-                                        optim_builder=optim_builder,
-                                        checkpoint_freq=checkpoint_freq,
-                                        trainer_cls=trainer_cls,
-                                        **kwargs)
+                BaseExperiment.__init__(
+                    self,
+                    params=params,
+                    model_cls=model_cls,
+                    n_epochs=n_epochs,
+                    name=name,
+                    save_path=save_path,
+                    key_mapping=key_mapping,
+                    val_score_key=val_score_key,
+                    optim_builder=optim_builder,
+                    checkpoint_freq=checkpoint_freq,
+                    trainer_cls=trainer_cls,
+                    **kwargs)
 
         def setup(self, params, training=True, **kwargs):
             """
