@@ -2,6 +2,24 @@ language: python
 
 matrix:
     include:
+        - name: "Unittests Python 3.5 Sklearn Backend"
+          python: 3.5
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Sklearn"
+        - name: "Unittests Python 3.6 Sklearn Backend"
+          python: 3.6
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Sklearn"
+        - name: "Unittests Python 3.7 Sklearn Backend"
+          python: 3.7
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Sklearn"
         - name: "Unittests Python 3.5 TF Backend"
           python: 3.5
           dist: xenial
