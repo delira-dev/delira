@@ -22,6 +22,7 @@ def recursively_convert_elements(element, check_type, conversion_fn):
         the converted element
 
     """
+    # ToDO: Find Bug in here
 
     # convert element with conversion_fn
     if isinstance(element, check_type):
@@ -34,19 +35,21 @@ def recursively_convert_elements(element, check_type, conversion_fn):
     # recursively convert all items of iterable and convert result back to
     # original iterable type
     if isinstance(element, typing.Iterable):
-        return type(element)((recursively_convert_elements(x,
-                                                           check_type,
-                                                           conversion_fn)
-                              for x in element))
+        element = type(element)([recursively_convert_elements(x,
+                                                              check_type,
+                                                              conversion_fn)
+                                 for x in element])
+        return element
 
     # recursively convert all keys and values of mapping and convert result
     # back to original mapping type
     if isinstance(element, typing.Mapping):
-        return type(element)({
+        element = type(element)({
             recursively_convert_elements(k, check_type, conversion_fn):
                 recursively_convert_elements(v, check_type, conversion_fn)
             for k, v in element.items()
         })
+        return element
 
     # none of the previous cases is suitable for the element -> return as is
     return element

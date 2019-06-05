@@ -10,7 +10,8 @@ from delira.training import Parameters
 from delira.data_loading import AbstractDataset
 
 if "TF" in get_backends():
-    from delira.training.utils import switch_tf_execution_mode
+    from delira.training.backends.tf_eager.utils import \
+        switch_tf_execution_mode
 
 
 class DummyDataset(AbstractDataset):
@@ -249,8 +250,6 @@ class ExperimentTest(unittest.TestCase):
 
                     def call(self, x: tf.Tensor):
                         return {"pred": self.dense_2(self.dense_1(x))}
-
-
 
                 test_cases["tf_eager"].append((
                     Parameters(fixed_params={
@@ -534,7 +533,7 @@ class ExperimentTest(unittest.TestCase):
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF Backend installed")
     def test_experiment_test_tf(self):
-        from delira.training import TfExperiment
+        from delira.training import TfGraphExperiment
         from delira.data_loading import BaseDataManager
 
         for case in self._test_cases["tf"]:
@@ -542,7 +541,7 @@ class ExperimentTest(unittest.TestCase):
                 (params, dataset_length_train, dataset_length_test,
                  network_cls) = case
 
-                exp = TfExperiment(params, network_cls,
+                exp = TfGraphExperiment(params, network_cls,
                                    key_mapping={"images": "data"},
                                    )
 
@@ -572,7 +571,7 @@ class ExperimentTest(unittest.TestCase):
                                 (params, dataset_length_train,
                                  dataset_length_test, network_cls) = case
 
-                                exp = TfExperiment(
+                                exp = TfGraphExperiment(
                                     params, network_cls,
                                     key_mapping={"images": "data"})
 
