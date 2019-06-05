@@ -14,8 +14,10 @@ warnings.simplefilter('ignore', ImportWarning)
 __POSSIBLE_BACKENDS = [
     ("torch", "torch"),
     ("tensorflow", "tf"),
+    ("chainer", "chainer"),
     ("sklearn", "sklearn")
 ]
+
 __BACKENDS = []
 
 
