@@ -137,34 +137,15 @@ if "SKLEARN" in get_backends():
             if os.path.isdir(self.save_path):
                 # check all files in directory starting with "checkpoint" and
                 # not ending with "_best.pth"
-                files = [x for x in os.listdir(self.save_path)
-                         if os.path.isfile(os.path.join(self.save_path, x))
-                         and x.startswith("checkpoint")
-                         and not x.endswith("_best.pkl")]
+                latest_state_path, latest_epoch = self._search_for_prev_state(
+                    self.save_path, [".pkl"])
 
                 # if list is not empty: load previous state
-                if files:
+                if latest_state_path is not None:
+                    self.update_state(latest_state_path)
 
-                    latest_epoch = max([
-                        int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
-                        for x in files])
+                    self.start_epoch = latest_epoch
 
-                    latest_state_path = os.path.join(self.save_path,
-                                                     "checkpoint_epoch_%d.pkl"
-                                                     % latest_epoch)
-
-                    # if pth file does not exist, load pt file instead
-                    if not os.path.isfile(latest_state_path):
-                        latest_state_path = latest_state_path[:-1]
-
-                    logger.info("Attempting to load state from previous \
-                                training from %s" % latest_state_path)
-                    try:
-                        self.update_state(latest_state_path)
-                    except KeyError:
-                        logger.warning("Previous State could not be loaded, \
-                                    although it exists.Training will be \
-                                    restarted")
             self.use_gpu = False
             self.input_device = "cpu"
             self.output_device = "cpu"
@@ -214,6 +195,7 @@ if "SKLEARN" in get_backends():
                 iterable = tqdm(enumerate(dset), unit=' sample', total=len(dset),
                                 desc="Creating unique targets to estimate "
                                      "classes")
+
             else:
                 iterable = enumerate(dset)
 
@@ -288,11 +270,14 @@ if "SKLEARN" in get_backends():
                 # that only one epoch consisting of one batch (which holds the
                 # whole dataset) is used for training
                 if num_epochs > 1:
-                    logging.info("An epoch number greater than 1 is given, "
-                                 "but the current module does not support "
-                                 "iterative training. Falling back to usual "
-                                 "dataset fitting. For huge datasets, this "
-                                 "might easily result in out of memory errors!")
+
+                    logging.info(
+                        "An epoch number greater than 1 is given, "
+                        "but the current module does not support "
+                        "iterative training. Falling back to usual "
+                        "dataset fitting. For huge datasets, this "
+                        "might easily result in out of memory errors!")
+
                     num_epochs = 1
 
             return super().train(num_epochs, datamgr_train, datamgr_valid,
@@ -343,13 +328,15 @@ if "SKLEARN" in get_backends():
             """
 
             for cb in self._callbacks:
-                self._update_state(cb.at_epoch_end(self, val_metrics=metrics_val,
+                self._update_state(cb.at_epoch_end(self,
+                                                   val_metrics=metrics_val,
                                                    val_score_key=val_score_key,
                                                    curr_epoch=epoch))
 
             if epoch % self.save_freq == 0:
                 self.save_state(os.path.join(self.save_path,
-                                             "checkpoint_epoch_%d.pkl" % epoch),
+                                             "checkpoint_epoch_%d.pkl"
+                                             % epoch),
                                 epoch)
 
             if is_best:

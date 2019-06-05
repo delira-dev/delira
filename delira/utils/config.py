@@ -70,6 +70,7 @@ class LookupConfig(Config):
                 update_val.update(value, deep=False)
             else:
                 update_val = value
+
         else:
             update_val = value
 

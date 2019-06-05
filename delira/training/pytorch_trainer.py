@@ -332,10 +332,12 @@ if "TORCH" in get_backends():
                     self.optimizers[k] = v
 
             except (ImportError, RuntimeError) as e:
-                logging.debug("Either APEX can't be imported correctly or a value "
-                              "missmatch occured. Switching to default FP32 "
-                              "training insted. The following Exception occured:"
-                              "\n%s" % str(e))
+                logging.debug(
+                    "Either APEX can't be imported correctly or a value "
+                    "missmatch occured. Switching to default FP32 "
+                    "training insted. The following Exception occured:"
+                    "\n%s" %
+                    str(e))
 
         def _at_training_begin(self, *args, **kwargs):
             """

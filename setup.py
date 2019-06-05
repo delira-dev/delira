@@ -41,13 +41,27 @@ def unify_requirements(base_requirements: list, *additional_requirement_lists):
 
 def parse_all_requirements(backend_requirement_dict: dict):
     backend_requirements = {"full": []}
+
+    # parse all requirements
     for backend_name, requirement_file in backend_requirement_dict.items():
         _reqs = resolve_requirements(
             os.path.join(os.path.dirname(__file__), requirement_file))
         backend_requirements[backend_name] = _reqs
 
+        # add all requirements to full if not already part of it
         backend_requirements["full"] = unify_requirements(
             backend_requirements["full"], _reqs)
+
+    # for each backend: check if requirement is already in base requirements
+    for backend_name, reqs in backend_requirements.items():
+        if backend_name == "base":
+            continue
+
+        for _req in reqs:
+            if _req in backend_requirements["base"]:
+                reqs.pop(reqs.index(_req))
+
+        backend_requirements[backend_name] = reqs
 
     return backend_requirements
 
@@ -55,7 +69,8 @@ def parse_all_requirements(backend_requirement_dict: dict):
 requirement_files = {"base": "requirements.txt",
                      "torch": "requirements_extra_torch.txt",
                      "torchscript": "requirements_extra_torch.txt",
-                     "tf": "requirements_extra_tf.txt"
+                     "tf": "requirements_extra_tf.txt",
+                     "sklearn": "requirements.txt"  # no extra requirements
                      }
 
 

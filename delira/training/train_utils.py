@@ -5,6 +5,23 @@ from ..utils.decorators import dtype_func
 
 
 def create_empty_optim_dict(*args, **kwargs):
+    """
+    Function returning an empty optimizer dict
+
+    Parameters
+    ----------
+    *args :
+        arbitrary positional arguments (ignored; only provided for api
+        conformity)
+    **kwargs :
+        arbitrary keyword arguments (ignored; only provided for api conformity)
+
+    Returns
+    -------
+    dict
+        empty dictionary
+
+    """
     return {}
 
 

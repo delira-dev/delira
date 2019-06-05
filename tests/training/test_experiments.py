@@ -28,7 +28,6 @@ class DummyDataset(AbstractDataset):
 class ExperimentTest(unittest.TestCase):
 
     def setUp(self) -> None:
-
         test_cases_torch, test_cases_tf, test_cases_sklearn, test_cases_torchscript = [], [], [], []
 
         from sklearn.metrics import mean_absolute_error
