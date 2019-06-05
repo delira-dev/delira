@@ -100,12 +100,14 @@ if "CHAINER" in get_backends():
 class ExperimentTest(unittest.TestCase):
 
     def setUp(self) -> None:
+
         test_cases = {
             "torch": [],
             "torchscript": [],
             "tf": [],
             "tf_eager": [],
-            "chainer": []
+            "chainer": [],
+            "sklearn": []
         }
 
         from sklearn.metrics import mean_absolute_error
@@ -384,6 +386,40 @@ class ExperimentTest(unittest.TestCase):
                     50,
                     DummyNetworkChainer)
             )
+
+        if "SKLEARN" in get_backends():
+            from sklearn.tree import DecisionTreeClassifier
+            from sklearn.neural_network import MLPClassifier
+
+            test_cases["sklearn"].append(
+                (Parameters(fixed_params={
+                    "model": {},
+                    "training": {
+                        "num_epochs": 2,
+                        "val_metrics": {"mae": mean_absolute_error}
+                    }
+                }),
+                    500,
+                    50,
+                    "mae",
+                    "lowest",
+                    DecisionTreeClassifier
+                ))
+
+            test_cases["sklearn"].append(
+                (Parameters(fixed_params={
+                    "model": {},
+                    "training": {
+                        "num_epochs": 2,
+                        "val_metrics": {"mae": mean_absolute_error}
+                    }
+                }),
+                    500,
+                    50,
+                    "mae",
+                    "lowest",
+                    MLPClassifier
+                ))
 
         self._test_cases = test_cases
 
@@ -677,7 +713,6 @@ class ExperimentTest(unittest.TestCase):
         from delira.training import TfEagerExperiment
         from delira.data_loading import BaseDataManager
 
-
         for case in self._test_cases["tf_eager"]:
             with self.subTest(case=case):
                 (params, dataset_length_train, dataset_length_test,
@@ -759,6 +794,54 @@ class ExperimentTest(unittest.TestCase):
                                         )
 
                 model = network_cls()
+                dset_test = DummyDataset(dataset_length_test)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                exp.test(model, dmgr_test, params.nested_get("val_metrics"))
+
+    @unittest.skipIf("SKLEARN" not in get_backends(),
+                     reason="No SKLEARN Backend installed")
+    def test_experiment_run_sklearn(self):
+        from delira.training import SkLearnExperiment
+        from delira.data_loading import BaseDataManager
+
+        for case in self._test_cases["sklearn"]:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 val_score_key, val_score_mode, network_cls) = case
+
+                exp = SkLearnExperiment(params, network_cls,
+                                        key_mapping={"X": "X"},
+                                        val_score_key=val_score_key,
+                                        val_score_mode=val_score_mode)
+
+                dset_train = DummyDataset(dataset_length_train)
+                dset_test = DummyDataset(dataset_length_test)
+
+                dmgr_train = BaseDataManager(dset_train, 16, 4, None)
+                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                exp.run(dmgr_train, dmgr_test)
+
+    @unittest.skipIf("SKLEARN" not in get_backends(),
+                     reason="No SKLEARN Backend installed")
+    def test_experiment_test_sklearn(self):
+        from delira.training import SkLearnExperiment
+        from delira.data_loading import BaseDataManager
+
+        for case in self._test_cases["sklearn"]:
+            with self.subTest(case=case):
+                (params, dataset_length_train, dataset_length_test,
+                 val_score_key, val_score_mode, network_cls) = case
+
+                exp = SkLearnExperiment(params, network_cls,
+                                        key_mapping={"X": "data"},
+                                        val_score_key=val_score_key,
+                                        val_score_mode=val_score_mode)
+                model = network_cls()
+
+                # must fit on 2 samples to initialize coefficients
+                model.fit(np.random.rand(2, 32), np.array([[0], [1]]))
 
                 dset_test = DummyDataset(dataset_length_test)
                 dmgr_test = BaseDataManager(dset_test, 16, 1, None)

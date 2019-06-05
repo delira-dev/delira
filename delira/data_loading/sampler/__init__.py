@@ -1,9 +1,10 @@
 from .abstract_sampler import AbstractSampler
 from .lambda_sampler import LambdaSampler
-from .random_sampler import RandomSampler, PrevalenceRandomSampler, \
-    StoppingPrevalenceRandomSampler
 from .sequential_sampler import SequentialSampler, \
     PrevalenceSequentialSampler, StoppingPrevalenceSequentialSampler
+
+from .random_sampler import RandomSampler, RandomSamplerNoReplacement,\
+    PrevalenceRandomSampler, StoppingPrevalenceRandomSampler
 from .weighted_sampler import WeightedRandomSampler, \
     WeightedPrevalenceRandomSampler
 
@@ -13,6 +14,7 @@ __all__ = [
     'PrevalenceSequentialSampler',
     'StoppingPrevalenceSequentialSampler',
     'RandomSampler',
+    'RandomSamplerNoReplacement',
     'PrevalenceRandomSampler',
     'StoppingPrevalenceRandomSampler',
     'WeightedRandomSampler',

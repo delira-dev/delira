@@ -19,3 +19,7 @@ if "TF" in get_backends():
 if "CHAINER" in get_backends():
     from .chainer_trainer import ChainerNetworkTrainer
     from .experiment import ChainerExperiment
+
+if "SKLEARN" in get_backends():
+    from .sklearn_trainer import SklearnEstimatorTrainer
+    from .experiment import SkLearnExperiment
