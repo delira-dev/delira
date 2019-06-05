@@ -47,7 +47,7 @@ class TfGraphExperiment(TfEagerExperiment):
         key_mapping : dict
             mapping between data_dict and model inputs (necessary for
             prediction with :class:`Predictor`-API), if no keymapping is
-            given, a default key_mapping of {"x": "data"} will be used
+            given, a default key_mapping of {"data": "data"} will be used
             here
         val_score_key : str or None
             key defining which metric to use for validation (determining
@@ -69,7 +69,7 @@ class TfGraphExperiment(TfEagerExperiment):
         """
 
         if key_mapping is None:
-            key_mapping = {"images": "data"}
+            key_mapping = {"data": "data"}
 
             super().__init__(
                 params=params,

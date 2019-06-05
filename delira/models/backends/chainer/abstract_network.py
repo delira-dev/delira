@@ -107,3 +107,83 @@ class AbstractChainerNetwork(chainer.Chain, ChainerMixin):
             v.to_device(device)
 
         return new_batch
+
+    @staticmethod
+    def closure(model, data_dict: dict, optimizers: dict, losses={},
+                metrics={}, fold=0, **kwargs):
+        """
+        default closure method to do a single training step;
+        Could be overwritten for more advanced models
+
+        Parameters
+        ----------
+        model : :class:`AbstractChainerNetwork`
+            trainable model
+        data_dict : dict
+            dictionary containing the data
+        optimizers : dict
+            dictionary of optimizers to optimize model's parameters;
+            ignored here, just passed for compatibility reasons
+        losses : dict
+            dict holding the losses to calculate errors;
+            ignored here, just passed for compatibility reasons
+        metrics : dict
+            dict holding the metrics to calculate
+        fold : int
+            Current Fold in Crossvalidation (default: 0)
+        **kwargs:
+            additional keyword arguments
+
+        Returns
+        -------
+        dict
+            Metric values (with same keys as input dict metrics)
+        dict
+            Loss values (with same keys as input dict losses; will always
+            be empty here)
+        dict
+            dictionary containing all predictions
+
+        """
+        assert (optimizers and losses) or not optimizers, \
+            "Criterion dict cannot be emtpy, if optimizers are passed"
+
+        loss_vals = {}
+        metric_vals = {}
+        total_loss = 0
+
+        inputs = data_dict.pop("data")
+        preds = model(inputs)
+
+        if data_dict:
+
+            for key, crit_fn in losses.items():
+                _loss_val = crit_fn(preds["pred"], *data_dict.values())
+                loss_vals[key] = _loss_val.item()
+                total_loss += _loss_val
+
+            with chainer.using_config("train", False):
+                for key, metric_fn in metrics.items():
+                    metric_vals[key] = metric_fn(
+                        preds["pred"], data_dict["label"]).item()
+
+        if optimizers:
+            model.cleargrads()
+            total_loss.backward()
+            optimizers['default'].update()
+
+        else:
+
+            # add prefix "val" in validation mode
+            eval_loss_vals, eval_metrics_vals = {}, {}
+            for key in loss_vals.keys():
+                eval_loss_vals["val_" + str(key)] = loss_vals[key]
+
+            for key in metric_vals:
+                eval_metrics_vals["val_" + str(key)] = metric_vals[key]
+
+            loss_vals = eval_loss_vals
+            metric_vals = eval_metrics_vals
+
+        return metric_vals, loss_vals, {k: v.unchain()
+                                        for k, v in preds.items()}

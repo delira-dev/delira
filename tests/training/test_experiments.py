@@ -50,51 +50,7 @@ if "CHAINER" in get_backends():
                         self.dense_1(x)))
             }
 
-        @staticmethod
-        def closure(model, data_dict: dict, optimizers: dict, losses={},
-                    metrics={}, fold=0, **kwargs):
-            assert (optimizers and losses) or not optimizers, \
-                "Criterion dict cannot be emtpy, if optimizers are passed"
 
-            loss_vals = {}
-            metric_vals = {}
-            total_loss = 0
-
-            inputs = data_dict.pop("data")
-            preds = model(inputs)
-
-            if data_dict:
-
-                for key, crit_fn in losses.items():
-                    _loss_val = crit_fn(preds["pred"], *data_dict.values())
-                    loss_vals[key] = _loss_val.item()
-                    total_loss += _loss_val
-
-                with chainer.using_config("train", False):
-                    for key, metric_fn in metrics.items():
-                        metric_vals[key] = metric_fn(
-                            preds["pred"], *data_dict.values()).item()
-
-            if optimizers:
-                model.cleargrads()
-                total_loss.backward()
-                optimizers['default'].update()
-
-            else:
-
-                # add prefix "val" in validation mode
-                eval_loss_vals, eval_metrics_vals = {}, {}
-                for key in loss_vals.keys():
-                    eval_loss_vals["val_" + str(key)] = loss_vals[key]
-
-                for key in metric_vals:
-                    eval_metrics_vals["val_" + str(key)] = metric_vals[key]
-
-                loss_vals = eval_loss_vals
-                metric_vals = eval_metrics_vals
-
-            return metric_vals, loss_vals, {k: v.unchain()
-                                            for k, v in preds.items()}
 
 
 class ExperimentTest(unittest.TestCase):
@@ -294,55 +250,7 @@ class ExperimentTest(unittest.TestCase):
                     def call(self, x: tf.Tensor):
                         return {"pred": self.dense_2(self.dense_1(x))}
 
-                    @staticmethod
-                    def closure(model: AbstractTfEagerNetwork,
-                                data_dict: dict,
-                                optimizers: typing.Dict[str,
-                                                        tf.train.Optimizer],
-                                losses={},
-                                metrics={},
-                                fold=0,
-                                **kwargs):
 
-                        loss_vals, metric_vals = {}, {}
-
-                        # calculate loss with graph created by gradient taping
-                        with tf.GradientTape() as tape:
-                            preds = model(data_dict["data"])
-                            total_loss = 0
-                            for k, loss_fn in losses.items():
-                                _loss_val = loss_fn(preds["pred"],
-                                                    data_dict["label"])
-                                loss_vals[k] = _loss_val.numpy()
-                                total_loss += _loss_val
-
-                        # calculate gradients
-                        grads = tape.gradient(total_loss,
-                                              model.trainable_variables)
-
-                        for k, metric_fn in metrics.items():
-                            metric_vals[k] = metric_fn(
-                                preds["pred"],
-                                data_dict["label"]).numpy()
-
-                        if optimizers:
-                            # perform optimization step
-                            optimizers["default"].apply_gradients(
-                                zip(grads, model.trainable_variables))
-                        else:
-                            # add prefix "val" in validation mode
-                            eval_losses, eval_metrics = {}, {}
-                            for key in loss_vals.keys():
-                                eval_losses["val_" + str(key)] = loss_vals[key]
-
-                            for key in metric_vals:
-                                eval_metrics["val_" +
-                                             str(key)] = metric_vals[key]
-
-                            loss_vals = eval_losses
-                            metric_vals = eval_metrics
-
-                        return metric_vals, loss_vals, preds
 
                 test_cases["tf_eager"].append((
                     Parameters(fixed_params={

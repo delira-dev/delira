@@ -84,7 +84,7 @@ class SklearnEstimator(AbstractNetwork):
         input_device : Any
             device for module inputs (will be ignored here; just given for
             compatibility)
-        output_device : torch.device
+        output_device : Any
             device for module outputs (will be ignored here; just given for
             compatibility)
 
@@ -106,8 +106,8 @@ class SklearnEstimator(AbstractNetwork):
     def closure(model, data_dict: dict, optimizers: dict, losses={},
                 metrics={}, fold=0, **kwargs):
         """
-        closure method to do a single training step
-
+        default closure method to do a single training step;
+        Could be overwritten for more advanced models
 
         Parameters
         ----------
@@ -135,8 +135,8 @@ class SklearnEstimator(AbstractNetwork):
         dict
             Loss values (with same keys as input dict losses; will always
             be empty here)
-        list
-            Arbitrary number of predictions as torch.Tensor
+        dict
+            dictionary containing all predictions
 
         """
 
