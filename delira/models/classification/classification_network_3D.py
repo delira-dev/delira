@@ -1,8 +1,10 @@
+from delira.utils.decorators import make_deprecated
 import logging
+
+from delira import get_backends
 
 file_logger = logging.getLogger(__name__)
 
-from delira import get_backends
 
 if "TORCH" in get_backends():
     import torch.nn as nn
@@ -27,6 +29,7 @@ if "TORCH" in get_backends():
 
         """
 
+        @make_deprecated("own repository to be announced")
         def __init__(self, in_channels: int, n_outputs: int, **kwargs):
             """
 

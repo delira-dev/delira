@@ -1,7 +1,9 @@
+from delira import get_backends
+from delira.utils.decorators import make_deprecated
 import logging
+
 file_logger = logging.getLogger(__name__)
 
-from delira import get_backends
 
 if "TORCH" in get_backends():
     import torch
@@ -22,6 +24,7 @@ if "TORCH" in get_backends():
 
         """
 
+        @make_deprecated("own repository to be announced")
         def __init__(self, in_channels: int, n_outputs: int, **kwargs):
             """
 
@@ -33,7 +36,8 @@ if "TORCH" in get_backends():
                 number of outputs (usually same as number of classes)
 
             """
-            # register params by passing them as kwargs to parent class __init__
+            # register params by passing them as kwargs to parent class
+            # __init__
             super().__init__(in_channels=in_channels,
                              n_outputs=n_outputs,
                              **kwargs)
@@ -59,11 +63,11 @@ if "TORCH" in get_backends():
 
             """
 
-            return self.module(input_batch)
+            return {"pred": self.module(input_batch)}
 
         @staticmethod
         def closure(model: AbstractPyTorchNetwork, data_dict: dict,
-                    optimizers: dict, criterions={}, metrics={},
+                    optimizers: dict, losses={}, metrics={},
                     fold=0, **kwargs):
             """
             closure method to do a single backpropagation step
@@ -77,9 +81,9 @@ if "TORCH" in get_backends():
                 dictionary containing the data
             optimizers : dict
                 dictionary of optimizers to optimize model's parameters
-            criterions : dict
-                dict holding the criterions to calculate errors
-                (gradients from different criterions will be accumulated)
+            losses : dict
+                dict holding the losses to calculate errors
+                (gradients from different losses will be accumulated)
             metrics : dict
                 dict holding the metrics to calculate
             fold : int
@@ -92,19 +96,19 @@ if "TORCH" in get_backends():
             dict
                 Metric values (with same keys as input dict metrics)
             dict
-                Loss values (with same keys as input dict criterions)
+                Loss values (with same keys as input dict losses)
             list
                 Arbitrary number of predictions as torch.Tensor
 
             Raises
             ------
             AssertionError
-                if optimizers or criterions are empty or the optimizers are not
+                if optimizers or losses are empty or the optimizers are not
                 specified
 
             """
 
-            assert (optimizers and criterions) or not optimizers, \
+            assert (optimizers and losses) or not optimizers, \
                 "Criterion dict cannot be emtpy, if optimizers are passed"
 
             loss_vals = {}
@@ -125,20 +129,21 @@ if "TORCH" in get_backends():
 
                 if data_dict:
 
-                    for key, crit_fn in criterions.items():
-                        _loss_val = crit_fn(preds, *data_dict.values())
-                        loss_vals[key] = _loss_val.detach()
+                    for key, crit_fn in losses.items():
+                        _loss_val = crit_fn(preds["pred"], *data_dict.values())
+                        loss_vals[key] = _loss_val.item()
                         total_loss += _loss_val
 
                     with torch.no_grad():
                         for key, metric_fn in metrics.items():
                             metric_vals[key] = metric_fn(
-                                preds, *data_dict.values())
+                                preds["pred"], *data_dict.values()).item()
 
             if optimizers:
                 optimizers['default'].zero_grad()
                 # perform loss scaling via apex if half precision is enabled
-                with optimizers["default"].scale_loss(total_loss) as scaled_loss:
+                with optimizers["default"].scale_loss(total_loss) \
+                        as scaled_loss:
                     scaled_loss.backward()
                 optimizers['default'].step()
 
@@ -155,12 +160,8 @@ if "TORCH" in get_backends():
                 loss_vals = eval_loss_vals
                 metric_vals = eval_metrics_vals
 
-            for key, val in {**metric_vals, **loss_vals}.items():
-                logging.info({"value": {"value": val.item(), "name": key,
-                                        "env_appendix": "_%02d" % fold
-                                        }})
-
-            return metric_vals, loss_vals, [preds]
+            return metric_vals, loss_vals, {k: v.detach()
+                                            for k, v in preds.items()}
 
         @staticmethod
         def _build_model(in_channels: int, n_outputs: int, **kwargs):
@@ -193,8 +194,8 @@ if "TORCH" in get_backends():
         @staticmethod
         def prepare_batch(batch: dict, input_device, output_device):
             """
-            Helper Function to prepare Network Inputs and Labels (convert them to
-            correct type and shape and push them to correct devices)
+            Helper Function to prepare Network Inputs and Labels (convert them
+            to correct type and shape and push them to correct devices)
 
             Parameters
             ----------
@@ -208,8 +209,8 @@ if "TORCH" in get_backends():
             Returns
             -------
             dict
-                dictionary containing data in correct type and shape and on correct
-                device
+                dictionary containing data in correct type and shape and on
+                correct device
 
             """
             return_dict = {"data": torch.from_numpy(batch.pop("data")).to(

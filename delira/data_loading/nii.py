@@ -1,10 +1,13 @@
-import logging
-import SimpleITK as sitk
-import numpy as np
 import json
+import logging
 import os
 from abc import abstractmethod
+
+import SimpleITK as sitk
+import numpy as np
+
 from delira.utils.decorators import make_deprecated
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,6 +31,8 @@ def load_nii(path):
 def load_sample_nii(files, label_load_cls):
     """
     Load sample from multiple ITK files
+
+    .. deprecated-removed:: 0.3.4 0.4
 
     Parameters
     ----------
@@ -53,7 +58,7 @@ def load_sample_nii(files, label_load_cls):
         img = img.astype(np.float32)
         assert img.max() <= 511
         assert img.max() > 1
-        img = img/511
+        img = img / 511
         img_list.append(img)
     label_gen = label_load_cls(files['label'])
     label = label_gen.get_labels()
@@ -68,6 +73,8 @@ def load_sample_nii(files, label_load_cls):
 class BaseLabelGenerator(object):
     """
     Base Class to load labels from json files
+
+    .. deprecated-removed: 0.3.3 0.3.5
 
     """
 

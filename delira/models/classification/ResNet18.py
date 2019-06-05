@@ -1,4 +1,5 @@
 import tensorflow as tf
+from delira.utils.decorators import make_deprecated
 
 conv2d = tf.keras.layers.Conv2D
 maxpool2d = tf.keras.layers.MaxPool2D
@@ -28,8 +29,8 @@ def get_image_format_and_axis():
         return image_format, -1
     else:
         raise RuntimeError(
-                "Image format unknown, got: {}".format(image_format)
-                )
+            "Image format unknown, got: {}".format(image_format)
+        )
 
 
 class ResBlock(tf.keras.Model):
@@ -42,20 +43,20 @@ class ResBlock(tf.keras.Model):
         self.identity = None
         if filters_in != filters:
             self.identity = conv2d(
-                                filters=filters, strides=strides[0],
-                                kernel_size=1, padding='same', use_bias=bias)
+                filters=filters, strides=strides[0],
+                kernel_size=1, padding='same', use_bias=bias)
             self.bnorm_identity = batchnorm2d(axis=_axis)
 
         self.conv_1 = conv2d(
-                        filters=filters, strides=strides[0],
-                        kernel_size=kernel_size,
-                        padding='same', use_bias=bias)
+            filters=filters, strides=strides[0],
+            kernel_size=kernel_size,
+            padding='same', use_bias=bias)
         self.batchnorm_1 = batchnorm2d(axis=_axis)
 
         self.conv_2 = conv2d(
-                        filters=filters, strides=strides[1],
-                        kernel_size=kernel_size,
-                        padding='same', use_bias=bias)
+            filters=filters, strides=strides[1],
+            kernel_size=kernel_size,
+            padding='same', use_bias=bias)
         self.batchnorm_2 = batchnorm2d(axis=_axis)
 
         self.relu = relu()
@@ -81,7 +82,9 @@ class ResBlock(tf.keras.Model):
 
 
 class ResNet18(tf.keras.Model):
+    @make_deprecated("own repository to be announced")
     def __init__(self, num_classes=None, bias=False):
+
         super(ResNet18, self).__init__()
 
         _image_format, _axis = get_image_format_and_axis()

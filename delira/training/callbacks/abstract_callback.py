@@ -35,7 +35,7 @@ class AbstractCallback(object):
         Returns
         -------
         dict
-            modified trainer attributes, where the name must correspond to the 
+            modified trainer attributes, where the name must correspond to the
             trainer's attribute name
 
         """
@@ -54,7 +54,7 @@ class AbstractCallback(object):
         Returns
         -------
         dict
-            modified trainer attributes, where the name must correspond to the 
+            modified trainer attributes, where the name must correspond to the
             trainer's attribute name
 
         """

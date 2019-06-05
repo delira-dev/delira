@@ -1,8 +1,12 @@
 import logging
-import tensorflow as tf
 import typing
+
+import tensorflow as tf
+
 from delira.models.abstract_network import AbstractTfNetwork
 from delira.models.classification.ResNet18 import ResNet18
+
+from delira.utils.decorators import make_deprecated
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +21,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
     """
 
+    @make_deprecated("own repository to be announced")
     def __init__(self, in_channels: int, n_outputs: int, **kwargs):
         """
 
@@ -46,16 +51,18 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         preds_train = self.model(images, training=True)
         preds_eval = self.model(images, training=False)
 
-        self.inputs = [images, labels]
-        self.outputs_train = [preds_train]
-        self.outputs_eval = [preds_eval]
+        self.inputs["images"] = images
+        self.inputs["labels"] = labels
+        self.outputs_train["pred"] = preds_train
+        self.outputs_eval["pred"] = preds_eval
 
         for key, value in kwargs.items():
             setattr(self, key, value)
 
     def _add_losses(self, losses: dict):
         """
-        Adds losses to model that are to be used by optimizers or during evaluation
+        Adds losses to model that are to be used by optimizers or during
+        evaluation
 
         Parameters
         ----------
@@ -70,34 +77,37 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
         else:
             self._losses = {}
             for name, _loss in losses.items():
-                self._losses[name] = _loss(self.inputs[-1], self.outputs_train[0])
+                self._losses[name] = _loss(self.inputs['labels'],
+                                           self.outputs_train['pred'])
 
             total_loss = tf.reduce_mean(list(self._losses.values()), axis=0)
 
             self._losses['total'] = total_loss
-            self.outputs_train.append(self._losses)
-            self.outputs_eval.append(self._losses)
+            self.outputs_train['losses'] = self._losses
+            self.outputs_eval['losses'] = self._losses
 
     def _add_optims(self, optims: dict):
         """
-        Adds optims to model that are to be used by optimizers or during training
+        Adds optims to model that are to be used by optimizers or during
+        training
 
         Parameters
         ----------
         optim: dict
-            dictionary containing all optimizers, optimizers should be of Type[tf.train.Optimizer]
+            dictionary containing all optimizers, optimizers should be of
+            Type[tf.train.Optimizer]
         """
         if self._optims is not None and len(optims) != 0:
             logging.warning('Change of optims is not yet supported')
             pass
-            #raise NotImplementedError()
+            # raise NotImplementedError()
         elif self._optims is not None and len(optims) == 0:
             pass
         else:
             self._optims = optims['default']
             grads = self._optims.compute_gradients(self._losses['total'])
             step = self._optims.apply_gradients(grads)
-            self.outputs_train.append(step)
+            self.outputs_train['default_optim'] = step
 
     @staticmethod
     def _build_model(n_outputs: int, **kwargs):
@@ -123,34 +133,35 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
     def closure(model: typing.Type[AbstractTfNetwork], data_dict: dict,
                 metrics={}, fold=0, **kwargs):
         """
-                closure method to do a single prediction.
-                This is followed by backpropagation or not based state of
-                on model.train
+        closure method to do a single prediction.
+        This is followed by backpropagation or not based state of
+        on model.train
 
-                Parameters
-                ----------
-                model: AbstractTfNetwork
-                    AbstractTfNetwork or its child-clases
-                data_dict : dict
-                    dictionary containing the data
-                metrics : dict
-                    dict holding the metrics to calculate
-                fold : int
-                    Current Fold in Crossvalidation (default: 0)
-                **kwargs:
-                    additional keyword arguments
+        Parameters
+        ----------
+        model: AbstractTfNetwork
+            AbstractTfNetwork or its child-clases
+        data_dict : dict
+            dictionary containing the data
+        metrics : dict
+            dict holding the metrics to calculate
+        fold : int
+            Current Fold in Crossvalidation (default: 0)
+        **kwargs:
+            additional keyword arguments
 
-                Returns
-                -------
-                dict
-                    Metric values (with same keys as input dict metrics)
-                dict
-                    Loss values (with same keys as those initially passed to model.init).
-                    Additionally, a total_loss key is added
-                list
-                    Arbitrary number of predictions as np.array
+        Returns
+        -------
+        dict
+            Metric values (with same keys as input dict metrics)
+        dict
+            Loss values (with same keys as those initially passed to
+            model.init).
+            Additionally, a total_loss key is added
+        dict
+            outputs of `model.run`
 
-                """
+        """
 
         loss_vals = {}
         metric_vals = {}
@@ -158,7 +169,9 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
         inputs = data_dict.pop('data')
 
-        preds, losses, *_ = model.run(inputs, data_dict['label'])
+        outputs = model.run(images=inputs, labels=data_dict['label'])
+        preds = outputs['pred']
+        losses = outputs['losses']
 
         for key, loss_val in losses.items():
             loss_vals[key] = loss_val
@@ -167,7 +180,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             metric_vals[key] = metric_fn(
                 preds, *data_dict.values())
 
-        if model.training == False:
+        if not model.training:
             # add prefix "val" in validation mode
             eval_loss_vals, eval_metrics_vals = {}, {}
             for key in loss_vals.keys():
@@ -179,13 +192,4 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
             loss_vals = eval_loss_vals
             metric_vals = eval_metrics_vals
 
-            image_names = "val_" + str(image_names)
-
-        for key, val in {**metric_vals, **loss_vals}.items():
-            logging.info({"value": {"value": val.item(), "name": key,
-                                    "env_appendix": "_%02d" % fold
-                                    }})
-
-        #logging.info({'image_grid': {"image_array": inputs, "name": image_names,
-        #                             "title": "input_images", "env_appendix": "_%02d" % fold}})
-        return metric_vals, loss_vals, [preds]
+        return metric_vals, loss_vals, outputs

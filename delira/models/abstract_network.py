@@ -1,5 +1,6 @@
 import abc
 import logging
+
 from delira import get_backends
 
 file_logger = logging.getLogger(__name__)
@@ -52,7 +53,7 @@ class AbstractNetwork(object):
 
     @staticmethod
     @abc.abstractmethod
-    def closure(model, data_dict: dict, optimizers: dict, criterions={},
+    def closure(model, data_dict: dict, optimizers: dict, losses={},
                 metrics={}, fold=0, **kwargs):
         """
         Function which handles prediction from batch, logging, loss calculation
@@ -65,8 +66,8 @@ class AbstractNetwork(object):
             dictionary containing the data
         optimizers : dict
             dictionary containing all optimizers to perform parameter update
-        criterions : dict
-            Functions or classes to calculate criterions
+        losses : dict
+            Functions or classes to calculate losses
         metrics : dict
             Functions or classes to calculate other metrics
         fold : int
@@ -79,8 +80,8 @@ class AbstractNetwork(object):
         dict
             Metric values (with same keys as input dict metrics)
         dict
-            Loss values (with same keys as input dict criterions)
-        list
+            Loss values (with same keys as input dict losses)
+        dict
             Arbitrary number of predictions
 
         Raises
@@ -133,6 +134,7 @@ class AbstractNetwork(object):
 
         """
         return self._init_kwargs
+
 
 if "TORCH" in get_backends():
     import torch
@@ -200,8 +202,8 @@ if "TORCH" in get_backends():
         @staticmethod
         def prepare_batch(batch: dict, input_device, output_device):
             """
-            Helper Function to prepare Network Inputs and Labels (convert them to
-            correct type and shape and push them to correct devices)
+            Helper Function to prepare Network Inputs and Labels (convert them
+            to correct type and shape and push them to correct devices)
 
             Parameters
             ----------
@@ -215,8 +217,8 @@ if "TORCH" in get_backends():
             Returns
             -------
             dict
-                dictionary containing data in correct type and shape and on correct
-                device
+                dictionary containing data in correct type and shape and on
+                correct device
 
             """
             return_dict = {"data": torch.from_numpy(batch.pop("data")).to(
@@ -254,14 +256,14 @@ if "TF" in get_backends():
             """
             AbstractNetwork.__init__(self, **kwargs)
             self._sess = sess()
-            self.inputs = None
-            self.outputs_train = None
-            self.outputs_eval = None
+            self.inputs = {}
+            self.outputs_train = {}
+            self.outputs_eval = {}
             self._losses = None
             self._optims = None
             self.training = True
 
-        def __call__(self, *args):
+        def __call__(self, *args, **kwargs):
             """
             Wrapper for calling self.run in eval setting
 
@@ -269,6 +271,8 @@ if "TF" in get_backends():
             ----------
             *args :
                 positional arguments (passed to `self.run`)
+            **kwargs:
+                keyword arguments (passed to `self.run`)
 
             Returns
             -------
@@ -277,7 +281,7 @@ if "TF" in get_backends():
 
             """
             self.training = False
-            return self.run(*args)
+            return self.run(*args, **kwargs)
 
         def _add_losses(self, losses: dict):
             """
@@ -302,25 +306,33 @@ if "TF" in get_backends():
             """
             raise NotImplementedError()
 
-        def run(self, *args):
+        def run(self, *args, **kwargs):
             """
-            Evaluates `self.outputs_train` or `self.outputs_eval` based on `self.training`
+            Evaluates `self.outputs_train` or `self.outputs_eval` based on
+            `self.training`
 
             Parameters
             ----------
             *args :
-                arguments to feed as `self.inputs`. Must have same length as `self.inputs`
+                currently unused, exist for compatibility reasons
+            **kwargs :
+                kwargs used to feed as ``self.inputs``. Same keys as for
+                ``self.inputs`` must be used
 
             Returns
             -------
-            np.ndarray or list
-                based on len(self.outputs*), returns either list or np.ndarray
+            dict
+                sames keys as outputs_train or outputs_eval,
+                containing evaluated expressions as values
 
             """
-            if isinstance(self.inputs, tf.Tensor):
-                _feed_dict = dict(zip([self.inputs], args))
-            else:
-                _feed_dict = dict(zip(self.inputs, args))
+            _feed_dict = {}
+
+            for feed_key, feed_value in kwargs.items():
+                assert feed_key in self.inputs.keys(), \
+                    "{} not found in self.inputs".format(feed_key)
+                _feed_dict[self.inputs[feed_key]] = feed_value
+
             if self.training:
                 return self._sess.run(self.outputs_train, feed_dict=_feed_dict)
             else:

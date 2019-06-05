@@ -34,6 +34,16 @@ Models
 Training
 --------
 
+Experiment
+**********
+
+* `Coarse <../../../_static/class_hierarchy/experiment_coarse.png>`_
+
+* `Fine <../../../_static/class_hierarchy/experiment_fine.png>`_
+
+Trainer
+*******
+
 * `Coarse <../../../_static/class_hierarchy/training_coarse.png>`_
 
 * `Fine <../../../_static/class_hierarchy/training_fine.png>`_
@@ -44,5 +54,12 @@ Hyperparameters
 * `Coarse <../../../_static/class_hierarchy/hyper_params_coarse.png>`_
 
 * `Fine <../../../_static/class_hierarchy/hyper_params_fine.png>`_
+
+Callbacks
+*********
+
+* `Coarse <../../../_static/class_hierarchy/callback_coarse.png>`_
+
+* `Fine <../../../_static/class_hierarchy/callback_fine.png>`_
 
 

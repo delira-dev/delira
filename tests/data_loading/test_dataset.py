@@ -1,11 +1,10 @@
+import unittest
+
 import numpy as np
 
 from delira.data_loading import ConcatDataset, BaseCacheDataset, \
-    BaseExtendCacheDataset, BaseLazyDataset, LoadSample, LoadSampleLabel, \
-    AbstractDataset
+    BaseExtendCacheDataset, BaseLazyDataset, LoadSample, LoadSampleLabel
 from delira.data_loading.load_utils import norm_zero_mean_unit_std
-
-import unittest
 
 
 class DataSubsetConcatTest(unittest.TestCase):
@@ -63,7 +62,6 @@ class DataSubsetConcatTest(unittest.TestCase):
 
         self.assertTrue(concat_dataset[0])
 
-
         # test slicing:
         half_len_a = len(dset_a) // 2
         half_len_b = len(dset_b) // 2
@@ -103,7 +101,7 @@ def test_cache_dataset():
         a = dataset[0]
         a = dataset[5]
         a = dataset[9]
-    except:
+    except BaseException:
         raise AssertionError('Dataset access failed.')
 
     try:
@@ -113,7 +111,7 @@ def test_cache_dataset():
             assert 'label' in i
             j += 1
         assert j == len(dataset)
-    except:
+    except BaseException:
         raise AssertionError('Dataset iteration failed.')
 
     # test extend cache dataset
@@ -123,7 +121,7 @@ def test_cache_dataset():
         a = dataset[0]
         a = dataset[20]
         a = dataset[39]
-    except:
+    except BaseException:
         raise AssertionError('Dataset access failed.')
 
     try:
@@ -133,7 +131,7 @@ def test_cache_dataset():
             assert 'label' in i
             j += 1
         assert j == len(dataset)
-    except:
+    except BaseException:
         raise AssertionError('Dataset iteration failed.')
 
 
@@ -146,7 +144,7 @@ def test_lazy_dataset():
         a = dataset[0]
         a = dataset[5]
         a = dataset[9]
-    except:
+    except BaseException:
         raise AssertionError('Dataset access failed.')
 
     try:
@@ -156,7 +154,7 @@ def test_lazy_dataset():
             assert 'label' in i
             j += 1
         assert j == len(dataset)
-    except:
+    except BaseException:
         raise AssertionError('Dataset iteration failed.')
 
 
@@ -166,7 +164,7 @@ def test_load_sample():
 
     def load_dummy_data(path):
         return np.random.rand(1, 256, 256) * np.random.randint(2, 20) + \
-               np.random.randint(20)
+            np.random.randint(20)
 
     # check loading of a single sample
     sample_fn = LoadSample({'data': ['data', 'data', 'data'], 'seg': ['data'],
@@ -207,4 +205,3 @@ def test_load_sample():
 
 if __name__ == "__main__":
     unittest.main()
-

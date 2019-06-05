@@ -1,9 +1,5 @@
 __version__ = '0.3.3'
 
-# from .models import AbstractNetwork
-# from .logging import TrixiHandler, MultiStreamHandler
-# from .data_loading import BaseCacheDataset, BaseLazyDataset, BaseDataManager, \
-#     RandomSampler, SequentialSampler
 import json
 import os
 import warnings
@@ -69,14 +65,13 @@ def get_backends():
     """
     Return List of currently available backends
 
+    Returns
+    -------
+    list
+        list of strings containing the currently installed backends
+
     """
 
     if not __BACKENDS:
         _determine_backends()
     return __BACKENDS
-
-
-# if "TORCH" in get_backends():
-#     from .io import torch_load_checkpoint, torch_save_checkpoint
-#     from .models import AbstractPyTorchNetwork
-#     from .data_loading import TorchvisionClassificationDataset

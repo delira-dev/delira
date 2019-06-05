@@ -1,10 +1,11 @@
-from delira import get_backends
-import numpy as np
 import time
-import gc
-import sys
-from psutil import virtual_memory
 import unittest
+
+import gc
+import numpy as np
+from psutil import virtual_memory
+
+from delira import get_backends
 
 
 class TfModelTest(unittest.TestCase):

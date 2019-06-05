@@ -10,10 +10,10 @@ Experiments are the outermost class to control your training, it wraps your
 NetworkTrainer and provides utilities for
 cross-validation.
 
-:hidden:`AbstractExperiment`
+:hidden:`BaseExperiment`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: AbstractExperiment
+.. autoclass:: BaseExperiment
     :members:
     :undoc-members:
     :show-inheritance:

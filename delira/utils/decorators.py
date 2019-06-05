@@ -1,7 +1,9 @@
-from delira import get_backends
-import numpy as np
-from functools import wraps
 import warnings
+from functools import wraps
+
+import numpy as np
+
+from delira import get_backends
 
 
 def dtype_func(class_object):

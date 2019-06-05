@@ -11,5 +11,6 @@ Delira
     Models <models/models>
     Training <training/training>
     Utilities <delira.utils>
+    Backend Resolution <backend_resolution>
 
     Class Hierarchy Diagrams <class_hierarchy>
