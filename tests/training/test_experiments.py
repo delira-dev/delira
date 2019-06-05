@@ -540,8 +540,8 @@ class ExperimentTest(unittest.TestCase):
                  network_cls) = case
 
                 exp = TfGraphExperiment(params, network_cls,
-                                   key_mapping={"images": "data"},
-                                   )
+                                        key_mapping={"images": "data"},
+                                        )
 
                 model = network_cls()
 
