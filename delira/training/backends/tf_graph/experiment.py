@@ -1,12 +1,16 @@
 import typing
 
+import tensorflow as tf
+
 from delira.models import AbstractTfGraphNetwork
+from delira.data_loading import BaseDataManager
 
 from delira.training.parameters import Parameters
 from ..tf_eager.experiment import TfEagerExperiment
 from ..tf_eager.utils import create_optims_default
 
 from .trainer import TfGraphNetworkTrainer
+from .utils import initialize_uninitialized
 
 
 class TfGraphExperiment(TfEagerExperiment):
@@ -112,3 +116,57 @@ class TfGraphExperiment(TfEagerExperiment):
         tf.reset_default_graph()
         return super().setup(self, params=params, training=training,
                              **kwargs)
+
+    def test(self, network, test_data: BaseDataManager,
+             metrics: dict, metric_keys=None,
+             verbose=False, prepare_batch=lambda x: x,
+             convert_fn=None, **kwargs):
+        """
+        Setup and run testing on a given network
+
+        Parameters
+        ----------
+        network : :class:`AbstractNetwork`
+            the (trained) network to test
+        test_data : :class:`BaseDataManager`
+            the data to use for testing
+        metrics : dict
+            the metrics to calculate
+        metric_keys : dict of tuples
+            the batch_dict keys to use for each metric to calculate.
+            Should contain a value for each key in ``metrics``.
+            If no values are given for a key, per default ``pred`` and
+            ``label``
+             will be used for metric calculation
+        verbose : bool
+            verbosity of the test process
+        prepare_batch : function
+            function to convert a batch-dict to a format accepted by the
+            model. This conversion typically includes dtype-conversion,
+            reshaping, wrapping to backend-specific tensors and
+            pushing to correct devices. If not further specified uses the
+            ``network``'s ``prepare_batch`` with CPU devices
+        convert_fn : function
+            function to convert a batch of tensors to numpy
+            if not specified defaults to
+            :func:`convert_torch_tensor_to_npy`
+        **kwargs :
+            additional keyword arguments
+
+        Returns
+        -------
+        dict
+            all predictions obtained by feeding the ``test_data`` through
+            the ``network``
+        dict
+            all metrics calculated upon the ``test_data`` and the obtained
+            predictions
+
+        """
+
+        initialize_uninitialized(network._sess)
+
+        return super().test(network=network, test_data=test_data,
+                            metrics=metrics, metric_keys=metric_keys,
+                            verbose=verbose, prepare_batch=prepare_batch,
+                            convert_fn=convert_fn, **kwargs)
