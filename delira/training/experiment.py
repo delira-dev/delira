@@ -1324,7 +1324,7 @@ if "CHAINER" in get_backends():
                  test_data: BaseDataManager,
                  metrics: dict, metric_keys=None,
                  verbose=False, prepare_batch=None,
-                 convert_fn=None, **kwargs):
+                 convert_fn=convert_chainer_tensor_to_npy, **kwargs):
             """
             Setup and run testing on a given network
 
@@ -1352,7 +1352,8 @@ if "CHAINER" in get_backends():
                 ``network``'s ``prepare_batch`` with CPU devices
             convert_fn : function
                 function to convert a batch of tensors to numpy
-                if not specified defaults to :func:`convert_torch_tensor_to_npy`
+                if not specified defaults to
+                :func:`convert_torch_tensor_to_npy`
             **kwargs :
                 additional keyword arguments
 
@@ -1375,10 +1376,6 @@ if "CHAINER" in get_backends():
                 prepare_batch = partial(network.prepare_batch,
                                         input_device=device,
                                         output_device=device)
-
-            # switch to backend-specific convert function
-            if convert_fn is None:
-                convert_fn = convert_chainer_tensor_to_npy
 
             return super().test(network=network, test_data=test_data,
                                 metrics=metrics, metric_keys=metric_keys,
