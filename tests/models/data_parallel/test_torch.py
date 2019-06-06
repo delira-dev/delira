@@ -52,9 +52,11 @@ class TestDataParallelTorch(unittest.TestCase):
 
         for orig_param, updated_param in zip(model_copy.parameters(),
                                              self.model.parameters()):
-            self.assertFalse(np.array_equal(orig_param.detach().cpu().numpy(),
-                                            updated_param.detach().cpu().numpy()
-                                            ))
+            self.assertFalse(
+                np.array_equal(
+                    orig_param.detach().cpu().numpy(),
+                    updated_param.detach().cpu().numpy()))
+
 
 if __name__ == '__main__':
     unittest.main()

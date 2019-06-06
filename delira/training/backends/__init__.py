@@ -2,7 +2,7 @@ from delira import get_backends as _get_backends
 
 
 if "CHAINER" in _get_backends():
-   from delira.training.backends.chainer import *
+    from delira.training.backends.chainer import *
 
 if "SKLEARN" in _get_backends():
     from delira.training.backends.sklearn import *
