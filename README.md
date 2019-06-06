@@ -5,7 +5,7 @@
 ![logo](docs/_static/logo/delira.svg "delira - Deep Learning in Radiology")
 
 # Delira - Deep Learning in Radiology
-Authors: [Justus Schock, Oliver Rippel, Christoph Haarburger](AUTHORS.rst)
+Authors: [Justus Schock, Michael Baumgartner, Oliver Rippel, Christoph Haarburger](AUTHORS.rst)
 
 ## Introduction
 Delira was originally developed as a deep learning framework for medical images such as CT or MRI. Currently, it works on arbitrary data (based on [NumPy](http://www.numpy.org/)). 

@@ -15,11 +15,13 @@ class TestMetrics(unittest.TestCase):
         pred = np.array([0, 1, 0, 1, 0])
         dummy_fn = accuracy_score
 
-        metric_wrapped = SklearnClassificationMetric(dummy_fn)
+        metric_wrapped = SklearnClassificationMetric(dummy_fn,
+                                                     pred_logits=False,
+                                                     gt_logits=False)
         wrapped_score = metric_wrapped(target, pred)
         self.assertLess(np.abs(wrapped_score - 0.4), 1e-8)
 
-        metric_ac = SklearnAccuracyScore
+        metric_ac = SklearnAccuracyScore(gt_logits=False, pred_logits=False)
         score = metric_ac(target, pred)
         self.assertLess(np.abs(score - 0.4), 1e-8)
 
