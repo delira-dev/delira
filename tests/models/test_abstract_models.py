@@ -154,10 +154,6 @@ class TestAbstractModels(unittest.TestCase):
             self._model = self._setup_torch()
 
         elif "torchscript" in self._testMethodName.lower():
-            from delira.training.backends.tf_eager import \
-                switch_tf_execution_mode
-
-            switch_tf_execution_mode("eager")
             self._model = self._setup_torchscript()
 
         elif "tf_graph" in self._testMethodName.lower():
@@ -168,6 +164,10 @@ class TestAbstractModels(unittest.TestCase):
             self._model = self._setup_tfgraph()
 
         elif "tf_eager" in self._testMethodName.lower():
+            from delira.training.backends.tf_eager import \
+                switch_tf_execution_mode
+
+            switch_tf_execution_mode("eager")
             self._model = self._setup_tfeager()
 
     @unittest.skipIf("SKLEARN" not in get_backends(),

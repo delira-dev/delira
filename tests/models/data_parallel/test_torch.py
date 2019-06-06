@@ -25,7 +25,7 @@ class TestDataParallelTorch(unittest.TestCase):
 
             model = SimpleModel()
 
-            self.optimizer = torch.nn.Adam(model.parameters())
+            self.optimizer = torch.optim.Adam(model.parameters())
 
             if torch.cuda.is_available() and torch.cuda.device_count() > 1:
                 self.model = DataParallelPyTorchNetwork(model, [0, 1])

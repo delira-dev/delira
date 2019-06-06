@@ -21,7 +21,7 @@ if "TORCH" in get_backends():
                 torch.nn.Linear(64, 1)
             )
 
-        @torch.jit.scriptmethod
+        @torch.jit.script_method
         def forward(self, x):
             return {
                 "pred":

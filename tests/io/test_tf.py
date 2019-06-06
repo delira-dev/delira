@@ -68,7 +68,7 @@ class IoTfTest(unittest.TestCase):
         import numpy as np
 
         switch_tf_execution_mode("eager")
-        
+
         class DummyNetwork(AbstractTfEagerNetwork):
             def __init__(self, in_channels, n_outputs):
                 super().__init__(in_channels=in_channels, n_outputs=n_outputs)
