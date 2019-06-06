@@ -250,8 +250,10 @@ class TfEagerExperiment(BaseExperiment):
             convert_fn = convert_to_numpy
 
         if prepare_batch is None:
-            prepare_batch = partial(network.prepare_batch, input_device="/cpu:0",
-                                    output_device="/cpu:0")
+            prepare_batch = partial(
+                network.prepare_batch,
+                input_device="/cpu:0",
+                output_device="/cpu:0")
 
         return super().test(network=network, test_data=test_data,
                             metrics=metrics, metric_keys=metric_keys,
