@@ -37,6 +37,5 @@ class TestMetrics(unittest.TestCase):
         self.assertEqual(score_auc, 0.5)
 
 
-
 if __name__ == '__main__':
     unittest.main()
