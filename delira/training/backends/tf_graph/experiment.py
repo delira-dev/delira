@@ -1,4 +1,5 @@
 import typing
+from functools import partial
 
 import tensorflow as tf
 
@@ -165,6 +166,11 @@ class TfGraphExperiment(TfEagerExperiment):
         """
 
         initialize_uninitialized(network._sess)
+
+        if prepare_batch is None:
+            prepare_batch = partial(network.prepare_batch,
+                                    input_device=None,
+                                    output_device=None)
 
         return super().test(network=network, test_data=test_data,
                             metrics=metrics, metric_keys=metric_keys,

@@ -345,7 +345,7 @@ class BaseExperiment(object):
 
     def test(self, network, test_data: BaseDataManager,
              metrics: dict, metric_keys=None,
-             verbose=False, prepare_batch=lambda x: x,
+             verbose=False, prepare_batch=None,
              convert_fn=lambda *x, **y: (x, y), **kwargs):
         """
         Setup and run testing on a given network

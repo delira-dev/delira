@@ -51,7 +51,7 @@ class TestSklearnBackend(
                 "network_cls": _cls,
                 "len_train": len_train,
                 "len_test": len_test,
-                "key_mapping": {"x": "data"}
+                "key_mapping": {"X": "X"}
             } for _cls in model_cls
         ]
         self._experiment_cls = experiment_cls
@@ -72,7 +72,7 @@ class TestSklearnBackend(
                 params = case.pop("params")
                 network_cls = case.pop("network_cls")
                 len_test = case.pop("len_test")
-                exp = self._experiment_cls(case["params"], network_cls, **case)
+                exp = self._experiment_cls(params, network_cls, **case)
 
                 # create data
                 dset_test = DummyDataset(len_test)

@@ -9,12 +9,12 @@ class IoTfTest(unittest.TestCase):
                      reason="No TF Backend Installed")
     def test_load_save(self):
         from delira.io import tf_load_checkpoint, tf_save_checkpoint
-        from delira.models import AbstractTfNetwork
-        from delira.training.utils import initialize_uninitialized
+        from delira.models import AbstractTfGraphNetwork
+        from delira.training import initialize_uninitialized
         import tensorflow as tf
         import numpy as np
 
-        class DummyNetwork(AbstractTfNetwork):
+        class DummyNetwork(AbstractTfGraphNetwork):
             def __init__(self, in_channels, n_outputs):
                 super().__init__(in_channels=in_channels, n_outputs=n_outputs)
                 self.net = self._build_model(in_channels, n_outputs)

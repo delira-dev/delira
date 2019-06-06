@@ -1,4 +1,5 @@
 import typing
+from functools import partial
 
 import tensorflow as tf
 
@@ -247,6 +248,10 @@ class TfEagerExperiment(BaseExperiment):
         # specify convert_fn to correct backend function
         if convert_fn is None:
             convert_fn = convert_to_numpy
+
+        if prepare_batch is None:
+            prepare_batch = partial(network.prepare_batch, input_device="/cpu:0",
+                                    output_device="/cpu:0")
 
         return super().test(network=network, test_data=test_data,
                             metrics=metrics, metric_keys=metric_keys,
