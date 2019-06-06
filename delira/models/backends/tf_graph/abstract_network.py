@@ -1,6 +1,7 @@
 import abc
 import logging
 import tensorflow as tf
+import numpy as np
 
 from delira.models.abstract_network import AbstractNetwork
 
@@ -165,7 +166,7 @@ class AbstractTfGraphNetwork(AbstractNetwork, metaclass=abc.ABCMeta):
             device
 
         """
-        return batch
+        return {k: v.astype(np.float32) for k, v in batch.items()}
 
     @staticmethod
     def closure(model, data_dict: dict, optimizers: dict, losses={},
