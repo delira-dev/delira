@@ -32,7 +32,8 @@ class TestMetrics(unittest.TestCase):
 
         metric_auc = AurocMetric()
         score_auc = metric_auc(target, pred)
-        self.assertEquals(score_auc, 0.5)
+        self.assertEqual(score_auc, 0.5)
+
 
 if __name__ == '__main__':
     unittest.main()
