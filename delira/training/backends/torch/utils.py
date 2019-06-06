@@ -58,4 +58,4 @@ def convert_to_numpy(*args, **kwargs):
     kwargs = recursively_convert_elements(kwargs, torch.Tensor,
                                           _single_element_tensor_conversion)
 
-    return convert_to_numpy_identity(args, kwargs)
+    return convert_to_numpy_identity(*args, **kwargs)

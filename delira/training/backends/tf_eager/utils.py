@@ -33,7 +33,7 @@ def convert_to_numpy(*args, **kwargs):
     kwargs = recursively_convert_elements(kwargs, tf.Tensor,
                                           _single_element_tensor_conversion)
 
-    return convert_to_numpy_identity(args, kwargs)
+    return convert_to_numpy_identity(*args, **kwargs)
 
 
 def create_optims_default(optim_cls, **optim_params):

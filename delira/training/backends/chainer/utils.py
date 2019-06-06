@@ -5,7 +5,8 @@ from delira.training.utils import convert_to_numpy_identity, \
 
 
 def _single_element_tensor_conversion(element):
-    return element.to_cpu().array
+    element.to_cpu()
+    return element.array
 
 
 def convert_to_numpy(*args, **kwargs):
@@ -32,7 +33,7 @@ def convert_to_numpy(*args, **kwargs):
     kwargs = recursively_convert_elements(kwargs, chainer.Variable,
                                           _single_element_tensor_conversion)
 
-    return convert_to_numpy_identity(args, kwargs)
+    return convert_to_numpy_identity(*args, **kwargs)
 
 
 def create_optims_default(model, optim_cls, **optimizer_params):

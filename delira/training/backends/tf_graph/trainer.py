@@ -283,7 +283,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
         file_name : str
             filename to save the state to
         """
-        load_checkpoint(file_name, self.module)
+        save_checkpoint(file_name, self.module)
 
     def load_state(self, file_name, *args, **kwargs):
         """
@@ -297,4 +297,4 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
         -------
 
         """
-        return save_checkpoint(file_name, self.module)
+        return load_checkpoint(file_name, self.module)

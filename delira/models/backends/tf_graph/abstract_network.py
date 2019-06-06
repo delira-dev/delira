@@ -108,8 +108,8 @@ class AbstractTfGraphNetwork(AbstractNetwork, metaclass=abc.ABCMeta):
         else:
             self._losses = {}
             for name, _loss in losses.items():
-                self._losses[name] = _loss(self.inputs[-1],
-                                           self.outputs_train[0])
+                self._losses[name] = _loss(self.inputs["label"],
+                                           self.outputs_train["pred"])
 
             total_loss = tf.reduce_mean(list(self._losses.values()), axis=0)
 
@@ -209,7 +209,7 @@ class AbstractTfGraphNetwork(AbstractNetwork, metaclass=abc.ABCMeta):
 
         inputs = data_dict.pop('data')
 
-        outputs = model.run(data=inputs, labels=data_dict['label'])
+        outputs = model.run(data=inputs, label=data_dict['label'])
         preds = outputs['pred']
         losses = outputs['losses']
 

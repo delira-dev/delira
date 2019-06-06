@@ -1,4 +1,4 @@
-import typing
+import collections
 import numpy as np
 
 
@@ -22,33 +22,33 @@ def recursively_convert_elements(element, check_type, conversion_fn):
         the converted element
 
     """
-    # ToDO: Find Bug in here
 
     # convert element with conversion_fn
     if isinstance(element, check_type):
         return conversion_fn(element)
 
-    # return string as is
-    if isinstance(element, str):
-        return element
-
-    # recursively convert all items of iterable and convert result back to
-    # original iterable type
-    if isinstance(element, typing.Iterable):
-        element = type(element)([recursively_convert_elements(x,
-                                                              check_type,
-                                                              conversion_fn)
-                                 for x in element])
+    # return string and arrays as is
+    elif isinstance(element, (str, np.ndarray)):
         return element
 
     # recursively convert all keys and values of mapping and convert result
     # back to original mapping type
-    if isinstance(element, typing.Mapping):
+    # must be checked before iterable since most mappings are also a iterable
+    elif isinstance(element, collections.Mapping):
         element = type(element)({
             recursively_convert_elements(k, check_type, conversion_fn):
                 recursively_convert_elements(v, check_type, conversion_fn)
             for k, v in element.items()
         })
+        return element
+
+    # recursively convert all items of iterable and convert result back to
+    # original iterable type
+    elif isinstance(element, collections.Iterable):
+        element = type(element)([recursively_convert_elements(x,
+                                                              check_type,
+                                                              conversion_fn)
+                                 for x in element])
         return element
 
     # none of the previous cases is suitable for the element -> return as is

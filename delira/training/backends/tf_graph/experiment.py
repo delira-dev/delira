@@ -71,18 +71,18 @@ class TfGraphExperiment(TfEagerExperiment):
         if key_mapping is None:
             key_mapping = {"data": "data"}
 
-            super().__init__(
-                params=params,
-                model_cls=model_cls,
-                n_epochs=n_epochs,
-                name=name,
-                save_path=save_path,
-                key_mapping=key_mapping,
-                val_score_key=val_score_key,
-                optim_builder=optim_builder,
-                checkpoint_freq=checkpoint_freq,
-                trainer_cls=trainer_cls,
-                **kwargs)
+        super().__init__(
+            params=params,
+            model_cls=model_cls,
+            n_epochs=n_epochs,
+            name=name,
+            save_path=save_path,
+            key_mapping=key_mapping,
+            val_score_key=val_score_key,
+            optim_builder=optim_builder,
+            checkpoint_freq=checkpoint_freq,
+            trainer_cls=trainer_cls,
+            **kwargs)
 
     def setup(self, params, training=True, **kwargs):
         """
@@ -114,7 +114,7 @@ class TfGraphExperiment(TfEagerExperiment):
 
         """
         tf.reset_default_graph()
-        return super().setup(self, params=params, training=training,
+        return super().setup(params=params, training=training,
                              **kwargs)
 
     def test(self, network, test_data: BaseDataManager,
