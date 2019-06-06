@@ -10,9 +10,13 @@ class IoTfTest(unittest.TestCase):
     def test_load_save(self):
         from delira.io.tf import load_checkpoint, save_checkpoint
         from delira.models import AbstractTfGraphNetwork
-        from delira.training import initialize_uninitialized
+        from delira.training.backends import switch_tf_execution_mode
+        from delira.training.backends import initialize_uninitialized
+
         import tensorflow as tf
         import numpy as np
+
+        switch_tf_execution_mode("graph")
 
         class DummyNetwork(AbstractTfGraphNetwork):
             def __init__(self, in_channels, n_outputs):
@@ -59,12 +63,12 @@ class IoTfTest(unittest.TestCase):
     def test_load_save_eager(self):
         from delira.io.tf import load_checkpoint_eager, save_checkpoint_eager
         from delira.models import AbstractTfEagerNetwork
+        from delira.training.backends import switch_tf_execution_mode
         import tensorflow as tf
         import numpy as np
 
-        if not tf.executing_eagerly():
-            tf.enable_eager_execution()
-
+        switch_tf_execution_mode("eager")
+        
         class DummyNetwork(AbstractTfEagerNetwork):
             def __init__(self, in_channels, n_outputs):
                 super().__init__(in_channels=in_channels, n_outputs=n_outputs)
