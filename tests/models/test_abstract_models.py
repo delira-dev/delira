@@ -42,6 +42,7 @@ class TestAbstractModels(unittest.TestCase):
     @staticmethod
     def _setup_tfeager(*args):
         import tensorflow as tf
+        tf.reset_default_graph()
         from delira.models.backends.tf_eager import AbstractTfEagerNetwork
 
         class Model(AbstractTfEagerNetwork):
@@ -58,6 +59,7 @@ class TestAbstractModels(unittest.TestCase):
     @staticmethod
     def _setup_tfgraph(*args):
         import tensorflow as tf
+        tf.reset_default_graph()
         from delira.models import AbstractTfGraphNetwork
         from delira.training.backends.tf_graph.utils import \
             initialize_uninitialized

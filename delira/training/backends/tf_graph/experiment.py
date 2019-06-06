@@ -85,39 +85,6 @@ class TfGraphExperiment(TfEagerExperiment):
             trainer_cls=trainer_cls,
             **kwargs)
 
-    def setup(self, params, training=True, **kwargs):
-        """
-        Defines the setup behavior (model, trainer etc.) for training and
-        testing case
-
-        Parameters
-        ----------
-        params : :class:`Parameters`
-            the parameters to use for setup
-        training : bool
-            whether to setup for training case or for testing case
-        **kwargs :
-            additional keyword arguments
-
-        Returns
-        -------
-        :class:`BaseNetworkTrainer`
-            the created trainer (if ``training=True``)
-        :class:`Predictor`
-            the created predictor (if ``training=False``)
-
-        See Also
-        --------
-
-        * :meth:`BaseExperiment._setup_training` for training setup
-
-        * :meth:`BaseExperiment._setup_test` for test setup
-
-        """
-        tf.reset_default_graph()
-        return super().setup(params=params, training=training,
-                             **kwargs)
-
     def test(self, network, test_data: BaseDataManager,
              metrics: dict, metric_keys=None,
              verbose=False, prepare_batch=lambda x: x,
