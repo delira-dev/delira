@@ -1,1 +1,2 @@
 from .abstract_network import AbstractTfEagerNetwork
+from .data_parallel import DataParallelTfEagerNetwork

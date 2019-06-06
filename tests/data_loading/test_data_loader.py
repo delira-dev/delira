@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from delira.data_loading import BaseDataLoader, SequentialSampler
-from . import DummyDataset
+from .utils import DummyDataset
 
 
 class DataLoaderTest(unittest.TestCase):

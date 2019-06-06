@@ -1,4 +1,4 @@
-from ..models import AbstractTfEagerNetwork
+from ..models.backends.tf_eager import AbstractTfEagerNetwork
 import typing
 import logging
 

@@ -9,7 +9,7 @@ from delira.data_loading.sampler import LambdaSampler, \
     SequentialSampler, \
     StoppingPrevalenceRandomSampler, \
     WeightedRandomSampler
-from . import DummyDataset
+from .utils import DummyDataset
 
 
 class SamplerTest(unittest.TestCase):

@@ -1,7 +1,7 @@
 import typing
 from functools import partial
 
-from delira.models import AbstractChainerNetwork
+from delira.models.backends.chainer import AbstractChainerNetwork
 from delira.data_loading import BaseDataManager
 from delira.training.base_experiment import BaseExperiment
 from delira.training.parameters import Parameters

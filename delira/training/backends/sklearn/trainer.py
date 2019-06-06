@@ -2,7 +2,7 @@ from .utils import create_optims_default
 from delira.training.utils import convert_to_numpy_identity as convert_to_numpy
 from delira.training.base_trainer import BaseNetworkTrainer
 from delira.io.sklearn import save_checkpoint, load_checkpoint
-from delira.models import SklearnEstimator
+from delira.models.backends.sklearn import SklearnEstimator
 from delira.data_loading import BaseDataManager
 from delira.data_loading.sampler import RandomSampler, \
     RandomSamplerNoReplacement

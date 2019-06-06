@@ -11,7 +11,8 @@ class TestDataParallel(unittest.TestCase):
             import chainer.links
             import chainer.functions
             import chainer.optimizers
-            from delira.models.backends.chainer.data_parallel import DataParallelChainerOptimizer, \
+            from delira.models.backends.chainer.data_parallel import \
+                DataParallelChainerOptimizer, \
                 DataParallel
 
             # creating a really simple model to test dataparallel behavior

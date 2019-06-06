@@ -2,7 +2,7 @@ import logging
 
 from delira.io.torch import load_checkpoint_torchscript, \
     save_checkpoint_torchscript
-from delira.models import AbstractTorchScriptNetwork
+from delira.models.backends.torchscript import AbstractTorchScriptNetwork
 
 from delira.training.base_trainer import BaseNetworkTrainer
 from ..torch.trainer import PyTorchNetworkTrainer

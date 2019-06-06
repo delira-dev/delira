@@ -4,7 +4,7 @@ import numpy as np
 from batchgenerators.dataloading import MultiThreadedAugmenter
 
 from delira.data_loading import BaseDataManager
-from . import DummyDataset
+from .utils import DummyDataset
 
 
 class DataManagerTest(unittest.TestCase):

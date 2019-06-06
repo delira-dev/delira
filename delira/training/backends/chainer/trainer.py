@@ -1,6 +1,7 @@
 from .utils import convert_to_numpy, create_optims_default
 from delira.io.chainer import load_checkpoint, save_checkpoint
-from delira.models import AbstractChainerNetwork, DataParallelChainerNetwork, \
+from delira.models.backends.chainer import AbstractChainerNetwork, \
+    DataParallelChainerNetwork, \
     DataParallelChainerOptimizer
 from delira.training.base_trainer import BaseNetworkTrainer
 import chainer

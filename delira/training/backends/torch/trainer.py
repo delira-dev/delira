@@ -7,7 +7,8 @@ import torch
 from batchgenerators.dataloading import MultiThreadedAugmenter
 
 from delira.io.torch import load_checkpoint_torch, save_checkpoint_torch
-from delira.models import AbstractPyTorchNetwork, DataParallelPyTorchNetwork
+from delira.models.backends.torch import AbstractPyTorchNetwork, \
+    DataParallelPyTorchNetwork
 
 from delira.training.base_trainer import BaseNetworkTrainer
 

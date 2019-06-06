@@ -3,7 +3,7 @@ from functools import partial
 
 import tensorflow as tf
 
-from delira.models import AbstractTfGraphNetwork
+from delira.models.backends.tf_graph import AbstractTfGraphNetwork
 from delira.data_loading import BaseDataManager
 
 from delira.training.parameters import Parameters

@@ -1,6 +1,6 @@
 import typing
 
-from delira.models import AbstractTorchScriptNetwork
+from delira.models.backends.torchscript import AbstractTorchScriptNetwork
 
 from delira.training.parameters import Parameters
 from ..torch.experiment import PyTorchExperiment

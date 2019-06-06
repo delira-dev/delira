@@ -4,7 +4,7 @@ from functools import partial
 import tensorflow as tf
 
 from delira.data_loading import BaseDataManager
-from delira.models import AbstractTfEagerNetwork
+from delira.models.backends.tf_eager import AbstractTfEagerNetwork
 
 from delira.training.base_experiment import BaseExperiment
 from delira.training.parameters import Parameters

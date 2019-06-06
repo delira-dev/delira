@@ -4,7 +4,7 @@ import os
 
 from sklearn.base import BaseEstimator
 
-from delira.models import SklearnEstimator
+from delira.models.backends.sklearn import SklearnEstimator
 
 from delira.training.base_experiment import BaseExperiment
 from delira.training.parameters import Parameters

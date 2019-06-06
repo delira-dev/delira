@@ -2,7 +2,8 @@ from .utils import create_optims_default, convert_to_numpy, \
     switch_tf_execution_mode
 from delira.training.base_trainer import BaseNetworkTrainer
 from delira.io.tf import save_checkpoint_eager, load_checkpoint_eager
-from delira.models import AbstractTfEagerNetwork
+from delira.models.backends.tf_eager import AbstractTfEagerNetwork, \
+    DataParallelTfEagerNetwork
 import logging
 import os
 from functools import partial
@@ -168,11 +169,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
                 logger.warning(
                     "multi-GPU training not yet tested!")
 
-                network = tf.keras.utils.multi_gpu_model(
-                    network,
-                    gpu_ids,
-                    cpu_merge=True,
-                    cpu_relocation=False)
+                network = DataParallelTfEagerNetwork(network, gpu_ids)
 
                 self.input_device = "/cpu:0"
                 self.output_device = "/cpu:0"
