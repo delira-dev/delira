@@ -68,7 +68,7 @@ class TestTfEagerBackend(
                 "network_cls": model_cls,
                 "len_train": len_train,
                 "len_test": len_test,
-                "key_mapping": {"data": "data"},
+                "key_mapping": {"x": "data"},
             }
         ]
         self._experiment_cls = experiment_cls
