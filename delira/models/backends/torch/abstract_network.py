@@ -2,7 +2,7 @@ import abc
 import torch
 from delira.models.abstract_network import AbstractNetwork
 
-from .utils import scale_loss
+from delira.models.backends.torch.utils import scale_loss
 
 
 class AbstractPyTorchNetwork(AbstractNetwork, torch.nn.Module):

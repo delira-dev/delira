@@ -1,7 +1,7 @@
 import contextlib
 
 from delira import get_backends
-from .decorators import make_deprecated
+from delira.utils.decorators import make_deprecated
 
 if "TORCH" in get_backends():
     import torch

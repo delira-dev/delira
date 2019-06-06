@@ -1,1 +1,1 @@
-from .abstract_network import SklearnEstimator
+from delira.models.backends.sklearn.abstract_network import SklearnEstimator

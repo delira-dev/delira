@@ -2,7 +2,7 @@ import unittest
 from delira import get_backends
 
 
-class TestDataParallel(unittest.TestCase):
+class TestDataParallelChainer(unittest.TestCase):
 
     def setUp(self) -> None:
         if "CHAINER" in get_backends():
@@ -14,9 +14,11 @@ class TestDataParallel(unittest.TestCase):
             from delira.models.backends.chainer.data_parallel import \
                 DataParallelChainerOptimizer, \
                 DataParallel
+            from delira.models.backends.chainer.abstract_network import \
+                AbstractChainerNetwork
 
             # creating a really simple model to test dataparallel behavior
-            class SimpleModel(chainer.link.Chain):
+            class SimpleModel(AbstractChainerNetwork):
                 def __init__(self):
                     super(SimpleModel, self).__init__()
 

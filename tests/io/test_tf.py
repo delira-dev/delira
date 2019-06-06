@@ -8,7 +8,7 @@ class IoTfTest(unittest.TestCase):
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF Backend Installed")
     def test_load_save(self):
-        from delira.io import tf_load_checkpoint, tf_save_checkpoint
+        from delira.io.tf import load_checkpoint, save_checkpoint
         from delira.models import AbstractTfGraphNetwork
         from delira.training import initialize_uninitialized
         import tensorflow as tf
@@ -37,13 +37,13 @@ class IoTfTest(unittest.TestCase):
 
         vars_1 = net._sess.run(tf.global_variables())
 
-        tf_save_checkpoint("./model", model=net)
+        save_checkpoint("./model", model=net)
 
         net._sess.run(tf.initializers.global_variables())
 
         vars_2 = net._sess.run(tf.global_variables())
 
-        tf_load_checkpoint("./model", model=net)
+        load_checkpoint("./model", model=net)
 
         vars_3 = net._sess.run(tf.global_variables())
 
@@ -57,7 +57,7 @@ class IoTfTest(unittest.TestCase):
 
     @unittest.skipIf("TF" not in get_backends(), "No TF Backend installed")
     def test_load_save_eager(self):
-        from delira.io import tf_eager_load_checkpoint, tf_eager_save_checkpoint
+        from delira.io.tf import load_checkpoint_eager, save_checkpoint_eager
         from delira.models import AbstractTfEagerNetwork
         import tensorflow as tf
         import numpy as np
@@ -89,14 +89,15 @@ class IoTfTest(unittest.TestCase):
         net = DummyNetwork((32,), 1)
         input_tensor = np.random.rand(1, 32)
         result_pre_save = net(input_tensor)
-        tf_eager_save_checkpoint("./model_eager", model=net)
+        save_checkpoint_eager("./model_eager", model=net)
 
-        loaded_state = tf_eager_load_checkpoint("./model_eager", model=net)
+        loaded_state = load_checkpoint_eager("./model_eager", model=net)
         loaded_net = loaded_state["model"]
 
         result_post_save = loaded_net(input_tensor)
 
         self.assertTrue(np.array_equal(result_post_save, result_pre_save))
 
-    if __name__ == '__main__':
-        unittest.main()
+
+if __name__ == '__main__':
+    unittest.main()

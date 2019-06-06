@@ -3,7 +3,7 @@ from copy import deepcopy, copy
 
 import yaml
 
-from ..utils import LookupConfig
+from delira.utils import LookupConfig
 
 
 class Parameters(LookupConfig):

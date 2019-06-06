@@ -8,7 +8,7 @@ class TestAbstractModels(unittest.TestCase):
     @staticmethod
     def _setup_torch(*args):
         import torch
-        from delira.models import AbstractPyTorchNetwork
+        from delira.models.backends.torch import AbstractPyTorchNetwork
 
         class Model(AbstractPyTorchNetwork):
             def __init__(self):
@@ -24,7 +24,8 @@ class TestAbstractModels(unittest.TestCase):
     @staticmethod
     def _setup_torchscript(*args):
         import torch
-        from delira.models import AbstractTorchScriptNetwork
+        from delira.models.backends.torchscript import \
+            AbstractTorchScriptNetwork
 
         class Model(AbstractTorchScriptNetwork):
             def __init__(self):
@@ -41,7 +42,7 @@ class TestAbstractModels(unittest.TestCase):
     @staticmethod
     def _setup_tfeager(*args):
         import tensorflow as tf
-        from delira.models import AbstractTfEagerNetwork
+        from delira.models.backends.tf_eager import AbstractTfEagerNetwork
 
         class Model(AbstractTfEagerNetwork):
             def __init__(self):

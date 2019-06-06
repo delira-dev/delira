@@ -8,7 +8,9 @@ from delira.data_loading.sampler import LambdaSampler, \
     RandomSampler, \
     SequentialSampler, \
     StoppingPrevalenceRandomSampler, \
-    WeightedRandomSampler
+    WeightedRandomSampler, \
+    WeightedPrevalenceRandomSampler
+
 from .utils import DummyDataset
 
 

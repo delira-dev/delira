@@ -9,7 +9,7 @@ from delira.models.backends.sklearn import SklearnEstimator
 from delira.training.base_experiment import BaseExperiment
 from delira.training.parameters import Parameters
 
-from .trainer import SklearnEstimatorTrainer
+from delira.training.backends.sklearn.trainer import SklearnEstimatorTrainer
 
 
 class SklearnExperiment(BaseExperiment):

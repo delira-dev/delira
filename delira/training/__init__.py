@@ -1,7 +1,7 @@
 
-from .parameters import Parameters
-from .base_experiment import BaseExperiment
-from .base_trainer import BaseNetworkTrainer
-from .predictor import Predictor
+from delira.training.parameters import Parameters
+from delira.training.base_experiment import BaseExperiment
+from delira.training.base_trainer import BaseNetworkTrainer
+from delira.training.predictor import Predictor
 
-from .backends import *
+from delira.training.backends import *

@@ -6,8 +6,9 @@ from delira.data_loading import BaseDataManager
 from delira.training.base_experiment import BaseExperiment
 from delira.training.parameters import Parameters
 
-from .utils import create_optims_default, convert_to_numpy
-from .trainer import ChainerNetworkTrainer
+from delira.training.backends.chainer.utils import create_optims_default
+from delira.training.backends.chainer.utils import convert_to_numpy
+from delira.training.backends.chainer.trainer import ChainerNetworkTrainer
 
 
 class ChainerExperiment(BaseExperiment):

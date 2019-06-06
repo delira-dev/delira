@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 if "TORCH" in get_backends():
 
     import torch
-    from ..models.backends.torch import AbstractPyTorchNetwork
-    from ..models.backends.torchscript import AbstractTorchScriptNetwork
+    from delira.models.backends.torch import AbstractPyTorchNetwork
+    from delira.models.backends.torchscript import AbstractTorchScriptNetwork
 
     def save_checkpoint_torch(file: str, model=None, optimizers={},
                               epoch=None, **kwargs):

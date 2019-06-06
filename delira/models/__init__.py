@@ -1,2 +1,2 @@
-from .abstract_network import AbstractNetwork
-from .backends import *
+from delira.models.abstract_network import AbstractNetwork
+from delira.models.backends import *

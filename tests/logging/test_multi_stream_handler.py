@@ -17,3 +17,7 @@ class MultiStreamHandlerTest(unittest.TestCase):
 
         with self.assertLogs(__name__, level='INFO'):
             logger.info("Test Info for Unittest")
+
+
+if __name__ == '__main__':
+    unittest.main()

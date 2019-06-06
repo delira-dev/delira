@@ -1,5 +1,6 @@
 import tensorflow as tf
-from .abstract_network import AbstractTfEagerNetwork
+from delira.models.backends.tf_eager.abstract_network import \
+    AbstractTfEagerNetwork
 
 
 class DataParallelTfEagerNetwork(AbstractTfEagerNetwork):

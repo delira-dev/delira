@@ -1,9 +1,6 @@
 import abc
 import logging
 
-from delira import get_backends
-import numpy as np
-
 file_logger = logging.getLogger(__name__)
 
 

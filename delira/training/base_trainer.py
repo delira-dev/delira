@@ -5,9 +5,9 @@ import typing
 
 from batchgenerators.dataloading import MultiThreadedAugmenter
 
-from .predictor import Predictor
-from .callbacks import AbstractCallback
-from ..models import AbstractNetwork
+from delira.training.predictor import Predictor
+from delira.training.callbacks import AbstractCallback
+from delira.models import AbstractNetwork
 
 import numpy as np
 import os

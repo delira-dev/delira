@@ -6,11 +6,12 @@ from batchgenerators.dataloading import SlimDataLoaderBase, \
     MultiThreadedAugmenter
 from batchgenerators.transforms import AbstractTransform
 
-from .data_loader import BaseDataLoader
-from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset
-from .load_utils import default_load_fn_2d
-from .sampler import SequentialSampler, AbstractSampler
-from ..utils.decorators import make_deprecated
+from delira.data_loading.data_loader import BaseDataLoader
+from delira.data_loading.dataset import AbstractDataset, BaseCacheDataset, \
+    BaseLazyDataset
+from delira.data_loading.load_utils import default_load_fn_2d
+from delira.data_loading.sampler import SequentialSampler, AbstractSampler
+from delira.utils.decorators import make_deprecated
 
 logger = logging.getLogger(__name__)
 

@@ -12,7 +12,8 @@ from delira.models.backends.torch import AbstractPyTorchNetwork, \
 
 from delira.training.base_trainer import BaseNetworkTrainer
 
-from .utils import convert_to_numpy, create_optims_default
+from delira.training.backends.torch.utils import create_optims_default
+from delira.training.backends.torch.utils import convert_to_numpy
 
 
 logger = logging.getLogger(__name__)

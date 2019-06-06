@@ -9,12 +9,12 @@ import numpy as np
 from sklearn.model_selection import KFold, StratifiedKFold, \
     StratifiedShuffleSplit, ShuffleSplit
 
-from ..data_loading import BaseDataManager
-from ..models import AbstractNetwork
+from delira.data_loading import BaseDataManager
+from delira.models import AbstractNetwork
 
-from .parameters import Parameters
-from .base_trainer import BaseNetworkTrainer
-from .predictor import Predictor
+from delira.training.parameters import Parameters
+from delira.training.base_trainer import BaseNetworkTrainer
+from delira.training.predictor import Predictor
 
 logger = logging.getLogger(__name__)
 

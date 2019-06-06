@@ -1,5 +1,5 @@
 import chainer
-from delira.models import DataParallelChainerOptimizer
+from delira.models.backends.chainer import DataParallelChainerOptimizer
 from delira.training.utils import convert_to_numpy_identity, \
     recursively_convert_elements
 

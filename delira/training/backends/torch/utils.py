@@ -1,9 +1,8 @@
 import torch
-import numpy as np
 
 from delira.utils.decorators import dtype_func
-from delira.training.utils import convert_to_numpy_identity, \
-    recursively_convert_elements
+from delira.training.utils import convert_to_numpy_identity
+from delira.training.utils import recursively_convert_elements
 
 
 @dtype_func(torch.nn.Module)

@@ -1,2 +1,4 @@
-from .experiment import TorchScriptExperiment
-from .trainer import TorchScriptNetworkTrainer
+from delira.training.backends.torchscript.experiment import \
+    TorchScriptExperiment
+from delira.training.backends.torchscript.trainer import \
+    TorchScriptNetworkTrainer

@@ -1,8 +1,8 @@
 import numpy as np
 from batchgenerators.dataloading.data_loader import SlimDataLoaderBase
 
-from .dataset import AbstractDataset
-from .sampler import AbstractSampler, SequentialSampler
+from delira.data_loading.dataset import AbstractDataset
+from delira.data_loading.sampler import AbstractSampler, SequentialSampler
 
 
 class BaseDataLoader(SlimDataLoaderBase):

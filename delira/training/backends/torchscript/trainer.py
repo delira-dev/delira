@@ -5,9 +5,10 @@ from delira.io.torch import load_checkpoint_torchscript, \
 from delira.models.backends.torchscript import AbstractTorchScriptNetwork
 
 from delira.training.base_trainer import BaseNetworkTrainer
-from ..torch.trainer import PyTorchNetworkTrainer
+from delira.training.backends.torch.trainer import PyTorchNetworkTrainer
 
-from ..torch.utils import convert_to_numpy, create_optims_default
+from delira.training.backends.torch.utils import convert_to_numpy
+from delira.training.backends.torch.utils import create_optims_default
 
 
 logger = logging.getLogger(__name__)

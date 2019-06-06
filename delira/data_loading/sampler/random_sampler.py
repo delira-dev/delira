@@ -3,7 +3,7 @@ from collections import OrderedDict
 from numpy import concatenate
 from numpy.random import choice, shuffle
 
-from .abstract_sampler import AbstractSampler
+from delira.data_loading.sampler.abstract_sampler import AbstractSampler
 from ..dataset import AbstractDataset
 
 

@@ -1,3 +1,3 @@
-from .experiment import TfGraphExperiment
-from .trainer import TfGraphNetworkTrainer
-from .utils import initialize_uninitialized
+from delira.training.backends.tf_graph.experiment import TfGraphExperiment
+from delira.training.backends.tf_graph.trainer import TfGraphNetworkTrainer
+from delira.training.backends.tf_graph.utils import initialize_uninitialized

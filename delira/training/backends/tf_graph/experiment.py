@@ -7,11 +7,11 @@ from delira.models.backends.tf_graph import AbstractTfGraphNetwork
 from delira.data_loading import BaseDataManager
 
 from delira.training.parameters import Parameters
-from ..tf_eager.experiment import TfEagerExperiment
-from ..tf_eager.utils import create_optims_default
+from delira.training.backends.tf_eager.experiment import TfEagerExperiment
+from delira.training.backends.tf_eager.utils import create_optims_default
 
-from .trainer import TfGraphNetworkTrainer
-from .utils import initialize_uninitialized
+from delira.training.backends.tf_graph.trainer import TfGraphNetworkTrainer
+from delira.training.backends.tf_graph.utils import initialize_uninitialized
 
 
 class TfGraphExperiment(TfEagerExperiment):

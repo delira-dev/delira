@@ -9,8 +9,9 @@ from delira.models.backends.tf_eager import AbstractTfEagerNetwork
 from delira.training.base_experiment import BaseExperiment
 from delira.training.parameters import Parameters
 
-from .trainer import TfEagerNetworkTrainer
-from .utils import create_optims_default, convert_to_numpy
+from delira.training.backends.tf_eager.trainer import TfEagerNetworkTrainer
+from delira.training.backends.tf_eager.utils import create_optims_default
+from delira.training.backends.tf_eager.utils import convert_to_numpy
 
 
 class TfEagerExperiment(BaseExperiment):

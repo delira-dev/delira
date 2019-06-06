@@ -3,9 +3,9 @@ import logging
 import numpy as np
 from tqdm import tqdm
 
-from ..data_loading import BaseDataManager
-from .utils import convert_to_numpy_identity
-from ..utils.config import LookupConfig
+from delira.data_loading import BaseDataManager
+from delira.training.utils import convert_to_numpy_identity
+from delira.utils.config import LookupConfig
 
 logger = logging.getLogger(__name__)
 

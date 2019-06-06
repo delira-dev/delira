@@ -1,6 +1,7 @@
 import torch
 
-from .abstract_network import AbstractPyTorchNetwork
+from delira.models.backends.torch.abstract_network import \
+    AbstractPyTorchNetwork
 
 
 class DataParallelPyTorchNetwork(AbstractPyTorchNetwork,

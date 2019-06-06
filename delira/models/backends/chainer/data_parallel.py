@@ -1,4 +1,5 @@
-from .abstract_network import AbstractChainerNetwork
+from delira.models.backends.chainer.abstract_network import \
+    AbstractChainerNetwork
 import chainer
 
 

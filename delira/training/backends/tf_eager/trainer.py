@@ -1,5 +1,6 @@
-from .utils import create_optims_default, convert_to_numpy, \
-    switch_tf_execution_mode
+from delira.training.backends.tf_eager.utils import create_optims_default
+from delira.training.backends.tf_eager.utils import convert_to_numpy
+from delira.training.backends.tf_eager.utils import switch_tf_execution_mode
 from delira.training.base_trainer import BaseNetworkTrainer
 from delira.io.tf import save_checkpoint_eager, load_checkpoint_eager
 from delira.models.backends.tf_eager import AbstractTfEagerNetwork, \

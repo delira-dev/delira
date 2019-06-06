@@ -9,8 +9,9 @@ from delira.data_loading import BaseDataManager
 from delira.training.base_experiment import BaseExperiment
 from delira.training.parameters import Parameters
 
-from .trainer import PyTorchNetworkTrainer
-from .utils import create_optims_default, convert_to_numpy
+from delira.training.backends.torch.trainer import PyTorchNetworkTrainer
+from delira.training.backends.torch.utils import create_optims_default
+from delira.training.backends.torch.utils import convert_to_numpy
 
 
 class PyTorchExperiment(BaseExperiment):

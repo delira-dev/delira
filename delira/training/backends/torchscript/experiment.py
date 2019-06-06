@@ -3,10 +3,11 @@ import typing
 from delira.models.backends.torchscript import AbstractTorchScriptNetwork
 
 from delira.training.parameters import Parameters
-from ..torch.experiment import PyTorchExperiment
-from ..torch.utils import create_optims_default
+from delira.training.backends.torch.experiment import PyTorchExperiment
+from delira.training.backends.torch.utils import create_optims_default
 
-from .trainer import TorchScriptNetworkTrainer
+from delira.training.backends.torchscript.trainer import \
+    TorchScriptNetworkTrainer
 
 
 class TorchScriptExperiment(PyTorchExperiment):
