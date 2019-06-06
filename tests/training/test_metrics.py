@@ -34,5 +34,6 @@ class TestMetrics(unittest.TestCase):
         score_auc = metric_auc(target, pred)
         self.assertEquals(score_auc, 0.5)
 
+
 if __name__ == '__main__':
     unittest.main()
