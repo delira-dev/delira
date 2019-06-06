@@ -14,10 +14,10 @@ if "TORCH" in get_backends():
             super().__init__()
 
             self.module = torch.nn.Sequential(
-                        torch.nn.Linear(32, 64),
-                        torch.nn.ReLU(),
-                        torch.nn.Linear(64, 1)
-                    )
+                torch.nn.Linear(32, 64),
+                torch.nn.ReLU(),
+                torch.nn.Linear(64, 1)
+            )
 
         def forward(self, x):
             return {
