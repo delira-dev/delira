@@ -6,28 +6,6 @@ from sklearn.metrics import mean_absolute_error
 from .utils import create_experiment_test_template_for_backend, DummyDataset
 
 
-if "SKLEARN" in get_backends():
-    from delira.models import AbstractChainerNetwork
-    import chainer
-
-    # define this outside, because it has to be pickleable, which it won't be,
-    # wehn defined inside a function
-    class DummyNetworkChainer(AbstractChainerNetwork):
-        def __init__(self):
-            super().__init__()
-
-            with self.init_scope():
-                self.dense_1 = chainer.links.Linear(32, 64)
-                self.dense_2 = chainer.links.Linear(64, 1)
-
-        def forward(self, x):
-            return {
-                "pred":
-                    self.dense_2(chainer.functions.relu(
-                        self.dense_1(x)))
-            }
-
-
 class TestSklearnBackend(
     create_experiment_test_template_for_backend("SKLEARN")
 ):

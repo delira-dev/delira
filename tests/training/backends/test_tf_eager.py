@@ -27,7 +27,7 @@ if "TF" in get_backends():
             return {"pred": self.model(x)}
 
 
-class TestTfGraphBackend(
+class TestTfEagerBackend(
     create_experiment_test_template_for_backend("TF")
 ):
     def setUp(self) -> None:

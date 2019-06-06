@@ -29,7 +29,7 @@ if "TORCH" in get_backends():
             }
 
 
-class TestChainerBackend(
+class TestTorchScriptBackend(
     create_experiment_test_template_for_backend("TORCH")
 ):
     def setUp(self) -> None:
