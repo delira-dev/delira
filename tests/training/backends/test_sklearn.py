@@ -83,8 +83,8 @@ class TestSklearnBackend(
                 # must fit on 2 samples to initialize coefficients
                 model.fit(np.random.rand(2, 32), np.array([[0], [1]]))
 
-            return exp.test(model, dmgr_test,
-                            params.nested_get("val_metrics", {}))
+                exp.test(model, dmgr_test,
+                         params.nested_get("val_metrics", {}))
 
 
 if __name__ == "__main__":
