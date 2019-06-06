@@ -12,7 +12,8 @@ class TestSklearnBackend(
     def setUp(self) -> None:
         if "SKLEARN" in get_backends():
             from delira.training import SklearnExperiment
-            import sklearn
+            from sklearn.tree import DecisionTreeClassifier
+            from sklearn.neural_network import MLPClassifier
 
             params = Parameters(fixed_params={
                 "model": {},
@@ -29,8 +30,10 @@ class TestSklearnBackend(
             })
 
             # run tests for estimator with and without partial_fit
-            model_cls = [sklearn.tree.DecisionTreeClassifier,
-                         sklearn.neural_network.MLPClassifier]
+            model_cls = [
+                DecisionTreeClassifier,
+                MLPClassifier
+            ]
 
             experiment_cls = SklearnExperiment
 
