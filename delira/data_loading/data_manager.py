@@ -367,7 +367,6 @@ class BaseDataManager(object):
                          num_cached_per_queue=2,
                          seeds=self.n_process_augmentation * [seed])
 
-
     def get_subset(self, indices):
         """
         Returns a Subset of the current datamanager based on given indices
