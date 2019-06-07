@@ -1,4 +1,5 @@
 import unittest
+import gc
 from delira import get_backends
 from delira.training import Parameters
 from sklearn.metrics import mean_absolute_error
@@ -83,6 +84,10 @@ class TestTfGraphBackend(
         self._experiment_cls = experiment_cls
 
         super().setUp()
+
+    def tearDown(self):
+        del tf
+        gc.collect()
 
 
 if __name__ == "__main__":
