@@ -85,7 +85,6 @@ if "TORCH" in get_backends():
         def add_param_group(self, param_group):
             return self._optimizer.add_param_group(param_group)
 
-
     from delira import get_current_debug_mode, set_debug_mode
 
     class DebugMode(object):
@@ -94,6 +93,7 @@ if "TORCH" in get_backends():
         defined context (and reverting to previous mode afterwards)
 
         """
+
         def __init__(self, mode):
             """
 
