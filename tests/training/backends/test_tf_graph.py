@@ -86,7 +86,11 @@ class TestTfGraphBackend(
         super().setUp()
 
     def tearDown(self):
-        del tf
+        try:
+            del tf
+            del tensorflow
+        except (UnboundLocalError, NameError):
+            pass
         gc.collect()
 
 
