@@ -13,7 +13,7 @@ class TestDataParallelChainer(unittest.TestCase):
             import chainer.optimizers
             from delira.models.backends.chainer.data_parallel import \
                 DataParallelChainerOptimizer, \
-                DataParallel
+                DataParallelChainerNetwork
             from delira.models.backends.chainer.abstract_network import \
                 AbstractChainerNetwork
 
@@ -31,8 +31,9 @@ class TestDataParallelChainer(unittest.TestCase):
                         chainer.functions.relu(
                             self.dense_1(x)))
 
-            self.model = DataParallel(SimpleModel(),
-                                      devices=["@numpy", "@numpy"])
+            self.model = DataParallelChainerNetwork(SimpleModel(),
+                                                    devices=["@numpy",
+                                                             "@numpy"])
 
             self.optimizer = DataParallelChainerOptimizer.from_optimizer_class(
                 chainer.optimizers.Adam

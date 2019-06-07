@@ -21,7 +21,7 @@ class TestDataParallelTorch(unittest.TestCase):
                     self.relu = torch.nn.ReLU()
 
                 def forward(self, x):
-                    return {"pred": self.dense_2(self.relu(self.dense1(x)))}
+                    return {"pred": self.dense_2(self.relu(self.dense_1(x)))}
 
             model = SimpleModel()
 

@@ -92,7 +92,7 @@ class IoTfTest(unittest.TestCase):
 
         net = DummyNetwork((32,), 1)
         input_tensor = np.random.rand(1, 32).astype(np.float32)
-        result_pre_save = net()
+        result_pre_save = net(input_tensor)
         save_checkpoint_eager("./model_eager", model=net)
 
         loaded_state = load_checkpoint_eager("./model_eager", model=net)
