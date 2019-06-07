@@ -1,10 +1,10 @@
-from delira.logging import TrixiHandler
-
-from trixi.logger import NumpyPlotFileLogger
 import logging
-import numpy as np
-import os
 import unittest
+
+import numpy as np
+from trixi.logger import NumpyPlotFileLogger
+
+from delira.logging import TrixiHandler
 
 
 class TrixiHandlerTest(unittest.TestCase):
@@ -20,7 +20,8 @@ class TrixiHandlerTest(unittest.TestCase):
 
         with self.assertLogs(__name__, level='INFO'):
             logger.info(
-                {'image': {"image": np.random.rand(28, 28), "name": "test_img"}})
+                {'image': {"image": np.random.rand(28, 28),
+                           "name": "test_img"}})
 
 
 if __name__ == '__main__':

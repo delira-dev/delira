@@ -1,9 +1,9 @@
-import os
 import logging
+import os
+
 import numpy as np
-from tqdm.auto import tqdm
-import tensorflow as tf
 from batchgenerators.dataloading import MultiThreadedAugmenter
+
 from .callbacks import AbstractCallback
 from .base_trainer import BaseNetworkTrainer
 from .train_utils import create_optims_default_tf as create_optims_default
@@ -57,10 +57,10 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         save_path : str
             path to save networks to
         key_mapping : dict
-            a dictionary containing the mapping from the ``data_dict`` to 
+            a dictionary containing the mapping from the ``data_dict`` to
             the actual model's inputs.
-            E.g. if a model accepts one input named 'x' and the data_dict 
-            contains one entry named 'data' this argument would have to 
+            E.g. if a model accepts one input named 'x' and the data_dict
+            contains one entry named 'data' this argument would have to
             be ``{'x': 'data'}``
         losses : dict
             dictionary containing the training losses
@@ -69,10 +69,10 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         optimizer_params : dict
             keyword arguments passed to optimizer during construction
         train_metrics : dict, optional
-            metrics, which will be evaluated during train phase 
+            metrics, which will be evaluated during train phase
             (should work on numpy arrays)
         val_metrics : dict, optional
-            metrics, which will be evaluated during test phase 
+            metrics, which will be evaluated during test phase
             (should work on numpy arrays)
         lr_scheduler_cls : Any
             learning rate schedule class: must implement step() method
@@ -98,8 +98,8 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         start_epoch : int
             epoch to start training at
         metric_keys : dict
-            dict specifying which batch_dict entry to use for which metric as 
-            target; default: None, which will result in key "label" for all 
+            dict specifying which batch_dict entry to use for which metric as
+            target; default: None, which will result in key "label" for all
             metrics
         convert_batch_to_npy_fn : type, optional
             function converting a batch-tensor to numpy, per default this is
@@ -155,13 +155,13 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         """
 
         # TODO: implement multi-GPU and single GPU training with help of
-        #  https://www.tensorflow.org/api_docs/python/tf/keras/utils/multi_gpu_model
-        #  note: might be bugged in combination with sess.run https://github.com/tensorflow/tensorflow/issues/21788
-        #  and https://www.tensorflow.org/api_docs/python/tf/keras/models/clone_model
+        #  keras multi-gpu model
+        #  note: might be bugged in combination with sess.run
+        #  https://github.com/tensorflow/tensorflow/issues/21788
 
         """
         if gpu_ids and tf.test.is_gpu_available():
-            assert len(gpu_ids) <= len(get_available_gpus()), "more GPUs 
+            assert len(gpu_ids) <= len(get_available_gpus()), "more GPUs
             specified than available"
             self.use_gpu = True
             if len(gpu_ids) > 1:
@@ -193,28 +193,17 @@ class TfNetworkTrainer(BaseNetworkTrainer):
 
         # Load latest epoch file if available
         if os.path.isdir(self.save_path):
-            # check all files in directory starting with "checkpoint" and
-            # not ending with "_best.meta"
-            files = [x for x in os.listdir(self.save_path)
-                     if os.path.isfile(os.path.join(self.save_path, x))
-                     and x.startswith("checkpoint")
-                     and x.endswith(".meta")
-                     and not (x.endswith("_best.meta")
-                              or x.endswith("_best.meta"))]
+            latest_state_path, latest_epoch = self._search_for_prev_state(
+                self.save_path, [".meta"])
 
-            # if list is not empty: load previous state
-            if files:
+            if latest_state_path is not None:
 
-                latest_epoch = max([
-                    int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
-                    for x in files])
-
-                latest_state_path = os.path.join(
-                    self.save_path, "checkpoint_epoch_%d.meta"
-                                    % latest_epoch)
+                # if pth file does not exist, load pt file instead
+                if not os.path.isfile(latest_state_path):
+                    latest_state_path = latest_state_path[:-1]
 
                 logger.info("Attempting to load state from previous \
-                                training from %s" % latest_state_path)
+                            training from %s" % latest_state_path)
 
                 self.update_state(latest_state_path)
                 self.start_epoch = latest_epoch
@@ -229,12 +218,14 @@ class TfNetworkTrainer(BaseNetworkTrainer):
             best network
 
         """
+
         if os.path.isfile(os.path.join(self.save_path,
                                        'checkpoint_best.meta')):
 
             # load best model and return it. Since the state is hidden in the
             # graph, we don't actually need to use
             # self._update_state.
+
             self.update_state(os.path.join(self.save_path,
                                            'checkpoint_best')
                               )
@@ -259,7 +250,7 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
 
     def predict_data_mgr(self, datamgr, batch_size=None, metrics={},
-                         metric_keys={}, verbose=False):
+                         metric_keys={}, verbose=False, **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator
 
@@ -277,6 +268,8 @@ class TfNetworkTrainer(BaseNetworkTrainer):
             the ``batch_dict`` items to use for metric calculation
         verbose : bool
             whether to show a progress-bar or not, default: False
+        **kwargs :
+            additional keword arguments
 
         """
         self.module.training = False

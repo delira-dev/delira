@@ -32,6 +32,7 @@ def read_file(file):
         content = f.read()
     return content
 
+
 def find_version(file):
     content = read_file(file)
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", content,
@@ -39,10 +40,11 @@ def find_version(file):
     if version_match:
         return version_match.group(1)
 
+
 # The short X.Y version
-version = find_version("../delira/__init__.py") #delira.__version__
+version = find_version("../delira/__init__.py")  # delira.__version__
 # The full version, including alpha/beta/rc tags
-release = version #delira.__version__
+release = version  # delira.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -198,9 +200,14 @@ texinfo_documents = [
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None,
-                      'trixi': ('https://trixi.readthedocs.io/en/latest/', None),
-                      'torch': ('https://pytorch.org/docs/stable/', None)}
+intersphinx_mapping = {
+    'https://docs.python.org/': None,
+    'trixi': (
+        'https://trixi.readthedocs.io/en/latest/',
+        None),
+    'torch': (
+        'https://pytorch.org/docs/stable/',
+        None)}
 
 # -- Options for todo extension ----------------------------------------------
 
@@ -218,42 +225,42 @@ autodoc_default_flags = ['members',
 autodoc_inherit_docstrings = True
 
 autodoc_mock_imports = [
-        "numpy",
-        "torchvision",
-        "torch",
-        "skimage",
-        "sklearn",
-        "jupyter",
-        "flake8"
-        "pytest-cov",
-        "autopep8",
-        "ipython",
-        "joblib",
-        "pillow",
-        "SimpleITK",
-        "pylint",
-        "tqdm",
-        "visdom",
-        "pyyaml",
-        "trixi",
-        "batchgenerators",
-        "psutil",
-        "nested_lookup",
-        "colorlover",
-        "flask",
-        "graphviz",
-        "matplotlib",
-        "seaborn",
-        "scipy",
-        "scipy.ndimage",
-        "telegram",
-        "portalocker",
-        "plotly",
-        "PIL",
-        "umap",
-        "tensorflow",
-        "yaml"
-    ]
+    "numpy",
+    "torchvision",
+    "torch",
+    "skimage",
+    "sklearn",
+    "jupyter",
+    "flake8"
+    "pytest-cov",
+    "autopep8",
+    "ipython",
+    "joblib",
+    "pillow",
+    "SimpleITK",
+    "pylint",
+    "tqdm",
+    "visdom",
+    "pyyaml",
+    "trixi",
+    "batchgenerators",
+    "psutil",
+    "nested_lookup",
+    "colorlover",
+    "flask",
+    "graphviz",
+    "matplotlib",
+    "seaborn",
+    "scipy",
+    "scipy.ndimage",
+    "telegram",
+    "portalocker",
+    "plotly",
+    "PIL",
+    "umap",
+    "tensorflow",
+    "yaml"
+]
 
 # autodoc_mock_imports = [
 #         "torch.optim",

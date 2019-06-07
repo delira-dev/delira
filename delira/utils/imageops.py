@@ -1,6 +1,7 @@
-from scipy.ndimage import zoom
 import SimpleITK as sitk
 import numpy as np
+from scipy.ndimage import zoom
+
 from .decorators import dtype_func
 
 sitk_img_func = dtype_func(sitk.Image)
@@ -22,7 +23,7 @@ def calculate_origin_offset(new_spacing, old_spacing):
     np.ndarray
         origin offset
     """
-    return np.subtract(new_spacing, old_spacing)/2
+    return np.subtract(new_spacing, old_spacing) / 2
 
 
 @sitk_img_func

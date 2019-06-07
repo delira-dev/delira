@@ -1,5 +1,6 @@
-from delira import get_backends
 import unittest
+
+from delira import get_backends
 
 
 class IoTorchTest(unittest.TestCase):

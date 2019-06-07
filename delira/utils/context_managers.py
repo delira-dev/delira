@@ -7,7 +7,7 @@ if "TORCH" in get_backends():
 
     class DefaultOptimWrapperTorch(object):
         """
-        Class wrapping a ``torch`` optimizer to mirror the behavior of ``apex`` 
+        Class wrapping a ``torch`` optimizer to mirror the behavior of ``apex``
         without depending on it
 
         """
@@ -19,9 +19,9 @@ if "TORCH" in get_backends():
             ----------
             optimizer : torch.optim.Optimizer
                 the actual optimizer to wrap
-            *args : 
+            *args :
                 additional positional arguments (unused)
-            **kwargs : 
+            **kwargs :
                 additional keyword arguments (unused)
 
             """
@@ -31,8 +31,8 @@ if "TORCH" in get_backends():
         @contextlib.contextmanager
         def scale_loss(self, loss):
             """
-            Function which scales the loss in ``apex`` and yields the unscaled loss 
-            here to mirror the API
+            Function which scales the loss in ``apex`` and yields the unscaled
+            loss here to mirror the API
 
             Parameters
             ----------
@@ -46,13 +46,13 @@ if "TORCH" in get_backends():
 
         def step(self, closure=None):
             """
-            Wraps the step method of the optimizer and calls the original step 
+            Wraps the step method of the optimizer and calls the original step
             method
 
             Parameters
             ----------
             closure : callable
-                A closure that reevaluates the model and returns the loss. 
+                A closure that reevaluates the model and returns the loss.
                 Optional for most optimizers.
 
             """

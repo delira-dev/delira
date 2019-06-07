@@ -7,6 +7,7 @@ class LambdaSampler(AbstractSampler):
     the index_list and the number of indices to return
 
     """
+
     def __init__(self, indices, sampling_fn):
         """
 

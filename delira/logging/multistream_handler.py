@@ -6,6 +6,7 @@ class MultiStreamHandler(logging.Handler):
     Logging Handler which accepts multiple streams and creates StreamHandlers
 
     """
+
     def __init__(self, *streams, level=logging.NOTSET):
         """
 

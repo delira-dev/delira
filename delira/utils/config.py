@@ -1,6 +1,5 @@
-from trixi.util import Config
 from nested_lookup import nested_lookup
-from typing import Optional
+from trixi.util import Config
 
 
 class LookupConfig(Config):
@@ -25,7 +24,7 @@ class LookupConfig(Config):
         Raises
         ------
         KeyError
-            Multiple Values are found for key 
+            Multiple Values are found for key
             (unclear which value should be returned)
             OR
             No Value was found for key and no default value was given
@@ -66,8 +65,9 @@ class LookupConfig(Config):
         """
 
         if type(value) == dict or type(value) == Config:
-            new_config = LookupConfig()
-            new_config.update(value, deep=False)
-            super().__setattr__(key, new_config)
+            update_val = LookupConfig()
+            update_val.update(value, deep=False)
         else:
-            super().__setattr__(key, value)
+            update_val = value
+
+        return super().__setattr__(key, update_val)

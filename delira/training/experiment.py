@@ -1,3 +1,4 @@
+
 import typing
 import logging
 import pickle
@@ -8,7 +9,6 @@ from functools import partial
 import numpy as np
 from sklearn.model_selection import KFold, StratifiedKFold, \
     StratifiedShuffleSplit, ShuffleSplit
-from trixi.experiment import Experiment as TrixiExperiment
 
 from delira import get_backends
 
@@ -22,7 +22,7 @@ from .predictor import Predictor
 logger = logging.getLogger(__name__)
 
 
-class BaseExperiment(TrixiExperiment):
+class BaseExperiment(object):
     """
     Baseclass for Experiments.
 
@@ -73,7 +73,8 @@ class BaseExperiment(TrixiExperiment):
         val_score_key : str or None
             key defining which metric to use for validation (determining best
             model and scheduling lr); if None: No validation-based operations
-            will be done (model might still get validated, but validation metrics
+            will be done (model might still get validated, but validation
+            metrics
             can only be logged and not used further)
         optim_builder : function
             Function returning a dict of backend-specific optimizers
@@ -87,7 +88,8 @@ class BaseExperiment(TrixiExperiment):
 
         """
 
-        # params could also be a file containing a pickled instance of parameters
+        # params could also be a file containing a pickled instance of
+        # parameters
         if isinstance(params, str):
             with open(params, "rb") as f:
                 params = pickle.load(f)
@@ -96,7 +98,7 @@ class BaseExperiment(TrixiExperiment):
             n_epochs = params.nested_get("n_epochs",
                                          params.nested_get("num_epochs"))
 
-        super().__init__(n_epochs)
+        self.n_epochs = n_epochs
 
         if name is None:
             name = "UnnamedExperiment"
@@ -337,8 +339,12 @@ class BaseExperiment(TrixiExperiment):
         :class:`BaseNetworkTrainer` for training itself
 
         """
-        return self.run(train_data=train_data, val_data=val_data, params=params,
-                        save_path=save_path, **kwargs)
+        return self.run(
+            train_data=train_data,
+            val_data=val_data,
+            params=params,
+            save_path=save_path,
+            **kwargs)
 
     def test(self, network, test_data: BaseDataManager,
              metrics: dict, metric_keys=None,
@@ -358,8 +364,8 @@ class BaseExperiment(TrixiExperiment):
         metric_keys : dict of tuples
             the batch_dict keys to use for each metric to calculate.
             Should contain a value for each key in ``metrics``.
-            If no values are given for a key, per default ``pred`` and ``label``
-             will be used for metric calculation
+            If no values are given for a key, per default ``pred`` and
+            ``label`` will be used for metric calculation
         verbose : bool
             verbosity of the test process
         prepare_batch : function
@@ -388,8 +394,10 @@ class BaseExperiment(TrixiExperiment):
                                convert_batch_to_npy_fn=convert_fn,
                                prepare_batch_fn=prepare_batch, **kwargs)
 
-        return predictor.predict_data_mgr(test_data, 1, metrics,
-                                          metric_keys, verbose)
+        # return first item of generator
+        return next(predictor.predict_data_mgr(test_data, 1, metrics,
+                                               metric_keys, verbose,
+                                               lazy_gen=False))
 
     def kfold(self, data: BaseDataManager, metrics: dict, num_epochs=None,
               num_splits=None, shuffle=False, random_seed=None,
@@ -437,8 +445,8 @@ class BaseExperiment(TrixiExperiment):
         metric_keys : dict of tuples
             the batch_dict keys to use for each metric to calculate.
             Should contain a value for each key in ``metrics``.
-            If no values are given for a key, per default ``pred`` and ``label``
-             will be used for metric calculation
+            If no values are given for a key, per default ``pred`` and
+            ``label`` will be used for metric calculation
         test_kwargs : dict or None
             kwargs to update the behavior of the :class:`BaseDataManager`
             containing the test and validation data.
@@ -528,8 +536,8 @@ class BaseExperiment(TrixiExperiment):
             np.random.seed(random_seed)
 
         # iterate over folds
-        for idx, (train_idxs, test_idxs) in enumerate(fold.split(split_idxs,
-                                                                 split_labels)):
+        for idx, (train_idxs, test_idxs) in enumerate(
+                fold.split(split_idxs, split_labels)):
 
             # extract data from single manager
             train_data = data.get_subset(train_idxs)
@@ -541,11 +549,12 @@ class BaseExperiment(TrixiExperiment):
             val_data = None
             if val_split is not None:
                 if split_type == "random":
-                    # split_labels are ignored for random splitting, set them to
-                    # split_idxs just ensures same length
+                    # split_labels are ignored for random splitting, set them
+                    # to split_idxs just ensures same length
                     train_labels = train_idxs
                 elif split_type == "stratified":
-                    # iterate over dataset to get labels for stratified splitting
+                    # iterate over dataset to get labels for stratified
+                    # splitting
                     train_labels = [train_data.dataset[_idx][label_key]
                                     for _idx in train_idxs]
                 else:
@@ -647,6 +656,7 @@ class BaseExperiment(TrixiExperiment):
         params : :class:`Parameters` or None
             the parameters to merge with ``self.params``
 
+
         Returns
         -------
         :class:`Parameters`
@@ -706,10 +716,9 @@ if "TORCH" in get_backends():
     from ..models import AbstractPyTorchNetwork
     import torch
 
-
     class PyTorchExperiment(BaseExperiment):
         def __init__(self,
-                     params:typing.Union[str, Parameters],
+                     params: typing.Union[str, Parameters],
                      model_cls: AbstractPyTorchNetwork,
                      n_epochs=None,
                      name=None,
@@ -795,9 +804,9 @@ if "TORCH" in get_backends():
                 the number of splits to extract from ``data``.
                 If None: uses a default of 10
             shuffle : bool
-                whether to shuffle the data before splitting or not (implemented
-                by index-shuffling rather than actual data-shuffling to retain
-                potentially lazy-behavior of datasets)
+                whether to shuffle the data before splitting or not
+                (implemented by index-shuffling rather than actual
+                data-shuffling to retain potentially lazy-behavior of datasets)
             random_seed : None
                 seed to seed numpy, the splitting functions and the used
                 backend-framework
@@ -807,9 +816,9 @@ if "TORCH" in get_backends():
                 if 'stratified': uses stratified data splitting. Stratification
                 will be based on ``label_key``
             val_split : float or None
-                the fraction of the train data to use as validation set. If None:
-                No validation will be done during training; only testing for
-                each fold after the training is complete
+                the fraction of the train data to use as validation set.
+                If None: No validation will be done during training; only
+                testing for each fold after the training is complete
             label_key : str
                 the label to use for stratification. Will be ignored unless
                 ``split_type`` is 'stratified'. Default: 'label'
@@ -875,15 +884,22 @@ if "TORCH" in get_backends():
             if random_seed is not None:
                 torch.manual_seed(random_seed)
 
-            return super().kfold(data=data, metrics=metrics,
-                                 num_epochs=num_epochs,
-                                 num_splits=num_splits, shuffle=shuffle,
-                                 random_seed=random_seed, split_type=split_type,
-                                 val_split=val_split, label_key=label_key,
-                                 train_kwargs=train_kwargs,
-                                 test_kwargs=test_kwargs,
-                                 metric_keys=metric_keys, params=params,
-                                 verbose=verbose, **kwargs)
+            return super().kfold(
+                data=data,
+                metrics=metrics,
+                num_epochs=num_epochs,
+                num_splits=num_splits,
+                shuffle=shuffle,
+                random_seed=random_seed,
+                split_type=split_type,
+                val_split=val_split,
+                label_key=label_key,
+                train_kwargs=train_kwargs,
+                test_kwargs=test_kwargs,
+                metric_keys=metric_keys,
+                params=params,
+                verbose=verbose,
+                **kwargs)
 
         def test(self, network, test_data: BaseDataManager,
                  metrics: dict, metric_keys=None,
@@ -916,7 +932,8 @@ if "TORCH" in get_backends():
                 ``network``'s ``prepare_batch`` with CPU devices
             convert_fn : function
                 function to convert a batch of tensors to numpy
-                if not specified defaults to :func:`convert_torch_tensor_to_npy`
+                if not specified defaults to
+                :func:`convert_torch_tensor_to_npy`
             **kwargs :
                 additional keyword arguments
 
@@ -951,7 +968,8 @@ if "TORCH" in get_backends():
 
 if "TF" in get_backends():
     from .tf_trainer import TfNetworkTrainer
-    from .train_utils import create_optims_default_tf, convert_tf_tensor_to_npy
+    from .train_utils import create_optims_default_tf, \
+        convert_tf_tensor_to_npy, initialize_uninitialized
     from ..models import AbstractTfNetwork
     from .parameters import Parameters
     import tensorflow as tf
@@ -1079,9 +1097,9 @@ if "TF" in get_backends():
                 the number of splits to extract from ``data``.
                 If None: uses a default of 10
             shuffle : bool
-                whether to shuffle the data before splitting or not (implemented
-                by index-shuffling rather than actual data-shuffling to retain
-                potentially lazy-behavior of datasets)
+                whether to shuffle the data before splitting or not
+                (implemented by index-shuffling rather than actual
+                data-shuffling to retain potentially lazy-behavior of datasets)
             random_seed : None
                 seed to seed numpy, the splitting functions and the used
                 backend-framework
@@ -1091,9 +1109,9 @@ if "TF" in get_backends():
                 if 'stratified': uses stratified data splitting. Stratification
                 will be based on ``label_key``
             val_split : float or None
-                the fraction of the train data to use as validation set. If None:
-                No validation will be done during training; only testing for
-                each fold after the training is complete
+                the fraction of the train data to use as validation set.
+                If None: No validation will be done during training; only
+                testing for each fold after the training is complete
             label_key : str
                 the label to use for stratification. Will be ignored unless
                 ``split_type`` is 'stratified'. Default: 'label'
@@ -1159,15 +1177,22 @@ if "TF" in get_backends():
             if random_seed is not None:
                 tf.set_random_seed(random_seed)
 
-            return super().kfold(data=data, metrics=metrics,
-                                 num_epochs=num_epochs,
-                                 num_splits=num_splits, shuffle=shuffle,
-                                 random_seed=random_seed, split_type=split_type,
-                                 val_split=val_split, label_key=label_key,
-                                 train_kwargs=train_kwargs,
-                                 test_kwargs=test_kwargs,
-                                 metric_keys=metric_keys, params=params,
-                                 verbose=verbose, **kwargs)
+            return super().kfold(
+                data=data,
+                metrics=metrics,
+                num_epochs=num_epochs,
+                num_splits=num_splits,
+                shuffle=shuffle,
+                random_seed=random_seed,
+                split_type=split_type,
+                val_split=val_split,
+                label_key=label_key,
+                train_kwargs=train_kwargs,
+                test_kwargs=test_kwargs,
+                metric_keys=metric_keys,
+                params=params,
+                verbose=verbose,
+                **kwargs)
 
         def test(self, network, test_data: BaseDataManager,
                  metrics: dict, metric_keys=None,
@@ -1200,7 +1225,8 @@ if "TF" in get_backends():
                 ``network``'s ``prepare_batch`` with CPU devices
             convert_fn : function
                 function to convert a batch of tensors to numpy
-                if not specified defaults to :func:`convert_torch_tensor_to_npy`
+                if not specified defaults to
+                :func:`convert_torch_tensor_to_npy`
             **kwargs :
                 additional keyword arguments
 
@@ -1217,6 +1243,8 @@ if "TF" in get_backends():
             # specify convert_fn to correct backend function
             if convert_fn is None:
                 convert_fn = convert_tf_tensor_to_npy
+
+            initialize_uninitialized(network._sess)
 
             return super().test(network=network, test_data=test_data,
                                 metrics=metrics, metric_keys=metric_keys,

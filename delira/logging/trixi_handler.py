@@ -1,6 +1,6 @@
 from logging import Handler, NOTSET
-from trixi.logger import AbstractLogger as AbstractTrixiLogger
 
+from trixi.logger import AbstractLogger as AbstractTrixiLogger
 
 TRIXI_PREFIXES = ["show_", "plot_", "save_", "get_", ""]
 
@@ -112,6 +112,7 @@ class VisdomLoggingHandler(TrixiHandler):
     Logging Handler to log with Visdom (via Trixi)
 
     """
+
     def __init__(self, exp_name, server="http://localhost", port=8080,
                  level=NOTSET, **kwargs):
         """

@@ -1,6 +1,8 @@
-import os
 import logging
+import os
+
 import numpy as np
+
 from tqdm.auto import tqdm
 import warnings
 from collections import OrderedDict
@@ -10,13 +12,16 @@ from .base_trainer import BaseNetworkTrainer
 from functools import partial
 
 from delira import get_backends
+from .callbacks import AbstractCallback
 
 logger = logging.getLogger(__name__)
 
 if "TORCH" in get_backends():
     import torch
     from .train_utils import convert_torch_tensor_to_npy
-    from .train_utils import create_optims_default_pytorch as create_optims_default
+    from .train_utils import create_optims_default_pytorch as \
+        create_optims_default
+
     from ..io.torch import load_checkpoint, save_checkpoint
     from ..models import AbstractPyTorchNetwork
 
@@ -67,15 +72,15 @@ if "TORCH" in get_backends():
             save_path : str
                 path to save networks to
             key_mapping : dict
-                a dictionary containing the mapping from the ``data_dict`` to 
+                a dictionary containing the mapping from the ``data_dict`` to
                 the actual model's inputs.
-                E.g. if a model accepts one input named 'x' and the data_dict 
-                contains one entry named 'data' this argument would have to 
+                E.g. if a model accepts one input named 'x' and the data_dict
+                contains one entry named 'data' this argument would have to
                 be ``{'x': 'data'}``
             losses : dict
                 dictionary containing the training losses
             optimizer_cls : subclass of tf.train.Optimizer
-                optimizer class implementing the optimization algorithm of 
+                optimizer class implementing the optimization algorithm of
                 choice
             optimizer_params : dict
                 keyword arguments passed to optimizer during construction
@@ -109,20 +114,20 @@ if "TORCH" in get_backends():
             start_epoch : int
                 epoch to start training at
             metric_keys : dict
-                dict specifying which batch_dict entry to use for which metric as
-                target; default: None, which will result in key "label" for all
-                metrics
+                dict specifying which batch_dict entry to use for which metric
+                as target; default: None, which will result in key "label"
+                for all metrics
             convert_batch_to_npy_fn : type, optional
-                function converting a batch-tensor to numpy, per default this is
-                a function, which detaches the tensor, moves it to cpu and the 
-                calls ``.numpy()`` on it
+                function converting a batch-tensor to numpy, per default this
+                is a function, which detaches the tensor, moves it to cpu and
+                then calls ``.numpy()`` on it
             mixed_precision : bool
                 whether to use mixed precision or not (False per default)
             mixed_precision_kwargs : dict
                 additional keyword arguments for mixed precision
             val_freq : int
-                validation frequency specifying how often to validate the trained
-                model (a value of 1 denotes validating every epoch,
+                validation frequency specifying how often to validate the
+                trained model (a value of 1 denotes validating every epoch,
                 a value of 2 denotes validating every second epoch etc.);
                 defaults to 1
             **kwargs :
@@ -139,7 +144,6 @@ if "TORCH" in get_backends():
                          be removed in next release to unify APIs across \
                          backends. Use 'losses' instead "))
                     crits = criterions
-
             else:
                 crits = losses
                 warnings.warn(
@@ -152,7 +156,7 @@ if "TORCH" in get_backends():
                 network, save_path, crits, optimizer_cls, optimizer_params,
                 train_metrics, val_metrics, lr_scheduler_cls,
                 lr_scheduler_params, gpu_ids, save_freq, optim_fn, key_mapping,
-                logging_type, logging_kwargs, fold, callbacks, start_epoch, 
+                logging_type, logging_kwargs, fold, callbacks, start_epoch,
                 metric_keys, convert_batch_to_npy_fn, val_freq)
 
             self._setup(network, optim_fn, optimizer_cls, optimizer_params,
@@ -177,7 +181,8 @@ if "TORCH" in get_backends():
             optim_fn : function
                 creates a dictionary containing all necessary optimizers
             optimizer_cls : subclass of torch.optim.Optimizer
-                optimizer class implementing the optimization algorithm of choice
+                optimizer class implementing the optimization algorithm of
+                choice
             optimizer_params : dict
             lr_scheduler_cls : Any
                 learning rate schedule class: must implement step() method
@@ -214,7 +219,7 @@ if "TORCH" in get_backends():
                 from ..utils.context_managers import DefaultOptimWrapperTorch
                 wrap_fn = DefaultOptimWrapperTorch
 
-            # wrap optimizers by half_precision_optimizer via apex if 
+            # wrap optimizers by half_precision_optimizer via apex if
             # necessary
             self.optimizers = {k: wrap_fn(
                 v, num_loss=len(self.losses)) for k, v
@@ -222,24 +227,10 @@ if "TORCH" in get_backends():
 
             # Load latest epoch file if available
             if os.path.isdir(self.save_path):
-                # check all files in directory starting with "checkpoint" and 
-                # not ending with "_best.pth"
-                files = [x for x in os.listdir(self.save_path)
-                         if os.path.isfile(os.path.join(self.save_path, x))
-                         and x.startswith("checkpoint")
-                         and not (x.endswith("_best.pth")
-                                  or x.endswith("_best.pt"))]
+                latest_state_path, latest_epoch = self._search_for_prev_state(
+                    self.save_path, [".pt", ".pth"])
 
-                # if list is not empty: load previous state
-                if files:
-
-                    latest_epoch = max([
-                        int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
-                        for x in files])
-
-                    latest_state_path = os.path.join(self.save_path,
-                                                     "checkpoint_epoch_%d.pth"
-                                                     % latest_epoch)
+                if latest_state_path is not None:
 
                     # if pth file does not exist, load pt file instead
                     if not os.path.isfile(latest_state_path):
@@ -250,7 +241,7 @@ if "TORCH" in get_backends():
                     try:
                         self.update_state(latest_state_path)
                     except KeyError:
-                        logger.warn("Previous State could not be loaded, \
+                        logger.warning("Previous State could not be loaded, \
                                     although it exists.Training will be \
                                     restarted")
 
@@ -302,7 +293,7 @@ if "TORCH" in get_backends():
 
         def _at_training_end(self):
             """
-            Defines Behaviour at end of training: Loads best model if 
+            Defines Behaviour at end of training: Loads best model if
             available
 
             Returns
@@ -311,7 +302,7 @@ if "TORCH" in get_backends():
                 best network
 
             """
-            if os.path.isfile(os.path.join(self.save_path, 
+            if os.path.isfile(os.path.join(self.save_path,
                                            'checkpoint_best.pt')):
 
                 # load best model and return it
@@ -323,8 +314,9 @@ if "TORCH" in get_backends():
         def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
                           **kwargs):
             """
-            Defines behaviour at beginning of each epoch: Executes all callbacks's
-            `at_epoch_end` method and saves current state if necessary
+            Defines behaviour at beginning of each epoch:
+            Executes all callbacks's `at_epoch_end` method and saves current
+            state if necessary
 
             Parameters
             ----------
@@ -344,9 +336,12 @@ if "TORCH" in get_backends():
             """
 
             for cb in self._callbacks:
-                self._update_state(cb.at_epoch_end(self, val_metrics=metrics_val,
-                                                   val_score_key=val_score_key,
-                                                   curr_epoch=epoch))
+                self._update_state(
+                    cb.at_epoch_end(
+                        self,
+                        val_metrics=metrics_val,
+                        val_score_key=val_score_key,
+                        curr_epoch=epoch))
 
             if epoch % self.save_freq == 0:
                 self.save_state(os.path.join(self.save_path,
@@ -374,11 +369,11 @@ if "TORCH" in get_backends():
 
             self.module.train()
 
-            return super()._train_single_epoch(batchgen, epoch, 
+            return super()._train_single_epoch(batchgen, epoch,
                                                verbose=verbose)
 
         def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
-                             metric_keys={}, verbose=False):
+                             metric_keys={}, verbose=False, **kwargs):
             """
             Defines a routine to predict data obtained from a batchgenerator
 
@@ -396,6 +391,8 @@ if "TORCH" in get_backends():
                 the ``batch_dict`` items to use for metric calculation
             verbose : bool
                 whether to show a progress-bar or not, default: False
+            **kwargs :
+                additional keyword arguments
 
             Returns
             -------
@@ -408,7 +405,7 @@ if "TORCH" in get_backends():
             self.module.eval()
 
             return super().predict_data_mgr(datamgr, batchsize, metrics,
-                                            metric_keys, verbose)
+                                            metric_keys, verbose, **kwargs)
 
         def save_state(self, file_name, epoch, **kwargs):
             """
@@ -434,7 +431,8 @@ if "TORCH" in get_backends():
         @staticmethod
         def load_state(file_name, **kwargs):
             """
-            Loads the new state from file via :func:`delira.io.torch.load_checkpoint`
+            Loads the new state from file via
+            :func:`delira.io.torch.load_checkpoint`
 
             Parameters
             ----------

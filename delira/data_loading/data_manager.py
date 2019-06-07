@@ -1,13 +1,15 @@
+import inspect
 import logging
+
 import numpy as np
 import typing
 import inspect
 from batchgenerators.dataloading import MultiThreadedAugmenter, \
     SingleThreadedAugmenter, SlimDataLoaderBase
 from batchgenerators.transforms import AbstractTransform
-from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset, \
-    ConcatDataset
+
 from .data_loader import BaseDataLoader
+from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset
 from .load_utils import default_load_fn_2d
 from .sampler import SequentialSampler, AbstractSampler
 from ..utils.decorators import make_deprecated
@@ -365,6 +367,7 @@ class BaseDataManager(object):
                          num_cached_per_queue=2,
                          seeds=self.n_process_augmentation * [seed])
 
+
     def get_subset(self, indices):
         """
         Returns a Subset of the current datamanager based on given indices
@@ -392,7 +395,9 @@ class BaseDataManager(object):
             "from_disc": True
         }
 
-        return self.__class__(self.dataset.get_subset(indices), **subset_kwargs)
+        return self.__class__(
+            self.dataset.get_subset(indices),
+            **subset_kwargs)
 
     def update_state_from_dict(self, new_state: dict):
         """
@@ -412,7 +417,7 @@ class BaseDataManager(object):
                 * ``sampling_kwargs``
                 * ``transforms``
 
-            If a key is not specified, the old value of the corresponding 
+            If a key is not specified, the old value of the corresponding
             attribute will be used
 
         Raises
@@ -425,8 +430,8 @@ class BaseDataManager(object):
         # update batch_size if specified
         self.batch_size = new_state.pop("batch_size", self.batch_size)
         # update n_process_augmentation if specified
-        self.n_process_augmentation = new_state.pop("n_process_augmentation",
-                                                    self.n_process_augmentation)
+        self.n_process_augmentation = new_state.pop(
+            "n_process_augmentation", self.n_process_augmentation)
         # update data_loader_cls if specified
         self.data_loader_cls = new_state.pop("data_loader_cls",
                                              self.data_loader_cls)
@@ -445,7 +450,7 @@ class BaseDataManager(object):
     @make_deprecated("BaseDataManager.get_subset")
     def train_test_split(self, *args, **kwargs):
         """
-        Calls :method:`AbstractDataset.train_test_split` and returns 
+        Calls :method:`AbstractDataset.train_test_split` and returns
         a manager for each subset with same configuration as current manager
 
         .. deprecation:: 0.3
@@ -453,11 +458,11 @@ class BaseDataManager(object):
 
         Parameters
         ----------
-        *args : 
-            positional arguments for 
+        *args :
+            positional arguments for
             ``sklearn.model_selection.train_test_split``
         **kwargs :
-            keyword arguments for 
+            keyword arguments for
             ``sklearn.model_selection.train_test_split``
 
         """
@@ -501,7 +506,7 @@ class BaseDataManager(object):
         Parameters
         ----------
         new_batch_size : int, Any
-            the new batchsize; should be int but can be of any type that can be 
+            the new batchsize; should be int but can be of any type that can be
             casted to an int
 
         """
@@ -527,10 +532,11 @@ class BaseDataManager(object):
         Setter for number of augmentation processes, casts to int before setting
         the attribute
 
+
         Parameters
         ----------
         new_process_number : int, Any
-            new number of augmentation processes; should be int but can be of 
+            new number of augmentation processes; should be int but can be of
             any type that can be casted to an int
 
         """
@@ -545,7 +551,7 @@ class BaseDataManager(object):
         Returns
         -------
         None, ``AbstractTransform``
-            The transformation, can either be None or an instance of 
+            The transformation, can either be None or an instance of
             ``AbstractTransform``
         """
 
@@ -554,7 +560,7 @@ class BaseDataManager(object):
     @transforms.setter
     def transforms(self, new_transforms):
         """
-        Setter for data transforms, assert if transforms are of valid type 
+        Setter for data transforms, assert if transforms are of valid type
         (either None or instance of ``AbstractTransform``)
 
         Parameters
@@ -595,8 +601,9 @@ class BaseDataManager(object):
 
         """
 
-        assert inspect.isclass(new_loader_cls) and issubclass(new_loader_cls,
-                                                              SlimDataLoaderBase)
+        assert inspect.isclass(new_loader_cls) and issubclass(
+            new_loader_cls, SlimDataLoaderBase)
+
         self._data_loader_cls = new_loader_cls
 
     @property
@@ -645,7 +652,7 @@ class BaseDataManager(object):
     def sampler(self, new_sampler):
         """
         Setter for current sampler.
-        If a valid class instance is passed, the sampler is simply assigned, if 
+        If a valid class instance is passed, the sampler is simply assigned, if
         a valid class type is passed, the sampler is created from the dataset
 
         Parameters
@@ -705,13 +712,17 @@ class BaseDataManager(object):
         if self.n_process_augmentation == 1:
             n_batches = int(np.floor(self.n_samples / self.batch_size))
         elif self.n_process_augmentation > 1:
-            if (self.n_samples / self.batch_size) < self.n_process_augmentation:
+            if (self.n_samples / self.batch_size) < \
+                    self.n_process_augmentation:
                 self.n_process_augmentation = 1
-                logger.warning('Too few samples for n_process_augmentation={}. '
-                               'Forcing n_process_augmentation={} '
-                               'instead'.format(self.n_process_augmentation, 1))
-            n_batches = int(np.floor(self.n_samples / self.batch_size /
-                                     self.n_process_augmentation))
+                logger.warning(
+                    'Too few samples for n_process_augmentation={}. '
+                    'Forcing n_process_augmentation={} '
+                    'instead'.format(
+                        self.n_process_augmentation, 1))
+            n_batches = int(np.floor(
+                self.n_samples / self.batch_size / self.n_process_augmentation)
+            )
         else:
             raise ValueError('Invalid value for n_process_augmentation')
         return n_batches

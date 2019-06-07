@@ -1,10 +1,10 @@
+from delira.utils.decorators import make_deprecated
 import logging
-
-file_logger = logging.getLogger(__name__)
 
 from delira import get_backends
 
-from delira.utils.decorators import make_deprecated
+file_logger = logging.getLogger(__name__)
+
 
 if "TORCH" in get_backends():
     import torch.nn as nn

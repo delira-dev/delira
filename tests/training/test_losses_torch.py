@@ -1,5 +1,7 @@
-from delira import get_backends
+
 import unittest
+
+from delira import get_backends
 
 
 class FocalLossTestPyTorch(unittest.TestCase):
@@ -18,19 +20,19 @@ class FocalLossTestPyTorch(unittest.TestCase):
         import torch.nn.functional as F
 
         # examples
-        ########################################################################
+        #######################################################################
         # binary values
         p = torch.Tensor([[0, 0.2, 0.5, 1.0], [0, 0.2, 0.5, 1.0]])
         t = torch.Tensor([[0, 0, 0, 0], [1, 1, 1, 1]])
         p_l = torch.Tensor([[-2, -1, 0, 2], [-2, -1, 0, 1]])
 
-        ########################################################################
+        #######################################################################
         # params
         gamma = 2
         alpha = 0.25
         eps = 1e-8
 
-        ########################################################################
+        #######################################################################
         # compute targets
         # target for focal loss
         p_t = p * t + (1 - p) * (1 - t)
@@ -49,7 +51,7 @@ class FocalLossTestPyTorch(unittest.TestCase):
         fc_value_logit = \
             F.binary_cross_entropy_with_logits(p_l, t, w, reduction='none')
 
-        ########################################################################
+        #######################################################################
         # test against BCE and CE =>focal loss with gamma=0, alpha=None
         # test against binary_cross_entropy
         bce = nn.BCELoss(reduction='none')
@@ -66,12 +68,12 @@ class FocalLossTestPyTorch(unittest.TestCase):
         focal_loss = focal(p_l, t)
         self.assertTrue((torch.abs(bce_loss - focal_loss) < eps).all())
 
-        ########################################################################
+        #######################################################################
         # test focal loss with pre computed values
         # test focal loss binary (values manually pre computed)
         focal = BCEFocalLossPyTorch(gamma=gamma, alpha=alpha, reduction='none')
         focal_loss = focal(p, t)
-        self.assertTrue((torch.abs(fc_value-focal_loss) < eps).all())
+        self.assertTrue((torch.abs(fc_value - focal_loss) < eps).all())
 
         # test focal loss binary with logit (values manually pre computed)
         # Note that now p_l is used as prediction
@@ -80,14 +82,14 @@ class FocalLossTestPyTorch(unittest.TestCase):
         focal_loss = focal(p_l, t)
         self.assertTrue((torch.abs(fc_value_logit - focal_loss) < eps).all())
 
-        ########################################################################
+        #######################################################################
         # test if backward function works
         p.requires_grad = True
         focal = BCEFocalLossPyTorch(gamma=gamma, alpha=alpha)
         focal_loss = focal(p, t)
         try:
             focal_loss.backward()
-        except:
+        except BaseException:
             self.assertTrue(False, "Backward function failed for focal loss")
 
         p_l.requires_grad = True
@@ -95,7 +97,7 @@ class FocalLossTestPyTorch(unittest.TestCase):
         focal_loss = focal(p_l, t)
         try:
             focal_loss.backward()
-        except:
+        except BaseException:
             self.assertTrue(
                 False, "Backward function failed for focal loss with logits")
 

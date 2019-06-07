@@ -1,8 +1,10 @@
-import numpy as np
-import os
 import collections
+import os
+
+import numpy as np
 from skimage.io import imread
 from skimage.transform import resize
+
 from delira.utils.decorators import make_deprecated
 
 
@@ -142,6 +144,7 @@ class LoadSample:
     """
     Provides a callable to load a single sample from multiple files in a folder
     """
+
     def __init__(self,
                  sample_ext: dict,
                  sample_fn: collections.abc.Callable,

@@ -1,12 +1,14 @@
-from ..utils import LookupConfig
 import pickle
-import yaml
 from copy import deepcopy, copy
+
+import yaml
+
+from ..utils import LookupConfig
 
 
 class Parameters(LookupConfig):
     """
-    Class Containing all variable and fixed parameters for training and model 
+    Class Containing all variable and fixed parameters for training and model
     instantiation
 
     See Also
@@ -279,8 +281,8 @@ class Parameters(LookupConfig):
                     dict_like_variability_on_top = dict_like.variability_on_top
                     dict_like = dict_like.permute_variability_on_top()
                 else:
-                    if not ("fixed" in dict_like.keys()
-                            or "variable" in dict_like.keys()):
+                    if ("fixed" not in dict_like.keys() and "variable" not in
+                            dict_like.keys()):
                         raise RuntimeError("Unsafe to Update from dict with "
                                            "another structre as current "
                                            "parameters")
@@ -290,8 +292,8 @@ class Parameters(LookupConfig):
                     dict_like_variability_on_top = dict_like.variability_on_top
                     dict_like = dict_like.permute_training_on_top()
                 else:
-                    if not ("model" in dict_like.keys()
-                            or "training" in dict_like.keys()):
+                    if ("model" not in dict_like.keys() and "training" not in
+                            dict_like.keys()):
                         raise RuntimeError("Unsafe to Update from dict with "
                                            "another structre as current "
                                            "parameters")

@@ -1,4 +1,5 @@
 import logging
+import copy
 
 import numpy as np
 from tqdm import tqdm
@@ -34,18 +35,20 @@ class Predictor(object):
         model : :class:`AbstractNetwork`
             the model to predict from
         key_mapping : dict
-            a dictionary containing the mapping from the ``data_dict`` to 
+            a dictionary containing the mapping from the ``data_dict`` to
             the actual model's inputs.
-            E.g. if a model accepts one input named 'x' and the data_dict 
-            contains one entry named 'data' this argument would have to 
+            E.g. if a model accepts one input named 'x' and the data_dict
+            contains one entry named 'data' this argument would have to
             be ``{'x': 'data'}``
         convert_batch_args_kwargs_to_npy_fn : type, optional
             a callable function to convert tensors in positional and keyword
             arguments to numpy; default: identity function
         prepare_batch_fn : type, optional
-            function converting a batch-tensor to the framework specific 
-            tensor-type and pushing it to correct device, default: identity 
+            function converting a batch-tensor to the framework specific
+            tensor-type and pushing it to correct device, default: identity
             function
+        **kwargs :
+            additional keyword arguments
 
         """
 
@@ -63,10 +66,10 @@ class Predictor(object):
         network : :class:`AbstractNetwork`
             the network to predict from
         key_mapping : dict
-            a dictionary containing the mapping from the ``data_dict`` to 
+            a dictionary containing the mapping from the ``data_dict`` to
             the actual model's inputs.
-            E.g. if a model accepts one input named 'x' and the data_dict 
-            contains one entry named 'data' this argument would have to 
+            E.g. if a model accepts one input named 'x' and the data_dict
+            contains one entry named 'data' this argument would have to
             be ``{'x': 'data'}``
         convert_batch_to_npy_fn : type
             a callable function to convert tensors in positional and keyword
@@ -82,10 +85,10 @@ class Predictor(object):
         self._convert_to_npy_fn = convert_batch_args_kwargs_to_npy_fn
         self._prepare_batch = prepare_batch_fn
 
-    def __call__(self, data: dict):
+    def __call__(self, data: dict, **kwargs):
         """
         Method to call the class.
-        Returns the predictions corresponding to the given data 
+        Returns the predictions corresponding to the given data
         obtained by the model
 
         Parameters
@@ -98,11 +101,28 @@ class Predictor(object):
         dict
             predicted data
         """
-        return self.predict(data)
+        return self.predict(data, **kwargs)
 
-    def predict(self, data: dict):
+    def predict(self, data: dict, **kwargs):
+        """
+        Predict single batch
+        Returns the predictions corresponding to the given data
+        obtained by the model
 
-        data = self._prepare_batch(data)
+        Parameters
+        ----------
+        data : dict
+            batch dictionary
+        **kwargs :
+            keyword arguments(directly passed to ``prepare_batch``)
+
+        Returns
+        -------
+        dict
+            predicted data
+
+        """
+        data = self._prepare_batch(data, **kwargs)
 
         mapped_data = {
             k: data[v] for k, v in self.key_mapping.items()}
@@ -119,7 +139,8 @@ class Predictor(object):
         )[1]
 
     def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
-                         metric_keys=None, verbose=False):
+                         metric_keys=None, verbose=False, lazy_gen=False,
+                         **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator
 
@@ -137,13 +158,27 @@ class Predictor(object):
             the ``batch_dict`` items to use for metric calculation
         verbose : bool
             whether to show a progress-bar or not, default: False
+        lazy_gen : bool
+            if True: Yields results instead of returning them; should be
+            specified if predicting on a low-memory device or when results
+            should be saved immediately
+        kwargs :
+            keyword arguments passed to :func:`prepare_batch_fn`
 
-        Returns
-        -------
+        Yields
+        ------
         dict
-            a dictionary containing all predictions
+            a dictionary containing all predictions of the current batch
+            if ``lazy_gen`` is True
         dict
-            a dictionary containing all validation metrics (maybe empty)
+            a dictionary containing all metrics of the current batch
+            if ``lazy_gen`` is True
+        dict
+            a dictionary containing all predictions;
+            if ``lazy_gen`` is False
+        dict
+            a dictionary containing all validation metrics (maybe empty);
+            if ``lazy_gen`` is False
 
         """
 
@@ -158,7 +193,8 @@ class Predictor(object):
 
         batchgen = datamgr.get_batchgen()
 
-        predictions_all, metric_vals = [], {k: [] for k in metrics.keys()}
+        if not lazy_gen:
+            predictions_all, metric_vals = [], {k: [] for k in metrics.keys()}
 
         n_batches = batchgen.num_batches * batchgen.num_processes
 
@@ -194,7 +230,11 @@ class Predictor(object):
                 for key, val_list in batch_dict.items():
                     batch_dict[key] = np.concatenate(val_list)
 
-                preds = self.predict(batch_dict)
+                preds = self.predict(copy.copy(batch_dict), **kwargs)
+
+                # convert batchdict back to numpy (self.predict may convert it
+                # to backend-specific tensor type) - no-op if already numpy
+                batch_dict = self._convert_to_npy_fn(**batch_dict)[1]
 
                 preds_batch = LookupConfig()
                 preds_batch.update(batch_dict)
@@ -205,17 +245,25 @@ class Predictor(object):
                                                  metrics=metrics,
                                                  metric_keys=metric_keys)
 
-                for k, v in _metric_vals.items():
-                    metric_vals[k].append(v)
+                if lazy_gen:
+                    yield preds, _metric_vals
+                else:
+                    for k, v in _metric_vals.items():
+                        metric_vals[k].append(v)
 
-                predictions_all.append(preds)
+                    predictions_all.append(preds)
 
                 batch_list = []
 
         batchgen._finish()
+        datamgr.batch_size = orig_batch_size
+        datamgr.n_process_augmentation = orig_num_aug_processes
+
+        if lazy_gen:
+            # triggers stopiteration
+            return
 
         # convert predictions from list of dicts to dict of lists
-
         new_predictions_all = {}
 
         def __convert_dict(old_dict, new_dict):
@@ -245,7 +293,8 @@ class Predictor(object):
 
                 else:
 
-                    # check if v is scalar and convert to npy-array if necessary.
+                    # check if v is scalar and convert to npy-array if
+                    # necessary.
                     # Otherwise concatenation might fail
                     if np.isscalar(v):
                         v = np.array(v)
@@ -294,10 +343,13 @@ class Predictor(object):
         for k, v in metric_vals.items():
             metric_vals[k] = np.array(v)
 
-        datamgr.batch_size = orig_batch_size
-        datamgr.n_process_augmentation = orig_num_aug_processes
+        # must yield these instead of returning them,
+        # because every function with a yield in it's body returns a
+        # generator object (even if the yield is never triggered)
+        yield predictions_all, metric_vals
 
-        return predictions_all, metric_vals
+        # triggers stopiteration
+        return
 
     def __setattr__(self, key, value):
         """
@@ -333,14 +385,14 @@ class Predictor(object):
         Parameters
         ----------
         batch: LookupConfig
-            dictionary containing the whole batch 
+            dictionary containing the whole batch
             (including predictions)
         metrics: dict
             dict with metrics
         metric_keys : dict
-            dict of tuples which contains hashables for specifying the items 
+            dict of tuples which contains hashables for specifying the items
             to use for calculating the respective metric.
-            If not specified for a metric, the keys "pred" and "label" 
+            If not specified for a metric, the keys "pred" and "label"
             are used per default
 
         Returns
@@ -351,5 +403,6 @@ class Predictor(object):
         if metric_keys is None:
             metric_keys = {k: ("pred", "label") for k in metrics.keys()}
 
-        return {key: metric_fn(*[batch.nested_get(k) for k in metric_keys[key]])
+        return {key: metric_fn(*[batch.nested_get(k)
+                                 for k in metric_keys[key]])
                 for key, metric_fn in metrics.items()}

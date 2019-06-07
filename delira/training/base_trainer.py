@@ -89,10 +89,10 @@ class BaseNetworkTrainer(Predictor):
         optim_fn : function
             creates a dictionary containing all necessary optimizers
         key_mapping : dict
-            a dictionary containing the mapping from the ``data_dict`` to 
+            a dictionary containing the mapping from the ``data_dict`` to
             the actual model's inputs.
-            E.g. if a model accepts one input named 'x' and the data_dict 
-            contains one entry named 'data' this argument would have to 
+            E.g. if a model accepts one input named 'x' and the data_dict
+            contains one entry named 'data' this argument would have to
             be ``{'x': 'data'}``
         logging_type : str or callable
             the type of logging. If string: it must be one of
@@ -163,7 +163,7 @@ class BaseNetworkTrainer(Predictor):
     def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                key_mapping, convert_batch_to_npy_fn, prepare_batch_fn):
 
-        super()._setup(network, key_mapping, convert_batch_to_npy_fn, 
+        super()._setup(network, key_mapping, convert_batch_to_npy_fn,
                        prepare_batch_fn)
 
         self.closure_fn = network.closure
@@ -298,8 +298,12 @@ class BaseNetworkTrainer(Predictor):
 
         n_batches = batchgen.num_batches * batchgen.num_processes
         if verbose:
-            iterable = tqdm(enumerate(batchgen), unit=' batch', total=n_batches,
-                            desc='Epoch %d' % epoch)
+            iterable = tqdm(
+                enumerate(batchgen),
+                unit=' batch',
+                total=n_batches,
+                desc='Epoch %d' %
+                epoch)
         else:
             iterable = enumerate(batchgen)
 
@@ -379,13 +383,17 @@ class BaseNetworkTrainer(Predictor):
         new_val_score = best_val_score
 
         if reduce_mode == 'mean':
-            def reduce_fn(batch): return np.mean(batch)
+            def reduce_fn(batch):
+                return np.mean(batch)
         elif reduce_mode == 'sum':
-            def reduce_fn(batch): return np.sum(batch)
+            def reduce_fn(batch):
+                return np.sum(batch)
         elif reduce_mode == 'first_only':
-            def reduce_fn(batch): return batch[0]
+            def reduce_fn(batch):
+                return batch[0]
         elif reduce_mode == 'last_only':
-            def reduce_fn(batch): return batch[-1]
+            def reduce_fn(batch):
+                return batch[-1]
         else:
             raise ValueError("No valid reduce mode given")
 
@@ -410,7 +418,7 @@ class BaseNetworkTrainer(Predictor):
 
                 val_metric_keys[k] = v
 
-        for epoch in range(self.start_epoch, num_epochs+1):
+        for epoch in range(self.start_epoch, num_epochs + 1):
 
             self._at_epoch_begin(metrics_val, val_score_key, epoch,
                                  num_epochs)
@@ -427,10 +435,13 @@ class BaseNetworkTrainer(Predictor):
 
             # validate network
             if datamgr_valid is not None and (epoch % self.val_freq == 0):
-                val_predictions, val_metrics = self.predict_data_mgr(
+                # next must be called here because self.predict_data_mgr
+                # returns a generator (of size 1) and we want to get the first
+                # (and only) item
+                val_predictions, val_metrics = next(self.predict_data_mgr(
                     datamgr_valid, datamgr_valid.batch_size,
                     metrics=val_metric_fns, metric_keys=val_metric_keys,
-                    verbose=verbose)
+                    verbose=verbose, lazy_gen=False))
 
                 total_metrics.update(val_metrics)
 
@@ -441,7 +452,8 @@ class BaseNetworkTrainer(Predictor):
             if val_score_key is not None:
                 if val_score_key not in total_metrics:
                     if "val_" + val_score_key not in total_metrics:
-                        logger.warning("val_score_key '%s' not a valid key for \
+                        logger.warning(
+                            "val_score_key '%s' not a valid key for \
                                     validation metrics ")
 
                         new_val_score = best_val_score
@@ -532,12 +544,14 @@ class BaseNetworkTrainer(Predictor):
 
         """
         assertion_str = "Given callback is not valid; Must be instance of " \
-            "AbstractCallback or provide functions " \
-            "'at_epoch_begin' and 'at_epoch_end'"
+                        "AbstractCallback or provide functions " \
+                        "'at_epoch_begin' and 'at_epoch_end'"
+        instance_check = isinstance(callback, AbstractCallback)
+        attr_check_begin = hasattr(callback, "at_epoch_begin")
+        attr_check_end = hasattr(callback, "at_epoch_end")
+        attr_check_both = attr_check_begin and attr_check_end
 
-        assert isinstance(callback, AbstractCallback) or \
-            (hasattr(callback, "at_epoch_begin")
-             and hasattr(callback, "at_epoch_end")), assertion_str
+        assert instance_check or attr_check_both, assertion_str
 
         self._callbacks.append(callback)
 
@@ -688,9 +702,10 @@ class BaseNetworkTrainer(Predictor):
 
         if "exp_name" in _logging_kwargs.keys():
             _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
-                                          "_%02d" % self.fold
+                "_%02d" % self.fold
 
-        # remove prior Trixihandlers and reinitialize it with given logging type
+        # remove prior Trixihandlers and reinitialize it with given logging
+        # type
         # This facilitates visualization of multiple splits/fold inside one
         # tensorboard-instance by means of
         # different tf.Summary.FileWriters()
@@ -710,3 +725,58 @@ class BaseNetworkTrainer(Predictor):
         )
         logging.basicConfig(level=logging.INFO,
                             handlers=new_handlers)
+
+    @staticmethod
+    def _search_for_prev_state(path, extensions=[]):
+        """
+        Helper function to search in a given path for previous epoch states
+        (indicated by extensions)
+
+        Parameters
+        ----------
+        path : str
+            the path to search in
+        extensions : list
+            list of strings containing valid file extensions for checkpoint
+            files
+
+        Returns
+        -------
+        str
+            the file containing the latest checkpoint (if available)
+        None
+            if no latst checkpoint was found
+        int
+            the latest epoch (1 if no checkpoint was found)
+
+        """
+        files = []
+        for file in os.listdir(path):
+            for ext in extensions:
+                if not ext.startswith("."):
+                    ext = "." + ext
+
+                if not file.endswith(ext):
+                    continue
+
+                if not file.startswith("checkpoint"):
+                    continue
+
+                if file.endswith("_best" + ext):
+                    continue
+
+                files.append(file)
+                break
+
+        if files:
+            latest_epoch = max([
+                int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
+                for x in files])
+
+            latest_state_path = [x for x in files
+                                 if x.startswith("checkpoint_%d"
+                                                 % latest_epoch)][0]
+
+            return latest_state_path, latest_epoch
+
+        return None, 1

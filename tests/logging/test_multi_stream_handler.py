@@ -1,11 +1,8 @@
-from delira.logging import MultiStreamHandler
-
 import logging
-import numpy as np
-import os
 import sys
-
 import unittest
+
+from delira.logging import MultiStreamHandler
 
 
 class MultiStreamHandlerTest(unittest.TestCase):
