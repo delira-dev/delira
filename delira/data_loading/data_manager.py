@@ -2,8 +2,10 @@ import inspect
 import logging
 
 import numpy as np
-from batchgenerators.dataloading import SlimDataLoaderBase, \
-    MultiThreadedAugmenter
+import typing
+import inspect
+from batchgenerators.dataloading import MultiThreadedAugmenter, \
+    SingleThreadedAugmenter, SlimDataLoaderBase
 from batchgenerators.transforms import AbstractTransform
 
 from .data_loader import BaseDataLoader
@@ -11,8 +13,221 @@ from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset
 from .load_utils import default_load_fn_2d
 from .sampler import SequentialSampler, AbstractSampler
 from ..utils.decorators import make_deprecated
+from delira import get_current_debug_mode
 
 logger = logging.getLogger(__name__)
+
+
+class Augmenter(object):
+    """
+    Class wrapping ``MultiThreadedAugmentor`` and ``SingleThreadedAugmenter``
+    to provide a uniform API and to disable multiprocessing/multithreading
+    inside the dataloading pipeline
+
+    """
+
+    def __init__(self, data_loader: BaseDataLoader, transforms,
+                 n_process_augmentation=None, num_cached_per_queue=2,
+                 seeds=None, **kwargs):
+        """
+
+        Parameters
+        ----------
+        data_loader : :class:`BaseDataLoader`
+            the dataloader providing the actual data
+        transforms : Callable or None
+            the transforms to use. Can be single callable or None
+        n_process_augmentation : int
+            the number of processes to use for augmentation (only necessary if
+            not in debug mode)
+        num_cached_per_queue : int
+            the number of samples to cache per queue (only necessary if not in
+            debug mode)
+        seeds : int or list
+            the seeds for each process (only necessary if not in debug mode)
+        **kwargs :
+            additional keyword arguments
+        """
+        # don't use multiprocessing in debug mode
+        if get_current_debug_mode():
+            augmenter = SingleThreadedAugmenter(data_loader, transforms)
+
+        else:
+            assert isinstance(n_process_augmentation, int)
+            # no seeds are given -> use default seed of 1
+            if seeds is None:
+                seeds = 1
+
+            # only an int is gien as seed -> replicate it for each process
+            if isinstance(seeds, int):
+                seeds = [seeds] * n_process_augmentation
+            augmenter = MultiThreadedAugmenter(
+                data_loader, transforms,
+                num_processes=n_process_augmentation,
+                num_cached_per_queue=num_cached_per_queue,
+                seeds=seeds,
+                **kwargs)
+
+        self._augmenter = augmenter
+
+    @property
+    def __iter__(self):
+        """
+        Property returning the augmenters ``__iter__``
+
+        Returns
+        -------
+        Callable
+            the augmenters ``__iter__``
+        """
+        return self._augmenter.__iter__
+
+    @property
+    def __next__(self):
+        """
+        Property returning the augmenters ``__next__``
+
+        Returns
+        -------
+        Callable
+            the augmenters ``__next__``
+        """
+        return self._augmenter.__next__
+
+    @property
+    def next(self):
+        """
+        Property returning the augmenters ``next``
+
+        Returns
+        -------
+        Callable
+            the augmenters ``next``
+        """
+        return self._augmenter.next
+
+    @staticmethod
+    def __identity_fn(*args, **kwargs):
+        """
+        Helper function accepting arbitrary args and kwargs and returning
+        without doing anything
+
+        Parameters
+        ----------
+        *args
+            keyword arguments
+        **kwargs
+            positional arguments
+
+        """
+        return
+
+    def _fn_checker(self, function_name):
+        """
+        Checks if the internal augmenter has a given attribute and returns it.
+        Otherwise it returns ``__identity_fn``
+
+        Parameters
+        ----------
+        function_name : str
+            the function name to check for
+
+        Returns
+        -------
+        Callable
+            either the function corresponding to the given function name or
+            ``__identity_fn``
+
+        """
+        # same as:
+        # if hasattr(self._augmenter, function_name):
+        #     return getattr(self._augmenter, functionname)
+        # else:
+        #     return self.__identity_fn
+        # but one less getattr call, because hasattr also calls getattr and
+        # handles AttributeError
+        try:
+            return getattr(self._augmenter, function_name)
+        except AttributeError:
+            return self.__identity_fn
+
+    @property
+    def _start(self):
+        """
+        Property to provide uniform API of ``_start``
+
+        Returns
+        -------
+        Callable
+            either the augmenter's ``_start`` method (if available) or
+            ``__identity_fn`` (if not available)
+        """
+        return self._fn_checker("_start")
+
+    def restart(self):
+        """
+        Property to provide uniform API of ``restart``
+
+        Returns
+        -------
+        Callable
+            either the augmenter's ``restart`` method (if available) or
+            ``__identity_fn`` (if not available)
+        """
+        return self._fn_checker("restart")
+
+    @property
+    def _finish(self):
+        """
+        Property to provide uniform API of ``_finish``
+
+        Returns
+        -------
+        Callable
+            either the augmenter's ``_finish`` method (if available) or
+            ``__identity_fn`` (if not available)
+        """
+        return self._fn_checker("_finish")
+
+    @property
+    def num_batches(self):
+        """
+        Property returning the number of batches
+
+        Returns
+        -------
+        int
+            number of batches
+        """
+        if isinstance(self._augmenter, MultiThreadedAugmenter):
+            return self._augmenter.generator.num_batches
+
+        return self._augmenter.data_loader.num_batches
+
+    @property
+    def num_processes(self):
+        """
+        Property returning the number of processes to use for loading and
+        augmentation
+
+        Returns
+        -------
+        int
+            number of processes to use for loading and
+            augmentation
+
+        """
+        if isinstance(self._augmenter, MultiThreadedAugmenter):
+            return self._augmenter.num_processes
+
+        return 1
+
+    def __del__(self):
+        """
+        Function defining what to do, if object should be deleted
+
+        """
+        del self._augmenter
 
 
 class BaseDataManager(object):
@@ -129,7 +344,7 @@ class BaseDataManager(object):
 
         Returns
         -------
-        MultiThreadedAugmenter
+        Augmenter
             Batchgenerator
 
         Raises
@@ -147,13 +362,10 @@ class BaseDataManager(object):
                                            sampler=self.sampler
                                            )
 
-        return MultiThreadedAugmenter(
-            data_loader,
-            self.transforms,
-            self.n_process_augmentation,
-            num_cached_per_queue=2,
-            seeds=self.n_process_augmentation * [seed]
-        )
+        return Augmenter(data_loader, self.transforms,
+                         self.n_process_augmentation,
+                         num_cached_per_queue=2,
+                         seeds=self.n_process_augmentation * [seed])
 
     def get_subset(self, indices):
         """
@@ -319,6 +531,7 @@ class BaseDataManager(object):
         Setter for number of augmentation processes, casts to int before
         setting the attribute
 
+
         Parameters
         ----------
         new_process_number : int, Any
@@ -389,6 +602,7 @@ class BaseDataManager(object):
 
         assert inspect.isclass(new_loader_cls) and issubclass(
             new_loader_cls, SlimDataLoaderBase)
+
         self._data_loader_cls = new_loader_cls
 
     @property
