@@ -4,6 +4,7 @@ import numpy as np
 from batchgenerators.dataloading import MultiThreadedAugmenter
 
 from delira.data_loading import BaseDataManager
+from delira.data_loading.data_manager import Augmenter
 from . import DummyDataset
 
 
@@ -19,7 +20,7 @@ class DataManagerTest(unittest.TestCase):
         manager = BaseDataManager(dset, batch_size, n_process_augmentation=1,
                                   transforms=None)
 
-        self.assertIsInstance(manager.get_batchgen(), MultiThreadedAugmenter)
+        self.assertIsInstance(manager.get_batchgen(), Augmenter)
 
         # create batch manually
         data, labels = [], []
