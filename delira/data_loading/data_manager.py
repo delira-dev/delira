@@ -528,8 +528,8 @@ class BaseDataManager(object):
     @n_process_augmentation.setter
     def n_process_augmentation(self, new_process_number):
         """
-        Setter for number of augmentation processes, casts to int before setting
-        the attribute
+        Setter for number of augmentation processes, casts to int before
+        setting the attribute
 
 
         Parameters
