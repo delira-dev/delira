@@ -303,7 +303,7 @@ class StoppingPrevalenceSequentialSampler(AbstractSampler):
         for key, val in n_indices.items():
             start = self._global_idxs[key] - val
             end = self._global_idxs[key]
-            samples += self._indices[start : end]
+            samples += self._indices[start: end]
 
         if self._shuffle:
             shuffle(samples)
