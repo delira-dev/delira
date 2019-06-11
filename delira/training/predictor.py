@@ -139,10 +139,10 @@ class Predictor(object):
         )[1]
 
     def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
-                         metric_keys=None, verbose=False, lazy_gen=False,
-                         **kwargs):
+                         metric_keys=None, verbose=False, **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator
+        without explicitly caching anything
 
         Parameters
         ----------
@@ -158,10 +158,6 @@ class Predictor(object):
             the ``batch_dict`` items to use for metric calculation
         verbose : bool
             whether to show a progress-bar or not, default: False
-        lazy_gen : bool
-            if True: Yields results instead of returning them; should be
-            specified if predicting on a low-memory device or when results
-            should be saved immediately
         kwargs :
             keyword arguments passed to :func:`prepare_batch_fn`
 
@@ -169,16 +165,8 @@ class Predictor(object):
         ------
         dict
             a dictionary containing all predictions of the current batch
-            if ``lazy_gen`` is True
         dict
             a dictionary containing all metrics of the current batch
-            if ``lazy_gen`` is True
-        dict
-            a dictionary containing all predictions;
-            if ``lazy_gen`` is False
-        dict
-            a dictionary containing all validation metrics (maybe empty);
-            if ``lazy_gen`` is False
 
         """
 
@@ -192,9 +180,6 @@ class Predictor(object):
         datamgr.n_process_augmentation = 1
 
         batchgen = datamgr.get_batchgen()
-
-        if not lazy_gen:
-            predictions_all, metric_vals = [], {k: [] for k in metrics.keys()}
 
         n_batches = batchgen.num_batches * batchgen.num_processes
 
@@ -245,13 +230,7 @@ class Predictor(object):
                                                  metrics=metrics,
                                                  metric_keys=metric_keys)
 
-                if lazy_gen:
-                    yield preds, _metric_vals
-                else:
-                    for k, v in _metric_vals.items():
-                        metric_vals[k].append(v)
-
-                    predictions_all.append(preds)
+                yield preds, _metric_vals
 
                 batch_list = []
 
@@ -259,97 +238,242 @@ class Predictor(object):
         datamgr.batch_size = orig_batch_size
         datamgr.n_process_augmentation = orig_num_aug_processes
 
-        if lazy_gen:
-            # triggers stopiteration
-            return
+        return
 
-        # convert predictions from list of dicts to dict of lists
-        new_predictions_all = {}
+    def predict_data_mgr_cache_metrics_only(self, datamgr, batchsize=None,
+                                            metrics={}, metric_keys=None,
+                                            verbose=False, **kwargs):
+        """
+        Defines a routine to predict data obtained from a batchgenerator and
+        caches the metrics
 
-        def __convert_dict(old_dict, new_dict):
-            """
-            Function to recursively convert dicts
+        Parameters
+        ----------
+        datamgr : :class:`BaseDataManager`
+            Manager producing a generator holding the batches
+        batchsize : int
+            Artificial batchsize (sampling will be done with batchsize
+            1 and sampled data will be stacked to match the artificial
+            batchsize)(default: None)
+        metrics : dict
+            the metrics to calculate
+        metric_keys : dict
+            the ``batch_dict`` items to use for metric calculation
+        verbose : bool
+            whether to show a progress-bar or not, default: False
+        kwargs :
+            keyword arguments passed to :func:`prepare_batch_fn`
 
-            Parameters
-            ----------
-            old_dict : dict
-                the old nested dict
-            new_dict : dict
-                the new nested dict
+        Yields
+        ------
+        dict
+            a dictionary containing all validation metrics (maybe empty)
 
-            Returns
-            -------
-            dict
-                the updated new nested dict
-            """
-            for k, v in old_dict.items():
+        Notes
+        -----
+        This function stores each prediction temporarily for metric
+        calculation; This results in a (typically) way lower memory
+        consumption than :meth:`Predictor.predict_data_mgr_cache_all`,
+        but still caches the metrics. If this is not desired, it is recommended
+        to use :meth:`Predictor.predict_data_mgr` and iterate over the
+        generator as this only produces per-batch metrics and predictions and
+        does not cache anything by default
 
-                # apply same function again on item if item is dict
-                if isinstance(v, dict):
-                    if k not in new_dict:
-                        new_dict[k] = {}
+        """
+        yield from self.predict_data_mgr_cache(datamgr, batchsize, metrics,
+                                               metric_keys, verbose,
+                                               cache_preds=False, **kwargs)
 
-                    new_dict[k] = __convert_dict(v, new_dict[k])
+        return
 
-                else:
+    def predict_data_mgr_cache_all(self, datamgr, batchsize=None, metrics={},
+                                   metric_keys=None, verbose=False, **kwargs):
+        """
+        Defines a routine to predict data obtained from a batchgenerator and
+        caches all predictions and metrics (yields them in dicts)
 
-                    # check if v is scalar and convert to npy-array if
-                    # necessary.
-                    # Otherwise concatenation might fail
-                    if np.isscalar(v):
-                        v = np.array(v)
+        Parameters
+        ----------
+        datamgr : :class:`BaseDataManager`
+            Manager producing a generator holding the batches
+        batchsize : int
+            Artificial batchsize (sampling will be done with batchsize
+            1 and sampled data will be stacked to match the artificial
+            batchsize)(default: None)
+        metrics : dict
+            the metrics to calculate
+        metric_keys : dict
+            the ``batch_dict`` items to use for metric calculation
+        verbose : bool
+            whether to show a progress-bar or not, default: False
+        kwargs :
+            keyword arguments passed to :func:`prepare_batch_fn`
 
-                    # check for zero-sized arrays and reshape if necessary.
-                    # Otherwise concatenation might fail
-                    if v.shape == ():
-                        v = v.reshape(1)
-                    if k in new_dict:
-                        new_predictions_all[k].append(v)
-                    else:
-                        new_predictions_all[k] = [v]
+        Yields
+        ------
+        dict
+            a dictionary containing all predictions;
+        dict
+            a dictionary containing all validation metrics (maybe empty)
 
-            return new_dict
+        Warnings
+        --------
+        Since this function caches all predictions and metrics, this may result
+        in huge memory consumption. If you are running out of memory, please
+        have a look at :meth:`Predictor.predict_data_mgr_cache_metrics_only`
+        or :meth:`Predictor.predict_data_mgr`
 
-        # recursively convert all nested dicts
-        for preds in predictions_all:
-            new_predictions_all = __convert_dict(preds, new_predictions_all)
+        """
+        yield from self.predict_data_mgr_cache(datamgr, batchsize, metrics,
+                                               metric_keys, verbose,
+                                               cache_preds=True, **kwargs)
 
-        def __concatenate_dict_items(dict_like: dict):
-            """
-            Function to recursively concatenate dict-items
+        return
 
-            Parameters
-            ----------
-            dict_like : dict
-                the (nested) dict, whoose items should be concatenated
+    def predict_data_mgr_cache(self, datamgr, batchsize=None, metrics={},
+                               metric_keys=None, verbose=False,
+                               cache_preds=False, **kwargs):
+        """
+        Defines a routine to predict data obtained from a batchgenerator and
+        caches all predictions and metrics (yields them in dicts)
 
-            Returns
-            -------
+        Parameters
+        ----------
+        datamgr : :class:`BaseDataManager`
+            Manager producing a generator holding the batches
+        batchsize : int
+            Artificial batchsize (sampling will be done with batchsize
+            1 and sampled data will be stacked to match the artificial
+            batchsize)(default: None)
+        metrics : dict
+            the metrics to calculate
+        metric_keys : dict
+            the ``batch_dict`` items to use for metric calculation
+        verbose : bool
+            whether to show a progress-bar or not, default: False
+        kwargs :
+            keyword arguments passed to :func:`prepare_batch_fn`
 
-            """
-            for k, v in dict_like.items():
-                if isinstance(v, dict):
-                    v = __concatenate_dict_items(v)
-                else:
-                    v = np.concatenate(v)
+        Yields
+        ------
+        dict
+            a dictionary containing all validation metrics (maybe empty)
+        dict
+            a dictionary containing all predictions; If ``cache_preds=True``
 
-                dict_like[k] = v
+        Warnings
+        --------
+        Since this function caches all metrics and may additionally cache all
+        predictions (based on the argument ``cache_preds``), this may result
+        in huge memory consumption. If you are running out of memory, please
+        have a look at :meth:`Predictor.predict_data_mgr_cache_metrics_only`
+        or :meth:`Predictor.predict_data_mgr` or consider setting
+        ``cache_preds`` to ``False`` (if not done already)
 
-                return dict_like
+        """
 
-        # concatenate lists to single arrays
-        predictions_all = __concatenate_dict_items(new_predictions_all)
+        predictions_all, metric_vals = [], {k: [] for k in metrics.keys()}
+
+        for preds, _metric_vals in self.predict_data_mgr(datamgr, batchsize,
+                                                         metrics, metric_keys,
+                                                         verbose, **kwargs):
+            if cache_preds:
+                predictions_all.append(preds)
+            for k, v in _metric_vals.items():
+                metric_vals[k].append(v)
+
+        if cache_preds:
+            # convert predictions from list of dicts to dict of lists
+            new_predictions_all = {}
+
+            # recursively convert all nested dicts
+            for preds in predictions_all:
+                new_predictions_all = self.__convert_dict(preds,
+                                                          new_predictions_all)
+
+            # concatenate lists to single arrays
+            preds_all = self.__concatenate_dict_items(new_predictions_all)
+        else:
+            preds_all = {}
 
         for k, v in metric_vals.items():
             metric_vals[k] = np.array(v)
 
-        # must yield these instead of returning them,
-        # because every function with a yield in it's body returns a
-        # generator object (even if the yield is never triggered)
-        yield predictions_all, metric_vals
+        if cache_preds:
+            yield preds_all, metric_vals
+        else:
+            yield metric_vals
 
-        # triggers stopiteration
         return
+
+    @staticmethod
+    def __convert_dict(old_dict, new_dict):
+        """
+        Function to recursively convert dicts
+
+        Parameters
+        ----------
+        old_dict : dict
+            the old nested dict
+        new_dict : dict
+            the new nested dict
+
+        Returns
+        -------
+        dict
+            the updated new nested dict
+        """
+        for k, v in old_dict.items():
+
+            # apply same function again on item if item is dict
+            if isinstance(v, dict):
+                if k not in new_dict:
+                    new_dict[k] = {}
+
+                new_dict[k] = Predictor.__convert_dict(v, new_dict[k])
+
+            else:
+
+                # check if v is scalar and convert to npy-array if
+                # necessary.
+                # Otherwise concatenation might fail
+                if np.isscalar(v):
+                    v = np.array(v)
+
+                # check for zero-sized arrays and reshape if necessary.
+                # Otherwise concatenation might fail
+                if v.shape == ():
+                    v = v.reshape(1)
+                if k in new_dict:
+                    new_dict[k].append(v)
+                else:
+                    new_dict[k] = [v]
+
+        return new_dict
+
+    @staticmethod
+    def __concatenate_dict_items(dict_like: dict):
+        """
+        Function to recursively concatenate dict-items
+
+        Parameters
+        ----------
+        dict_like : dict
+            the (nested) dict, whoose items should be concatenated
+
+        Returns
+        -------
+
+        """
+        for k, v in dict_like.items():
+            if isinstance(v, dict):
+                v = Predictor.__concatenate_dict_items(v)
+            else:
+                v = np.concatenate(v)
+
+            dict_like[k] = v
+
+            return dict_like
 
     def __setattr__(self, key, value):
         """

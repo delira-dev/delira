@@ -303,7 +303,7 @@ class BaseNetworkTrainer(Predictor):
                 unit=' batch',
                 total=n_batches,
                 desc='Epoch %d' %
-                epoch)
+                     epoch)
         else:
             iterable = enumerate(batchgen)
 
@@ -438,10 +438,11 @@ class BaseNetworkTrainer(Predictor):
                 # next must be called here because self.predict_data_mgr
                 # returns a generator (of size 1) and we want to get the first
                 # (and only) item
-                val_predictions, val_metrics = next(self.predict_data_mgr(
-                    datamgr_valid, datamgr_valid.batch_size,
-                    metrics=val_metric_fns, metric_keys=val_metric_keys,
-                    verbose=verbose, lazy_gen=False))
+                val_predictions, val_metrics = next(
+                    self.predict_data_mgr_cache_metrics_only(
+                        datamgr_valid, datamgr_valid.batch_size,
+                        metrics=val_metric_fns, metric_keys=val_metric_keys,
+                        verbose=verbose))
 
                 total_metrics.update(val_metrics)
 
@@ -470,7 +471,7 @@ class BaseNetworkTrainer(Predictor):
 
                 # set best_val_score to new_val_score if is_best
                 best_val_score = int(is_best) * new_val_score + \
-                    (1 - int(is_best)) * best_val_score
+                                 (1 - int(is_best)) * best_val_score
 
                 if is_best and verbose:
                     logging.info("New Best Value at Epoch %03d : %03.3f" %
@@ -702,7 +703,7 @@ class BaseNetworkTrainer(Predictor):
 
         if "exp_name" in _logging_kwargs.keys():
             _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
-                "_%02d" % self.fold
+                                          "_%02d" % self.fold
 
         # remove prior Trixihandlers and reinitialize it with given logging
         # type
