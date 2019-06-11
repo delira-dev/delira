@@ -61,6 +61,12 @@ class Augmenter(object):
             # only an int is gien as seed -> replicate it for each process
             if isinstance(seeds, int):
                 seeds = [seeds] * n_process_augmentation
+
+            # avoid same seeds for all processes
+            if any([seeds[0] == _seed for _seed in seeds[1:]]):
+                for idx in range(len(seeds)):
+                    seeds[idx] = seeds[idx] + idx
+
             augmenter = MultiThreadedAugmenter(
                 data_loader, transforms,
                 num_processes=n_process_augmentation,
@@ -200,7 +206,7 @@ class Augmenter(object):
             number of batches
         """
         if isinstance(self._augmenter, MultiThreadedAugmenter):
-            return self._augmenter.generator.num_batches
+            return self._augmenter.generator.num_batches  # * self.num_processes
 
         return self._augmenter.data_loader.num_batches
 
@@ -693,8 +699,7 @@ class BaseDataManager(object):
     @property
     def n_batches(self):
         """
-        Returns Number of Batches based on batchsize,
-        number of samples and number of processes
+        Returns Number of Batches based on batchsize and number of samples
 
         Returns
         -------
@@ -708,20 +713,11 @@ class BaseDataManager(object):
 
         """
         assert self.n_samples > 0
-        if self.n_process_augmentation == 1:
-            n_batches = int(np.floor(self.n_samples / self.batch_size))
-        elif self.n_process_augmentation > 1:
-            if (self.n_samples / self.batch_size) < \
-                    self.n_process_augmentation:
-                self.n_process_augmentation = 1
-                logger.warning(
-                    'Too few samples for n_process_augmentation={}. '
-                    'Forcing n_process_augmentation={} '
-                    'instead'.format(
-                        self.n_process_augmentation, 1))
-            n_batches = int(np.floor(
-                self.n_samples / self.batch_size / self.n_process_augmentation)
-            )
-        else:
-            raise ValueError('Invalid value for n_process_augmentation')
+
+        n_batches = self.n_samples // self.batch_size
+
+        truncated_batch = self.n_samples % self.batch_size
+
+        n_batches += int(bool(truncated_batch))
+
         return n_batches

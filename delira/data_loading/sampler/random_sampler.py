@@ -23,9 +23,8 @@ class RandomSampler(AbstractSampler):
             corresponding class
 
         """
-        super().__init__()
+        super().__init__(indices)
         self._indices = list(range(len(indices)))
-        self._global_index = 0
 
     def _get_indices(self, n_indices):
         """
@@ -47,21 +46,11 @@ class RandomSampler(AbstractSampler):
             If maximal number of samples is reached
 
         """
-        if self._global_index >= len(self._indices):
-            self._global_index = 0
-            raise StopIteration
-
-        new_global_idx = self._global_index + n_indices
-
-        # If we reach end, make batch smaller
-        if new_global_idx >= len(self._indices):
-            new_global_idx = len(self._indices)
+        n_indices = self._check_batchsize(n_indices)
 
         indices = choice(self._indices,
-                         size=new_global_idx - self._global_index)
-        # indices = choices(
-        #   self._indices, k=new_global_idx - self._global_index)
-        self._global_index = new_global_idx
+                         size=n_indices)
+
         return indices
 
     def __len__(self):
@@ -93,12 +82,12 @@ class PrevalenceRandomSampler(AbstractSampler):
             sampled indices will be shuffled
 
         """
-        super().__init__()
+        super().__init__(indices)
 
-        self._num_indices = 0
+        self._num_samples = 0
         _indices = {}
         for idx, class_idx in enumerate(indices):
-            self._num_indices += 1
+            self._num_samples += 1
             class_idx = int(class_idx)
             if class_idx in _indices.keys():
                 _indices[class_idx].append(idx)
@@ -158,9 +147,7 @@ class PrevalenceRandomSampler(AbstractSampler):
             If maximal number of samples is reached
 
         """
-        if self._global_index >= self._num_indices:
-            self._global_index = 0
-            raise StopIteration
+        n_indices = self._check_batchsize(n_indices)
 
         samples_per_class = int(n_indices / self._n_classes)
 
@@ -178,14 +165,13 @@ class PrevalenceRandomSampler(AbstractSampler):
             _samples.append(choice(idx_list, size=1))
 
         _samples = concatenate(_samples)
-        self._global_index += n_indices
         if self._shuffle:
             shuffle(_samples)
 
         return _samples
 
     def __len__(self):
-        return self._num_indices
+        return self._num_samples
 
 
 class StoppingPrevalenceRandomSampler(AbstractSampler):
@@ -212,7 +198,7 @@ class StoppingPrevalenceRandomSampler(AbstractSampler):
             if True: indices will be sampled in a sequential way per class and
             sampled indices will be shuffled
         """
-        super().__init__()
+        super().__init__(indices)
 
         _indices = {}
         _global_idxs = {}
@@ -233,7 +219,7 @@ class StoppingPrevalenceRandomSampler(AbstractSampler):
             ordered_dict[k] = _indices[k]
             length = min(length, len(_indices[k]))
 
-        self._length = length
+        self._num_samples = length
 
         self._indices = ordered_dict
         self._n_classes = len(_indices.keys())
@@ -261,6 +247,58 @@ class StoppingPrevalenceRandomSampler(AbstractSampler):
         labels = [dataset[idx]['label'] for idx in indices]
         return cls(labels, **kwargs)
 
+    def _check_batchsize(self, n_indices):
+        """
+        Checks if batchsize is valid for all classes
+
+        Parameters
+        ----------
+        n_indices : int
+            the number of samples to return
+
+        Returns
+        -------
+        dict
+            number of samples per class to return
+
+        """
+        n_indices = super()._check_batchsize(n_indices)
+
+        samples_per_class = n_indices // self._n_classes
+        remaining = n_indices % self._n_classes
+
+        samples = {}
+
+        try:
+
+            # sample same number of sample for each class
+            for key, idx_list in self._indices.items():
+                if self._global_idxs[key] >= len(idx_list):
+                    raise StopIteration
+
+                # truncate if necessary
+                samples[key] = min(
+                    samples_per_class,
+                    len(self._indices[key]) - self._global_idxs[key])
+
+                self._global_idxs[key] += samples[key]
+
+            # fill up starting with largest class
+            while remaining:
+                for key, idx_list in self._indices.items():
+                    samples[key] += 1
+                    remaining -= 1
+
+        except StopIteration as e:
+            # set all global indices to 0
+            for key in self._global_idxs.keys():
+                self._global_idxs[key] = 0
+
+            raise e
+
+        finally:
+            return samples
+
     def _get_indices(self, n_indices):
         """
         Actual Sampling
@@ -278,40 +316,19 @@ class StoppingPrevalenceRandomSampler(AbstractSampler):
         -------
             list: list of sampled indices
         """
-        samples_per_class = int(n_indices / self._n_classes)
-        _samples = []
+        n_indices = self._check_batchsize(n_indices)
 
-        for key, idx_list in self._indices.items():
-            if self._global_idxs[key] >= len(idx_list):
-                self._global_idxs[key] = 0
-                raise StopIteration
+        samples = []
 
-            new_global_idx = self._global_idxs[key] + samples_per_class
+        for key, _n_indices in n_indices.items():
+            samples += choice(self._indices[key], size=_n_indices)
 
-            if new_global_idx >= len(idx_list):
-                new_global_idx = len(idx_list)
+        samples = concatenate(samples)
 
-            _samples.append(choice(idx_list, size=samples_per_class))
-
-            self._global_idxs[key] = new_global_idx
-
-        for key, idx_list in self._indices.items():
-            if len(_samples) >= n_indices:
-                break
-
-            if self._global_idxs[key] >= len(idx_list):
-                self._global_idxs[key] = 0
-
-            new_global_idx = self._global_idxs[key] + 1
-
-            _samples.append(choice(idx_list, size=1))
-            self._global_idxs[key] = new_global_idx
-
-        _samples = concatenate(_samples)
         if self._shuffle:
-            shuffle(_samples)
+            shuffle(samples)
 
-        return _samples
+        return samples
 
     def __len__(self):
-        return self._length
+        return self._num_samples
