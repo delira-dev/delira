@@ -54,7 +54,7 @@ class AbstractSampler(object):
 
         """
 
-        if self._global_index > self._num_samples:
+        if self._global_index >= self._num_samples:
             self._global_index = 0
             raise StopIteration
 
