@@ -65,6 +65,6 @@ setup(
     extras_require={
         "full": requirements_extra_full,
         "torch": requirements_extra_torch,
-        "tf": requirements_extra_tf
+        "tensorflow": requirements_extra_tf
     }
 )
