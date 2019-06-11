@@ -107,10 +107,10 @@ class BaseNetworkTrainer(Predictor):
         start_epoch : int
             epoch to start training at
         metric_keys : dict
-            the batch_dict keys to use for each metric to calculate. 
-            Should contain a value for each key in ``metrics``. 
-            If no values are given for a key, per default ``pred`` and 
-            ``label`` will be used for metric calculation 
+            the batch_dict keys to use for each metric to calculate.
+            Should contain a value for each key in ``metrics``.
+            If no values are given for a key, per default ``pred`` and
+            ``label`` will be used for metric calculation
         convert_batch_to_npy_fn : type, optional
             function converting a batch-tensor to numpy, per default this is
             the identity function
