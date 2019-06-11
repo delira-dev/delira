@@ -45,7 +45,7 @@ class LambdaSampler(AbstractSampler):
 
         n_indices = self._check_batchsize(n_indices)
 
-        samples = self._sampling_fn(n_indices)
+        samples = self._sampling_fn(self._indices, n_indices)
         return samples
 
     def __len__(self):

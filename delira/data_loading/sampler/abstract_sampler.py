@@ -63,8 +63,7 @@ class AbstractSampler(object):
             if n_indices + self._global_index > self._num_samples:
                 n_indices = self._num_samples - self._global_index
 
-            self._global_index += n_indices
-
+        self._global_index += n_indices
         return n_indices
 
     @abstractmethod

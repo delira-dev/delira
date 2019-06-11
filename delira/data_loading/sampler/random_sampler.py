@@ -321,7 +321,7 @@ class StoppingPrevalenceRandomSampler(AbstractSampler):
         samples = []
 
         for key, _n_indices in n_indices.items():
-            samples += choice(self._indices[key], size=_n_indices)
+            samples.append(choice(self._indices[key], size=_n_indices))
 
         samples = concatenate(samples)
 
