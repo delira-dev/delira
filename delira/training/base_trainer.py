@@ -438,7 +438,7 @@ class BaseNetworkTrainer(Predictor):
                 # next must be called here because self.predict_data_mgr
                 # returns a generator (of size 1) and we want to get the first
                 # (and only) item
-                val_predictions, val_metrics = next(
+                val_metrics = next(
                     self.predict_data_mgr_cache_metrics_only(
                         datamgr_valid, datamgr_valid.batch_size,
                         metrics=val_metric_fns, metric_keys=val_metric_keys,
