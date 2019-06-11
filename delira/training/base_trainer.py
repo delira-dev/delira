@@ -471,7 +471,7 @@ class BaseNetworkTrainer(Predictor):
 
                 # set best_val_score to new_val_score if is_best
                 best_val_score = int(is_best) * new_val_score + \
-                                 (1 - int(is_best)) * best_val_score
+                    (1 - int(is_best)) * best_val_score
 
                 if is_best and verbose:
                     logging.info("New Best Value at Epoch %03d : %03.3f" %
@@ -703,7 +703,7 @@ class BaseNetworkTrainer(Predictor):
 
         if "exp_name" in _logging_kwargs.keys():
             _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
-                                          "_%02d" % self.fold
+                "_%02d" % self.fold
 
         # remove prior Trixihandlers and reinitialize it with given logging
         # type
