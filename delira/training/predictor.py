@@ -181,7 +181,8 @@ class Predictor(object):
 
         batchgen = datamgr.get_batchgen()
 
-        n_batches = batchgen.num_batches * batchgen.num_processes
+        n_batches = batchgen.num_batches
+
 
         if verbose:
             iterable = tqdm(enumerate(batchgen), unit=' sample',
