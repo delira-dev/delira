@@ -10,7 +10,8 @@ class AbstractSampler(object):
     """
 
     def __init__(self, indices=None):
-        pass
+        self._num_samples = len(indices)
+        self._global_index = 0
 
     @classmethod
     def from_dataset(cls, dataset: AbstractDataset, **kwargs):
@@ -30,6 +31,40 @@ class AbstractSampler(object):
         """
         indices = list(range(len(dataset)))
         return cls(indices, **kwargs)
+
+    def _check_batchsize(self, n_indices):
+        """
+        Checks if the batchsize is valid (and truncates batches if necessary).
+        Will also raise StopIteration if enough batches sampled
+
+        Parameters
+        ----------
+        n_indices : int
+            number of indices to sample
+
+        Returns
+        -------
+        int
+            number of indices to sample (truncated if necessary)
+
+        Raises
+        ------
+        StopIteration
+            if enough batches sampled
+
+        """
+
+        if self._global_index >= self._num_samples:
+            self._global_index = 0
+            raise StopIteration
+
+        else:
+            # truncate batch if necessary
+            if n_indices + self._global_index > self._num_samples:
+                n_indices = self._num_samples - self._global_index
+
+        self._global_index += n_indices
+        return n_indices
 
     @abstractmethod
     def _get_indices(self, n_indices):
