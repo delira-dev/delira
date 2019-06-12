@@ -124,8 +124,7 @@ class TestTensorboardLogging(unittest.TestCase):
     @unittest.skipIf(torch is None, "Torch Backend not installed")
     def test_picture_torch(self):
         self._logger.log({"picture": {"tag": "picture_torch",
-                                      "img_tensor":
-                                          torch.from_numpy(self._npy_imgs[0])}})
+                                      "img_tensor": torch.from_numpy(self._npy_imgs[0])}})
 
     def test_images_npy(self):
         self._logger.log({"images": {"tag": "images_npy",
