@@ -206,7 +206,7 @@ class Augmenter(object):
             number of batches
         """
         if isinstance(self._augmenter, MultiThreadedAugmenter):
-            return self._augmenter.generator.num_batches  # * self.num_processes
+            return self._augmenter.generator.num_batches
 
         return self._augmenter.data_loader.num_batches
 
