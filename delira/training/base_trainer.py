@@ -107,9 +107,10 @@ class BaseNetworkTrainer(Predictor):
         start_epoch : int
             epoch to start training at
         metric_keys : dict
-            dict specifying which batch_dict entry to use for which metric as
-            target; default: None, which will result in key "label" for all
-            metrics
+            the batch_dict keys to use for each metric to calculate.
+            Should contain a value for each key in ``metrics``.
+            If no values are given for a key, per default ``pred`` and
+            ``label`` will be used for metric calculation
         convert_batch_to_npy_fn : type, optional
             function converting a batch-tensor to numpy, per default this is
             the identity function
@@ -470,8 +471,8 @@ class BaseNetworkTrainer(Predictor):
                     best_val_score, new_val_score, val_score_mode)
 
                 # set best_val_score to new_val_score if is_best
-                best_val_score = int(is_best) * new_val_score + \
-                    (1 - int(is_best)) * best_val_score
+                if is_best:
+                    best_val_score = new_val_score
 
                 if is_best and verbose:
                     logging.info("New Best Value at Epoch %03d : %03.3f" %

@@ -183,7 +183,6 @@ class Predictor(object):
 
         n_batches = batchgen.num_batches
 
-
         if verbose:
             iterable = tqdm(enumerate(batchgen), unit=' sample',
                             total=n_batches, desc=self._tqdm_desc)
