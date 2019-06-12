@@ -1,4 +1,5 @@
-include *.txt
+include requirements/*.txt
 include *.md
 include LICENSE
 include notebooks/*.ipynb
+include setup.cfg
