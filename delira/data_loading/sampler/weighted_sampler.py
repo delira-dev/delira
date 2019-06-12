@@ -2,7 +2,7 @@ import numpy as np
 from numpy.random import choice
 
 from delira.data_loading.sampler.abstract_sampler import AbstractSampler
-from ..dataset import AbstractDataset
+from delira.data_loading.dataset import AbstractDataset
 
 
 class WeightedRandomSampler(AbstractSampler):
@@ -25,7 +25,7 @@ class WeightedRandomSampler(AbstractSampler):
             (parameter ``p``)
 
         """
-        super().__init__()
+        super().__init__(indices)
 
         self._indices = list(range(len(indices)))
         self._weights = weights
@@ -73,21 +73,10 @@ class WeightedRandomSampler(AbstractSampler):
             if weights or cum_weights don't match the population
 
         """
-        if self._global_index >= len(self._indices):
-            self._global_index = 0
-            raise StopIteration
+        n_indices = self._check_batchsize(n_indices)
 
-        new_global_idx = self._global_index + n_indices
+        samples = choice(self._indices, size=n_indices, p=self._weights)
 
-        # If we reach end, make batch smaller
-        if new_global_idx >= len(self._indices):
-            new_global_idx = len(self._indices)
-
-        samples = choice(self._indices,
-                         size=new_global_idx - self._global_index,
-                         p=self._weights)
-
-        self._global_index = new_global_idx
         return samples
 
     def __len__(self):

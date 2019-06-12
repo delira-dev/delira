@@ -2,6 +2,8 @@
 Delira Introduction
 ===================
 
+*Last updated: 09.05.2019*
+
 Authors: Justus Schock, Christoph Haarburger
 
 Loading Data
@@ -36,16 +38,27 @@ The dataset's ``__init__`` has the following signature:
 
 .. code:: python
 
-    def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
-                     **load_kwargs):
+    def __init__(self, data_path, load_fn, **load_kwargs):
 
 This means, you have to pass the path to the directory containing your
 data (``data_path``), a function to load a single sample of your data
-(``load_fn``), the file extensions for valid images (``img_extensions``)
-and the extensions for valid groundtruth files (``gt_files``). The
-defined extensions are used to index all data files in the given
-``data_path``. To get a single sample of your dataset after creating it,
-you can index it like this: ``dataset[0]``.
+(``load_fn``). To get a single sample of your dataset after creating it,
+you can index it like this: ``dataset[0]``. Additionally you can iterate
+over your dataset just like over any other ``python`` iterator via
+
+.. code:: python
+
+    for sample in dataset:
+        # do your stuff here
+
+or enumerate it via
+
+.. code:: python
+
+    for idx, sample in enumerate(dataset):
+        # do your stuff here
+
+.
 
 The missing argument ``**load_kwargs`` accepts an arbitrary amount of
 additional keyword arguments which are directly passed to your loading
@@ -57,8 +70,7 @@ An example of how loading your data may look like is given below:
 
     from delira.data_loading import BaseLazyDataset, default_load_fn_2d
     dataset_train = BaseLazyDataset("/images/datasets/external/mnist/train",
-                                    default_load_fn_2d, img_extensions=[".png"],
-                                    gt_extensions=[".txt"], img_shape=(224, 224))
+                                    default_load_fn_2d, img_shape=(224, 224))
 
 In this case all data lying in ``/images/datasets/external/mnist/train``
 is loaded by ``default_load_fn_2d``. The files containing the data must
@@ -151,7 +163,6 @@ The following example shows how to create a data manager instance:
 
     from delira.data_loading import BaseDataManager
     from batchgenerators.transforms.abstract_transforms import Compose
-    from batchgenerators.transforms.spatial_transforms import MirrorTransform
     from batchgenerators.transforms.sample_normalization_transforms import MeanStdNormalizationTransform
     
     batchsize = 64
@@ -161,7 +172,7 @@ The following example shows how to create a data manager instance:
                                         batchsize,  # batchsize
                                         n_process_augmentation=1,  # number of augmentation processes
                                         transforms=transforms)  # augmentation transforms
-
+    
 
 The approach to initialize a DataManager from a datapath takes more
 arguments since, in opposite to initializaton from dataset, it needs all
@@ -326,10 +337,10 @@ modules.
 ^^^^^^^^^^^
 
 The ``forward`` function defines what has to be done to forward your
-input through your network. Assuming your network has three
-convolutional layers stored in ``self.conv1``, ``self.conv2`` and
-``self.conv3`` and a ReLU stored in ``self.relu``, a simple ``forward``
-function could look like this:
+input through your network and must return a dictionary. Assuming your
+network has three convolutional layers stored in ``self.conv1``,
+``self.conv2`` and ``self.conv3`` and a ReLU stored in ``self.relu``, a
+simple ``forward`` function could look like this:
 
 .. code:: python
 
@@ -338,7 +349,7 @@ function could look like this:
         out_2 = self.relu(self.conv2(out_1))
         out_3 = self.conv3(out2)
         
-        return out_3
+        return {"pred": out_3}
 
 ``prepare_batch``
 ^^^^^^^^^^^^^^^^^
@@ -446,7 +457,8 @@ A simple closure function for a PyTorch module could look like this:
             with context_man():
 
                 inputs = data_dict.pop("data")
-                preds = model(inputs)
+                # obtain outputs from network
+                preds = model(inputs)["pred"]
 
                 if data_dict:
 
@@ -486,7 +498,7 @@ A simple closure function for a PyTorch module could look like this:
             logging.info({'image_grid': {"images": inputs, "name": "input_images",
                                          "env_appendix": "_%02d" % fold}})
 
-            return metric_vals, loss_vals, [preds]
+            return metric_vals, loss_vals, preds
 
     **Note:** This closure is taken from the
     ``delira.models.classification.ClassificationNetworkBasePyTorch``
@@ -551,7 +563,7 @@ hyperparameters only have to be done once:
     manager_val = BaseDataManager(dataset_val, params.nested_get("batch_size"), 3,
                                   transforms=None, sampler_cls=SequentialSampler,
                                   n_process_loading=4)
-
+    
 
 Trainer
 ~~~~~~~
@@ -598,7 +610,7 @@ Training your network might look like this:
                             )
     
     #trainer.train(params.nested_get("num_epochs"), manager_train, manager_val)
-
+    
 
 Experiment
 ~~~~~~~~~~
@@ -719,33 +731,6 @@ look like this:
         for key, val_tensor in scalars.items():
             logger.info({"value": {"value": val_tensor.item(), "name": key}})
             scalars[key] += 1
-
-    **Note:** The following section is deprecated and is only contained
-    for legacy reasons. It is absolutely not recommended to use this
-    code ### ``ImgSaveHandler`` The ``ImgSaveHandler`` saves the images
-    to a specified directory. The logging message must either include an
-    image or a dictionary containing a key 'images' which should be
-    associated with a list or dict of images.
-
-Types of VisdomHandlers
-^^^^^^^^^^^^^^^^^^^^^^^
-
-The abilities of a handler is simply derivable by it's name: A
-``VisdomImageHandler`` is the pure visdom logger, whereas the
-``VisdomImageSaveHandler`` combines the abilities of a
-``VisdomImageHandler``\ and a ``ImgSaveHandler``. Together with a
-``StreamHandler`` (in-built handler) you get the
-``VisdomImageStreamHandler`` and if you also want to add the option to
-save images to disk, you should use the ``VisdomImageSaveStreamHandler``
-
-The provided handlers are:
-
--  ``ImgSaveHandler``
--  ``MultistreamHandler``
--  ``VisdomImageHandler``
--  ``VisdomImageSaveHandler``
--  ``VisdomImageSaveStreamHandler``
--  ``VisdomStreamHandler``
 
 More Examples
 -------------

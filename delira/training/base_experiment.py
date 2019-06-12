@@ -45,6 +45,7 @@ class BaseExperiment(object):
                  optim_builder=None,
                  checkpoint_freq=1,
                  trainer_cls=BaseNetworkTrainer,
+                 predictor_cls=Predictor,
                  **kwargs):
         """
 
@@ -80,6 +81,8 @@ class BaseExperiment(object):
             2 denotes saving every second epoch etc.); default: 1
         trainer_cls : subclass of :class:`BaseNetworkTrainer`
             the trainer class to use for training the model
+        predictor_cls : subclass of :class:`Predictor`
+            the predictor class to use for testing the model
         **kwargs :
             additional keyword arguments
 
@@ -114,6 +117,7 @@ class BaseExperiment(object):
         os.makedirs(self.save_path, exist_ok=True)
 
         self.trainer_cls = trainer_cls
+        self.predictor_cls = predictor_cls
 
         if val_score_key is None:
             if params.nested_get("val_metrics", False):
@@ -249,9 +253,10 @@ class BaseExperiment(object):
             the created predictor
 
         """
-        predictor = Predictor(model=model, key_mapping=self.key_mapping,
-                              convert_batch_to_npy_fn=convert_batch_to_npy_fn,
-                              prepare_batch_fn=prepare_batch_fn, **kwargs)
+        predictor = self.predictor_cls(
+            model=model, key_mapping=self.key_mapping,
+            convert_batch_to_npy_fn=convert_batch_to_npy_fn,
+            prepare_batch_fn=prepare_batch_fn, **kwargs)
         return predictor
 
     def run(self, train_data: BaseDataManager,
@@ -392,9 +397,8 @@ class BaseExperiment(object):
                                prepare_batch_fn=prepare_batch, **kwargs)
 
         # return first item of generator
-        return next(predictor.predict_data_mgr(test_data, 1, metrics,
-                                               metric_keys, verbose,
-                                               lazy_gen=False))
+        return next(predictor.predict_data_mgr_cache_all(test_data, 1, metrics,
+                                                         metric_keys, verbose))
 
     def kfold(self, data: BaseDataManager, metrics: dict, num_epochs=None,
               num_splits=None, shuffle=False, random_seed=None,

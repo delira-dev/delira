@@ -14,6 +14,7 @@ Let's first setup the essential hyperparameters. We will use
 
 .. code:: ipython3
 
+    logger = None
     import torch
     from delira.training import Parameters
     params = Parameters(fixed_params={
@@ -76,7 +77,7 @@ can open http://localhost:9999 in your browser.
     # (don't do `logger = logging.Logger("...")` since this will create a new
     # logger which is unrelated to the root logger
     logger = logging.getLogger("Test Logger")
-
+    
 
 Since a single visdom server can run multiple environments, we need to
 specify a (unique) name for our environment and need to tell the logger,
@@ -173,9 +174,7 @@ For Data-Augmentation we will apply a few transformations:
 
 .. code:: ipython3
 
-    from batchgenerators.transforms import RandomCropTransform, \
-                                            ContrastAugmentationTransform, Compose
-    from batchgenerators.transforms.spatial_transforms import ResizeTransform
+    from batchgenerators.transforms import ContrastAugmentationTransform, Compose
     from batchgenerators.transforms.sample_normalization_transforms import MeanStdNormalizationTransform
     
     transforms = Compose([
@@ -216,7 +215,8 @@ it. We will therfore use the already implemented ``UNet3dPytorch``:
     from delira.training.train_utils import create_optims_default_pytorch
     from delira.models.segmentation import UNet3dPyTorch
     
-    logger.info("Init Experiment")
+    if logger:
+        logger.info("Init Experiment")
     experiment = PyTorchExperiment(params, UNet3dPyTorch,
                                    name="Segmentation3dExample",
                                    save_path="./tmp/delira_Experiments",

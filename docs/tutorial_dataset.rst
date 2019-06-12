@@ -1,28 +1,13 @@
-Dataset Guide (Incl. Integration to new API Delira v0.3.2)
-**********************************************************
 
-*Author: Michael Baumgartner*
+# Dataset Guide (incl. Integration to new API) With Delira v0.3.2 a new
+dataset API was introduced to allow for more flexibility and add some
+features. This notebook shows the difference between the new and the old
+API and provides some examples for newly added features.
 
-*Date: 13.05.2019*
-
-With Delira v0.3.2 a new dataset API was introduced to allow for more 
-flexibility and add some features. This notebook shows the difference between 
-the new and the old API and provides some examples for newly added features.
-
-Overview Old API 
-================
-The old dataset API was based on the assumption that
-the underlying structure of the data can be described as followed: 
-    * root 
-        * sample1 
-            * img1 
-            * img2 
-            * label 
-        * sample2 
-            * img1 
-            * img2 
-            * label 
-        * …
+## Overview Old API The old dataset API was based on the assumption that
+the underlying structure of the data can be described as followed: \*
+root \* sample1 \* img1 \* img2 \* label \* sample2 \* img1 \* img2 \*
+label \* ...
 
 A single sample was constructed from multiple images which are all
 located in the same subdirectory. The corresponding signature of the
@@ -33,9 +18,7 @@ to the root directory, ``img_extensions``\ and ``gt_exntensions`` were
 often unsed. As a consequence a new dataset needed to be created which
 initialises the unused variables with arbitrary values.
 
-Overview New API
-================
-The new dataset API was refactored to a more general
+## Overview New API The new dataset API was refactored to a more general
 approach where only a ``data_path`` to the root directory and a
 ``load_fn`` for a single sample need to be provided. A simple loading
 function (``load_fn``) to generate random data independent from the
@@ -64,15 +47,13 @@ given path might be realized as below.
             'label': np.random.randint(0, 10),
             'path': path,
         }
-
+    
 
 When used with the provided BaseDatasets, the return value of the load
 function is not limited to dictionaries and might be of any type which
 can be added to a list with the ``append`` method.
 
-New Datasets 
-------------
-Some basic datasets are already implemented inside
+### New Datasets Some basic datasets are already implemented inside
 Delira and should be suitable for most cases. The ``BaseCacheDataset``
 saves all samples inside the RAM and thus can only be used if everything
 fits inside the memory. ´BaseLazyDataset´ loads the individual samples
@@ -99,7 +80,7 @@ the additional loading time.
     
     # print lazy data
     print(lazy_set[0].keys())
-
+    
 
 In the above example a list of multiple paths is used as the
 ``data_path``. ``load_fn`` is called for every element inside the
@@ -121,15 +102,13 @@ combination with for loops.
     for cs in cached_set:
         print(cs["path"])
 
-New Utility Function (Integration to new API) 
----------------------------------------------
-The behavior of the old
+## New Utility Function (Integration to new API) The behavior of the old
 API can be replicated with the ``LoadSample``,
 ``LoadSampleLabel``\ functions. ``LoadSample`` assumes that all needed
 images and the label (for a single sample) are located in a directory.
 Both functions return a dictionary containing the loaded data.
 ``sample_ext`` maps keys to iterables. Each iterable defines the names
-of the images which should be loaded from the directory. ´sample_fn´ is
+of the images which should be loaded from the directory. ´sample\_fn´ is
 used to load the images which are than stacked inside a single array.
 
 .. code:: ipython3
@@ -177,7 +156,7 @@ used to load the images which are than stacked inside a single array.
     print("segmentation type: {}".format(sample0["seg"].dtype))
     print("data min value: {}".format(sample0["data"].min()))
     print("data max value: {}".format(sample0["data"].max()))
-
+    
 
 By default the range is normalized to (-1, 1), but ``norm_fn`` can be
 changed to achieve other normalization schemes. Some examples are

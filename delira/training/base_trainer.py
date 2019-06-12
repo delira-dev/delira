@@ -1,9 +1,8 @@
-from abc import abstractmethod
 import logging
 import pickle
 import typing
 
-from batchgenerators.dataloading import MultiThreadedAugmenter
+from delira.data_loading.data_manager import Augmenter
 
 from delira.training.predictor import Predictor
 from delira.training.callbacks import AbstractCallback
@@ -107,9 +106,10 @@ class BaseNetworkTrainer(Predictor):
         start_epoch : int
             epoch to start training at
         metric_keys : dict
-            dict specifying which batch_dict entry to use for which metric as
-            target; default: None, which will result in key "label" for all
-            metrics
+            the batch_dict keys to use for each metric to calculate.
+            Should contain a value for each key in ``metrics``.
+            If no values are given for a key, per default ``pred`` and
+            ``label`` will be used for metric calculation
         convert_batch_to_npy_fn : type, optional
             function converting a batch-tensor to numpy, per default this is
             the identity function
@@ -280,14 +280,14 @@ class BaseNetworkTrainer(Predictor):
             self.save_state(os.path.join(self.save_path,
                                          "checkpoint_best"))
 
-    def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch,
+    def _train_single_epoch(self, batchgen: Augmenter, epoch,
                             verbose=False):
         """
         Trains the network a single epoch
 
         Parameters
         ----------
-        batchgen : MultiThreadedAugmenter
+        batchgen : :class:`Augmenter`
             Generator yielding the training batches
         epoch : int
             current epoch
@@ -296,14 +296,14 @@ class BaseNetworkTrainer(Predictor):
 
         metrics, losses = [], []
 
-        n_batches = batchgen.generator.num_batches * batchgen.num_processes
+        n_batches = batchgen.num_batches
         if verbose:
             iterable = tqdm(
                 enumerate(batchgen),
                 unit=' batch',
                 total=n_batches,
                 desc='Epoch %d' %
-                epoch)
+                     epoch)
         else:
             iterable = enumerate(batchgen)
 
@@ -438,10 +438,11 @@ class BaseNetworkTrainer(Predictor):
                 # next must be called here because self.predict_data_mgr
                 # returns a generator (of size 1) and we want to get the first
                 # (and only) item
-                val_predictions, val_metrics = next(self.predict_data_mgr(
-                    datamgr_valid, datamgr_valid.batch_size,
-                    metrics=val_metric_fns, metric_keys=val_metric_keys,
-                    verbose=verbose, lazy_gen=False))
+                val_metrics = next(
+                    self.predict_data_mgr_cache_metrics_only(
+                        datamgr_valid, datamgr_valid.batch_size,
+                        metrics=val_metric_fns, metric_keys=val_metric_keys,
+                        verbose=verbose))
 
                 total_metrics.update(val_metrics)
 
@@ -469,8 +470,8 @@ class BaseNetworkTrainer(Predictor):
                     best_val_score, new_val_score, val_score_mode)
 
                 # set best_val_score to new_val_score if is_best
-                best_val_score = int(is_best) * new_val_score + \
-                    (1 - int(is_best)) * best_val_score
+                if is_best:
+                    best_val_score = new_val_score
 
                 if is_best and verbose:
                     logging.info("New Best Value at Epoch %03d : %03.3f" %

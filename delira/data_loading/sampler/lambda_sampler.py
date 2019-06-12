@@ -22,11 +22,10 @@ class LambdaSampler(AbstractSampler):
             and the number of indices to return
 
         """
-        super().__init__()
+        super().__init__(indices)
         self._indices = list(range(len(indices)))
 
         self._sampling_fn = sampling_fn
-        self._global_index = 0
 
     def _get_indices(self, n_indices):
         """
@@ -42,27 +41,11 @@ class LambdaSampler(AbstractSampler):
         list
             list of sampled indices
 
-        Raises
-        ------
-        StopIteration
-            Maximum number of indices sampled
-
         """
 
-        if self._global_index >= len(self._indices):
-            self._global_index = 0
-            raise StopIteration
+        n_indices = self._check_batchsize(n_indices)
 
-        new_global_idx = self._global_index + n_indices
-
-        # If we reach end, make batch smaller
-        if new_global_idx >= len(self._indices):
-            new_global_idx = len(self._indices)
-
-        samples = self._sampling_fn(self._indices,
-                                    new_global_idx - self._global_index)
-
-        self._global_index = new_global_idx
+        samples = self._sampling_fn(self._indices, n_indices)
         return samples
 
     def __len__(self):

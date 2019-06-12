@@ -64,14 +64,7 @@ class LookupConfig(Config):
 
         """
 
-        if isinstance(value, dict) or isinstance(value, Config):
-            if not isinstance(value, LookupConfig):
-                update_val = LookupConfig()
-                update_val.update(value, deep=False)
-            else:
-                update_val = value
+        if isinstance(value, dict) and not isinstance(value, LookupConfig):
+            value = LookupConfig(config=value)
 
-        else:
-            update_val = value
-
-        return super().__setattr__(key, update_val)
+        return super().__setattr__(key, value)

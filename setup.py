@@ -4,6 +4,9 @@ from setuptools import find_packages, setup
 
 
 def resolve_requirements(file):
+    if not os.path.isfile(file):
+        os.path.join(os.path.join(os.path.dirname(__file__), "requirements",
+                                  file))
     requirements = []
     with open(file) as f:
         req = f.read().splitlines()
@@ -67,13 +70,13 @@ def parse_all_requirements(backend_requirement_dict: dict):
 
 
 requirement_files = {
-    "base": "requirements.txt",
-    "sklearn": "requirements.txt",  # no extra requirements necessary
-    "torch": "requirements_extra_torch.txt",
-    "torchscript": "requirements_extra_torch.txt",
-    "tf": "requirements_extra_tf.txt",
-    "tf_eager": "requirements_extra_tf.txt",
-    "chainer": "requirements_extra_chainer.txt"
+    "base": "base.txt",
+    "sklearn": "base.txt",  # no extra requirements necessary
+    "torch": "torch.txt",
+    "torchscript": "torch.txt",
+    "tensorflow": "tensorflow.txt",
+    "tensorflow_eager": "tensorflow.txt",
+    "chainer": "chainer.txt"
 }
 
 

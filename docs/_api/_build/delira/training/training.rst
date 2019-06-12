@@ -7,6 +7,7 @@ training routines and wrapping experiments.
 
     Parameters <parameters>
     Network Trainer <trainer>
+    Predictor <predictor>
     Experiment <experiment>
     Callbacks <callbacks>
     Losses <losses>

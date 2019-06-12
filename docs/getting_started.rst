@@ -13,13 +13,16 @@ The currently supported backends are:
 
   .. note::
     ``delira`` supports mixed-precision training via `apex <https://github.com/NVIDIA/apex>`_, but ``apex`` must be installed separately
-    
+
   .. note::
     ``delira`` supports Multi-GPU training currently only with ``torch`` backend.
    
 * `torchscript <https://pytorch.org/docs/stable/jit.html>`_ : Suffix ``torchscript``
     
-* `tf <https://tensorflow.org>`_: Suffix ``tf``
+* `tensorflow <https://tensorflow.org>`_: Suffix ``tensorflow``
+
+  .. note::
+    the ``tensorflow`` backend is still very experimental and may be unstable.
 
 * None: No Suffix
 
@@ -34,18 +37,20 @@ The currently supported backends are:
 Installation
 ------------
 
+<<<<<<< HEAD
 ============== =================================== =================================================================================================== ======================================================================================================================
 Backend        Binary Installation                 Source Installation                                                                                 Notes
 ============== =================================== =================================================================================================== ======================================================================================================================
 None           ``pip install delira``              ``pip install git+https://github.com/justusschock/delira.git``                                      Training not possible if backend is not installed separately
 `torch`_       ``pip install delira[torch]``       ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[torch]``       ``delira`` with ``torch`` backend supports mixed-precision training via `NVIDIA/apex`_ (must be installed separately).
 `torchscript`_ ``pip install delira[torchscript]`` ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[torchscript]`` The ``torchscript`` backend currently supports only single-GPU-training
-`tf`_          ``pip install delira[tf]``          ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[tf]``          the ``tf`` backend is still very experimental and lacks some `features`_
+`tensorflow`_  ``pip install delira[tensorflow]``  ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[tensorflow]``  The ``tensorflow`` backend is still very experimental and lacks some `features`_
 Full           ``pip install delira[full]``        ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[full]``        All backends will be installed.
 ============== =================================== =================================================================================================== ======================================================================================================================
 
 .. _torch: https://pytorch.org
 .. _NVIDIA/apex: https://github.com/NVIDIA/apex.git
 .. _torchscript: https://pytorch.org/docs/stable/jit.html
-.. _tf: https://www.tensorflow.org/
+.. _tensorflow: https://www.tensorflow.org/
 .. _features: https://github.com/justusschock/delira/issues/47
+
