@@ -14,6 +14,7 @@ Let's first setup the essential hyperparameters. We will use
 
 .. code:: ipython3
 
+    logger = None
     import torch
     from delira.training import Parameters
     params = Parameters(fixed_params={
@@ -76,7 +77,7 @@ can open http://localhost:9999 in your browser.
     # (don't do `logger = logging.Logger("...")` since this will create a new
     # logger which is unrelated to the root logger
     logger = logging.getLogger("Test Logger")
-
+    
 
 Since a single visdom server can run multiple environments, we need to
 specify a (unique) name for our environment and need to tell the logger,
@@ -129,12 +130,6 @@ a 32-bit floating point numpy array and ensure, they have the same shape
     assert mask.shape == img.shape
     print(img.shape)
 
-
-.. parsed-literal::
-
-    (192, 192, 174)
-
-
 By querying the unique values in the mask, we get the following:
 
 .. code:: ipython3
@@ -164,7 +159,7 @@ the image and the mask (we choose slice 100 here) and plot it:
     plt.imshow(mask_slice, cmap="gray")
     plt.colorbar(fraction=0.046, pad=0.04)
     plt.show()
-
+    
 
 To load the data, we have to use a ``Dataset``. The following defines a
 very simple dataset, accepting an image slice, a mask slice and the
@@ -207,8 +202,8 @@ For Data-Augmentation we will apply a few transformations:
     from batchgenerators.transforms.sample_normalization_transforms import MeanStdNormalizationTransform
     
     transforms = Compose([
-        RandomCropTransform((150, 150), label_key="label"), # Perform Random Crops of Size 150 x 150 pixels
-        ResizeTransform((224, 224), label_key="label"), # Resample these crops back to 224 x 224 pixels
+        RandomCropTransform(150, label_key="label"), # Perform Random Crops of Size 150 x 150 pixels
+        ResizeTransform(224, label_key="label"), # Resample these crops back to 224 x 224 pixels
         ContrastAugmentationTransform(), # randomly adjust contrast
         MeanStdNormalizationTransform(mean=[img_slice.mean()], std=[img_slice.std()])]) # use concrete values since we only have one sample (have to estimate it over whole dataset otherwise)
 
@@ -246,7 +241,8 @@ it. We will therfore use the already implemented ``UNet2dPytorch``:
     from delira.training.train_utils import create_optims_default_pytorch
     from delira.models.segmentation import UNet2dPyTorch
     
-    logger.info("Init Experiment")
+    if logger is not None:
+        logger.info("Init Experiment")
     experiment = PyTorchExperiment(params, UNet2dPyTorch,
                                    name="Segmentation2dExample",
                                    save_path="./tmp/delira_Experiments",

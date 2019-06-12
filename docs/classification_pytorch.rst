@@ -14,6 +14,7 @@ Let's first setup the essential hyperparameters. We will use
 
 .. code:: ipython3
 
+    logger = None
     import torch
     from delira.training import Parameters
     params = Parameters(fixed_params={
@@ -76,7 +77,7 @@ can open http://localhost:9999 in your browser.
     # (don't do `logger = logging.Logger("...")` since this will create a new
     # logger which is unrelated to the root logger
     logger = logging.getLogger("Test Logger")
-
+    
 
 Since a single visdom server can run multiple environments, we need to
 specify a (unique) name for our environment and need to tell the logger,
@@ -117,12 +118,12 @@ For Data-Augmentation we will apply a few transformations:
     from batchgenerators.transforms.sample_normalization_transforms import MeanStdNormalizationTransform
     
     transforms = Compose([
-        RandomCropTransform((200, 200)), # Perform Random Crops of Size 200 x 200 pixels
-        ResizeTransform((224, 224)), # Resample these crops back to 224 x 224 pixels
+        RandomCropTransform(200), # Perform Random Crops of Size 200 x 200 pixels
+        ResizeTransform(224), # Resample these crops back to 224 x 224 pixels
         ContrastAugmentationTransform(), # randomly adjust contrast
         MeanStdNormalizationTransform(mean=[0.5], std=[0.5])]) 
     
-
+    
 
 With these transformations we can now wrap our datasets into
 datamanagers:
@@ -140,7 +141,7 @@ datamanagers:
                                   transforms=transforms,
                                   sampler_cls=SequentialSampler,
                                   n_process_augmentation=4)
-
+    
 
 Training
 --------
@@ -160,7 +161,8 @@ it. We will therfore use the already implemented
     from delira.training.train_utils import create_optims_default_pytorch
     from delira.models.classification import ClassificationNetworkBasePyTorch
     
-    logger.info("Init Experiment")
+    if logger is not None:
+        logger.info("Init Experiment")
     experiment = PyTorchExperiment(params, ClassificationNetworkBasePyTorch,
                                    name="ClassificationExample",
                                    save_path="./tmp/delira_Experiments",
