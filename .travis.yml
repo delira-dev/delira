@@ -29,6 +29,7 @@ before_install:
           bash scripts/ci/install_before_tests.sh;
       else
           bash scripts/ci/install_before_style_check.sh;
+          pip install -r docs/requirements.txt;
       fi
 
 install:
