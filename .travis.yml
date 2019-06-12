@@ -44,7 +44,7 @@ script:
       fi
     
     # build docs if python == 3.7
-    - if [[ "$TRAVIS_PYTHON_VERSION" == 3.7 ]] && [[ "$TEST_TYPE" == "unittests" ]]; then
+    - if [[ "$TRAVIS_PYTHON_VERSION" == 3.7 ]] && [[ "$TEST_TYPE" == "style-check" ]]; then
           bash scripts/ci/build_docs.sh;
       fi
 
