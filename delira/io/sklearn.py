@@ -19,7 +19,8 @@ def save_checkpoint(file: str, model=None, epoch=None, **kwargs):
 
     """
 
-    return joblib.dump({"model": model, "epoch": epoch}, file, **kwargs)
+    return_val = joblib.dump({"model": model, "epoch": epoch}, file, **kwargs)
+    return return_val
 
 
 def load_checkpoint(file, **kwargs):
