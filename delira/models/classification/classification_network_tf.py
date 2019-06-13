@@ -131,7 +131,7 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
     @staticmethod
     def closure(model: typing.Type[AbstractTfNetwork], data_dict: dict,
-                metrics={}, fold=0, **kwargs):
+                metrics=None, fold=0, **kwargs):
         """
         closure method to do a single prediction.
         This is followed by backpropagation or not based state of
@@ -163,9 +163,10 @@ class ClassificationNetworkBaseTf(AbstractTfNetwork):
 
         """
 
+        if metrics is None:
+            metrics = {}
         loss_vals = {}
         metric_vals = {}
-        image_names = "input_images"
 
         inputs = data_dict.pop('data')
 

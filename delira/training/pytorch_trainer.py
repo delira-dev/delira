@@ -1,18 +1,12 @@
 import logging
 import os
-
-import numpy as np
-
-from tqdm.auto import tqdm
 import warnings
-from collections import OrderedDict
-from batchgenerators.dataloading import MultiThreadedAugmenter
-from .callbacks import AbstractCallback
-from .base_trainer import BaseNetworkTrainer
 from functools import partial
 
+from batchgenerators.dataloading import MultiThreadedAugmenter
+
 from delira import get_backends
-from .callbacks import AbstractCallback
+from .base_trainer import BaseNetworkTrainer
 
 logger = logging.getLogger(__name__)
 
@@ -41,25 +35,23 @@ if "TORCH" in get_backends():
                      key_mapping,
                      losses=None,
                      optimizer_cls=None,
-                     optimizer_params={},
-                     train_metrics={},
-                     val_metrics={},
+                     optimizer_params=None,
+                     train_metrics=None,
+                     val_metrics=None,
                      lr_scheduler_cls=None,
-                     lr_scheduler_params={},
-                     gpu_ids=[],
+                     lr_scheduler_params=None,
+                     gpu_ids=None,
                      save_freq=1,
                      optim_fn=create_optims_default,
                      logging_type="tensorboardx",
-                     logging_kwargs={},
+                     logging_kwargs=None,
                      fold=0,
-                     callbacks=[],
+                     callbacks=None,
                      start_epoch=1,
                      metric_keys=None,
                      convert_batch_to_npy_fn=convert_torch_tensor_to_npy,
                      mixed_precision=False,
-                     mixed_precision_kwargs={"enable_caching": True,
-                                             "verbose": False,
-                                             "allow_banned": False},
+                     mixed_precision_kwargs=None,
                      criterions=None,
                      val_freq=1,
                      ** kwargs):
@@ -135,6 +127,24 @@ if "TORCH" in get_backends():
 
             """
 
+            if optimizer_params is None:
+                optimizer_params = {}
+            if train_metrics is None:
+                train_metrics = {}
+            if val_metrics is None:
+                val_metrics = {}
+            if lr_scheduler_params is None:
+                lr_scheduler_params = {}
+            if gpu_ids is None:
+                gpu_ids = []
+            if logging_kwargs is None:
+                logging_kwargs = {}
+            if callbacks is None:
+                callbacks = []
+            if mixed_precision_kwargs is None:
+                mixed_precision_kwargs = {"enable_caching": True,
+                                          "verbose": False,
+                                          "allow_banned": False}
             if (criterions is not None) ^ (losses is not None):
                 if losses is not None:
                     crits = losses
@@ -372,8 +382,8 @@ if "TORCH" in get_backends():
             return super()._train_single_epoch(batchgen, epoch,
                                                verbose=verbose)
 
-        def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
-                             metric_keys={}, verbose=False, **kwargs):
+        def predict_data_mgr(self, datamgr, batchsize=None, metrics=None,
+                             metric_keys=None, verbose=False, **kwargs):
             """
             Defines a routine to predict data obtained from a batchgenerator
 
@@ -402,6 +412,10 @@ if "TORCH" in get_backends():
                 calculated metrics
 
             """
+            if metrics is None:
+                metrics = {}
+            if metric_keys is None:
+                metric_keys = {}
             self.module.eval()
 
             return super().predict_data_mgr(datamgr, batchsize, metrics,
@@ -417,8 +431,6 @@ if "TORCH" in get_backends():
                 filename to save the state to
             epoch : int
                 current epoch (will be saved for mapping back)
-            *args :
-                positional arguments
             **kwargs :
                 keyword arguments
 

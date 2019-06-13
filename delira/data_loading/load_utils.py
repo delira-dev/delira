@@ -78,7 +78,11 @@ def is_valid_image_file(fname, img_extensions, gt_extensions):
     ----------
     fname : str
         filename of image path
-     Returns
+    img_extensions : list
+        list of valid image file extensions
+    gt_extensions : list
+        list of valid gt file extensions
+    Returns
     -------
     bool
         is valid data sample
@@ -148,7 +152,7 @@ class LoadSample:
     def __init__(self,
                  sample_ext: dict,
                  sample_fn: collections.abc.Callable,
-                 dtype={}, normalize=(), norm_fn=norm_range('-1,1'),
+                 dtype=None, normalize=(), norm_fn=norm_range('-1,1'),
                  **kwargs):
         """
 
@@ -185,6 +189,8 @@ class LoadSample:
         >>>                                       'seg': 'uint8'},
         >>>                      normalize=('data',))
         """
+        if dtype is None:
+            dtype = {}
         self._sample_ext = sample_ext
         self._sample_fn = sample_fn
         self._dtype = dtype
@@ -235,7 +241,7 @@ class LoadSampleLabel(LoadSample):
                  sample_fn: collections.abc.Callable,
                  label_ext: collections.abc.Iterable,
                  label_fn: collections.abc.Callable,
-                 sample_kwargs={}, **kwargs):
+                 sample_kwargs=None, **kwargs):
         """
         Load sample and label from folder
 
@@ -264,6 +270,9 @@ class LoadSampleLabel(LoadSample):
         --------
         :class: `LoadSample`
         """
+        if sample_kwargs is None:
+            sample_kwargs = {}
+
         super().__init__(sample_ext, sample_fn, **sample_kwargs)
         self._label_ext = label_ext
         self._label_fn = label_fn
@@ -282,7 +291,7 @@ class LoadSampleLabel(LoadSample):
         dict
             dict with data and label
         """
-        sample_dict = super(LoadSampleLabel, self).__call__(path)
+        sample_dict = super().__call__(path)
         label_dict = self._label_fn(os.path.join(path, self._label_ext),
                                     **self._label_kwargs)
         sample_dict.update(label_dict)

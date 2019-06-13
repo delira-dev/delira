@@ -1,19 +1,16 @@
 import inspect
 import logging
 
-import numpy as np
-import typing
-import inspect
 from batchgenerators.dataloading import MultiThreadedAugmenter, \
     SingleThreadedAugmenter, SlimDataLoaderBase
 from batchgenerators.transforms import AbstractTransform
 
+from delira import get_current_debug_mode
 from .data_loader import BaseDataLoader
 from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset
 from .load_utils import default_load_fn_2d
 from .sampler import SequentialSampler, AbstractSampler
 from ..utils.decorators import make_deprecated
-from delira import get_current_debug_mode
 
 logger = logging.getLogger(__name__)
 
@@ -245,7 +242,7 @@ class BaseDataManager(object):
 
     def __init__(self, data, batch_size, n_process_augmentation,
                  transforms, sampler_cls=SequentialSampler,
-                 sampler_kwargs={},
+                 sampler_kwargs=None,
                  data_loader_cls=None, dataset_cls=None,
                  load_fn=default_load_fn_2d, from_disc=True, **kwargs):
         """
@@ -292,6 +289,8 @@ class BaseDataManager(object):
         """
 
         # Instantiate Hidden variables for property access
+        if sampler_kwargs is None:
+            sampler_kwargs = {}
         self._batch_size = None
         self._n_process_augmentation = None
         self._transforms = None
