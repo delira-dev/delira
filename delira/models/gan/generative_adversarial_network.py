@@ -94,7 +94,7 @@ if "TORCH" in get_backends():
 
         @staticmethod
         def closure(model, data_dict: dict,
-                    optimizers: dict, losses={}, metrics={},
+                    optimizers: dict, losses=None, metrics=None,
                     fold=0, **kwargs):
             """
             closure method to do a single backpropagation step
@@ -134,6 +134,10 @@ if "TORCH" in get_backends():
 
             """
 
+            if losses is None:
+                losses = {}
+            if metrics is None:
+                metrics = {}
             loss_vals = {}
             metric_vals = {}
             total_loss_discr_real = 0

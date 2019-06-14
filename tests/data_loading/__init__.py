@@ -5,9 +5,11 @@ from delira.data_loading import AbstractDataset
 
 
 class DummyDataset(AbstractDataset):
-    def __init__(self, length=600, class_weights=[0.5, 0.3, 0.2]):
+    def __init__(self, length=600, class_weights=None):
         super().__init__(None, None)
 
+        if class_weights is None:
+            class_weights = [0.5, 0.3, 0.2]
         assert math.isclose(sum(class_weights), 1)
 
         self._data = [np.random.rand(1, 28, 28) for i in range(length)]

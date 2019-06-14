@@ -1,18 +1,16 @@
-from abc import abstractmethod
 import logging
+import os
 import pickle
 import typing
 
-from ..data_loading.data_manager import Augmenter
-
-from .predictor import Predictor
-from .callbacks import AbstractCallback
-from ..models import AbstractNetwork
-
 import numpy as np
-import os
 from tqdm import tqdm
+
 from delira.logging import TrixiHandler
+from .callbacks import AbstractCallback
+from .predictor import Predictor
+from ..data_loading.data_manager import Augmenter
+from ..models import AbstractNetwork
 
 logger = logging.getLogger(__name__)
 
@@ -614,7 +612,7 @@ class BaseNetworkTrainer(Predictor):
 
         """
         for key, val in new_state.items():
-            if (key.startswith("__") and key.endswith("__")):
+            if key.startswith("__") and key.endswith("__"):
                 continue
 
             try:
@@ -729,7 +727,7 @@ class BaseNetworkTrainer(Predictor):
                             handlers=new_handlers)
 
     @staticmethod
-    def _search_for_prev_state(path, extensions=[]):
+    def _search_for_prev_state(path, extensions=None):
         """
         Helper function to search in a given path for previous epoch states
         (indicated by extensions)
@@ -752,6 +750,8 @@ class BaseNetworkTrainer(Predictor):
             the latest epoch (1 if no checkpoint was found)
 
         """
+        if extensions is None:
+            extensions = []
         files = []
         for file in os.listdir(path):
             for ext in extensions:

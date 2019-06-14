@@ -226,7 +226,6 @@ def bounding_box(mask, margin=None):
     """
     # mask_arr is in z, y, x order
     mask_arr = sitk.GetArrayFromImage(mask)
-    zdim, ydim, xdim = mask_arr.shape
     nz = np.where(mask_arr != 0)
     lower = [np.min(nz[0]), np.min(nz[1]), np.min(nz[2])]
     upper = [np.max(nz[0]), np.max(nz[1]), np.max(nz[2])]

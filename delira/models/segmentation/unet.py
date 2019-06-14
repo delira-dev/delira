@@ -7,7 +7,6 @@ if "TORCH" in get_backends():
     import torch
     import torch.nn.functional as F
     from torch.nn import init
-    import logging
     from ..abstract_network import AbstractPyTorchNetwork
 
     class UNet2dPyTorch(AbstractPyTorchNetwork):
@@ -175,8 +174,8 @@ if "TORCH" in get_backends():
             return {"pred": x}
 
         @staticmethod
-        def closure(model, data_dict: dict, optimizers: dict, losses={},
-                    metrics={}, fold=0, **kwargs):
+        def closure(model, data_dict: dict, optimizers: dict, losses=None,
+                    metrics=None, fold=0, **kwargs):
             """
             closure method to do a single backpropagation step
 
@@ -216,6 +215,10 @@ if "TORCH" in get_backends():
 
             """
 
+            if losses is None:
+                losses = {}
+            if metrics is None:
+                metrics = {}
             assert (optimizers and losses) or not optimizers, \
                 "Loss dict cannot be emtpy, if optimizers are passed"
 
@@ -618,8 +621,8 @@ if "TORCH" in get_backends():
             return {"pred": x}
 
         @staticmethod
-        def closure(model, data_dict: dict, optimizers: dict, losses={},
-                    metrics={}, fold=0, **kwargs):
+        def closure(model, data_dict: dict, optimizers: dict, losses=None,
+                    metrics=None, fold=0, **kwargs):
             """
             closure method to do a single backpropagation step
 
@@ -659,6 +662,10 @@ if "TORCH" in get_backends():
 
             """
 
+            if losses is None:
+                losses = {}
+            if metrics is None:
+                metrics = {}
             assert (optimizers and losses) or not optimizers, \
                 "Loss dict cannot be emtpy, if optimizers are passed"
 
