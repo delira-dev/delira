@@ -6,6 +6,7 @@ class ReporterCallback(AbstractCallback):
     A ReporterCallback which adds the metrics to the internal state and also
     handles a stopping criterion (which will be passed from the scheduler)
     """
+
     def __init__(self, stopping_fn):
         """
 
@@ -59,4 +60,3 @@ class ReporterCallback(AbstractCallback):
 
         update_dict = {"stop_training": self.stopping_fn(self)}
         return update_dict
-

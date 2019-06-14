@@ -110,6 +110,7 @@ class _DebugPool:
     Instead of parallel mapping (as :class:`multiprocessing.Pool` does), this
     class does sequential mapping
     """
+
     def map(self, function, argument_list):
         """
         Sequentially maps a given function to a list of arguments
@@ -161,6 +162,7 @@ class DebugSafePool:
     """
     Utility Class to dispatch to sequential mapping if debug mode is activated
     """
+
     def __init__(self, n_processes=None, *args, **kwargs):
         """
 

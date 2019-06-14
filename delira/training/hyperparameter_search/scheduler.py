@@ -9,7 +9,6 @@ import numpy as np
 
 
 def _concat_dict_items(dict_like):
-
     """
     Concatenates all items of same key across all dictionaries
 
@@ -37,6 +36,7 @@ class Scheduler:
     An abstract Scheduler, which schedules different trials across different
     GPUs (currently only on same machine)
     """
+
     def __init__(self, run_fn, search_algo: SearchAlgorithm, gpus: list = None,
                  **kwargs):
         """
@@ -199,4 +199,3 @@ class FIFOScheduler(Scheduler):
     # never stop due to scheduling condition
     def stopping_condition(self, reporter) -> bool:
         return False
-

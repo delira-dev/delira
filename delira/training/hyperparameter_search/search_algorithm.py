@@ -10,6 +10,7 @@ class SearchAlgorithm(object):
     The actual search behavior will be specified by the ``sampler_cls``
     argument
     """
+
     def __init__(self, sampler_cls, params: Parameters = None,
                  n_iter: int = None):
         """
@@ -92,6 +93,7 @@ class GridSearchAlgorithm(SearchAlgorithm):
     """
     A GridSearch Implementation
     """
+
     def __init__(self, params: Parameters = None, n_iter: int = None):
         """
 
