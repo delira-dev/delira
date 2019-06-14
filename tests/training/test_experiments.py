@@ -73,7 +73,7 @@ class ExperimentTest(unittest.TestCase):
                         "optimizer_cls": torch.optim.Adam,
                         "optimizer_params": {"lr": 1e-3},
                         "num_epochs": 2,
-                        "val_metrics": {"mae": mean_absolute_error},
+                        "val_metrics": {"val_mae": mean_absolute_error},
                         "lr_sched_cls": ReduceLROnPlateauCallbackPyTorch,
                         "lr_sched_params": {"mode": "min"}
                     }
@@ -134,7 +134,7 @@ class ExperimentTest(unittest.TestCase):
                             "optimizer_cls": tf.train.AdamOptimizer,
                             "optimizer_params": {"learning_rate": 1e-3},
                             "num_epochs": 2,
-                            "val_metrics": {"mae": mean_absolute_error},
+                            "val_metrics": {"val_mae": mean_absolute_error},
                             "lr_sched_cls": None,
                             "lr_sched_params": {}}
                     }
