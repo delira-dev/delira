@@ -1,5 +1,6 @@
 
 from delira import get_backends
+from delira.utils.context_managers import DebugEnabled
 import unittest
 
 import numpy as np
@@ -277,21 +278,23 @@ class ExperimentTest(unittest.TestCase):
         from delira.training import TfExperiment
         from delira.data_loading import BaseDataManager
 
-        for case in self._test_cases_tf:
-            with self.subTest(case=case):
-                (params, dataset_length_train, dataset_length_test,
-                 network_cls) = case
+        with DebugEnabled():
 
-                exp = TfExperiment(params, network_cls,
-                                   key_mapping={"images": "data"})
+            for case in self._test_cases_tf:
+                with self.subTest(case=case):
+                    (params, dataset_length_train, dataset_length_test,
+                     network_cls) = case
 
-                dset_train = DummyDataset(dataset_length_train)
-                dset_test = DummyDataset(dataset_length_test)
+                    exp = TfExperiment(params, network_cls,
+                                       key_mapping={"images": "data"})
 
-                dmgr_train = BaseDataManager(dset_train, 16, 1, None)
-                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+                    dset_train = DummyDataset(dataset_length_train)
+                    dset_test = DummyDataset(dataset_length_test)
 
-                exp.run(dmgr_train, dmgr_test)
+                    dmgr_train = BaseDataManager(dset_train, 16, 2, None)
+                    dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+
+                    exp.run(dmgr_train, dmgr_test)
 
     @unittest.skipIf("TF" not in get_backends(),
                      reason="No TF Backend installed")
