@@ -56,8 +56,6 @@ class BaseDataLoader(SlimDataLoaderBase):
         self._seed = seed
         np.random.seed(seed)
 
-        self._batches_generated = 0
-
     def generate_train_batch(self):
         """
         Generate Indices which behavior based on self.sampling gets data based
@@ -74,36 +72,32 @@ class BaseDataLoader(SlimDataLoaderBase):
             If the maximum number of batches has been generated
         """
 
-        if self._batches_generated >= self.num_batches:
-            raise StopIteration
-        else:
-            self._batches_generated += 1
-            idxs = None
-            while idxs is None:
-                try:
-                    idxs = self.sampler_queue.get(timeout=0.2)
-                except Empty:
-                    pass
+        idxs = None
+        while idxs is None:
+            try:
+                idxs = self.sampler_queue.get(timeout=0.2)
+            except Empty:
+                pass
 
-            # idxs = self.sampler_queue.get()
+        # idxs = self.sampler_queue.get()
 
-            result = [self._get_sample(_idx) for _idx in idxs]
+        result = [self._get_sample(_idx) for _idx in idxs]
 
-            result_dict = {}
+        result_dict = {}
 
-            # concatenate dict entities by keys
-            for _result_dict in result:
-                for key, val in _result_dict.items():
-                    if key in result_dict.keys():
-                        result_dict[key].append(val)
-                    else:
-                        result_dict[key] = [val]
+        # concatenate dict entities by keys
+        for _result_dict in result:
+            for key, val in _result_dict.items():
+                if key in result_dict.keys():
+                    result_dict[key].append(val)
+                else:
+                    result_dict[key] = [val]
 
-            # convert list to numpy arrays
-            for key, val_list in result_dict.items():
-                result_dict[key] = np.asarray(val_list)
+        # convert list to numpy arrays
+        for key, val_list in result_dict.items():
+            result_dict[key] = np.asarray(val_list)
 
-            return result_dict
+        return result_dict
 
     def _get_sample(self, index):
         """
