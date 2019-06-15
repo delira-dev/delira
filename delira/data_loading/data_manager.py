@@ -6,6 +6,7 @@ from batchgenerators.dataloading import MultiThreadedAugmenter, \
 from batchgenerators.transforms import AbstractTransform
 
 from multiprocessing import Queue
+from queue import Full
 
 from delira import get_current_debug_mode
 from .data_loader import BaseDataLoader
@@ -106,8 +107,16 @@ class Augmenter(object):
         dict
             the next batch
         """
+        idxs = self._sampler(self._batchsize)
 
-        self._sampler_queue.put(self._sampler(self._batchsize))
+        # dont't wait forever. Release this after short timeout and try again
+        # to avoid deadlock
+        while True:
+            try:
+                self._sampler_queue.put(idxs, timeout=0.2)
+                break
+            except Full:
+                continue
 
         return next(self._augmenter)
 
