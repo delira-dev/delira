@@ -1,7 +1,7 @@
 import unittest
 
 import numpy as np
-from multiprocessing import SimpleQueue
+from multiprocessing import Queue
 from delira.data_loading import BaseDataLoader, SequentialSampler
 from . import DummyDataset
 
@@ -10,7 +10,7 @@ class DataLoaderTest(unittest.TestCase):
 
     def test_data_loader(self):
         np.random.seed(1)
-        sampler_queue = SimpleQueue()
+        sampler_queue = Queue()
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
         sampler = SequentialSampler.from_dataset(dset)
         loader = BaseDataLoader(dset, batch_size=16,

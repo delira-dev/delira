@@ -5,7 +5,7 @@ from batchgenerators.dataloading import MultiThreadedAugmenter, \
     SingleThreadedAugmenter, SlimDataLoaderBase
 from batchgenerators.transforms import AbstractTransform
 
-from multiprocessing import SimpleQueue as Queue
+from multiprocessing import JoinableQueue as Queue
 from queue import Full
 
 from delira import get_current_debug_mode
@@ -111,13 +111,12 @@ class Augmenter(object):
 
         # dont't wait forever. Release this after short timeout and try again
         # to avoid deadlock
-        # while True:
-        #     try:
-        #         self._sampler_queue.put(idxs, timeout=0.2)
-        #         break
-        #     except Full:
-        #         continue
-        self._sampler_queue.put(idxs)
+        while True:
+            try:
+                self._sampler_queue.put(idxs, timeout=0.2)
+                break
+            except Full:
+                continue
 
         return next(self._augmenter)
 
@@ -212,8 +211,8 @@ class Augmenter(object):
             either the augmenter's ``_finish`` method (if available) or
             ``__identity_fn`` (if not available)
         """
-        # self._sampler_queue.close()
-        # self._sampler_queue.join_thread()
+        self._sampler_queue.close()
+        self._sampler_queue.join_thread()
         return self._fn_checker("_finish")()
 
     @property

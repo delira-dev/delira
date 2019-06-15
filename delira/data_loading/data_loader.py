@@ -72,14 +72,14 @@ class BaseDataLoader(SlimDataLoaderBase):
             If the maximum number of batches has been generated
         """
 
-        # idxs = None
-        # while idxs is None:
-        #     try:
-        #         idxs = self.sampler_queue.get(timeout=0.2)
-        #     except Empty:
-        #         pass
-        # self.sampler_queue.task_done()
-        idxs = self.sampler_queue.get()
+        idxs = None
+        while idxs is None:
+            try:
+                idxs = self.sampler_queue.get(timeout=0.2)
+            except Empty:
+                pass
+        self.sampler_queue.task_done()
+        # idxs = self.sampler_queue.get()
 
         result = [self._get_sample(_idx) for _idx in idxs]
 
