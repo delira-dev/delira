@@ -39,5 +39,3 @@ class NumbaCompose(Compose):
     def __init__(self, transforms):
         super().__init__(transforms=[NumbaTransformWrapper(trafo)
                                      for trafo in transforms])
-
-
