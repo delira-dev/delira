@@ -108,6 +108,7 @@ class Augmenter(object):
         """
 
         self._sampler_queue.put(self._sampler(self._batchsize))
+
         return next(self._augmenter)
 
     def next(self):

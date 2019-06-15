@@ -1,6 +1,7 @@
 import numpy as np
 from batchgenerators.dataloading.data_loader import SlimDataLoaderBase
 from multiprocessing import Queue
+from queue import Empty
 
 from .dataset import AbstractDataset
 
@@ -77,8 +78,14 @@ class BaseDataLoader(SlimDataLoaderBase):
             raise StopIteration
         else:
             self._batches_generated += 1
+            idxs = None
+            while idxs is None:
+                try:
+                    idxs = self.sampler_queue.get(timeout=0.2)
+                except Empty:
+                    pass
 
-            idxs = self.sampler_queue.get()
+            # idxs = self.sampler_queue.get()
 
             result = [self._get_sample(_idx) for _idx in idxs]
 
