@@ -1,7 +1,7 @@
 import unittest
 
 import numpy as np
-from multiprocessing import JoinableQueue as Queue
+from multiprocessing import Queue
 from delira.data_loading import BaseDataLoader, SequentialSampler
 from . import DummyDataset
 
