@@ -78,7 +78,7 @@ class BaseDataLoader(SlimDataLoaderBase):
                 idxs = self.sampler_queue.get(timeout=0.2)
             except Empty:
                 pass
-
+        self.sampler_queue.task_done()
         # idxs = self.sampler_queue.get()
 
         result = [self._get_sample(_idx) for _idx in idxs]
