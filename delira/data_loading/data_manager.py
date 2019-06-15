@@ -191,7 +191,6 @@ class Augmenter(object):
         """
         return self._fn_checker("restart")
 
-    @property
     def _finish(self):
         """
         Property to provide uniform API of ``_finish``
@@ -202,7 +201,9 @@ class Augmenter(object):
             either the augmenter's ``_finish`` method (if available) or
             ``__identity_fn`` (if not available)
         """
-        return self._fn_checker("_finish")
+        self._sampler_queue.close()
+        self._sampler_queue.join_thread()
+        return self._fn_checker("_finish")()
 
     @property
     def num_batches(self):
@@ -242,6 +243,7 @@ class Augmenter(object):
         Function defining what to do, if object should be deleted
 
         """
+        self._finish()
         del self._augmenter
 
 
