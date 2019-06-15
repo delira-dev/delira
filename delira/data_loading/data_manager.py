@@ -86,6 +86,7 @@ class Augmenter(object):
         self._augmenter = augmenter
         self._sampler = sampler
         self._sampler_queue = sampler_queue
+        self._sampler_queue.cancel_join_thread()
 
     def __iter__(self):
         """
