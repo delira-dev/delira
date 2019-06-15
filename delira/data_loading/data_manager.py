@@ -211,8 +211,8 @@ class Augmenter(object):
             either the augmenter's ``_finish`` method (if available) or
             ``__identity_fn`` (if not available)
         """
-        #self._sampler_queue.close()
-        #self._sampler_queue.join_thread()
+        # self._sampler_queue.close()
+        # self._sampler_queue.join_thread()
         return self._fn_checker("_finish")()
 
     @property
