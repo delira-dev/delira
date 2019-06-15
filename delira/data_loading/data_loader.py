@@ -1,8 +1,8 @@
 import numpy as np
 from batchgenerators.dataloading.data_loader import SlimDataLoaderBase
+from multiprocessing import Queue
 
 from .dataset import AbstractDataset
-from .sampler import AbstractSampler, SequentialSampler
 
 
 class BaseDataLoader(SlimDataLoaderBase):
@@ -12,8 +12,8 @@ class BaseDataLoader(SlimDataLoaderBase):
     """
 
     def __init__(self, dataset: AbstractDataset,
-                 batch_size=1, num_batches=None, seed=1,
-                 sampler=None):
+                 sampler_queue: Queue,
+                 batch_size=1, num_batches=None, seed=1):
         """
 
         Parameters
@@ -22,13 +22,13 @@ class BaseDataLoader(SlimDataLoaderBase):
             dataset to perform sample loading
         batch_size : int
             number of samples per batch
+        sampler_queue : :class:`multiprocessing.Queue`
+            the queue, the sample indices to load will be put to.
+            Necessary for interprocess communication
         num_batches : int
             number of batches to load
         seed : int
             seed for Random Number Generator
-        sampler : AbstractSampler or None
-            class defining the sampling strategy;
-            if None: SequentialSampler will be used
 
         Raises
         ------
@@ -45,17 +45,11 @@ class BaseDataLoader(SlimDataLoaderBase):
         # store dataset in self._data
         super().__init__(dataset, batch_size)
 
-        assert isinstance(sampler, AbstractSampler) or sampler is None, \
-            "Sampler must be instance of subclass of AbstractSampler of None"
+        self.sampler_queue = sampler_queue
 
-        if sampler is None:
-            sampler = SequentialSampler(list(range(len(dataset))))
-
-        self.sampler = sampler
-
-        self.n_samples = len(sampler)
+        self.n_samples = len(dataset)
         if num_batches is None:
-            num_batches = len(sampler) // batch_size
+            num_batches = len(dataset) // batch_size
 
         self.num_batches = num_batches
         self._seed = seed
@@ -84,7 +78,7 @@ class BaseDataLoader(SlimDataLoaderBase):
         else:
             self._batches_generated += 1
 
-            idxs = self.sampler(self.batch_size)
+            idxs = self.sampler_queue.get()
 
             result = [self._get_sample(_idx) for _idx in idxs]
 
