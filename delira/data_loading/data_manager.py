@@ -377,8 +377,6 @@ class BaseDataManager(object):
         data_loader = self.data_loader_cls(
             self.dataset,
             batch_size=self.batch_size,
-            # divide because dataloader gets pickled and each loader in
-            # each process thinks it has to produce n_batches
             num_batches=self.n_batches,
             seed=seed,
             sampler_queue=sampler_queue
