@@ -288,7 +288,7 @@ class ExperimentTest(unittest.TestCase):
                 dset_train = DummyDataset(dataset_length_train)
                 dset_test = DummyDataset(dataset_length_test)
 
-                dmgr_train = BaseDataManager(dset_train, 16, 2, None)
+                dmgr_train = BaseDataManager(dset_train, 16, 1, None)
                 dmgr_test = BaseDataManager(dset_test, 16, 1, None)
 
                 exp.run(dmgr_train, dmgr_test)
