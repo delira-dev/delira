@@ -169,7 +169,6 @@ class Predictor(object):
             a dictionary containing all metrics of the current batch
 
         """
-        print(metric_keys)
         if metrics is None:
             metrics = {}
         orig_num_aug_processes = datamgr.n_process_augmentation
@@ -282,7 +281,6 @@ class Predictor(object):
         does not cache anything by default
 
         """
-        print(metric_keys)
         if metrics is None:
             metrics = {}
         yield from self.predict_data_mgr_cache(datamgr=datamgr,
