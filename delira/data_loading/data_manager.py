@@ -5,7 +5,7 @@ from batchgenerators.dataloading import MultiThreadedAugmenter, \
     SingleThreadedAugmenter, SlimDataLoaderBase
 from batchgenerators.transforms import AbstractTransform
 
-from multiprocessing import JoinableQueue as Queue
+from multiprocessing import Manager, Queue
 from queue import Full
 
 from delira import get_current_debug_mode
@@ -86,7 +86,6 @@ class Augmenter(object):
         self._augmenter = augmenter
         self._sampler = sampler
         self._sampler_queue = sampler_queue
-        self._sampler_queue.cancel_join_thread()
 
     def __iter__(self):
         """
@@ -114,7 +113,7 @@ class Augmenter(object):
         # to avoid deadlock
         while True:
             try:
-                self._sampler_queue.put(idxs, timeout=0.2)
+                self._sampler_queue.put_nowait(idxs)
                 break
             except Full:
                 continue
@@ -212,8 +211,8 @@ class Augmenter(object):
             either the augmenter's ``_finish`` method (if available) or
             ``__identity_fn`` (if not available)
         """
-        self._sampler_queue.close()
-        self._sampler_queue.join_thread()
+        #self._sampler_queue.close()
+        #self._sampler_queue.join_thread()
         return self._fn_checker("_finish")()
 
     @property
@@ -362,6 +361,7 @@ class BaseDataManager(object):
         assert inspect.isclass(sampler_cls) and issubclass(sampler_cls,
                                                            AbstractSampler)
         self.sampler = sampler_cls.from_dataset(self.dataset, **sampler_kwargs)
+        self._process_manager = Manager()
 
     def get_batchgen(self, seed=1):
         """
@@ -385,7 +385,7 @@ class BaseDataManager(object):
         """
         assert self.n_batches > 0
 
-        sampler_queue = Queue()
+        sampler_queue = self._process_manager.Queue()
 
         data_loader = self.data_loader_cls(
             self.dataset,
