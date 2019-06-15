@@ -145,6 +145,7 @@ class ExperimentTest(unittest.TestCase):
             )
 
         self._test_cases_tf = test_cases_tf
+        print(self._testMethodName)
 
     @unittest.skipIf("TORCH" not in get_backends(),
                      reason="No TORCH Backend installed")
