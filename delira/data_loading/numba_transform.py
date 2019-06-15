@@ -18,9 +18,10 @@ class NumbaTransformWrapper(AbstractTransform):
             nopython = False
             target = "cpu"
 
-        self._transform = numba.jit(transform, nopython=nopython,
-                                    target=target,
-                                    parallel=parallel, **options)
+        transform.__call__ = numba.jit(transform.__call__, nopython=nopython,
+                                       target=target,
+                                       parallel=parallel, **options)
+        self.transform = transform
 
     def __call__(self, *args, **kwargs):
         return self._transform(*args, **kwargs)
