@@ -5,7 +5,7 @@ from batchgenerators.dataloading import MultiThreadedAugmenter, \
     SingleThreadedAugmenter, SlimDataLoaderBase
 from batchgenerators.transforms import AbstractTransform
 
-from multiprocessing import Queue
+from multiprocessing import JoinableQueue as Queue
 from queue import Full
 
 from delira import get_current_debug_mode
