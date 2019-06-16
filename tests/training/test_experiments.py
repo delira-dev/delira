@@ -1,4 +1,6 @@
 
+from delira.data_loading import AbstractDataset
+from delira.training import Parameters
 from delira import get_backends
 import unittest
 
@@ -6,9 +8,6 @@ import numpy as np
 from functools import partial
 import logging
 logger = logging.getLogger(__name__)
-from delira.training import Parameters
-
-from delira.data_loading import AbstractDataset
 
 
 class DummyDataset(AbstractDataset):
