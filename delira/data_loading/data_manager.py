@@ -44,7 +44,7 @@ class Augmenter(object):
             the sampler to use; must be used here instead of inside the
             dataloader to avoid duplications and oversampling due to
             multiprocessing
-        sampler_queues : list of g:class:`multiprocessing.Queue`
+        sampler_queues : list of :class:`multiprocessing.Queue`
             queues to pass the sample indices to the actual dataloader
         num_cached_per_queue : int
             the number of samples to cache per queue (only necessary if not in

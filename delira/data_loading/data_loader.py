@@ -1,6 +1,5 @@
 import numpy as np
 from batchgenerators.dataloading.data_loader import SlimDataLoaderBase
-from multiprocessing import Queue
 from queue import Empty
 import logging
 
@@ -26,7 +25,7 @@ class BaseDataLoader(SlimDataLoaderBase):
             dataset to perform sample loading
         batch_size : int
             number of samples per batch
-        sampler_queues : list :class:`multiprocessing.Queue`
+        sampler_queues : list of :class:`multiprocessing.Queue`
             the queue,s the sample indices to load will be put to.
             Necessary for interprocess communication
         num_batches : int
@@ -80,8 +79,6 @@ class BaseDataLoader(SlimDataLoaderBase):
         while idxs is None:
             try:
                 idxs = sampler_queue.get(timeout=0.2)
-
-                # idxs = self.sampler_queue.get()
 
                 result = [self._get_sample(_idx) for _idx in idxs]
 
