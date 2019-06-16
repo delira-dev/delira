@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 pip install -U pip wheel;
-pip install -r requirements.txt;
+pip install -r requirements/base.txt;
 
 if [[ "$BACKEND" == "TF" ]]; then
     pip install -r requirements/tensorflow.txt
