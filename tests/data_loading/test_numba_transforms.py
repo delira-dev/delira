@@ -8,7 +8,7 @@ try:
 except ImportError:
     numba = None
 
-    
+
 class NumbaTest(unittest.TestCase):
     def setUp(self) -> None:
         from delira.data_loading.numba_transform import NumbaTransform, \
