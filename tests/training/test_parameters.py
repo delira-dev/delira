@@ -7,8 +7,10 @@ from ..utils import check_for_no_backend
 
 
 class ParametersTest(unittest.TestCase):
-    @unittest.skipUnless(check_for_no_backend(), "Test should only be executed "
-                                                 "if no backend is specified")
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed "
+        "if no backend is specified")
     def test_parameters(self):
         def to_lookup_config(dictionary):
             tmp = LookupConfig()

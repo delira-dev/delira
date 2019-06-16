@@ -9,8 +9,10 @@ from ..utils import check_for_no_backend
 
 
 class TestMetrics(unittest.TestCase):
-    @unittest.skipUnless(check_for_no_backend(), "Test should only be executed "
-                                                 "if no backend is specified")
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed "
+        "if no backend is specified")
     def test_sklearn_classification_metric(self):
         """
         Test metric wrapper for sklearn metrics
@@ -29,8 +31,10 @@ class TestMetrics(unittest.TestCase):
         score = metric_ac(target, pred)
         self.assertLess(np.abs(score - 0.4), 1e-8)
 
-    @unittest.skipUnless(check_for_no_backend(), "Test should only be executed "
-                                                 "if no backend is specified")
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed "
+        "if no backend is specified")
     def test_auroc_metric(self):
         """
         Test auroc metric

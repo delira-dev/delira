@@ -146,7 +146,8 @@ class SamplerTest(unittest.TestCase):
 
         assert len(sampler(250)) == 250
 
-        # checks if labels are all the same (should not happen if random sampled)
+        # checks if labels are all the same (should not happen if random
+        # sampled)
         assert len(set([dset[_idx]["label"] for _idx in sampler(301)])) > 1
 
     @unittest.skipUnless(check_for_no_backend(),
@@ -160,7 +161,8 @@ class SamplerTest(unittest.TestCase):
 
         assert len(sampler(250)) == 250
 
-        # checks if labels are all the same (should not happen if random sampled)
+        # checks if labels are all the same (should not happen if random
+        # sampled)
         n_draw = 1000
         label_list = [dset[_idx]["label"] for _idx in sampler(n_draw)]
         assert len(set(label_list)) > 1

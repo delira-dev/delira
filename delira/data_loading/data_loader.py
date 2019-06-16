@@ -1,11 +1,10 @@
+from delira.data_loading.dataset import AbstractDataset
 import numpy as np
 from batchgenerators.dataloading.data_loader import SlimDataLoaderBase
 from queue import Empty
 import logging
 
 logger = logging.getLogger(__name__)
-
-from delira.data_loading.dataset import AbstractDataset
 
 
 class BaseDataLoader(SlimDataLoaderBase):

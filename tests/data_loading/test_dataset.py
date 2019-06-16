@@ -8,6 +8,7 @@ from delira.data_loading.load_utils import norm_zero_mean_unit_std
 
 from ..utils import check_for_no_backend
 
+
 class DataSubsetConcatTest(unittest.TestCase):
 
     @staticmethod

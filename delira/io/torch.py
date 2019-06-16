@@ -1,12 +1,11 @@
+from delira.models.backends.torchscript import AbstractTorchScriptNetwork
+from delira.models.backends.torch import AbstractPyTorchNetwork
+import torch
 import logging
 import os
 from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
-
-import torch
-from delira.models.backends.torch import AbstractPyTorchNetwork
-from delira.models.backends.torchscript import AbstractTorchScriptNetwork
 
 
 def save_checkpoint_torch(file: str, model=None, optimizers={},
