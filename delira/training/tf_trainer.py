@@ -287,8 +287,7 @@ class TfNetworkTrainer(BaseNetworkTrainer):
         """
         if metrics is None:
             metrics = {}
-        if metric_keys is None:
-            metric_keys = {}
+
         self.module.training = False
 
         return super().predict_data_mgr(datamgr, batch_size, metrics,

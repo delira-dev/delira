@@ -4,6 +4,8 @@ import unittest
 
 import numpy as np
 from functools import partial
+import logging
+logger = logging.getLogger(__name__)
 from delira.training import Parameters
 
 from delira.data_loading import AbstractDataset
@@ -73,7 +75,7 @@ class ExperimentTest(unittest.TestCase):
                         "optimizer_cls": torch.optim.Adam,
                         "optimizer_params": {"lr": 1e-3},
                         "num_epochs": 2,
-                        "val_metrics": {"mae": mean_absolute_error},
+                        "val_metrics": {"val_mae": mean_absolute_error},
                         "lr_sched_cls": ReduceLROnPlateauCallbackPyTorch,
                         "lr_sched_params": {"mode": "min"}
                     }
@@ -134,7 +136,7 @@ class ExperimentTest(unittest.TestCase):
                             "optimizer_cls": tf.train.AdamOptimizer,
                             "optimizer_params": {"learning_rate": 1e-3},
                             "num_epochs": 2,
-                            "val_metrics": {"mae": mean_absolute_error},
+                            "val_metrics": {"val_mae": mean_absolute_error},
                             "lr_sched_cls": None,
                             "lr_sched_params": {}}
                     }
@@ -145,6 +147,7 @@ class ExperimentTest(unittest.TestCase):
             )
 
         self._test_cases_tf = test_cases_tf
+        logger.info(self._testMethodName)
 
     @unittest.skipIf("TORCH" not in get_backends(),
                      reason="No TORCH Backend installed")
@@ -167,7 +170,7 @@ class ExperimentTest(unittest.TestCase):
                 dset_train = DummyDataset(dataset_length_train)
                 dset_test = DummyDataset(dataset_length_test)
 
-                dmgr_train = BaseDataManager(dset_train, 16, 4, None)
+                dmgr_train = BaseDataManager(dset_train, 16, 2, None)
                 dmgr_test = BaseDataManager(dset_test, 16, 1, None)
 
                 exp.run(dmgr_train, dmgr_test)
@@ -287,7 +290,7 @@ class ExperimentTest(unittest.TestCase):
                 dset_train = DummyDataset(dataset_length_train)
                 dset_test = DummyDataset(dataset_length_test)
 
-                dmgr_train = BaseDataManager(dset_train, 16, 4, None)
+                dmgr_train = BaseDataManager(dset_train, 16, 2, None)
                 dmgr_test = BaseDataManager(dset_test, 16, 1, None)
 
                 exp.run(dmgr_train, dmgr_test)

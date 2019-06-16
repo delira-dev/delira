@@ -44,7 +44,6 @@ requirements_extra_tf = resolve_requirements(os.path.join(
 requirements_extra_full += requirements_extra_tf
 
 readme = read_file(os.path.join(os.path.dirname(__file__), "README.md"))
-license = read_file(os.path.join(os.path.dirname(__file__), "LICENSE"))
 delira_version = find_version(os.path.join(os.path.dirname(__file__), "delira",
                                            "__init__.py"))
 
@@ -58,7 +57,7 @@ setup(
     long_description_content_type='text/markdown',
     maintainer="Justus Schock",
     maintainer_email="justus.schock@rwth-aachen.de",
-    license=license,
+    license='BSD-2',
     install_requires=requirements,
     tests_require=["coverage"],
     python_requires=">=3.5",

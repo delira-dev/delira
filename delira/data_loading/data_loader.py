@@ -1,8 +1,11 @@
 import numpy as np
 from batchgenerators.dataloading.data_loader import SlimDataLoaderBase
+from queue import Empty
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .dataset import AbstractDataset
-from .sampler import AbstractSampler, SequentialSampler
 
 
 class BaseDataLoader(SlimDataLoaderBase):
@@ -12,8 +15,8 @@ class BaseDataLoader(SlimDataLoaderBase):
     """
 
     def __init__(self, dataset: AbstractDataset,
-                 batch_size=1, num_batches=None, seed=1,
-                 sampler=None):
+                 sampler_queues: list,
+                 batch_size=1, num_batches=None, seed=1):
         """
 
         Parameters
@@ -22,13 +25,13 @@ class BaseDataLoader(SlimDataLoaderBase):
             dataset to perform sample loading
         batch_size : int
             number of samples per batch
+        sampler_queues : list of :class:`multiprocessing.Queue`
+            the queue,s the sample indices to load will be put to.
+            Necessary for interprocess communication
         num_batches : int
             number of batches to load
         seed : int
             seed for Random Number Generator
-        sampler : AbstractSampler or None
-            class defining the sampling strategy;
-            if None: SequentialSampler will be used
 
         Raises
         ------
@@ -45,23 +48,15 @@ class BaseDataLoader(SlimDataLoaderBase):
         # store dataset in self._data
         super().__init__(dataset, batch_size)
 
-        assert isinstance(sampler, AbstractSampler) or sampler is None, \
-            "Sampler must be instance of subclass of AbstractSampler of None"
+        self.sampler_queues = sampler_queues
 
-        if sampler is None:
-            sampler = SequentialSampler(list(range(len(dataset))))
-
-        self.sampler = sampler
-
-        self.n_samples = len(sampler)
+        self.n_samples = len(dataset)
         if num_batches is None:
-            num_batches = len(sampler) // batch_size
+            num_batches = len(dataset) // batch_size
 
         self.num_batches = num_batches
         self._seed = seed
         np.random.seed(seed)
-
-        self._batches_generated = 0
 
     def generate_train_batch(self):
         """
@@ -79,30 +74,31 @@ class BaseDataLoader(SlimDataLoaderBase):
             If the maximum number of batches has been generated
         """
 
-        if self._batches_generated >= self.num_batches:
-            raise StopIteration
-        else:
-            self._batches_generated += 1
+        idxs = None
+        sampler_queue = self.sampler_queues[self.thread_id]
+        while idxs is None:
+            try:
+                idxs = sampler_queue.get(timeout=0.2)
 
-            idxs = self.sampler(self.batch_size)
+                result = [self._get_sample(_idx) for _idx in idxs]
 
-            result = [self._get_sample(_idx) for _idx in idxs]
+                result_dict = {}
 
-            result_dict = {}
+                # concatenate dict entities by keys
+                for _result_dict in result:
+                    for key, val in _result_dict.items():
+                        if key in result_dict.keys():
+                            result_dict[key].append(val)
+                        else:
+                            result_dict[key] = [val]
 
-            # concatenate dict entities by keys
-            for _result_dict in result:
-                for key, val in _result_dict.items():
-                    if key in result_dict.keys():
-                        result_dict[key].append(val)
-                    else:
-                        result_dict[key] = [val]
+                # convert list to numpy arrays
+                for key, val_list in result_dict.items():
+                    result_dict[key] = np.asarray(val_list)
 
-            # convert list to numpy arrays
-            for key, val_list in result_dict.items():
-                result_dict[key] = np.asarray(val_list)
-
-            return result_dict
+                return result_dict
+            except Empty:
+                pass
 
     def _get_sample(self, index):
         """
