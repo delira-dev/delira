@@ -6,7 +6,7 @@ from setuptools import find_packages, setup
 def resolve_requirements(file):
     if not os.path.isfile(file):
         os.path.join(os.path.join(os.path.dirname(__file__), "requirements",
-                                  file))
+                                  os.path.dirname(file)))
     requirements = []
     with open(file) as f:
         req = f.read().splitlines()
