@@ -1,11 +1,10 @@
+from .dataset import AbstractDataset
 import numpy as np
 from batchgenerators.dataloading.data_loader import SlimDataLoaderBase
 from queue import Empty
 import logging
 
 logger = logging.getLogger(__name__)
-
-from .dataset import AbstractDataset
 
 
 class BaseDataLoader(SlimDataLoaderBase):
