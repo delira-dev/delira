@@ -5,10 +5,14 @@ import numpy as np
 from trixi.logger import NumpyPlotFileLogger
 
 from delira.logging import TrixiHandler
+from ..utils import check_for_no_backend
 
 
 class TrixiHandlerTest(unittest.TestCase):
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no backend is "
+                         "installed and specified")
     def test_trixi_logger(self):
         handler = TrixiHandler(NumpyPlotFileLogger,
                                img_dir="./imgs", plot_dir="./plots")

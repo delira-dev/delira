@@ -1,12 +1,12 @@
 import unittest
 import gc
-from delira import get_backends
+from tests.utils import check_for_tf_backend
 from delira.training import Parameters
 from sklearn.metrics import mean_absolute_error
 from .utils import create_experiment_test_template_for_backend
 
 
-if "TF" in get_backends():
+if check_for_tf_backend():
     from delira.models import AbstractTfEagerNetwork
     import tensorflow as tf
 
@@ -32,7 +32,7 @@ class TestTfEagerBackend(
     create_experiment_test_template_for_backend("TF")
 ):
     def setUp(self) -> None:
-        if "TF" in get_backends():
+        if check_for_tf_backend():
             import tensorflow as tf
             from delira.training import TfEagerExperiment
             from delira.training.backends import switch_tf_execution_mode
@@ -79,6 +79,10 @@ class TestTfEagerBackend(
     def tearDown(self):
         try:
             del tf
+        except (UnboundLocalError, NameError):
+            pass
+
+        try:
             del tensorflow
         except (UnboundLocalError, NameError):
             pass

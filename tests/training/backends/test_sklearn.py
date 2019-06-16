@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from delira import get_backends
+from tests.utils import check_for_sklearn_backend
 from delira.training import Parameters
 from sklearn.metrics import mean_absolute_error
 from .utils import create_experiment_test_template_for_backend, DummyDataset
@@ -10,7 +10,7 @@ class TestSklearnBackend(
     create_experiment_test_template_for_backend("SKLEARN")
 ):
     def setUp(self) -> None:
-        if "SKLEARN" in get_backends():
+        if check_for_sklearn_backend():
             from delira.training import SklearnExperiment
             from sklearn.tree import DecisionTreeClassifier
             from sklearn.neural_network import MLPClassifier
@@ -58,8 +58,9 @@ class TestSklearnBackend(
 
         super().setUp()
 
-    @unittest.skipIf("SKLEARN" not in get_backends(),
-                     reason="No SKLEARN backend installed")
+    @unittest.skipUnless(check_for_sklearn_backend(),
+                         "Test should only be executed if SKLEARN backend is "
+                         "installed and specified")
     def test_experiment_test(self):
         from delira.data_loading import BaseDataManager
 

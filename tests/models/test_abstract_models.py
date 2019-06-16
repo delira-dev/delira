@@ -1,6 +1,8 @@
 import unittest
 import numpy as np
 from delira import get_backends
+from ..utils import check_for_chainer_backend, check_for_torch_backend, \
+    check_for_tf_backend, check_for_sklearn_backend
 
 
 class TestAbstractModels(unittest.TestCase):
@@ -172,34 +174,40 @@ class TestAbstractModels(unittest.TestCase):
             switch_tf_execution_mode("eager")
             self._model = self._setup_tfeager()
 
-    @unittest.skipIf("SKLEARN" not in get_backends(),
-                     reason="No SKLEARN backend installed")
+    @unittest.skipUnless(check_for_sklearn_backend(),
+                         "Test should be only executed if sklearn backend is "
+                         "installed and specified")
     def test_sklearn(self):
         self.run_model_arg()
 
-    @unittest.skipIf("CHAINER" not in get_backends(),
-                     reason="No CHAINER backend installed")
+    @unittest.skipUnless(check_for_chainer_backend(),
+                         "Test should be only executed if chainer backend is "
+                         "installed and specified")
     def test_chainer(self):
         import chainer
         self.run_model_arg(chainer.backend.CpuDevice())
 
-    @unittest.skipIf("TORCH" not in get_backends(),
-                     reason="No TORCH backend installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Test should be only executed if torch backend is "
+                         "installed and specified")
     def test_pytorch(self):
         self.run_model_arg("cpu")
 
-    @unittest.skipIf("TORCH" not in get_backends(),
-                     reason="No TORCH backend installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Test should be only executed if torch backend is "
+                         "installed and specified")
     def test_torchscript(self):
         self.run_model_arg("cpu")
 
-    @unittest.skipIf("TF" not in get_backends(),
-                     reason="No TF backend installed")
+    @unittest.skipUnless(check_for_tf_backend(),
+                         "Test should be only executed if tf backend is "
+                         "installed and specified")
     def test_tf_eager(self):
         self.run_model_arg("/cpu:0")
 
-    @unittest.skipIf("TF" not in get_backends(),
-                     reason="No TF backend installed")
+    @unittest.skipUnless(check_for_tf_backend(),
+                         "Test should be only executed if tf backend is "
+                         "installed and specified")
     def test_tf_graph(self):
 
         self.run_model_kwarg()

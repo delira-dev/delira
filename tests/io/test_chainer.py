@@ -1,8 +1,8 @@
 import unittest
 
-from delira import get_backends
+from ..utils import check_for_chainer_backend
 
-if "CHAINER" in get_backends():
+if check_for_chainer_backend():
     import chainer
     from delira.models import AbstractChainerNetwork
 
@@ -24,8 +24,9 @@ if "CHAINER" in get_backends():
 
 class IoChainerTest(unittest.TestCase):
 
-    @unittest.skipIf("CHAINER" not in get_backends(),
-                     reason="No CHAINER Backend Installed")
+    @unittest.skipUnless(check_for_chainer_backend(),
+                         "Test should be only executed if chainer backend is "
+                         "installed and specified")
     def test_load_save(self):
 
         from delira.io.chainer import load_checkpoint, save_checkpoint

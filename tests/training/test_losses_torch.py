@@ -1,13 +1,13 @@
 
 import unittest
 
-from delira import get_backends
+from ..utils import check_for_torch_backend
 
 
 class FocalLossTestPyTorch(unittest.TestCase):
 
-    @unittest.skipIf("TORCH" not in get_backends(),
-                     reason="No torch backend installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         reason="No torch backend installed")
     def test_focalloss(self):
         """
         Test some predefines focal loss values
@@ -37,7 +37,7 @@ class FocalLossTestPyTorch(unittest.TestCase):
         # target for focal loss
         p_t = p * t + (1 - p) * (1 - t)
         alpha_t = torch.Tensor([alpha]).expand_as(t) * t + \
-            (1 - t) * (1 - torch.Tensor([alpha]).expand_as(t))
+                  (1 - t) * (1 - torch.Tensor([alpha]).expand_as(t))
         w = alpha_t * (1 - p_t).pow(torch.Tensor([gamma]))
         fc_value = F.binary_cross_entropy(p, t, w, reduction='none')
 
@@ -45,7 +45,7 @@ class FocalLossTestPyTorch(unittest.TestCase):
         p_tmp = torch.sigmoid(p_l)
         p_t = p_tmp * t + (1 - p_tmp) * (1 - t)
         alpha_t = torch.Tensor([alpha]).expand_as(t) * t + \
-            (1 - t) * (1 - torch.Tensor([alpha]).expand_as(t))
+                  (1 - t) * (1 - torch.Tensor([alpha]).expand_as(t))
         w = alpha_t * (1 - p_t).pow(torch.Tensor([gamma]))
 
         fc_value_logit = \

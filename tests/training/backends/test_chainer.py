@@ -4,8 +4,10 @@ from delira.training import Parameters
 from sklearn.metrics import mean_absolute_error
 from .utils import create_experiment_test_template_for_backend
 
+from tests.utils import check_for_chainer_backend
 
-if "CHAINER" in get_backends():
+
+if check_for_chainer_backend():
     from delira.models import AbstractChainerNetwork
     import chainer
 
@@ -31,7 +33,7 @@ class TestChainerBackend(
     create_experiment_test_template_for_backend("CHAINER")
 ):
     def setUp(self) -> None:
-        if "CHAINER" in get_backends():
+        if check_for_chainer_backend():
             from delira.training import ChainerExperiment
             import chainer
 

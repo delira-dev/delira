@@ -1,11 +1,11 @@
 import unittest
-from delira import get_backends
+from tests.utils import check_for_chainer_backend
 
 
 class TestDataParallelChainer(unittest.TestCase):
 
     def setUp(self) -> None:
-        if "CHAINER" in get_backends():
+        if check_for_chainer_backend():
             import chainer
             import chainer.link
             import chainer.links
@@ -40,8 +40,9 @@ class TestDataParallelChainer(unittest.TestCase):
             )
             self.optimizer.setup(self.model)
 
-    @unittest.skipIf("CHAINER" not in get_backends(),
-                     "No CHAINER Backend installed")
+    @unittest.skipUnless(check_for_chainer_backend(),
+                         "Test should be only executed if chainer backend is "
+                         "installed and specified")
     def test_update(self):
         import numpy as np
         import chainer
@@ -72,8 +73,9 @@ class TestDataParallelChainer(unittest.TestCase):
                 self.assertIsNone(updated_param.grad_var)
 
     # test with keyword arguments
-    @unittest.skipIf("CHAINER" not in get_backends(),
-                     "No CHAINER Backend installed")
+    @unittest.skipUnless(check_for_chainer_backend(),
+                         "Test should be only executed if chainer backend is "
+                         "installed and specified")
     def test_keyword_arguments_different_batchsize(self):
         import numpy as np
         import chainer
@@ -92,8 +94,9 @@ class TestDataParallelChainer(unittest.TestCase):
                                  chainer.get_device("@numpy"))
 
     # test with positional arguments
-    @unittest.skipIf("CHAINER" not in get_backends(),
-                     "No CHAINER Backend installed")
+    @unittest.skipUnless(check_for_chainer_backend(),
+                         "Test should be only executed if chainer backend is "
+                         "installed and specified")
     def test_positional_arguments(self):
         import numpy as np
         import chainer

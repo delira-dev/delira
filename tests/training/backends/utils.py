@@ -1,8 +1,16 @@
 import numpy as np
 from delira.data_loading import AbstractDataset, BaseDataManager
 from delira.training import BaseExperiment
-from delira import get_backends
+from tests.utils import check_for_chainer_backend, check_for_tf_backend, \
+    check_for_sklearn_backend, check_for_torch_backend
 import unittest
+
+_SKIP_CONDITIONS = {
+    "CHAINER": check_for_chainer_backend,
+    "TF": check_for_tf_backend,
+    "TORCH": check_for_torch_backend,
+    "SKLEARN": check_for_sklearn_backend()
+}
 
 
 class DummyDataset(AbstractDataset):
@@ -65,8 +73,10 @@ def kfold_experiment(experiment_cls, params, network_cls, len_data,
 
 
 def create_experiment_test_template_for_backend(backend: str):
-    backend_skip = unittest.skipIf(backend not in get_backends(),
-                                   reason="No %s backend installed" % backend)
+    backend_skip = unittest.skipUnless(_SKIP_CONDITIONS[backend](),
+                                       "Test should be only executed if "
+                                       "backend %s is installed and specified"
+                                       % backend)
 
     class TestCase(unittest.TestCase):
 

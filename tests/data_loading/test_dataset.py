@@ -6,6 +6,7 @@ from delira.data_loading import ConcatDataset, BaseCacheDataset, \
     BaseExtendCacheDataset, BaseLazyDataset, LoadSample, LoadSampleLabel
 from delira.data_loading.load_utils import norm_zero_mean_unit_std
 
+from ..utils import check_for_no_backend
 
 class DataSubsetConcatTest(unittest.TestCase):
 
@@ -26,6 +27,9 @@ class DataSubsetConcatTest(unittest.TestCase):
         return {'data': np.random.rand(1, 256, 256),
                 'label': np.random.randint(2)}
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_data_subset_concat(self):
 
         class DummyCacheDataset(BaseCacheDataset):
@@ -78,6 +82,9 @@ class DataSubsetConcatTest(unittest.TestCase):
         # check if entries are valid
         self.assertTrue(sliced_concat_set[0])
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_cache_dataset(self):
         def load_mul_sample(path):
             """
@@ -135,6 +142,9 @@ class DataSubsetConcatTest(unittest.TestCase):
         except BaseException:
             raise AssertionError('Dataset iteration failed.')
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_lazy_dataset(self):
         # test lazy dataset
         paths = list(range(10))
@@ -158,6 +168,9 @@ class DataSubsetConcatTest(unittest.TestCase):
         except BaseException:
             raise AssertionError('Dataset iteration failed.')
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_load_sample(self):
         def load_dummy_label(path):
             return {'label': 42}

@@ -11,11 +11,16 @@ from delira.data_loading.sampler import LambdaSampler, \
     WeightedRandomSampler, \
     WeightedPrevalenceRandomSampler
 
+from ..utils import check_for_no_backend
+
 from .utils import DummyDataset
 
 
 class SamplerTest(unittest.TestCase):
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_lambda_sampler(self):
         np.random.seed(1)
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
@@ -32,6 +37,9 @@ class SamplerTest(unittest.TestCase):
         self.assertEqual(sampler_a(15), list(range(15)))
         self.assertEqual(sampler_b(15), list(range(len(dset) - 15, len(dset))))
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_prevalence_random_sampler(self):
         np.random.seed(1)
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
@@ -52,6 +60,9 @@ class SamplerTest(unittest.TestCase):
 
         self.assertEqual(len(sampler(5)), 5)
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_prevalence_sequential_sampler(self):
         np.random.seed(1)
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
@@ -61,6 +72,9 @@ class SamplerTest(unittest.TestCase):
         # ToDo add test considering actual sampling strategy
         self.assertEqual(len(sampler(5)), 5)
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_random_sampler(self):
         np.random.seed(1)
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
@@ -74,6 +88,9 @@ class SamplerTest(unittest.TestCase):
         self.assertGreater(
             len(set([dset[_idx]["label"] for _idx in sampler(301)])), 1)
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_sequential_sampler(self):
         np.random.seed(1)
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
@@ -91,6 +108,9 @@ class SamplerTest(unittest.TestCase):
         self.assertEqual(len(set([dset[_idx]["label"]
                                   for _idx in sampler(101)])), 2)
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_stopping_prevalence_random_sampler(self):
         np.random.seed(1)
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
@@ -115,34 +135,38 @@ class SamplerTest(unittest.TestCase):
                 self.assertEqual(
                     len(set([dset[_idx]["label"] for _idx in sample])), 3)
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
+    def test_weighted_sampler(self):
+        np.random.seed(1)
+        dset = DummyDataset(600, [0.5, 0.3, 0.2])
 
-def test_weighted_sampler():
-    np.random.seed(1)
-    dset = DummyDataset(600, [0.5, 0.3, 0.2])
+        sampler = WeightedRandomSampler.from_dataset(dset)
 
-    sampler = WeightedRandomSampler.from_dataset(dset)
+        assert len(sampler(250)) == 250
 
-    assert len(sampler(250)) == 250
+        # checks if labels are all the same (should not happen if random sampled)
+        assert len(set([dset[_idx]["label"] for _idx in sampler(301)])) > 1
 
-    # checks if labels are all the same (should not happen if random sampled)
-    assert len(set([dset[_idx]["label"] for _idx in sampler(301)])) > 1
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
+    def test_weighted_prevalence_sampler(self):
+        np.random.seed(1)
+        dset = DummyDataset(2000, [0.5, 0.3, 0.2])
 
+        sampler = WeightedPrevalenceRandomSampler.from_dataset(dset)
 
-def test_weighted_prevalence_sampler():
-    np.random.seed(1)
-    dset = DummyDataset(2000, [0.5, 0.3, 0.2])
+        assert len(sampler(250)) == 250
 
-    sampler = WeightedPrevalenceRandomSampler.from_dataset(dset)
-
-    assert len(sampler(250)) == 250
-
-    # checks if labels are all the same (should not happen if random sampled)
-    n_draw = 1000
-    label_list = [dset[_idx]["label"] for _idx in sampler(n_draw)]
-    assert len(set(label_list)) > 1
-    assert abs(label_list.count(0) / n_draw - (1 / 3)) < 0.1
-    assert abs(label_list.count(1) / n_draw - (1 / 3)) < 0.1
-    assert abs(label_list.count(2) / n_draw - (1 / 3)) < 0.1
+        # checks if labels are all the same (should not happen if random sampled)
+        n_draw = 1000
+        label_list = [dset[_idx]["label"] for _idx in sampler(n_draw)]
+        assert len(set(label_list)) > 1
+        assert abs(label_list.count(0) / n_draw - (1 / 3)) < 0.1
+        assert abs(label_list.count(1) / n_draw - (1 / 3)) < 0.1
+        assert abs(label_list.count(2) / n_draw - (1 / 3)) < 0.1
 
 
 if __name__ == '__main__':

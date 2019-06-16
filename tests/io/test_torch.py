@@ -1,12 +1,13 @@
 import unittest
 
-from delira import get_backends
+from ..utils import check_for_torch_backend
 
 
 class IoTorchTest(unittest.TestCase):
 
-    @unittest.skipIf("TORCH" not in get_backends(),
-                     reason="No TORCH Backend Installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Test should be only executed if torch backend is "
+                         "installed and specified")
     def test_load_save(self):
 
         from delira.io.torch import load_checkpoint_torch, \

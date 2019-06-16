@@ -1,12 +1,13 @@
 import unittest
 
-from delira import get_backends
+from ..utils import check_for_tf_backend
 
 
 class IoTfTest(unittest.TestCase):
 
-    @unittest.skipIf("TF" not in get_backends(),
-                     reason="No TF Backend Installed")
+    @unittest.skipUnless(check_for_tf_backend(),
+                         "Test should be only executed if tensorflow backend "
+                         "is installed and specified")
     def test_load_save(self):
         from delira.io.tf import load_checkpoint, save_checkpoint
         from delira.models import AbstractTfGraphNetwork

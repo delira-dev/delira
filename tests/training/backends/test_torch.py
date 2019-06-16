@@ -1,11 +1,11 @@
 import unittest
-from delira import get_backends
+from tests.utils import check_for_torch_backend
 from delira.training import Parameters
 from sklearn.metrics import mean_absolute_error
 from .utils import create_experiment_test_template_for_backend
 
 
-if "TORCH" in get_backends():
+if check_for_torch_backend():
     from delira.models import AbstractPyTorchNetwork
     import torch
 
@@ -30,7 +30,7 @@ class TestTorchBackend(
     create_experiment_test_template_for_backend("TORCH")
 ):
     def setUp(self) -> None:
-        if "TORCH" in get_backends():
+        if check_for_torch_backend():
             import torch
             from delira.training import PyTorchExperiment
 

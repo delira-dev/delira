@@ -1,12 +1,13 @@
 import unittest
 
-from delira import get_backends
+from ..utils import check_for_sklearn_backend
 
 
 class IoSklearnTest(unittest.TestCase):
 
-    @unittest.skipIf("SKLEARN" not in get_backends(),
-                     reason="No SKLEARN Backend Installed")
+    @unittest.skipUnless(check_for_sklearn_backend(),
+                         "Test should be only executed if sklearn backend is "
+                         "installed and specified")
     def test_load_save(self):
 
         from delira.io.sklearn import load_checkpoint, save_checkpoint

@@ -1,13 +1,14 @@
 import unittest
-from delira import get_backends
 from copy import deepcopy
 import numpy as np
+
+from tests.utils import check_for_torch_backend
 
 
 class TestDataParallelTorch(unittest.TestCase):
 
     def setUp(self) -> None:
-        if "TORCH" in get_backends():
+        if check_for_torch_backend():
             from delira.models.backends.torch import AbstractPyTorchNetwork, \
                 DataParallelPyTorchNetwork
             import torch
@@ -32,8 +33,9 @@ class TestDataParallelTorch(unittest.TestCase):
             else:
                 self.model = model
 
-    @unittest.skipIf("TORCH" not in get_backends(),
-                     "No TORCH Backend installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Test should be only executed if torch backend is "
+                         "installed and specified")
     def test_update(self):
         import torch
 
