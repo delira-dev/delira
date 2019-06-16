@@ -5,6 +5,8 @@ import pickle
 import os
 from datetime import datetime
 
+import copy
+
 import numpy as np
 from sklearn.model_selection import KFold, StratifiedKFold, \
     StratifiedShuffleSplit, ShuffleSplit
@@ -544,8 +546,8 @@ class BaseExperiment(object):
             train_data = data.get_subset(train_idxs)
             test_data = data.get_subset(test_idxs)
 
-            train_data.update_state_from_dict(train_kwargs)
-            test_data.update_state_from_dict(test_kwargs)
+            train_data.update_state_from_dict(copy.deepcopy(train_kwargs))
+            test_data.update_state_from_dict(copy.deepcopy(test_kwargs))
 
             val_data = None
             if val_split is not None:
@@ -569,7 +571,7 @@ class BaseExperiment(object):
                 for _train_idxs, _val_idxs in _val_split.split(train_idxs,
                                                                train_labels):
                     val_data = train_data.get_subset(_val_idxs)
-                    val_data.update_state_from_dict(test_kwargs)
+                    val_data.update_state_from_dict(copy.deepcopy(test_kwargs))
 
                     train_data = train_data.get_subset(_train_idxs)
 

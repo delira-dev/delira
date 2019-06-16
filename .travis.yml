@@ -120,6 +120,7 @@ before_install:
           bash scripts/ci/install_before_docs.sh;
       else
           bash scripts/ci/install_before_style_check.sh;
+          pip install -r docs/requirements.txt;
       fi
 
 install:
@@ -136,10 +137,10 @@ script:
           bash scripts/ci/run_style_checks.sh;
       fi
 
+
 after_success:
     - if [[ "$TEST_TYPE" == "unittests" ]]; then
           codecov;
-      fi
 
 before_deploy:
     - cd $TRAVIS_BUILD_DIR

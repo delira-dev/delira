@@ -56,6 +56,7 @@ def save_checkpoint_torch(file: str, model=None, optimizers={},
 
     torch.save(state, file, **kwargs)
 
+
 def load_checkpoint_torch(file, **kwargs):
     """
     Loads a saved model
@@ -123,6 +124,7 @@ def save_checkpoint_torchscript(file: str, model=None, optimizers={},
     if optimizers or epoch is not None:
         save_checkpoint_torch(file + "_trainer_state.pt", None,
                               optimizers=optimizers, epoch=epoch, **kwargs)
+
 
 def load_checkpoint_torchscript(file: str, **kwargs):
     """

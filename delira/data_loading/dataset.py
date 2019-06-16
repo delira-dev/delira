@@ -583,8 +583,13 @@ class Nii3DLazyDataset(BaseLazyDataset):
         """
 
     @make_deprecated('LoadSample')
-    def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
-                 img_files, label_file, **load_kwargs):
+    def __init__(
+            self,
+            data_path,
+            load_fn,
+            img_files,
+            label_file,
+            **load_kwargs):
         """
          Parameters
         ----------
@@ -639,7 +644,7 @@ class Nii3DCacheDatset(BaseCacheDataset):
      """
 
     @make_deprecated('LoadSample')
-    def __init__(self, data_path, load_fn, img_extensions, gt_extensions,
+    def __init__(self, data_path, load_fn,
                  img_files, label_file, **load_kwargs):
         """
          Parameters

@@ -1,4 +1,5 @@
 import logging
+import os
 import pickle
 import typing
 
@@ -9,8 +10,8 @@ from delira.training.callbacks import AbstractCallback
 from delira.models import AbstractNetwork
 
 import numpy as np
-import os
 from tqdm import tqdm
+
 from delira.logging import TrixiHandler
 
 logger = logging.getLogger(__name__)
@@ -455,7 +456,7 @@ class BaseNetworkTrainer(Predictor):
                     if "val_" + val_score_key not in total_metrics:
                         logger.warning(
                             "val_score_key '%s' not a valid key for \
-                                    validation metrics ")
+                                    validation metrics" % str(val_score_key))
 
                         new_val_score = best_val_score
 
@@ -613,7 +614,7 @@ class BaseNetworkTrainer(Predictor):
 
         """
         for key, val in new_state.items():
-            if (key.startswith("__") and key.endswith("__")):
+            if key.startswith("__") and key.endswith("__"):
                 continue
 
             try:
@@ -728,7 +729,7 @@ class BaseNetworkTrainer(Predictor):
                             handlers=new_handlers)
 
     @staticmethod
-    def _search_for_prev_state(path, extensions=[]):
+    def _search_for_prev_state(path, extensions=None):
         """
         Helper function to search in a given path for previous epoch states
         (indicated by extensions)
@@ -751,6 +752,8 @@ class BaseNetworkTrainer(Predictor):
             the latest epoch (1 if no checkpoint was found)
 
         """
+        if extensions is None:
+            extensions = []
         files = []
         for file in os.listdir(path):
             for ext in extensions:

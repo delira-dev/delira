@@ -8,6 +8,9 @@ from delira.models.backends.tf_graph import AbstractTfGraphNetwork
 import os
 import logging
 
+from batchgenerators.dataloading import MultiThreadedAugmenter
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,18 +30,18 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
                  key_mapping: dict,
                  losses: dict,
                  optimizer_cls,
-                 optimizer_params={},
-                 train_metrics={},
-                 val_metrics={},
+                 optimizer_params=None,
+                 train_metrics=None,
+                 val_metrics=None,
                  lr_scheduler_cls=None,
-                 lr_scheduler_params={},
-                 gpu_ids=[],
+                 lr_scheduler_params=None,
+                 gpu_ids=None,
                  save_freq=1,
                  optim_fn=create_optims_default,
                  logging_type="tensorboardx",
-                 logging_kwargs={},
+                 logging_kwargs=None,
                  fold=0,
-                 callbacks=[],
+                 callbacks=None,
                  start_epoch=1,
                  metric_keys=None,
                  convert_batch_to_npy_fn=convert_to_numpy,
@@ -112,6 +115,21 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
         """
         # switch to graph execution
         switch_tf_execution_mode("graph")
+
+        if optimizer_params is None:
+            optimizer_params = {}
+        if train_metrics is None:
+            train_metrics = {}
+        if val_metrics is None:
+            val_metrics = {}
+        if lr_scheduler_params is None:
+            lr_scheduler_params = {}
+        if gpu_ids is None:
+            gpu_ids = []
+        if logging_kwargs is None:
+            logging_kwargs = {}
+        if callbacks is None:
+            callbacks = []
 
         super().__init__(
             network, save_path, losses, optimizer_cls, optimizer_params,
@@ -247,8 +265,8 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
 
         return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
 
-    def predict_data_mgr(self, datamgr, batch_size=None, metrics={},
-                         metric_keys={}, verbose=False, **kwargs):
+    def predict_data_mgr(self, datamgr, batch_size=None, metrics=None,
+                         metric_keys=None, verbose=False, **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator
 
@@ -256,7 +274,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
         ----------
         datamgr : :class:`BaseDataManager`
             Manager producing a generator holding the batches
-        batchsize : int
+        batch_size : int
             Artificial batchsize (sampling will be done with batchsize
             1 and sampled data will be stacked to match the artificial
             batchsize)(default: None)
@@ -270,6 +288,9 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
             additional keword arguments
 
         """
+        if metrics is None:
+            metrics = {}
+
         self.module.training = False
 
         return super().predict_data_mgr(datamgr, batch_size, metrics,

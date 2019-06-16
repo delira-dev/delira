@@ -17,10 +17,8 @@ class Parameters(LookupConfig):
 
     """
 
-    def __init__(self, fixed_params={"model": {},
-                                     "training": {}},
-                 variable_params={"model": {},
-                                  "training": {}}):
+    def __init__(self, fixed_params=None,
+                 variable_params=None):
         """
 
         Parameters
@@ -30,6 +28,13 @@ class Parameters(LookupConfig):
         variable_params: dict
             variable parameters (can be variated by a hyperparameter search)
         """
+
+        if variable_params is None:
+            variable_params = {"model": {},
+                               "training": {}}
+        if fixed_params is None:
+            fixed_params = {"model": {},
+                            "training": {}}
 
         super().__init__(fixed=fixed_params,
                          variable=variable_params)
@@ -238,8 +243,8 @@ class Parameters(LookupConfig):
             overwrite a 'regular' value with a dict/Config at lower levels.
             See examples for an illustration of the difference
 
-        Examples:
-        ---------
+        Examples
+        --------
         The following illustrates the update behaviour if
         :obj:allow_dict_overwrite is active. If it isn't, an AttributeError
         would be raised, originating from trying to update "string"::
