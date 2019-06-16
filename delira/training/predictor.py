@@ -169,7 +169,6 @@ class Predictor(object):
             a dictionary containing all metrics of the current batch
 
         """
-
         if metrics is None:
             metrics = {}
         orig_num_aug_processes = datamgr.n_process_augmentation
@@ -284,8 +283,11 @@ class Predictor(object):
         """
         if metrics is None:
             metrics = {}
-        yield from self.predict_data_mgr_cache(datamgr, batchsize, metrics,
-                                               metric_keys, verbose,
+        yield from self.predict_data_mgr_cache(datamgr=datamgr,
+                                               batchsize=batchsize,
+                                               metrics=metrics,
+                                               metric_keys=metric_keys,
+                                               verbose=verbose,
                                                cache_preds=False, **kwargs)
 
         return
@@ -330,8 +332,11 @@ class Predictor(object):
         """
         if metrics is None:
             metrics = {}
-        yield from self.predict_data_mgr_cache(datamgr, batchsize, metrics,
-                                               metric_keys, verbose,
+        yield from self.predict_data_mgr_cache(datamgr=datamgr,
+                                               batchsize=batchsize,
+                                               metrics=metrics,
+                                               metric_keys=metric_keys,
+                                               verbose=verbose,
                                                cache_preds=True, **kwargs)
 
         return
@@ -382,11 +387,17 @@ class Predictor(object):
 
         if metrics is None:
             metrics = {}
+
         predictions_all, metric_vals = [], {k: [] for k in metrics.keys()}
 
-        for preds, _metric_vals in self.predict_data_mgr(datamgr, batchsize,
-                                                         metrics, metric_keys,
-                                                         verbose, **kwargs):
+        for preds, _metric_vals in self.predict_data_mgr(
+                datamgr=datamgr,
+                batchsize=batchsize,
+                metrics=metrics,
+                metric_keys=metric_keys,
+                verbose=verbose,
+                **kwargs):
+
             if cache_preds:
                 predictions_all.append(preds)
             for k, v in _metric_vals.items():

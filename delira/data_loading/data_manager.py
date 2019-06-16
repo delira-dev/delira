@@ -5,6 +5,9 @@ from batchgenerators.dataloading import MultiThreadedAugmenter, \
     SingleThreadedAugmenter, SlimDataLoaderBase
 from batchgenerators.transforms import AbstractTransform
 
+from multiprocessing import Queue
+from queue import Full
+
 from delira import get_current_debug_mode
 from .data_loader import BaseDataLoader
 from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset
@@ -24,8 +27,8 @@ class Augmenter(object):
     """
 
     def __init__(self, data_loader: BaseDataLoader, transforms,
-                 n_process_augmentation=None, num_cached_per_queue=2,
-                 seeds=None, **kwargs):
+                 n_process_augmentation, sampler, sampler_queues: list,
+                 num_cached_per_queue=2, seeds=None, **kwargs):
         """
 
         Parameters
@@ -37,6 +40,12 @@ class Augmenter(object):
         n_process_augmentation : int
             the number of processes to use for augmentation (only necessary if
             not in debug mode)
+        sampler : :class:`AbstractSampler`
+            the sampler to use; must be used here instead of inside the
+            dataloader to avoid duplications and oversampling due to
+            multiprocessing
+        sampler_queues : list of :class:`multiprocessing.Queue`
+            queues to pass the sample indices to the actual dataloader
         num_cached_per_queue : int
             the number of samples to cache per queue (only necessary if not in
             debug mode)
@@ -45,6 +54,9 @@ class Augmenter(object):
         **kwargs :
             additional keyword arguments
         """
+
+        self._batchsize = data_loader.batch_size
+
         # don't use multiprocessing in debug mode
         if get_current_debug_mode():
             augmenter = SingleThreadedAugmenter(data_loader, transforms)
@@ -72,42 +84,59 @@ class Augmenter(object):
                 **kwargs)
 
         self._augmenter = augmenter
+        self._sampler = sampler
+        self._sampler_queues = sampler_queues
+        self._queue_id = 0
 
-    @property
     def __iter__(self):
         """
-        Property returning the augmenters ``__iter__``
+        Function returning an iterator
 
         Returns
         -------
-        Callable
-            the augmenters ``__iter__``
+        Augmenter
+            self
         """
-        return self._augmenter.__iter__
+        return self
 
-    @property
+    def _next_queue(self):
+        idx = self._queue_id
+        self._queue_id = (self._queue_id + 1) % len(self._sampler_queues)
+        return self._sampler_queues[idx]
+
     def __next__(self):
         """
-        Property returning the augmenters ``__next__``
+        Function to sample and load the next batch
 
         Returns
         -------
-        Callable
-            the augmenters ``__next__``
+        dict
+            the next batch
         """
-        return self._augmenter.__next__
+        idxs = self._sampler(self._batchsize)
+        queue = self._next_queue()
 
-    @property
+        # dont't wait forever. Release this after short timeout and try again
+        # to avoid deadlock
+        while True:
+            try:
+                queue.put(idxs, timeout=0.2)
+                break
+            except Full:
+                continue
+
+        return next(self._augmenter)
+
     def next(self):
         """
-        Property returning the augmenters ``next``
+        Function to sample and load
 
         Returns
         -------
-        Callable
-            the augmenters ``next``
+        dict
+            the next batch
         """
-        return self._augmenter.next
+        return next(self)
 
     @staticmethod
     def __identity_fn(*args, **kwargs):
@@ -179,7 +208,6 @@ class Augmenter(object):
         """
         return self._fn_checker("restart")
 
-    @property
     def _finish(self):
         """
         Property to provide uniform API of ``_finish``
@@ -190,7 +218,12 @@ class Augmenter(object):
             either the augmenter's ``_finish`` method (if available) or
             ``__identity_fn`` (if not available)
         """
-        return self._fn_checker("_finish")
+        ret_val = self._fn_checker("_finish")()
+        for queue in self._sampler_queues:
+            queue.close()
+            queue.join_thread()
+
+        return ret_val
 
     @property
     def num_batches(self):
@@ -230,6 +263,7 @@ class Augmenter(object):
         Function defining what to do, if object should be deleted
 
         """
+        self._finish()
         del self._augmenter
 
 
@@ -360,15 +394,23 @@ class BaseDataManager(object):
         """
         assert self.n_batches > 0
 
-        data_loader = self.data_loader_cls(self.dataset,
-                                           batch_size=self.batch_size,
-                                           num_batches=self.n_batches,
-                                           seed=seed,
-                                           sampler=self.sampler
-                                           )
+        sampler_queues = []
+
+        for idx in range(self.n_process_augmentation):
+            sampler_queues.append(Queue())
+
+        data_loader = self.data_loader_cls(
+            self.dataset,
+            batch_size=self.batch_size,
+            num_batches=self.n_batches,
+            seed=seed,
+            sampler_queues=sampler_queues
+        )
 
         return Augmenter(data_loader, self.transforms,
                          self.n_process_augmentation,
+                         sampler=self.sampler,
+                         sampler_queues=sampler_queues,
                          num_cached_per_queue=2,
                          seeds=self.n_process_augmentation * [seed])
 
@@ -528,6 +570,8 @@ class BaseDataManager(object):
             number of augmentation processes
         """
 
+        if get_current_debug_mode():
+            return 1
         return self._n_process_augmentation
 
     @n_process_augmentation.setter

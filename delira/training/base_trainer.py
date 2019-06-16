@@ -454,7 +454,7 @@ class BaseNetworkTrainer(Predictor):
                     if "val_" + val_score_key not in total_metrics:
                         logger.warning(
                             "val_score_key '%s' not a valid key for \
-                                    validation metrics ")
+                                    validation metrics" % str(val_score_key))
 
                         new_val_score = best_val_score
 

@@ -414,8 +414,7 @@ if "TORCH" in get_backends():
             """
             if metrics is None:
                 metrics = {}
-            if metric_keys is None:
-                metric_keys = {}
+
             self.module.eval()
 
             return super().predict_data_mgr(datamgr, batchsize, metrics,
