@@ -9,7 +9,7 @@ _SKIP_CONDITIONS = {
     "CHAINER": check_for_chainer_backend,
     "TF": check_for_tf_backend,
     "TORCH": check_for_torch_backend,
-    "SKLEARN": check_for_sklearn_backend()
+    "SKLEARN": check_for_sklearn_backend
 }
 
 

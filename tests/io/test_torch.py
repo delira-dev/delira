@@ -35,8 +35,9 @@ class IoTorchTest(unittest.TestCase):
         save_checkpoint_torch("./model_torch.pt", model=net)
         self.assertTrue(load_checkpoint_torch("./model_torch.pt"))
 
-    @unittest.skipIf("TORCH" not in get_backends(),
-                     reason="No TORCH Backend Installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Test should be only executed if torch backend is "
+                         "installed and specified")
     def test_torchscript_save(self):
         from delira.io.torch import load_checkpoint_torchscript, \
             save_checkpoint_torchscript

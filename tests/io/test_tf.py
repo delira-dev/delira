@@ -60,7 +60,9 @@ class IoTfTest(unittest.TestCase):
             with self.subTest(var_1=var_1, var_3=var_3):
                 self.assertTrue(np.all(var_1 == var_3))
 
-    @unittest.skipIf("TF" not in get_backends(), "No TF Backend installed")
+    @unittest.skipUnless(check_for_tf_backend(),
+                         "Test should be only executed if tensorflow backend "
+                         "is installed and specified")
     def test_load_save_eager(self):
         from delira.io.tf import load_checkpoint_eager, save_checkpoint_eager
         from delira.models import AbstractTfEagerNetwork
