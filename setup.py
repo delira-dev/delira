@@ -5,8 +5,7 @@ from setuptools import find_packages, setup
 
 def resolve_requirements(file):
     if not os.path.isfile(file):
-        os.path.join(os.path.join(os.path.dirname(__file__), "requirements",
-                                  os.path.dirname(file)))
+        file = os.path.join(os.path.dirname(__file__), "requirements", file)
     requirements = []
     with open(file) as f:
         req = f.read().splitlines()
@@ -47,8 +46,7 @@ def parse_all_requirements(backend_requirement_dict: dict):
 
     # parse all requirements
     for backend_name, requirement_file in backend_requirement_dict.items():
-        _reqs = resolve_requirements(
-            os.path.join(os.path.dirname(__file__), requirement_file))
+        _reqs = resolve_requirements(requirement_file)
         backend_requirements[backend_name] = _reqs
 
         # add all requirements to full if not already part of it
