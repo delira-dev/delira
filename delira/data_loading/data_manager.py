@@ -27,7 +27,7 @@ class Augmenter(object):
     """
 
     def __init__(self, data_loader: BaseDataLoader, transforms,
-                 n_process_augmentation, sampler, sampler_queue: Queue,
+                 n_process_augmentation, sampler, sampler_queues: list,
                  num_cached_per_queue=2, seeds=None, **kwargs):
         """
 
@@ -44,8 +44,8 @@ class Augmenter(object):
             the sampler to use; must be used here instead of inside the
             dataloader to avoid duplications and oversampling due to
             multiprocessing
-        sampler_queue : :class:`multiprocessing.Queue`
-            a queue to pass the sample indices to the actual dataloader
+        sampler_queues : list of g:class:`multiprocessing.Queue`
+            queues to pass the sample indices to the actual dataloader
         num_cached_per_queue : int
             the number of samples to cache per queue (only necessary if not in
             debug mode)
@@ -85,7 +85,8 @@ class Augmenter(object):
 
         self._augmenter = augmenter
         self._sampler = sampler
-        self._sampler_queue = sampler_queue
+        self._sampler_queues = sampler_queues
+        self._queue_id = 0
 
     def __iter__(self):
         """
@@ -98,6 +99,11 @@ class Augmenter(object):
         """
         return self
 
+    def _next_queue(self):
+        idx = self._queue_id
+        self._queue_id = (self._queue_id + 1) % len(self._sampler_queues)
+        return self._sampler_queues[idx]
+
     def __next__(self):
         """
         Function to sample and load the next batch
@@ -108,12 +114,13 @@ class Augmenter(object):
             the next batch
         """
         idxs = self._sampler(self._batchsize)
+        queue = self._next_queue()
 
         # dont't wait forever. Release this after short timeout and try again
         # to avoid deadlock
         while True:
             try:
-                self._sampler_queue.put(idxs, timeout=0.2)
+                queue.put(idxs, timeout=0.2)
                 break
             except Full:
                 continue
@@ -212,8 +219,9 @@ class Augmenter(object):
             ``__identity_fn`` (if not available)
         """
         ret_val = self._fn_checker("_finish")()
-        self._sampler_queue.close()
-        self._sampler_queue.join_thread()
+        for queue in self._sampler_queues:
+            queue.close()
+            queue.join_thread()
 
         return ret_val
 
@@ -386,20 +394,23 @@ class BaseDataManager(object):
         """
         assert self.n_batches > 0
 
-        sampler_queue = Queue()
+        sampler_queues = []
+
+        for idx in range(self.n_process_augmentation):
+            sampler_queues.append(Queue())
 
         data_loader = self.data_loader_cls(
             self.dataset,
             batch_size=self.batch_size,
             num_batches=self.n_batches,
             seed=seed,
-            sampler_queue=sampler_queue
+            sampler_queues=sampler_queues
         )
 
         return Augmenter(data_loader, self.transforms,
                          self.n_process_augmentation,
                          sampler=self.sampler,
-                         sampler_queue=sampler_queue,
+                         sampler_queues=sampler_queues,
                          num_cached_per_queue=2,
                          seeds=self.n_process_augmentation * [seed])
 

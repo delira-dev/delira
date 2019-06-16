@@ -2,6 +2,9 @@ import numpy as np
 from batchgenerators.dataloading.data_loader import SlimDataLoaderBase
 from multiprocessing import Queue
 from queue import Empty
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .dataset import AbstractDataset
 
@@ -13,7 +16,7 @@ class BaseDataLoader(SlimDataLoaderBase):
     """
 
     def __init__(self, dataset: AbstractDataset,
-                 sampler_queue: Queue,
+                 sampler_queues: list,
                  batch_size=1, num_batches=None, seed=1):
         """
 
@@ -23,8 +26,8 @@ class BaseDataLoader(SlimDataLoaderBase):
             dataset to perform sample loading
         batch_size : int
             number of samples per batch
-        sampler_queue : :class:`multiprocessing.Queue`
-            the queue, the sample indices to load will be put to.
+        sampler_queues : list :class:`multiprocessing.Queue`
+            the queue,s the sample indices to load will be put to.
             Necessary for interprocess communication
         num_batches : int
             number of batches to load
@@ -46,7 +49,7 @@ class BaseDataLoader(SlimDataLoaderBase):
         # store dataset in self._data
         super().__init__(dataset, batch_size)
 
-        self.sampler_queue = sampler_queue
+        self.sampler_queues = sampler_queues
 
         self.n_samples = len(dataset)
         if num_batches is None:
@@ -73,30 +76,32 @@ class BaseDataLoader(SlimDataLoaderBase):
         """
 
         idxs = None
+        sampler_queue = self.sampler_queues[self.thread_id]
         while idxs is None:
             try:
-                idxs = self.sampler_queue.get(timeout=0.2)
+                idxs = sampler_queue.get(timeout=0.2)
+
+                # idxs = self.sampler_queue.get()
+
+                result = [self._get_sample(_idx) for _idx in idxs]
+
+                result_dict = {}
+
+                # concatenate dict entities by keys
+                for _result_dict in result:
+                    for key, val in _result_dict.items():
+                        if key in result_dict.keys():
+                            result_dict[key].append(val)
+                        else:
+                            result_dict[key] = [val]
+
+                # convert list to numpy arrays
+                for key, val_list in result_dict.items():
+                    result_dict[key] = np.asarray(val_list)
+
+                return result_dict
             except Empty:
                 pass
-        # idxs = self.sampler_queue.get()
-
-        result = [self._get_sample(_idx) for _idx in idxs]
-
-        result_dict = {}
-
-        # concatenate dict entities by keys
-        for _result_dict in result:
-            for key, val in _result_dict.items():
-                if key in result_dict.keys():
-                    result_dict[key].append(val)
-                else:
-                    result_dict[key] = [val]
-
-        # convert list to numpy arrays
-        for key, val_list in result_dict.items():
-            result_dict[key] = np.asarray(val_list)
-
-        return result_dict
 
     def _get_sample(self, index):
         """

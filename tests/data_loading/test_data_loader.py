@@ -14,7 +14,7 @@ class DataLoaderTest(unittest.TestCase):
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
         sampler = SequentialSampler.from_dataset(dset)
         loader = BaseDataLoader(dset, batch_size=16,
-                                sampler_queue=sampler_queue)
+                                sampler_queues=[sampler_queue])
 
         sampler_queue.put(sampler(16))
 
