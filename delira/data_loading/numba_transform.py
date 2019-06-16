@@ -21,10 +21,10 @@ class NumbaTransformWrapper(AbstractTransform):
         transform.__call__ = numba.jit(transform.__call__, nopython=nopython,
                                        target=target,
                                        parallel=parallel, **options)
-        self.transform = transform
+        self._transform = transform
 
-    def __call__(self, *args, **kwargs):
-        return self._transform(*args, **kwargs)
+    def __call__(self, **kwargs):
+        return self._transform(**kwargs)
 
 
 class NumbaTransform(NumbaTransformWrapper):
