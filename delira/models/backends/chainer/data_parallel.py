@@ -134,16 +134,16 @@ def _scatter(inputs, target_devices: list, dim):
             return _apply_scatter(inputs, target_devices, dim)
 
         # map _scatter_map recursively to all samples in tuple
-        if isinstance(inputs, tuple) and len(inputs) > 0:
+        if isinstance(inputs, tuple) and inputs:
             return list(zip(*map(_scatter_map, inputs)))
 
         # map _scatter_map recursively to all samples in list
-        if isinstance(inputs, list) and len(inputs) > 0:
+        if isinstance(inputs, list) and inputs:
             return list(map(list, zip(*map(_scatter_map,
                                            inputs))))
 
         # map _scatter_map recursively to all samples in dict
-        if isinstance(inputs, dict) and len(inputs) > 0:
+        if isinstance(inputs, dict) and inputs:
             return list(map(type(inputs), zip(*map(_scatter_map,
                                                    inputs.items()))))
 

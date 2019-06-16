@@ -67,4 +67,3 @@ def scale_loss(loss,
                             **kwargs) as _loss:
 
             yield _loss
-    return

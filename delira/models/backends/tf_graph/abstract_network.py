@@ -85,8 +85,8 @@ class AbstractTfGraphNetwork(AbstractNetwork, metaclass=abc.ABCMeta):
 
         if self.training:
             return self._sess.run(self.outputs_train, feed_dict=_feed_dict)
-        else:
-            return self._sess.run(self.outputs_eval, feed_dict=_feed_dict)
+
+        return self._sess.run(self.outputs_eval, feed_dict=_feed_dict)
 
     def _add_losses(self, losses: dict):
         """
@@ -99,11 +99,11 @@ class AbstractTfGraphNetwork(AbstractNetwork, metaclass=abc.ABCMeta):
             dictionary containing all losses. Individual losses are averaged
 
         """
-        if self._losses is not None and len(losses) != 0:
+        if self._losses is not None and losses:
             logging.warning('Change of losses is not yet supported')
             raise NotImplementedError()
 
-        elif self._losses is not None and len(losses) == 0:
+        elif self._losses is not None and not losses:
             pass
 
         else:
@@ -130,11 +130,9 @@ class AbstractTfGraphNetwork(AbstractNetwork, metaclass=abc.ABCMeta):
             Type[tf.train.Optimizer]
 
         """
-        if self._optims is not None and len(optims) != 0:
+        if self._optims is not None and optims:
             logging.warning('Change of optims is not yet supported')
-            pass
-            # raise NotImplementedError()
-        elif self._optims is not None and len(optims) == 0:
+        elif self._optims is not None and not optims:
             pass
         else:
             self._optims = optims['default']

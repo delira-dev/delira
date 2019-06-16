@@ -176,25 +176,24 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
         #  note: might be bugged in combination with sess.run
         #  https://github.com/tensorflow/tensorflow/issues/21788
 
-        """
-        if gpu_ids and tf.test.is_gpu_available():
-            assert len(gpu_ids) <= len(get_available_gpus()), "more GPUs
-            specified than available"
-            self.use_gpu = True
-            if len(gpu_ids) > 1:
-                logger.warning(
-                    "multi-GPU training not yet tested!")
-
-                network.model = tf.keras.utils.multi_gpu_model(
-                                        network.model,
-                                        len(gpu_ids),
-                                        cpu_merge=True,
-                                        cpu_relocation=False)
-            else:
-                network.models = tf.keras.models.clone_model(network.model)
-        else:
-            self.use_gpu = False
-        """
+        # if gpu_ids and tf.test.is_gpu_available():
+        #     assert len(gpu_ids) <= len(get_available_gpus()), "more GPUs
+        #     specified than available"
+        #     self.use_gpu = True
+        #     if len(gpu_ids) > 1:
+        #         logger.warning(
+        #             "multi-GPU training not yet tested!")
+        #
+        #         network.model = tf.keras.utils.multi_gpu_model(
+        #                                 network.model,
+        #                                 len(gpu_ids),
+        #                                 cpu_merge=True,
+        #                                 cpu_relocation=False)
+        #     else:
+        #         network.models = tf.keras.models.clone_model(network.model)
+        # else:
+        #     self.use_gpu = False
+        #
 
         self.optimizers = optim_fn(optimizer_cls, **optimizer_params)
 
