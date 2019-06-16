@@ -32,7 +32,7 @@ class WriterLoggingBackend(BaseBackend):
         """
         return args, kwargs
 
-    def _image(self,  tag, img_tensor, global_step=None, walltime=None,
+    def _image(self, tag, img_tensor, global_step=None, walltime=None,
                dataformats='CHW'):
         converted_args, converted_kwargs = self.convert_to_npy(
             tag=tag, img_tensor=img_tensor, global_step=global_step,
@@ -40,7 +40,7 @@ class WriterLoggingBackend(BaseBackend):
 
         self._writer.add_image(*converted_args, **converted_kwargs)
 
-    def _images(self,  tag, img_tensor, global_step=None, walltime=None,
+    def _images(self, tag, img_tensor, global_step=None, walltime=None,
                 dataformats='NCHW'):
         converted_args, converted_kwargs = self.convert_to_npy(
             tag=tag, img_tensor=img_tensor, global_step=global_step,
@@ -78,13 +78,25 @@ class WriterLoggingBackend(BaseBackend):
             tag=tag, values=values, global_step=global_step, bins=bins)
         self._writer.add_histogram(*converted_args, **converted_kwargs)
 
-    def _figure(self, tag, figure, global_step=None, close=True, walltime=None):
+    def _figure(
+            self,
+            tag,
+            figure,
+            global_step=None,
+            close=True,
+            walltime=None):
         converted_args, converted_kwargs = self.convert_to_npy(
             tag=tag, figure=figure, global_step=global_step, close=close,
             walltime=walltime)
         self._writer.add_figure(*converted_args, **converted_kwargs)
 
-    def _audio(self, tag, snd_tensor, global_step=None, sample_rate=44100, walltime=None):
+    def _audio(
+            self,
+            tag,
+            snd_tensor,
+            global_step=None,
+            sample_rate=44100,
+            walltime=None):
         converted_args, converted_kwargs = self.convert_to_npy(
             tag=tag, snd_tensor=snd_tensor, global_step=global_step,
             sample_rate=sample_rate, walltime=walltime
@@ -97,7 +109,12 @@ class WriterLoggingBackend(BaseBackend):
             walltime=walltime)
         self._writer.add_text(*converted_args, **converted_kwargs)
 
-    def _graph_pytorch(self, model, input_to_model=None, verbose=False, **kwargs):
+    def _graph_pytorch(
+            self,
+            model,
+            input_to_model=None,
+            verbose=False,
+            **kwargs):
         converted_args, converted_kwargs = self.convert_to_npy(
             model=model, input_to_model=input_to_model,
             verbose=verbose, **kwargs)

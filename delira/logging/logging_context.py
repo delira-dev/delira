@@ -7,8 +7,12 @@ from delira.logging.base_logger import make_logger
 
 class LoggingContext(object):
 
-    def __init__(self, name, initialize_if_missing=False, destroy_on_exit=False,
-                 **kwargs):
+    def __init__(
+            self,
+            name,
+            initialize_if_missing=False,
+            destroy_on_exit=False,
+            **kwargs):
         if logger_exists(name):
             self._name = name
         elif initialize_if_missing:
