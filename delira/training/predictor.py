@@ -138,7 +138,7 @@ class Predictor(object):
             **pred
         )[1]
 
-    def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
+    def predict_data_mgr(self, datamgr, batchsize=None, metrics=None,
                          metric_keys=None, verbose=False, **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator
@@ -169,7 +169,8 @@ class Predictor(object):
             a dictionary containing all metrics of the current batch
 
         """
-
+        if metrics is None:
+            metrics = {}
         orig_num_aug_processes = datamgr.n_process_augmentation
         orig_batch_size = datamgr.batch_size
 
@@ -205,8 +206,8 @@ class Predictor(object):
             if batchsize is None or len(batch_list) >= batchsize:
 
                 batch_dict = {}
-                for batch in batch_list:
-                    for key, val in batch.items():
+                for _batch in batch_list:
+                    for key, val in _batch.items():
                         if key in batch_dict.keys():
                             batch_dict[key].append(val)
                         else:
@@ -241,7 +242,7 @@ class Predictor(object):
         return
 
     def predict_data_mgr_cache_metrics_only(self, datamgr, batchsize=None,
-                                            metrics={}, metric_keys=None,
+                                            metrics=None, metric_keys=None,
                                             verbose=False, **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator and
@@ -280,13 +281,18 @@ class Predictor(object):
         does not cache anything by default
 
         """
-        yield from self.predict_data_mgr_cache(datamgr, batchsize, metrics,
-                                               metric_keys, verbose,
+        if metrics is None:
+            metrics = {}
+        yield from self.predict_data_mgr_cache(datamgr=datamgr,
+                                               batchsize=batchsize,
+                                               metrics=metrics,
+                                               metric_keys=metric_keys,
+                                               verbose=verbose,
                                                cache_preds=False, **kwargs)
 
         return
 
-    def predict_data_mgr_cache_all(self, datamgr, batchsize=None, metrics={},
+    def predict_data_mgr_cache_all(self, datamgr, batchsize=None, metrics=None,
                                    metric_keys=None, verbose=False, **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator and
@@ -324,13 +330,18 @@ class Predictor(object):
         or :meth:`Predictor.predict_data_mgr`
 
         """
-        yield from self.predict_data_mgr_cache(datamgr, batchsize, metrics,
-                                               metric_keys, verbose,
+        if metrics is None:
+            metrics = {}
+        yield from self.predict_data_mgr_cache(datamgr=datamgr,
+                                               batchsize=batchsize,
+                                               metrics=metrics,
+                                               metric_keys=metric_keys,
+                                               verbose=verbose,
                                                cache_preds=True, **kwargs)
 
         return
 
-    def predict_data_mgr_cache(self, datamgr, batchsize=None, metrics={},
+    def predict_data_mgr_cache(self, datamgr, batchsize=None, metrics=None,
                                metric_keys=None, verbose=False,
                                cache_preds=False, **kwargs):
         """
@@ -351,6 +362,8 @@ class Predictor(object):
             the ``batch_dict`` items to use for metric calculation
         verbose : bool
             whether to show a progress-bar or not, default: False
+        cache_preds : bool
+            whether to also cache predictions
         kwargs :
             keyword arguments passed to :func:`prepare_batch_fn`
 
@@ -372,11 +385,19 @@ class Predictor(object):
 
         """
 
+        if metrics is None:
+            metrics = {}
+
         predictions_all, metric_vals = [], {k: [] for k in metrics.keys()}
 
-        for preds, _metric_vals in self.predict_data_mgr(datamgr, batchsize,
-                                                         metrics, metric_keys,
-                                                         verbose, **kwargs):
+        for preds, _metric_vals in self.predict_data_mgr(
+                datamgr=datamgr,
+                batchsize=batchsize,
+                metrics=metrics,
+                metric_keys=metric_keys,
+                verbose=verbose,
+                **kwargs):
+
             if cache_preds:
                 predictions_all.append(preds)
             for k, v in _metric_vals.items():
@@ -502,7 +523,7 @@ class Predictor(object):
             super().__setattr__(key, value)
 
     @staticmethod
-    def calc_metrics(batch: LookupConfig, metrics={}, metric_keys=None):
+    def calc_metrics(batch: LookupConfig, metrics=None, metric_keys=None):
         """
         Compute metrics
 
@@ -524,6 +545,8 @@ class Predictor(object):
         dict
             dict with metric results
         """
+        if metrics is None:
+            metrics = {}
         if metric_keys is None:
             metric_keys = {k: ("pred", "label") for k in metrics.keys()}
 

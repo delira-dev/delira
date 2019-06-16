@@ -10,7 +10,7 @@ if "TORCH" in get_backends():
     import torch
     from ..models import AbstractPyTorchNetwork
 
-    def save_checkpoint(file: str, model=None, optimizers={},
+    def save_checkpoint(file: str, model=None, optimizers=None,
                         epoch=None, **kwargs):
         """
         Save model's parameters
@@ -28,6 +28,8 @@ if "TORCH" in get_backends():
             current epoch (will also be pickled)
 
         """
+        if optimizers is None:
+            optimizers = {}
         if isinstance(model, torch.nn.DataParallel):
             _model = model.module
         else:

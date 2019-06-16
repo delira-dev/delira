@@ -54,7 +54,7 @@ def convert_batch_to_numpy_identity(*args, **kwargs):
 if "TORCH" in get_backends():
     import torch
 
-    from ..utils.decorators import torch_tensor_func, torch_module_func
+    from ..utils.decorators import torch_module_func
 
     @dtype_func(float)
     def float_to_pytorch_tensor(f: float):
