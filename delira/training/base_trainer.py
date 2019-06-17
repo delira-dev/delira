@@ -464,8 +464,8 @@ class BaseNetworkTrainer(Predictor):
                             new_val_score = best_val_score
 
                         else:
-                            new_val_score = total_metrics["val_" +
-                                                          val_score_key]
+                            new_val_score = \
+                                total_metrics["val_" + val_score_key]
                             val_score_key = "val_" + val_score_key
                     else:
                         new_val_score = total_metrics.get(val_score_key)

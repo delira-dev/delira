@@ -42,22 +42,22 @@ class TestTensorboardLogging(unittest.TestCase):
         if tf is not None:
             input_shape = [1, 28, 28]
 
-            l = tf.keras.layers
-            max_pool = l.MaxPooling2D(
+            layers = tf.keras.layers
+            max_pool = layers.MaxPooling2D(
                 (2, 2), (2, 2), padding='same', data_format="channels_first")
             self._model_tf = tf.keras.Sequential(
                 [
-                    l.Reshape(
+                    layers.Reshape(
                         target_shape=input_shape,
                         input_shape=(28 * 28,)),
-                    l.Conv2D(
+                    layers.Conv2D(
                         32,
                         5,
                         padding='same',
                         data_format="channels_first",
                         activation=tf.nn.relu),
                     max_pool,
-                    l.Conv2D(
+                    layers.Conv2D(
                         64,
                         5,
                         padding='same',
@@ -123,8 +123,10 @@ class TestTensorboardLogging(unittest.TestCase):
 
     @unittest.skipIf(torch is None, "Torch Backend not installed")
     def test_picture_torch(self):
-        self._logger.log({"picture": {"tag": "picture_torch",
-                                      "img_tensor": torch.from_numpy(self._npy_imgs[0])}})
+        self._logger.log({
+            "picture": {
+                "tag": "picture_torch",
+                "img_tensor": torch.from_numpy(self._npy_imgs[0])}})
 
     def test_images_npy(self):
         self._logger.log({"images": {"tag": "images_npy",
