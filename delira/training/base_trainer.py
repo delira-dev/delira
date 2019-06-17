@@ -775,10 +775,10 @@ class BaseNetworkTrainer(Predictor):
                 int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
                 for x in files])
 
-            latest_state_path = [x for x in files
+            latest_state_filename = [x for x in files
                                  if x.startswith("checkpoint_epoch_%d"
                                                  % latest_epoch)][0]
-
+            latest_state_path = os.path.join(path, latest_state_filename)
             return latest_state_path, latest_epoch
 
         return None, 1
