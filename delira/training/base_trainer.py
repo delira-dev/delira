@@ -445,6 +445,8 @@ class BaseNetworkTrainer(Predictor):
 
                 total_metrics.update(val_metrics)
 
+            _, total_metrics = self._convert_to_npy_fn(**total_metrics)
+
             for k, v in total_metrics.items():
                 total_metrics[k] = reduce_fn(v)
 
