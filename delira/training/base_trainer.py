@@ -484,8 +484,7 @@ class BaseNetworkTrainer(Predictor):
 
                 # log metrics and loss values
                 for key, val in total_metrics.items():
-                    log()
-                    logging.info({"value": {"scalar_value": val, "tag": key
+                    log({"value": {"scalar_value": val, "tag": key
                                             }})
 
                 self._at_epoch_end(total_metrics, val_score_key, epoch,
@@ -685,8 +684,8 @@ class BaseNetworkTrainer(Predictor):
 
     @property
     def name(self):
-        return os.path.dirname(os.path.basename(os.path.basename(
-            self.save_path)))
+        return os.path.basename(os.path.dirname(os.path.dirname(
+            os.path.dirname(self.save_path))))
 
     def _reinitialize_logging(self, logging_type, logging_kwargs: dict):
         from delira.logging import TensorboardBackend, VisdomBackend, \
@@ -739,7 +738,10 @@ class BaseNetworkTrainer(Predictor):
         # tensorboard-instance by means of
         # different tf.Summary.FileWriters()
 
-        logger = make_logger(backend_cls(_logging_kwargs))
+        level = _logging_kwargs.pop("level")
+
+        logger = make_logger(backend_cls(_logging_kwargs),
+                             level=level)
 
         logger_name = self.name + "_run_%02d" % self.fold
         register_logger(logger, logger_name)
