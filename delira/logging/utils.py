@@ -35,3 +35,7 @@ def unregister_logger(name: str):
 
 def get_logger(name):
     return _AVAILABLE_LOGGERS[name]
+
+
+def get_available_loggers():
+    return list(_AVAILABLE_LOGGERS.keys())
