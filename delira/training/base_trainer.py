@@ -776,7 +776,7 @@ class BaseNetworkTrainer(Predictor):
                 for x in files])
 
             latest_state_path = [x for x in files
-                                 if x.startswith("checkpoint_%d"
+                                 if x.startswith("checkpoint_epoch_%d"
                                                  % latest_epoch)][0]
 
             return latest_state_path, latest_epoch
