@@ -88,7 +88,7 @@ class TestTensorboardLogging(unittest.TestCase):
 
     def _setup_logger(self):
         return make_logger(TensorboardBackend(
-            {"log_dir": os.path.join(".", "runs", self._testMethodName)}
+            {"logdir": os.path.join(".", "runs", self._testMethodName)}
         ))
 
     @staticmethod

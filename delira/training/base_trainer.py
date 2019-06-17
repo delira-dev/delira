@@ -720,7 +720,7 @@ class BaseNetworkTrainer(Predictor):
         elif backend_cls == TensorboardBackend:
             _logging_kwargs.update(
                 {
-                    "log_dir":
+                    "logdir":
                         os.path.join(os.path.basename(
                             os.path.basename(self.save_path)),
                             "logs", "run_%02d" % self.fold),
