@@ -485,7 +485,7 @@ class BaseNetworkTrainer(Predictor):
                 # log metrics and loss values
                 for key, val in total_metrics.items():
                     log({"value": {"scalar_value": val, "tag": key
-                                            }})
+                                   }})
 
                 self._at_epoch_end(total_metrics, val_score_key, epoch,
                                    is_best)
