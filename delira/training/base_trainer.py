@@ -447,7 +447,6 @@ class BaseNetworkTrainer(Predictor):
                             metric_keys=val_metric_keys,
                             verbose=verbose))
 
-
                     total_metrics.update(val_metrics)
                 _, total_metrics = self._convert_to_npy_fn(**total_metrics)
 
