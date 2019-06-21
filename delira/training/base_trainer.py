@@ -447,7 +447,9 @@ class BaseNetworkTrainer(Predictor):
                             metric_keys=val_metric_keys,
                             verbose=verbose))
 
+
                     total_metrics.update(val_metrics)
+                _, total_metrics = self._convert_to_npy_fn(**total_metrics)
 
                 for k, v in total_metrics.items():
                     total_metrics[k] = reduce_fn(v)
@@ -482,19 +484,19 @@ class BaseNetworkTrainer(Predictor):
                         logging.info("New Best Value at Epoch %03d : %03.3f" %
                                      (epoch, best_val_score))
 
-                # log metrics and loss values
-                for key, val in total_metrics.items():
-                    log({"value": {"scalar_value": val, "tag": key
-                                   }})
+                    # log metrics and loss values
+                    for key, val in total_metrics.items():
+                        log({"value": {"scalar_value": val, "tag": key
+                                       }})
 
-                self._at_epoch_end(total_metrics, val_score_key, epoch,
-                                   is_best)
+                    self._at_epoch_end(total_metrics, val_score_key, epoch,
+                                       is_best)
 
-                is_best = False
+                    is_best = False
 
-                # stop training (might be caused by early stopping)
-                if self.stop_training:
-                    break
+                    # stop training (might be caused by early stopping)
+                    if self.stop_training:
+                        break
 
         return self._at_training_end()
 
@@ -797,10 +799,10 @@ class BaseNetworkTrainer(Predictor):
                 int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
                 for x in files])
 
-            latest_state_path = [x for x in files
-                                 if x.startswith("checkpoint_%d"
-                                                 % latest_epoch)][0]
-
+            latest_state_filename = [x for x in files
+                                     if x.startswith("checkpoint_epoch_%d"
+                                                     % latest_epoch)][0]
+            latest_state_path = os.path.join(path, latest_state_filename)
             return latest_state_path, latest_epoch
 
         return None, 1
