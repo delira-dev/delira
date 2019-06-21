@@ -286,22 +286,7 @@ if "TORCH" in get_backends():
                 self._prepare_batch, input_device=self.input_device,
                 output_device=self.output_device)
 
-        def _at_training_begin(self, *args, **kwargs):
-            """
-            Defines behaviour at beginning of training
-
-            Parameters
-            ----------
-            *args :
-                positional arguments
-            **kwargs :
-                keyword arguments
-
-            """
-            self.save_state(os.path.join(
-                self.save_path, "checkpoint_epoch_0"), 0)
-
-        def _at_training_end(self):
+        def _at_training_end(self, *args, **kwargs):
             """
             Defines Behaviour at end of training: Loads best model if
             available
@@ -319,7 +304,7 @@ if "TORCH" in get_backends():
                 self.update_state(os.path.join(self.save_path,
                                                'checkpoint_best.pt'))
 
-            return self.module
+            return super()._at_training_end(*args, **kwargs)
 
         def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
                           **kwargs):
