@@ -1,284 +1,30 @@
 import inspect
 import logging
 
-from batchgenerators.dataloading import MultiThreadedAugmenter, \
-    SingleThreadedAugmenter, SlimDataLoaderBase
 from batchgenerators.transforms import AbstractTransform
 
-from multiprocessing import Queue
-from queue import Full
-
 from delira import get_current_debug_mode
-from .data_loader import BaseDataLoader
-from .dataset import AbstractDataset, BaseCacheDataset, BaseLazyDataset
-from .load_utils import default_load_fn_2d
-from .sampler import SequentialSampler, AbstractSampler
-from ..utils.decorators import make_deprecated
+from delira.data_loading.data_loader import DataLoader
+from delira.data_loading.sampler import SequentialSampler, AbstractSampler
+from delira.data_loading.augmenter import Augmenter
+from delira.data_loading.dataset import DictDataset, IterableDataset, \
+    AbstractDataset
+from collections import Iterable
 
 logger = logging.getLogger(__name__)
 
 
-class Augmenter(object):
-    """
-    Class wrapping ``MultiThreadedAugmentor`` and ``SingleThreadedAugmenter``
-    to provide a uniform API and to disable multiprocessing/multithreading
-    inside the dataloading pipeline
-
-    """
-
-    def __init__(self, data_loader: BaseDataLoader, transforms,
-                 n_process_augmentation, sampler, sampler_queues: list,
-                 num_cached_per_queue=2, seeds=None, **kwargs):
-        """
-
-        Parameters
-        ----------
-        data_loader : :class:`BaseDataLoader`
-            the dataloader providing the actual data
-        transforms : Callable or None
-            the transforms to use. Can be single callable or None
-        n_process_augmentation : int
-            the number of processes to use for augmentation (only necessary if
-            not in debug mode)
-        sampler : :class:`AbstractSampler`
-            the sampler to use; must be used here instead of inside the
-            dataloader to avoid duplications and oversampling due to
-            multiprocessing
-        sampler_queues : list of :class:`multiprocessing.Queue`
-            queues to pass the sample indices to the actual dataloader
-        num_cached_per_queue : int
-            the number of samples to cache per queue (only necessary if not in
-            debug mode)
-        seeds : int or list
-            the seeds for each process (only necessary if not in debug mode)
-        **kwargs :
-            additional keyword arguments
-        """
-
-        self._batchsize = data_loader.batch_size
-
-        # don't use multiprocessing in debug mode
-        if get_current_debug_mode():
-            augmenter = SingleThreadedAugmenter(data_loader, transforms)
-
-        else:
-            assert isinstance(n_process_augmentation, int)
-            # no seeds are given -> use default seed of 1
-            if seeds is None:
-                seeds = 1
-
-            # only an int is gien as seed -> replicate it for each process
-            if isinstance(seeds, int):
-                seeds = [seeds] * n_process_augmentation
-
-            # avoid same seeds for all processes
-            if any([seeds[0] == _seed for _seed in seeds[1:]]):
-                for idx in range(len(seeds)):
-                    seeds[idx] = seeds[idx] + idx
-
-            augmenter = MultiThreadedAugmenter(
-                data_loader, transforms,
-                num_processes=n_process_augmentation,
-                num_cached_per_queue=num_cached_per_queue,
-                seeds=seeds,
-                **kwargs)
-
-        self._augmenter = augmenter
-        self._sampler = sampler
-        self._sampler_queues = sampler_queues
-        self._queue_id = 0
-
-    def __iter__(self):
-        """
-        Function returning an iterator
-
-        Returns
-        -------
-        Augmenter
-            self
-        """
-        return self
-
-    def _next_queue(self):
-        idx = self._queue_id
-        self._queue_id = (self._queue_id + 1) % len(self._sampler_queues)
-        return self._sampler_queues[idx]
-
-    def __next__(self):
-        """
-        Function to sample and load the next batch
-
-        Returns
-        -------
-        dict
-            the next batch
-        """
-        idxs = self._sampler(self._batchsize)
-        queue = self._next_queue()
-
-        # dont't wait forever. Release this after short timeout and try again
-        # to avoid deadlock
-        while True:
-            try:
-                queue.put(idxs, timeout=0.2)
-                break
-            except Full:
-                continue
-
-        return next(self._augmenter)
-
-    def next(self):
-        """
-        Function to sample and load
-
-        Returns
-        -------
-        dict
-            the next batch
-        """
-        return next(self)
-
-    @staticmethod
-    def __identity_fn(*args, **kwargs):
-        """
-        Helper function accepting arbitrary args and kwargs and returning
-        without doing anything
-
-        Parameters
-        ----------
-        *args
-            keyword arguments
-        **kwargs
-            positional arguments
-
-        """
-        return
-
-    def _fn_checker(self, function_name):
-        """
-        Checks if the internal augmenter has a given attribute and returns it.
-        Otherwise it returns ``__identity_fn``
-
-        Parameters
-        ----------
-        function_name : str
-            the function name to check for
-
-        Returns
-        -------
-        Callable
-            either the function corresponding to the given function name or
-            ``__identity_fn``
-
-        """
-        # same as:
-        # if hasattr(self._augmenter, function_name):
-        #     return getattr(self._augmenter, functionname)
-        # else:
-        #     return self.__identity_fn
-        # but one less getattr call, because hasattr also calls getattr and
-        # handles AttributeError
-        try:
-            return getattr(self._augmenter, function_name)
-        except AttributeError:
-            return self.__identity_fn
-
-    @property
-    def _start(self):
-        """
-        Property to provide uniform API of ``_start``
-
-        Returns
-        -------
-        Callable
-            either the augmenter's ``_start`` method (if available) or
-            ``__identity_fn`` (if not available)
-        """
-        return self._fn_checker("_start")
-
-    def restart(self):
-        """
-        Property to provide uniform API of ``restart``
-
-        Returns
-        -------
-        Callable
-            either the augmenter's ``restart`` method (if available) or
-            ``__identity_fn`` (if not available)
-        """
-        return self._fn_checker("restart")
-
-    def _finish(self):
-        """
-        Property to provide uniform API of ``_finish``
-
-        Returns
-        -------
-        Callable
-            either the augmenter's ``_finish`` method (if available) or
-            ``__identity_fn`` (if not available)
-        """
-        ret_val = self._fn_checker("_finish")()
-        for queue in self._sampler_queues:
-            queue.close()
-            queue.join_thread()
-
-        return ret_val
-
-    @property
-    def num_batches(self):
-        """
-        Property returning the number of batches
-
-        Returns
-        -------
-        int
-            number of batches
-        """
-        if isinstance(self._augmenter, MultiThreadedAugmenter):
-            return self._augmenter.generator.num_batches
-
-        return self._augmenter.data_loader.num_batches
-
-    @property
-    def num_processes(self):
-        """
-        Property returning the number of processes to use for loading and
-        augmentation
-
-        Returns
-        -------
-        int
-            number of processes to use for loading and
-            augmentation
-
-        """
-        if isinstance(self._augmenter, MultiThreadedAugmenter):
-            return self._augmenter.num_processes
-
-        return 1
-
-    def __del__(self):
-        """
-        Function defining what to do, if object should be deleted
-
-        """
-        self._finish()
-        del self._augmenter
-
-
-class BaseDataManager(object):
+class DataManager(object):
     """
     Class to Handle Data
-    Creates Dataset , Dataloader and BatchGenerator
+    Creates Dataset (if necessary), Dataloader and Augmenter
 
     """
 
     def __init__(self, data, batch_size, n_process_augmentation,
                  transforms, sampler_cls=SequentialSampler,
-                 sampler_kwargs=None,
-                 data_loader_cls=None, dataset_cls=None,
-                 load_fn=default_load_fn_2d, from_disc=True, **kwargs):
+                 drop_last=False, data_loader_cls=None,
+                 **sampler_kwargs):
         """
 
         Parameters
@@ -294,27 +40,20 @@ class BaseDataManager(object):
             Data transformations for augmentation
         sampler_cls : AbstractSampler
             class defining the sampling strategy
-        sampler_kwargs : dict
-            keyword arguments for sampling
+        drop_last : bool
+            whether to drop the last (possibly smaller) batch
         data_loader_cls : subclass of SlimDataLoaderBase
             DataLoader class
-        dataset_cls : subclass of AbstractDataset
-            Dataset class
-        load_fn : function
-            function to load simple sample
-        from_disc : bool
-            whether or not to load data from disc just the time it is needed
-        **kwargs :
-            other keyword arguments (needed for dataloading and passed to
-            dataset_cls)
+        **sampler_kwargs :
+            other keyword arguments (passed to sampler_cls)
 
         Raises
         ------
         AssertionError
-            * `data_loader_cls` is not :obj:`None` and not a subclass of
-            `SlimDataLoaderBase`
-            * `dataset_cls` is not :obj:`None` and not a subclass of
-            :class:`.AbstractDataset`
+            ``data_loader_cls`` is not :obj:`None` and not a subclass of
+            `DataLoader`
+        TypeError
+            ``data`` is not a Dataset object and not of type dict or iterable
 
         See Also
         --------
@@ -329,8 +68,8 @@ class BaseDataManager(object):
         self._n_process_augmentation = None
         self._transforms = None
         self._data_loader_cls = None
-        self._dataset = None
         self._sampler = None
+        self.drop_last = drop_last
 
         # set actual values to properties
         self.batch_size = batch_size
@@ -339,38 +78,30 @@ class BaseDataManager(object):
         self.transforms = transforms
 
         if data_loader_cls is None:
-            logger.info("No DataLoader Class specified. Using BaseDataLoader")
-            data_loader_cls = BaseDataLoader
+            logger.info("No dataloader Class specified. Using DataLoader")
+            data_loader_cls = DataLoader
         else:
             assert inspect.isclass(data_loader_cls), \
                 "data_loader_cls must be class not instance of class"
-            assert issubclass(data_loader_cls, SlimDataLoaderBase), \
-                "dater_loader_cls must be subclass of SlimDataLoaderBase"
+            assert issubclass(data_loader_cls, DataLoader), \
+                "dater_loader_cls must be subclass of DataLoader"
 
         self.data_loader_cls = data_loader_cls
 
-        if isinstance(data, AbstractDataset):
-            self.dataset = data
-        else:
-
-            if dataset_cls is None:
-                if from_disc:
-                    dataset_cls = BaseLazyDataset
-                else:
-                    dataset_cls = BaseCacheDataset
-
-                logger.info("No DataSet Class specified. Using %s instead" %
-                            dataset_cls.__name__)
-
+        if not isinstance(data, AbstractDataset):
+            if isinstance(data, dict):
+                data = DictDataset(data)
+            elif isinstance(data, Iterable):
+                data = IterableDataset(data)
             else:
-                assert issubclass(dataset_cls, AbstractDataset), \
-                    "dataset_cls must be subclass of AbstractDataset"
+                raise TypeError("Invalid Data type given: %s"
+                                % type(data).__name__)
 
-            self.dataset = dataset_cls(data, load_fn, **kwargs)
+        self.data = data
 
         assert inspect.isclass(sampler_cls) and issubclass(sampler_cls,
                                                            AbstractSampler)
-        self.sampler = sampler_cls.from_dataset(self.dataset, **sampler_kwargs)
+        self.sampler = sampler_cls.from_dataset(self.data, **sampler_kwargs)
 
     def get_batchgen(self, seed=1):
         """
@@ -384,7 +115,7 @@ class BaseDataManager(object):
         Returns
         -------
         Augmenter
-            Batchgenerator
+           The actual iterable batchgenerator
 
         Raises
         ------
@@ -393,26 +124,18 @@ class BaseDataManager(object):
 
         """
         assert self.n_batches > 0
-
-        sampler_queues = []
-
-        for idx in range(self.n_process_augmentation):
-            sampler_queues.append(Queue())
-
+        
         data_loader = self.data_loader_cls(
-            self.dataset,
-            batch_size=self.batch_size,
-            num_batches=self.n_batches,
-            seed=seed,
-            sampler_queues=sampler_queues
+            self.data
         )
 
-        return Augmenter(data_loader, self.transforms,
-                         self.n_process_augmentation,
+        return Augmenter(data_loader=data_loader,
                          sampler=self.sampler,
-                         sampler_queues=sampler_queues,
-                         num_cached_per_queue=2,
-                         seeds=self.n_process_augmentation * [seed])
+                         num_processes=self.n_process_augmentation,
+                         transforms=self.transforms,
+                         seed=seed,
+                         drop_last=self.drop_last
+                         )
 
     def get_subset(self, indices):
         """
@@ -436,13 +159,10 @@ class BaseDataManager(object):
             "transforms": self.transforms,
             "sampler_cls": self.sampler.__class__,
             "data_loader_cls": self.data_loader_cls,
-            "dataset_cls": None,
-            "load_fn": None,
-            "from_disc": True
         }
 
         return self.__class__(
-            self.dataset.get_subset(indices),
+            self.data.get_subset(indices),
             **subset_kwargs)
 
     def update_state_from_dict(self, new_state: dict):
@@ -485,51 +205,13 @@ class BaseDataManager(object):
         new_sampler = new_state.pop("sampler", None)
         if new_sampler is not None:
             self.sampler = new_sampler.from_dataset(
-                self.dataset,
+                self.data,
                 **new_state.pop("sampling_kwargs", {}))
         self.transforms = new_state.pop("transforms", self.transforms)
 
         if new_state:
             raise KeyError("Invalid Keys in new_state given: %s"
                            % (','.join(map(str, new_state.keys()))))
-
-    @make_deprecated("BaseDataManager.get_subset")
-    def train_test_split(self, *args, **kwargs):
-        """
-        Calls :method:`AbstractDataset.train_test_split` and returns
-        a manager for each subset with same configuration as current manager
-
-        .. deprecation:: 0.3
-            method will be removed in next major release
-
-        Parameters
-        ----------
-        *args :
-            positional arguments for
-            ``sklearn.model_selection.train_test_split``
-        **kwargs :
-            keyword arguments for
-            ``sklearn.model_selection.train_test_split``
-
-        """
-
-        trainset, valset = self.dataset.train_test_split(*args, **kwargs)
-
-        subset_kwargs = {
-            "batch_size": self.batch_size,
-            "n_process_augmentation": self.n_process_augmentation,
-            "transforms": self.transforms,
-            "sampler_cls": self.sampler.__class__,
-            "data_loader_cls": self.data_loader_cls,
-            "dataset_cls": None,
-            "load_fn": None,
-            "from_disc": True
-        }
-
-        train_mgr = self.__class__(trainset, **subset_kwargs)
-        val_mgr = self.__class__(valset, **subset_kwargs)
-
-        return train_mgr, val_mgr
 
     @property
     def batch_size(self):
@@ -631,7 +313,7 @@ class BaseDataManager(object):
         Returns
         -------
         type
-            Subclass of ``SlimDataLoaderBase``
+            Subclass of ``DataLoader``
         """
 
         return self._data_loader_cls
@@ -640,7 +322,7 @@ class BaseDataManager(object):
     def data_loader_cls(self, new_loader_cls):
         """
         Setter for current data loader class, asserts if class is of valid type
-        (must be a class and a subclass of ``SlimDataLoaderBase``)
+        (must be a class and a subclass of ``DataLoader``)
 
         Parameters
         ----------
@@ -650,37 +332,9 @@ class BaseDataManager(object):
         """
 
         assert inspect.isclass(new_loader_cls) and issubclass(
-            new_loader_cls, SlimDataLoaderBase)
+            new_loader_cls, DataLoader)
 
         self._data_loader_cls = new_loader_cls
-
-    @property
-    def dataset(self):
-        """
-        Property to access the current dataset
-
-        Returns
-        -------
-        :class:`AbstractDataset`
-            the current dataset
-
-        """
-
-        return self._dataset
-
-    @dataset.setter
-    def dataset(self, new_dataset):
-        """
-        Setter for new dataset
-
-        Parameters
-        ----------
-        new_dataset : :class:`AbstractDataset`
-
-        """
-
-        assert isinstance(new_dataset, AbstractDataset)
-        self._dataset = new_dataset
 
     @property
     def sampler(self):
@@ -717,7 +371,7 @@ class BaseDataManager(object):
 
         if inspect.isclass(new_sampler) and issubclass(new_sampler,
                                                        AbstractSampler):
-            self._sampler = new_sampler.from_dataset(self.dataset)
+            self._sampler = new_sampler.from_dataset(self.data)
 
         elif isinstance(new_sampler, AbstractSampler):
             self._sampler = new_sampler
@@ -761,6 +415,6 @@ class BaseDataManager(object):
 
         truncated_batch = self.n_samples % self.batch_size
 
-        n_batches += int(bool(truncated_batch))
+        n_batches += int(bool(truncated_batch) and not self.drop_last)
 
         return n_batches
