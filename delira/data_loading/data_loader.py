@@ -9,6 +9,7 @@ class DataLoader:
     Basic Dataloader class, that returns data for a given set of indices and
     combines it as batches
     """
+
     def __init__(self, data):
         """
         Parameters

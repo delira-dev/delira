@@ -6,7 +6,7 @@ from delira.data_loading.dataset import AbstractDataset, IterableDataset, \
     ConcatDataset, Nii3DCacheDatset, Nii3DLazyDataset
 from delira.data_loading.augmenter import Augmenter
 from delira.data_loading.data_manager import DataManager
-from delira.data_loading.load_utils import  LoadSample, LoadSampleLabel
+from delira.data_loading.load_utils import LoadSample, LoadSampleLabel
 
 from delira.data_loading.sampler import *
 

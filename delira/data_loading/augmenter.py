@@ -134,6 +134,7 @@ class _ParallelAugmenter(AbstractAugmenter):
     """
     An Augmenter that loads and augments multiple batches in parallel
     """
+
     def __init__(self, data_loader, sampler, num_processes=None,
                  transforms=None, seed=1, drop_last=False):
         """
@@ -389,6 +390,7 @@ class _SequentialAugmenter(AbstractAugmenter):
     An Augmenter that loads and augments batches sequentially without any
     parallelism
     """
+
     def __init__(self, data_loader, sampler, transforms=None, seed=1,
                  drop_last=False):
         """
@@ -432,6 +434,7 @@ class Augmenter(object):
     :class:`_ParallelAugmenter` and switches between them by arguments and
     debug mode
     """
+
     def __init__(self, data_loader, sampler, num_processes=None,
                  transforms=None, seed=1, drop_last=False):
         """

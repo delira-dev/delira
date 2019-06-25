@@ -69,4 +69,3 @@ class BaseLabelGenerator(object):
             if not overwritten in subclass
         """
         raise NotImplementedError()
-        
