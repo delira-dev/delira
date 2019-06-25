@@ -1,16 +1,14 @@
-from .abstract_sampler import AbstractSampler
+from delira.data_loading.sampler.abstract_sampler import AbstractSampler
 
 
 class LambdaSampler(AbstractSampler):
     """
     Implements Arbitrary Sampling methods specified by a function which takes
-    the index_list and the number of indices to return
-
+    the index_list and returns a single index
     """
 
     def __init__(self, indices, sampling_fn):
         """
-
         Parameters
         ----------
         indices : list
@@ -19,34 +17,19 @@ class LambdaSampler(AbstractSampler):
              corresponding class
         sampling_fn : function
             Actual sampling implementation; must accept an index-list
-            and the number of indices to return
-
+            and return a single index
         """
         super().__init__(indices)
         self._indices = list(range(len(indices)))
 
         self._sampling_fn = sampling_fn
 
-    def _get_indices(self, n_indices):
+    def _get_next_index(self):
         """
         Actual Sampling
-
-        Parameters
-        ----------
-        n_indices : int
-            number of indices to return
-
         Returns
         -------
-        list
-            list of sampled indices
-
+        int
+            the next sample
         """
-
-        n_indices = self._check_batchsize(n_indices)
-
-        samples = self._sampling_fn(self._indices, n_indices)
-        return samples
-
-    def __len__(self):
-        return len(self._indices)
+        return self._sampling_fn(self._indices)
