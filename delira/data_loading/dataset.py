@@ -5,11 +5,12 @@ import typing
 import numpy as np
 from skimage.transform import resize
 from sklearn.model_selection import train_test_split
+from collections import Iterable
 from tqdm import tqdm
 
 from delira import get_backends
-from ..utils import subdirs
-from ..utils.decorators import make_deprecated
+from delira.utils import subdirs
+from delira.utils.decorators import make_deprecated
 
 
 class AbstractDataset:
@@ -209,6 +210,36 @@ class _DatasetIter(object):
         sample = self._dset[self._curr_index]
         self._curr_index += 1
         return sample
+
+
+class DictDataset(AbstractDataset):
+    def __init__(self, data: dict):
+        super().__init__(None, None)
+        self._data = data
+
+    def __getitem__(self, index: int):
+        return {k: v[index] for k, v in self._data.items()}
+
+    def get_sample_from_index(self, index):
+        return self[index]
+
+    def _make_dataset(self, path: str):
+        pass
+
+
+class IterableDataset(AbstractDataset):
+    def __init__(self, data: Iterable):
+        super().__init__(None, None)
+        self._data = data
+
+    def __getitem__(self, index):
+        return self._data[index]
+
+    def get_sample_from_index(self, index):
+        return self[index]
+
+    def _make_dataset(self, path: str):
+        pass
 
 
 class BlankDataset(AbstractDataset):
