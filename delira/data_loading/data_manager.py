@@ -418,3 +418,17 @@ class DataManager(object):
         n_batches += int(bool(truncated_batch) and not self.drop_last)
 
         return n_batches
+
+    def __iter__(self):
+        """
+        Build-In function to create an iterator. First creates an
+        :class:`Augmenter` and afterwards an iterable for the created
+        augmenter, which is then returned
+
+        Returns
+        -------
+        Generator object
+            generator object to iterate over the augmented batches
+
+        """
+        return iter(self.get_batchgen())
