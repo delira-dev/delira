@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from functools import partial
 
-from delira.data_loading import AbstractDataset, BaseDataManager
+from delira.data_loading import AbstractDataset, DataManager
 
 
 class DummyDataset(AbstractDataset):
@@ -27,7 +27,7 @@ class TestPredictor(unittest.TestCase):
     def setUp(self):
 
         self.dset = DummyDataset(20)
-        self.dmgr = BaseDataManager(self.dset, 4, 1, transforms=None)
+        self.dmgr = DataManager(self.dset, 4, 1, transforms=None)
 
     # @unittest.skip
     @unittest.skipIf("TF" not in get_backends(),

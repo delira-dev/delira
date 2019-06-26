@@ -1,6 +1,6 @@
 import unittest
 
-from delira.data_loading import DataLoader, SequentialSampler
+from delira.data_loading import DataLoader, SequentialSampler, BatchSampler
 from . import DummyDataset
 
 
@@ -11,17 +11,20 @@ class DataLoaderTest(unittest.TestCase):
         sampler = SequentialSampler.from_dataset(dset)
         loader = DataLoader(dset)
 
-        self.assertIsInstance(loader(sampler(16)), dict)
+        batch_sampler = BatchSampler(sampler, 16)
+        sampler_iter = iter(batch_sampler)
 
-        for key, val in loader(sampler(16)).items():
+        self.assertIsInstance(loader(next(sampler_iter)), dict)
+
+        for key, val in loader(next(sampler_iter)).items():
             self.assertEqual(len(val), 16)
 
-        self.assertIn("label", loader(sampler(16)))
-        self.assertIn("data", loader(sampler(16)))
+        self.assertIn("label", loader(next(sampler_iter)))
+        self.assertIn("data", loader(next(sampler_iter)))
 
         self.assertEqual(
             len(set([_tmp
-                     for _tmp in loader(sampler(16))["label"]])),
+                     for _tmp in loader(next(sampler_iter))["label"]])),
             1)
 
 

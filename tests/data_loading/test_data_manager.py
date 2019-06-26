@@ -16,7 +16,7 @@ class DataManagerTest(unittest.TestCase):
         np.random.seed(1)
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
 
-        manager = DataManager(dset, batch_size, n_process_augmentation=1,
+        manager = DataManager(dset, batch_size, n_process_augmentation=0,
                               transforms=None)
 
         self.assertIsInstance(manager.get_batchgen(), Augmenter)
@@ -29,7 +29,8 @@ class DataManagerTest(unittest.TestCase):
 
         batch_dict = {"data": np.asarray(data), "label": np.asarray(labels)}
 
-        augmenter_iter = iter(manager.get_batchgen())
+        augmenter = manager.get_batchgen()
+        augmenter_iter = iter(augmenter)
         for key, val in next(augmenter_iter).items():
             self.assertTrue((val == batch_dict[key]).all())
 

@@ -46,7 +46,7 @@ class TestAugmenters(unittest.TestCase):
 
             last_idx += 1
 
-        self.assertEquals(last_idx, num_batches)
+        self.assertEqual(last_idx, num_batches)
 
     # multiple test functions running the same test with different
     # configurations. Must be done in different functions, because
