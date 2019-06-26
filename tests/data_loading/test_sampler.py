@@ -46,7 +46,7 @@ class SamplerTest(unittest.TestCase):
         sampler_iter_b = iter(sampler_b)
         self.assertEqual(next(sampler_iter_a), list(range(15)))
         self.assertEqual(next(sampler_iter_b),
-                         list(range(len(dset), len(dset)-15, -1)))
+                         list(range(len(dset), len(dset) - 15, -1)))
 
     def test_prevalence_random_sampler(self):
         np.random.seed(1)
