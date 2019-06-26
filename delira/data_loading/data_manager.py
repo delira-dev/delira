@@ -130,6 +130,7 @@ class DataManager(object):
         )
 
         return Augmenter(data_loader=data_loader,
+                         batchsize=self.batch_size,
                          sampler=self.sampler,
                          num_processes=self.n_process_augmentation,
                          transforms=self.transforms,
@@ -418,6 +419,15 @@ class DataManager(object):
         n_batches += int(bool(truncated_batch) and not self.drop_last)
 
         return n_batches
+
+    @property
+    def dataset(self):
+        return self.data
+
+    @dataset.setter
+    def dataset(self, new_dset):
+        assert isinstance(new_dset, AbstractDataset)
+        self.data = new_dset
 
     def __iter__(self):
         """

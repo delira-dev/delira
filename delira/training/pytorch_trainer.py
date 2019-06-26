@@ -3,10 +3,9 @@ import os
 import warnings
 from functools import partial
 
-from batchgenerators.dataloading import MultiThreadedAugmenter
-
 from delira import get_backends
 from .base_trainer import BaseNetworkTrainer
+from ..data_loading import DataManager
 
 logger = logging.getLogger(__name__)
 
@@ -363,23 +362,24 @@ if "TORCH" in get_backends():
                                              "checkpoint_best.pt"),
                                 epoch)
 
-        def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch,
-                                verbose=False):
+        def _train_single_epoch(self, dmgr_train: DataManager, epoch,
+                            verbose=False):
             """
             Trains the network a single epoch
 
             Parameters
             ----------
-            batchgen : MultiThreadedAugmenter
-                Generator yielding the training batches
+            dmgr_train : :class:`DataManager`
+                Datamanager to create the data generator
             epoch : int
                 current epoch
+
 
             """
 
             self.module.train()
 
-            return super()._train_single_epoch(batchgen, epoch,
+            return super()._train_single_epoch(dmgr_train, epoch,
                                                verbose=verbose)
 
         def predict_data_mgr(self, datamgr, batchsize=None, metrics=None,

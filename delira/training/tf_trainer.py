@@ -1,13 +1,12 @@
 import logging
 import os
 
-from batchgenerators.dataloading import MultiThreadedAugmenter
-
 from .base_trainer import BaseNetworkTrainer
 from .train_utils import convert_tf_tensor_to_npy
 from .train_utils import create_optims_default_tf as create_optims_default
 from .train_utils import initialize_uninitialized
 from ..io import tf_load_checkpoint, tf_save_checkpoint
+from ..data_loading import DataManager
 
 logger = logging.getLogger(__name__)
 
@@ -245,22 +244,22 @@ class TfNetworkTrainer(BaseNetworkTrainer):
 
         return self.module
 
-    def _train_single_epoch(self, batchgen: MultiThreadedAugmenter, epoch,
+    def _train_single_epoch(self, dmgr_train: DataManager, epoch,
                             verbose=False):
         """
         Trains the network a single epoch
 
         Parameters
         ----------
-        batchgen : MultiThreadedAugmenter
-            Generator yielding the training batches
+        dmgr_train : :class:`DataManager`
+            Datamanager to create the data generator
         epoch : int
             current epoch
 
         """
         self.module.training = True
 
-        return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
+        return super()._train_single_epoch(dmgr_train, epoch, verbose=verbose)
 
     def predict_data_mgr(self, datamgr, batch_size=None, metrics=None,
                          metric_keys=None, verbose=False, **kwargs):

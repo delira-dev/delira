@@ -1,8 +1,5 @@
-from collections import OrderedDict
-from random import shuffle
-
 from delira.data_loading.sampler.abstract_sampler import AbstractSampler
-from delira.data_loading.dataset import AbstractDataset
+
 
 from delira.data_loading.sampler.per_class_sampler import PerClassSampler, \
     StoppingPerClassSampler
@@ -24,7 +21,7 @@ class SequentialSampler(AbstractSampler):
         """
         super().__init__(indices)
 
-        self._indices = range(len(indices))
+        self._indices = iter(range(len(indices)))
 
     def _get_next_index(self):
         """

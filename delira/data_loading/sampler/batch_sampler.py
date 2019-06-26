@@ -24,7 +24,7 @@ class BatchSampler(object):
     def __len__(self):
         num_batches = len(self._sampler) // self._batchsize
 
-        if self._truncate:
-            num_batches += int(bool(self._sampler % self._batchsize))
+        if not self._truncate:
+            num_batches += int(bool(len(self._sampler) % self._batchsize))
 
         return num_batches

@@ -9,7 +9,7 @@ from tqdm import tqdm
 from delira.logging import TrixiHandler
 from .callbacks import AbstractCallback
 from .predictor import Predictor
-from ..data_loading.data_manager import Augmenter
+from ..data_loading import Augmenter, DataManager
 from ..models import AbstractNetwork
 
 logger = logging.getLogger(__name__)
@@ -279,15 +279,15 @@ class BaseNetworkTrainer(Predictor):
             self.save_state(os.path.join(self.save_path,
                                          "checkpoint_best"))
 
-    def _train_single_epoch(self, batchgen: Augmenter, epoch,
+    def _train_single_epoch(self, dmgr_train: DataManager, epoch,
                             verbose=False):
         """
         Trains the network a single epoch
 
         Parameters
         ----------
-        batchgen : :class:`Augmenter`
-            Generator yielding the training batches
+        dmgr_train : :class:`DataManager`
+            Datamanager to create the data generator
         epoch : int
             current epoch
 
@@ -295,7 +295,9 @@ class BaseNetworkTrainer(Predictor):
 
         metrics, losses = [], []
 
-        n_batches = batchgen.num_batches
+        batchgen = dmgr_train.get_batchgen(seed=epoch)
+
+        n_batches = dmgr_train.n_batches
         if verbose:
             iterable = tqdm(
                 enumerate(batchgen),
@@ -318,8 +320,6 @@ class BaseNetworkTrainer(Predictor):
                                                    batch_nr=batch_nr)
             metrics.append(_metrics)
             losses.append(_losses)
-
-        batchgen._finish()
 
         total_losses, total_metrics = {}, {}
 
@@ -422,11 +422,9 @@ class BaseNetworkTrainer(Predictor):
             self._at_epoch_begin(metrics_val, val_score_key, epoch,
                                  num_epochs)
 
-            batch_gen_train = datamgr_train.get_batchgen(seed=epoch)
-
             # train single network epoch
             train_metrics, train_losses = self._train_single_epoch(
-                batch_gen_train, epoch, verbose=verbose)
+                datamgr_train, epoch, verbose=verbose)
 
             total_metrics = {
                 **train_metrics,

@@ -1,10 +1,6 @@
-from collections import OrderedDict
-
-from numpy import concatenate
-from numpy.random import choice, shuffle
+from numpy.random import choice
 
 from delira.data_loading.sampler.abstract_sampler import AbstractSampler
-from delira.data_loading.dataset import AbstractDataset
 from delira.data_loading.sampler.per_class_sampler import PerClassSampler, \
     StoppingPerClassSampler
 

@@ -13,7 +13,7 @@ from sklearn.model_selection import KFold, StratifiedKFold, \
 
 from delira import get_backends
 
-from ..data_loading import BaseDataManager
+from ..data_loading import DataManager
 from ..models import AbstractNetwork
 
 from .parameters import Parameters
@@ -263,17 +263,17 @@ class BaseExperiment(object):
             prepare_batch_fn=prepare_batch_fn, **kwargs)
         return predictor
 
-    def run(self, train_data: BaseDataManager,
-            val_data: BaseDataManager = None,
+    def run(self, train_data: DataManager,
+            val_data: DataManager = None,
             params: Parameters = None, **kwargs):
         """
         Setup and run training
 
         Parameters
         ----------
-        train_data : :class:`BaseDataManager`
+        train_data : :class:`DataManager`
             the data to use for training
-        val_data : :class:`BaseDataManager` or None
+        val_data : :class:`DataManager` or None
             the data to use for validation (no validation is done
             if passing None); default: None
         params : :class:`Parameters` or None
@@ -313,8 +313,8 @@ class BaseExperiment(object):
                              self.val_score_key, kwargs.get("val_score_mode",
                                                             "lowest"))
 
-    def resume(self, save_path: str, train_data: BaseDataManager,
-               val_data: BaseDataManager = None,
+    def resume(self, save_path: str, train_data: DataManager,
+               val_data: DataManager = None,
                params: Parameters = None, **kwargs):
         """
         Resumes a previous training by passing an explicit ``save_path``
@@ -324,9 +324,9 @@ class BaseExperiment(object):
         ----------
         save_path : str
             path to previous training
-        train_data : :class:`BaseDataManager`
+        train_data : :class:`DataManager`
             the data to use for training
-        val_data : :class:`BaseDataManager` or None
+        val_data : :class:`DataManager` or None
             the data to use for validation (no validation is done
             if passing None); default: None
         params : :class:`Parameters` or None
@@ -352,7 +352,7 @@ class BaseExperiment(object):
             save_path=save_path,
             **kwargs)
 
-    def test(self, network, test_data: BaseDataManager,
+    def test(self, network, test_data: DataManager,
              metrics: dict, metric_keys=None,
              verbose=False, prepare_batch=lambda x: x,
              convert_fn=lambda x: x, **kwargs):
@@ -363,7 +363,7 @@ class BaseExperiment(object):
         ----------
         network : :class:`AbstractNetwork`
             the (trained) network to test
-        test_data : :class:`BaseDataManager`
+        test_data : :class:`DataManager`
             the data to use for testing
         metrics : dict
             the metrics to calculate
@@ -404,7 +404,7 @@ class BaseExperiment(object):
         return next(predictor.predict_data_mgr_cache_all(test_data, 1, metrics,
                                                          metric_keys, verbose))
 
-    def kfold(self, data: BaseDataManager, metrics: dict, num_epochs=None,
+    def kfold(self, data: DataManager, metrics: dict, num_epochs=None,
               num_splits=None, shuffle=False, random_seed=None,
               split_type="random", val_split=0.2, label_key="label",
               train_kwargs: dict = None, metric_keys: dict = None,
@@ -414,7 +414,7 @@ class BaseExperiment(object):
 
         Parameters
         ----------
-        data : :class:`BaseDataManager`
+        data : :class:`DataManager`
             the data to use for training(, validation) and testing. Will be
             split based on ``split_type`` and ``val_split``
         metrics : dict
@@ -445,7 +445,7 @@ class BaseExperiment(object):
             the label to use for stratification. Will be ignored unless
             ``split_type`` is 'stratified'. Default: 'label'
         train_kwargs : dict or None
-            kwargs to update the behavior of the :class:`BaseDataManager`
+            kwargs to update the behavior of the :class:`DataManager`
             containing the train data. If None: empty dict will be passed
         metric_keys : dict of tuples
             the batch_dict keys to use for each metric to calculate.
@@ -453,7 +453,7 @@ class BaseExperiment(object):
             If no values are given for a key, per default ``pred`` and
             ``label`` will be used for metric calculation
         test_kwargs : dict or None
-            kwargs to update the behavior of the :class:`BaseDataManager`
+            kwargs to update the behavior of the :class:`DataManager`
             containing the test and validation data.
             If None: empty dict will be passed
         params : :class:`Parameters`or None
@@ -487,7 +487,7 @@ class BaseExperiment(object):
         and :class:`sklearn.model_selection.StratifiedShuffleSplit`
         for stratified data-splitting
 
-        * :meth:`BaseDataManager.update_from_state_dict` for updating the
+        * :meth:`DataManager.update_from_state_dict` for updating the
         data managers by kwargs
 
         * :meth:`BaseExperiment.run` for the training
@@ -786,7 +786,7 @@ if "TORCH" in get_backends():
                              trainer_cls=trainer_cls,
                              **kwargs)
 
-        def kfold(self, data: BaseDataManager, metrics: dict, num_epochs=None,
+        def kfold(self, data: DataManager, metrics: dict, num_epochs=None,
                   num_splits=None, shuffle=False, random_seed=None,
                   split_type="random", val_split=0.2, label_key="label",
                   train_kwargs: dict = None, test_kwargs: dict = None,
@@ -797,7 +797,7 @@ if "TORCH" in get_backends():
 
             Parameters
             ----------
-            data : :class:`BaseDataManager`
+            data : :class:`DataManager`
                 the data to use for training(, validation) and testing. Will be
                 split based on ``split_type`` and ``val_split``
             metrics : dict
@@ -828,7 +828,7 @@ if "TORCH" in get_backends():
                 the label to use for stratification. Will be ignored unless
                 ``split_type`` is 'stratified'. Default: 'label'
             train_kwargs : dict or None
-                kwargs to update the behavior of the :class:`BaseDataManager`
+                kwargs to update the behavior of the :class:`DataManager`
                 containing the train data. If None: empty dict will be passed
             metric_keys : dict of tuples
                 the batch_dict keys to use for each metric to calculate.
@@ -836,7 +836,7 @@ if "TORCH" in get_backends():
                 If no values are given for a key, per default ``pred`` and
                 ``label`` will be used for metric calculation
             test_kwargs : dict or None
-                kwargs to update the behavior of the :class:`BaseDataManager`
+                kwargs to update the behavior of the :class:`DataManager`
                 containing the test and validation data.
                 If None: empty dict will be passed
             params : :class:`Parameters`or None
@@ -870,7 +870,7 @@ if "TORCH" in get_backends():
             and :class:`sklearn.model_selection.StratifiedShuffleSplit`
             for stratified data-splitting
 
-            * :meth:`BaseDataManager.update_from_state_dict` for updating the
+            * :meth:`DataManager.update_from_state_dict` for updating the
             data managers by kwargs
 
             * :meth:`BaseExperiment.run` for the training
@@ -906,7 +906,7 @@ if "TORCH" in get_backends():
                 verbose=verbose,
                 **kwargs)
 
-        def test(self, network, test_data: BaseDataManager,
+        def test(self, network, test_data: DataManager,
                  metrics: dict, metric_keys=None,
                  verbose=False, prepare_batch=None,
                  convert_fn=None, **kwargs):
@@ -917,7 +917,7 @@ if "TORCH" in get_backends():
             ----------
             network : :class:`AbstractNetwork`
                 the (trained) network to test
-            test_data : :class:`BaseDataManager`
+            test_data : :class:`DataManager`
                 the data to use for testing
             metrics : dict
                 the metrics to calculate
@@ -1079,7 +1079,7 @@ if "TF" in get_backends():
 
             return super().setup(params=params, training=training, **kwargs)
 
-        def kfold(self, data: BaseDataManager, metrics: dict, num_epochs=None,
+        def kfold(self, data: DataManager, metrics: dict, num_epochs=None,
                   num_splits=None, shuffle=False, random_seed=None,
                   split_type="random", val_split=0.2, label_key="label",
                   train_kwargs: dict = None, test_kwargs: dict = None,
@@ -1090,7 +1090,7 @@ if "TF" in get_backends():
 
             Parameters
             ----------
-            data : :class:`BaseDataManager`
+            data : :class:`DataManager`
                 the data to use for training(, validation) and testing. Will be
                 split based on ``split_type`` and ``val_split``
             metrics : dict
@@ -1121,7 +1121,7 @@ if "TF" in get_backends():
                 the label to use for stratification. Will be ignored unless
                 ``split_type`` is 'stratified'. Default: 'label'
             train_kwargs : dict or None
-                kwargs to update the behavior of the :class:`BaseDataManager`
+                kwargs to update the behavior of the :class:`DataManager`
                 containing the train data. If None: empty dict will be passed
             metric_keys : dict of tuples
                 the batch_dict keys to use for each metric to calculate.
@@ -1129,7 +1129,7 @@ if "TF" in get_backends():
                 If no values are given for a key, per default ``pred`` and
                 ``label`` will be used for metric calculation
             test_kwargs : dict or None
-                kwargs to update the behavior of the :class:`BaseDataManager`
+                kwargs to update the behavior of the :class:`DataManager`
                 containing the test and validation data.
                 If None: empty dict will be passed
             params : :class:`Parameters`or None
@@ -1163,7 +1163,7 @@ if "TF" in get_backends():
             and :class:`sklearn.model_selection.StratifiedShuffleSplit`
             for stratified data-splitting
 
-            * :meth:`BaseDataManager.update_from_state_dict` for updating the
+            * :meth:`DataManager.update_from_state_dict` for updating the
             data managers by kwargs
 
             * :meth:`BaseExperiment.run` for the training
@@ -1199,7 +1199,7 @@ if "TF" in get_backends():
                 verbose=verbose,
                 **kwargs)
 
-        def test(self, network, test_data: BaseDataManager,
+        def test(self, network, test_data: DataManager,
                  metrics: dict, metric_keys=None,
                  verbose=False, prepare_batch=lambda x: x,
                  convert_fn=None, **kwargs):
@@ -1210,7 +1210,7 @@ if "TF" in get_backends():
             ----------
             network : :class:`AbstractNetwork`
                 the (trained) network to test
-            test_data : :class:`BaseDataManager`
+            test_data : :class:`DataManager`
                 the data to use for testing
             metrics : dict
                 the metrics to calculate

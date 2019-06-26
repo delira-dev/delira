@@ -87,13 +87,15 @@ class AbstractAugmenter(object):
     Basic Augmenter Class providing a general Augmenter API
     """
 
-    def __init__(self, data_loader, sampler, transforms=None, seed=1,
+    def __init__(self, data_loader, batchsize, sampler, transforms=None, seed=1,
                  drop_last=False):
         """
         Parameters
         ----------
         data_loader : :class:`DataLoader`
             the dataloader, loading samples for given indices
+        batchsize : int
+            the batchsize to use for sampling
         sampler : :class:`AbstractSampler`
             the sampler (may be batch sampler or usual sampler), defining the
             actual sampling strategy; Is an iterable yielding indices
@@ -109,7 +111,8 @@ class AbstractAugmenter(object):
 
         if not isinstance(sampler, BatchSampler):
             if isinstance(sampler, AbstractSampler):
-                sampler = BatchSampler
+                sampler = BatchSampler(sampler, batchsize,
+                                       truncate=drop_last)
             else:
                 raise ValueError("Invalid Sampler given: %s" % str(sampler))
 
@@ -135,13 +138,15 @@ class _ParallelAugmenter(AbstractAugmenter):
     An Augmenter that loads and augments multiple batches in parallel
     """
 
-    def __init__(self, data_loader, sampler, num_processes=None,
+    def __init__(self, data_loader, batchsize, sampler, num_processes=None,
                  transforms=None, seed=1, drop_last=False):
         """
         Parameters
         ----------
         data_loader : :class:`DataLoader`
             the dataloader, loading samples for given indices
+         batchsize : int
+            the batchsize to use for sampling
         sampler : :class:`AbstractSampler`
             the sampler (may be batch sampler or usual sampler), defining the
             actual sampling strategy; Is an iterable yielding indices
@@ -157,7 +162,8 @@ class _ParallelAugmenter(AbstractAugmenter):
             whether to drop the last (possibly smaller) batch or not
         """
 
-        super().__init__(data_loader, sampler, transforms, seed, drop_last)
+        super().__init__(data_loader, batchsize, sampler, transforms, seed,
+                         drop_last)
 
         if num_processes is None:
             num_processes = os.cpu_count()
@@ -179,6 +185,7 @@ class _ParallelAugmenter(AbstractAugmenter):
     def abort_event(self):
         """
         Property to access the abortion Event
+
         Returns
         -------
         :class:`multiprocessing.Event`
@@ -190,14 +197,12 @@ class _ParallelAugmenter(AbstractAugmenter):
     def abort_event(self, new_event):
         """
         Setter for the abortion Event;
-        Ensures the old event get's set before it is overwritten
+
         Parameters
         ----------
         new_event : class:`multiprocessing.Event`
             the new event
         """
-        if self._abort_event is not None and not self._abort_event.is_set():
-            self._abort_event.set()
 
         self._abort_event = new_event
 
@@ -240,10 +245,6 @@ class _ParallelAugmenter(AbstractAugmenter):
         Shuts down the processes and resets all related flags and counters
         """
 
-        # shutdown workers by setting abortion event
-        if not self._abort_event.is_set():
-            self._abort_event.set()
-
         # for each process:
         for _data_conn, _index_conn, _process in zip(self._data_pipes,
                                                      self._index_pipes,
@@ -252,8 +253,8 @@ class _ParallelAugmenter(AbstractAugmenter):
             # send None to worker
             _index_conn.send(None)
             # Close Process and wait for its termination
-            _process.close()
             _process.join()
+            _process.close()
 
             # close connections
             _index_conn.close()
@@ -364,7 +365,7 @@ class _ParallelAugmenter(AbstractAugmenter):
                 try:
                     if not all_sampled:
                         idxs = next(sampler_iter)
-                        self._enqueue_indices(idxs)
+                        self._enqueue_indices([idxs])
                 except StopIteration:
                     all_sampled = True
 
@@ -391,7 +392,7 @@ class _SequentialAugmenter(AbstractAugmenter):
     parallelism
     """
 
-    def __init__(self, data_loader, sampler, transforms=None, seed=1,
+    def __init__(self, data_loader, batchsize, sampler, transforms=None, seed=1,
                  drop_last=False):
         """
         Parameters
@@ -408,8 +409,9 @@ class _SequentialAugmenter(AbstractAugmenter):
         drop_last : bool
             whether to drop the last (possibly smaller) batch or not
         """
-        super().__init__(data_loader=data_loader, sampler=sampler,
-                         transforms=transforms, seed=seed, drop_last=drop_last)
+        super().__init__(data_loader=data_loader, batchsize=batchsize,
+                         sampler=sampler, transforms=transforms, seed=seed,
+                         drop_last=drop_last)
 
     def __iter__(self):
         # create sampler iterator
@@ -435,7 +437,7 @@ class Augmenter(object):
     debug mode
     """
 
-    def __init__(self, data_loader, sampler, num_processes=None,
+    def __init__(self, data_loader, batchsize, sampler, num_processes=None,
                  transforms=None, seed=1, drop_last=False):
         """
         Parameters
@@ -459,6 +461,7 @@ class Augmenter(object):
 
         self._augmenter = self._resolve_augmenter_cls(num_processes,
                                                       data_loader=data_loader,
+                                                      batchsize=batchsize,
                                                       sampler=sampler,
                                                       transforms=transforms,
                                                       seed=seed,

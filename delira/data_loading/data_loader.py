@@ -59,15 +59,15 @@ class DataLoader:
         for _result_dict in data:
             for key, val in _result_dict.items():
                 if key in data_dict.keys():
-                    _result_dict[key].append(val)
+                    data_dict[key].append(val)
                 else:
-                    _result_dict[key] = [val]
+                    data_dict[key] = [val]
 
         # convert list to numpy arrays
         for key, val_list in data_dict.items():
             data_dict[key] = np.asarray(val_list)
 
-        return
+        return data_dict
 
     @property
     def process_id(self):

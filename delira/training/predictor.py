@@ -4,7 +4,7 @@ import copy
 import numpy as np
 from tqdm import tqdm
 
-from ..data_loading import BaseDataManager
+from ..data_loading import DataManager
 from .train_utils import convert_batch_to_numpy_identity
 from ..utils.config import LookupConfig
 
@@ -138,15 +138,16 @@ class Predictor(object):
             **pred
         )[1]
 
-    def predict_data_mgr(self, datamgr, batchsize=None, metrics=None,
-                         metric_keys=None, verbose=False, **kwargs):
+    def predict_data_mgr(self, datamgr: DataManager, batchsize=None,
+                         metrics=None, metric_keys=None, verbose=False,
+                         **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator
         without explicitly caching anything
 
         Parameters
         ----------
-        datamgr : :class:`BaseDataManager`
+        datamgr : :class:`DataManager`
             Manager producing a generator holding the batches
         batchsize : int
             Artificial batchsize (sampling will be done with batchsize
@@ -178,11 +179,10 @@ class Predictor(object):
             batchsize = orig_batch_size
 
         datamgr.batch_size = 1
-        datamgr.n_process_augmentation = 1
 
         batchgen = datamgr.get_batchgen()
 
-        n_batches = batchgen.num_batches
+        n_batches = datamgr.n_batches
 
         if verbose:
             iterable = tqdm(enumerate(batchgen), unit=' sample',
@@ -235,7 +235,6 @@ class Predictor(object):
 
                 batch_list = []
 
-        batchgen._finish()
         datamgr.batch_size = orig_batch_size
         datamgr.n_process_augmentation = orig_num_aug_processes
 
