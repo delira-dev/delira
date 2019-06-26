@@ -3,11 +3,12 @@ import unittest
 import numpy as np
 
 from delira.data_loading.sampler import LambdaSampler, \
-    PrevalenceRandomSampler, \
-    PrevalenceSequentialSampler, \
+    PerClassRandomSampler, \
+    PerClassSequentialSampler, \
     RandomSampler, \
+    StoppingPerClassRandomSampler, \
     SequentialSampler, \
-    StoppingPrevalenceRandomSampler, \
+    StoppingPerClassSequentialSampler, \
     WeightedRandomSampler
 from . import DummyDataset
 
@@ -34,7 +35,7 @@ class SamplerTest(unittest.TestCase):
         np.random.seed(1)
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
 
-        sampler = PrevalenceRandomSampler.from_dataset(dset)
+        sampler = PerClassRandomSampler.from_dataset(dset)
 
         for batch_len in [1, 2, 3]:
             with self.subTest(batch_len=batch_len):
@@ -54,7 +55,7 @@ class SamplerTest(unittest.TestCase):
         np.random.seed(1)
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
 
-        sampler = PrevalenceSequentialSampler.from_dataset(dset)
+        sampler = PerClassSequentialSampler.from_dataset(dset)
 
         # ToDo add test considering actual sampling strategy
         self.assertEqual(len(sampler(5)), 5)
@@ -93,7 +94,7 @@ class SamplerTest(unittest.TestCase):
         np.random.seed(1)
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
 
-        sampler = StoppingPrevalenceRandomSampler.from_dataset(dset)
+        sampler = StoppingPerClassRandomSampler.from_dataset(dset)
 
         with self.assertRaises(StopIteration):
             for i in range(121):
@@ -105,7 +106,7 @@ class SamplerTest(unittest.TestCase):
         np.random.seed(1)
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
 
-        sampler = StoppingPrevalenceRandomSampler.from_dataset(dset)
+        sampler = StoppingPerClassSequentialSampler.from_dataset(dset)
 
         with self.assertRaises(StopIteration):
             for i in range(121):

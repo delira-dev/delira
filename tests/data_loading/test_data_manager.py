@@ -1,7 +1,6 @@
 import unittest
 
 import numpy as np
-from batchgenerators.dataloading import MultiThreadedAugmenter
 
 from delira.data_loading import DataManager
 from delira.data_loading.data_manager import Augmenter
@@ -10,7 +9,7 @@ from . import DummyDataset
 
 class DataManagerTest(unittest.TestCase):
 
-    def test_base_datamanager(self):
+    def test_datamanager(self):
 
         batch_size = 16
 
@@ -30,10 +29,11 @@ class DataManagerTest(unittest.TestCase):
 
         batch_dict = {"data": np.asarray(data), "label": np.asarray(labels)}
 
-        for key, val in next(manager.get_batchgen()).items():
+        augmenter_iter = iter(manager.get_batchgen())
+        for key, val in next(augmenter_iter).items():
             self.assertTrue((val == batch_dict[key]).all())
 
-        for key, val in next(manager.get_batchgen()).items():
+        for key, val in next(augmenter_iter).items():
             self.assertEqual(len(val), batch_size)
 
 
