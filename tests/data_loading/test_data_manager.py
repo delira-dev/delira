@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from batchgenerators.dataloading import MultiThreadedAugmenter
 
-from delira.data_loading import BaseDataManager
+from delira.data_loading import DataManager
 from delira.data_loading.data_manager import Augmenter
 from . import DummyDataset
 
@@ -17,8 +17,8 @@ class DataManagerTest(unittest.TestCase):
         np.random.seed(1)
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
 
-        manager = BaseDataManager(dset, batch_size, n_process_augmentation=1,
-                                  transforms=None)
+        manager = DataManager(dset, batch_size, n_process_augmentation=1,
+                              transforms=None)
 
         self.assertIsInstance(manager.get_batchgen(), Augmenter)
 

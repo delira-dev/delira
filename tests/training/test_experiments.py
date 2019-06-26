@@ -153,7 +153,7 @@ class ExperimentTest(unittest.TestCase):
     def test_experiment_run_torch(self):
 
         from delira.training import PyTorchExperiment
-        from delira.data_loading import BaseDataManager
+        from delira.data_loading import DataManager
 
         for case in self._test_cases_torch:
             with self.subTest(case=case):
@@ -169,8 +169,8 @@ class ExperimentTest(unittest.TestCase):
                 dset_train = DummyDataset(dataset_length_train)
                 dset_test = DummyDataset(dataset_length_test)
 
-                dmgr_train = BaseDataManager(dset_train, 16, 2, None)
-                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+                dmgr_train = DataManager(dset_train, 16, 2, None)
+                dmgr_test = DataManager(dset_test, 16, 1, None)
 
                 exp.run(dmgr_train, dmgr_test)
 
@@ -178,7 +178,7 @@ class ExperimentTest(unittest.TestCase):
                      reason="No TORCH Backend installed")
     def test_experiment_test_torch(self):
         from delira.training import PyTorchExperiment
-        from delira.data_loading import BaseDataManager
+        from delira.data_loading import DataManager
 
         for case in self._test_cases_torch:
             with self.subTest(case=case):
@@ -193,7 +193,7 @@ class ExperimentTest(unittest.TestCase):
                 model = network_cls()
 
                 dset_test = DummyDataset(dataset_length_test)
-                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+                dmgr_test = DataManager(dset_test, 16, 1, None)
 
                 prepare_batch = partial(
                     model.prepare_batch,
@@ -208,7 +208,7 @@ class ExperimentTest(unittest.TestCase):
                      reason="No TORCH Backend installed")
     def test_experiment_kfold_torch(self):
         from delira.training import PyTorchExperiment
-        from delira.data_loading import BaseDataManager
+        from delira.data_loading import DataManager
         from copy import deepcopy
 
         # all test cases
@@ -233,7 +233,7 @@ class ExperimentTest(unittest.TestCase):
                                 dset = DummyDataset(
                                     dataset_length_test + dataset_length_train)
 
-                                dmgr = BaseDataManager(dset, 16, 1, None)
+                                dmgr = DataManager(dset, 16, 1, None)
                                 exp.kfold(
                                     dmgr,
                                     params.nested_get("val_metrics"),
@@ -262,7 +262,7 @@ class ExperimentTest(unittest.TestCase):
                                 dset = DummyDataset(
                                     dataset_length_test + dataset_length_train)
 
-                                dmgr = BaseDataManager(dset, 16, 1, None)
+                                dmgr = DataManager(dset, 16, 1, None)
                                 exp.kfold(
                                     dmgr,
                                     params.nested_get("val_metrics"),
@@ -276,7 +276,7 @@ class ExperimentTest(unittest.TestCase):
     def test_experiment_run_tf(self):
 
         from delira.training import TfExperiment
-        from delira.data_loading import BaseDataManager
+        from delira.data_loading import DataManager
 
         for case in self._test_cases_tf:
             with self.subTest(case=case):
@@ -289,8 +289,8 @@ class ExperimentTest(unittest.TestCase):
                 dset_train = DummyDataset(dataset_length_train)
                 dset_test = DummyDataset(dataset_length_test)
 
-                dmgr_train = BaseDataManager(dset_train, 16, 2, None)
-                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+                dmgr_train = DataManager(dset_train, 16, 2, None)
+                dmgr_test = DataManager(dset_test, 16, 1, None)
 
                 exp.run(dmgr_train, dmgr_test)
 
@@ -298,7 +298,7 @@ class ExperimentTest(unittest.TestCase):
                      reason="No TF Backend installed")
     def test_experiment_test_tf(self):
         from delira.training import TfExperiment
-        from delira.data_loading import BaseDataManager
+        from delira.data_loading import DataManager
 
         for case in self._test_cases_tf:
             with self.subTest(case=case):
@@ -312,7 +312,7 @@ class ExperimentTest(unittest.TestCase):
                 model = network_cls()
 
                 dset_test = DummyDataset(dataset_length_test)
-                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+                dmgr_test = DataManager(dset_test, 16, 1, None)
 
                 exp.test(model, dmgr_test, params.nested_get("val_metrics"))
 
@@ -320,7 +320,7 @@ class ExperimentTest(unittest.TestCase):
                      reason="No TF Backend installed")
     def test_experiment_kfold_tf(self):
         from delira.training import TfExperiment
-        from delira.data_loading import BaseDataManager
+        from delira.data_loading import DataManager
 
         # all test cases
         for case in self._test_cases_tf:
@@ -342,7 +342,7 @@ class ExperimentTest(unittest.TestCase):
                                 dset = DummyDataset(
                                     dataset_length_test + dataset_length_train)
 
-                                dmgr = BaseDataManager(dset, 16, 1, None)
+                                dmgr = DataManager(dset, 16, 1, None)
                                 exp.kfold(
                                     dmgr,
                                     params.nested_get("val_metrics"),
@@ -365,7 +365,7 @@ class ExperimentTest(unittest.TestCase):
                                 dset = DummyDataset(
                                     dataset_length_test + dataset_length_train)
 
-                                dmgr = BaseDataManager(dset, 16, 1, None)
+                                dmgr = DataManager(dset, 16, 1, None)
                                 exp.kfold(
                                     dmgr,
                                     params.nested_get("val_metrics"),
