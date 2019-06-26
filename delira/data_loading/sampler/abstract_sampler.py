@@ -40,8 +40,11 @@ class AbstractSampler(object):
         raise NotImplementedError
 
     def __iter__(self):
-        for i in range(self._num_samples):
-            yield self._get_next_index()
+        try:
+            for i in range(self._num_samples):
+                yield self._get_next_index()
+        except StopIteration:
+            return
 
     def __len__(self):
         return self._num_samples
