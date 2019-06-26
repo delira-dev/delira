@@ -87,8 +87,14 @@ class AbstractAugmenter(object):
     Basic Augmenter Class providing a general Augmenter API
     """
 
-    def __init__(self, data_loader, batchsize, sampler, transforms=None, seed=1,
-                 drop_last=False):
+    def __init__(
+            self,
+            data_loader,
+            batchsize,
+            sampler,
+            transforms=None,
+            seed=1,
+            drop_last=False):
         """
         Parameters
         ----------
@@ -392,8 +398,14 @@ class _SequentialAugmenter(AbstractAugmenter):
     parallelism
     """
 
-    def __init__(self, data_loader, batchsize, sampler, transforms=None, seed=1,
-                 drop_last=False):
+    def __init__(
+            self,
+            data_loader,
+            batchsize,
+            sampler,
+            transforms=None,
+            seed=1,
+            drop_last=False):
         """
         Parameters
         ----------

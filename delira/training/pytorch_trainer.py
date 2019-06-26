@@ -363,7 +363,7 @@ if "TORCH" in get_backends():
                                 epoch)
 
         def _train_single_epoch(self, dmgr_train: DataManager, epoch,
-                            verbose=False):
+                                verbose=False):
             """
             Trains the network a single epoch
 
