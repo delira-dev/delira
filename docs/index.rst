@@ -18,7 +18,6 @@ delira - Deep Learning In RAdiology
    :caption: Tutorials:
 
    tutorial_delira
-   tutorial_dataset
    classification_pytorch
    gan_pytorch
    segmentation_2d_pytorch
