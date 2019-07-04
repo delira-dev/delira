@@ -31,7 +31,7 @@ delira - Deep Learning In RAdiology
 
    _api/_build/modules
 
-   GitHub <https://github.com/justusschock/delira>
+   GitHub <https://github.com/delira-dev/delira>
 
 
 

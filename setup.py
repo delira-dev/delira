@@ -51,7 +51,7 @@ setup(
     name='delira',
     version=delira_version,
     packages=find_packages(),
-    url='https://github.com/justusschock/delira/',
+    url='https://github.com/delira-dev/delira/',
     test_suite="unittest",
     long_description=readme,
     long_description_content_type='text/markdown',
