@@ -21,7 +21,7 @@ if (( $num_errors_after < $num_errors_before )); then
     git config --global push.default simple; # Push only to the current branch.  
     # Make sure to make the output quiet, or else the API token will 
     # leak!  This works because the API key can replace your password.
-    git push https://$GITHUB_TOKEN@github.com/justusschock/delira.git;
+    git push https://$GITHUB_TOKEN@github.com/delira-dev/delira.git;
 fi
 
 cd "$TRAVIS_BUILD_DIR";
