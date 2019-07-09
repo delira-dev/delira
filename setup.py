@@ -37,8 +37,6 @@ requirements_extra_tf = resolve_requirements(os.path.join(
 requirements_extra_full += requirements_extra_tf
 
 readme = read_file(os.path.join(os.path.dirname(__file__), "README.md"))
-delira_version = find_version(os.path.join(os.path.dirname(__file__), "delira",
-                                           "__init__.py"))
 
 setup(
     name='delira',
