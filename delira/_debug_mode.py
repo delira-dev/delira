@@ -9,6 +9,7 @@ __DEBUG_MODE = False
 # implement a functionality without multiprocessing
 # (even if this slows down things a lot!).
 
+
 def get_current_debug_mode():
     """
     Getter function for the current debug mode

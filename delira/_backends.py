@@ -59,7 +59,7 @@ def _determine_backends():
 def get_backends():
     """
     Return List of currently available backends
-    
+
     Returns
     -------
     list
