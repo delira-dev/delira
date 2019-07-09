@@ -23,14 +23,6 @@ def read_file(file):
     return content
 
 
-def find_version(file):
-    content = read_file(file)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", content,
-                              re.M)
-    if version_match:
-        return version_match.group(1)
-
-
 requirements = resolve_requirements(os.path.join(os.path.dirname(__file__),
                                                  'requirements.txt'))
 
