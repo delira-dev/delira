@@ -1,5 +1,6 @@
 import os
 import json
+from delira._version import __version__
 
 # to register new possible backends, they have to be added to this list.
 # each backend should consist of a tuple of length 2 with the first entry
@@ -12,7 +13,7 @@ __BACKENDS = []
 
 def _determine_backends():
 
-    _config_file = __file__.replace("__init__.py", ".delira")
+    _config_file = __file__.replace("_backends.py", ".delira")
     # look for config file to determine backend
     # if file exists: load config into environment variables
 
@@ -65,6 +66,7 @@ def get_backends():
     list
         list of strings containing the currently installed backends
     """
+    global __BACKENDS
 
     if not __BACKENDS:
         _determine_backends()
