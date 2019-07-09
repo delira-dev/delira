@@ -49,7 +49,8 @@ delira_version = find_version(os.path.join(os.path.dirname(__file__), "delira",
 
 setup(
     name='delira',
-    version=delira_version,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass()
     packages=find_packages(),
     url='https://github.com/delira-dev/delira/',
     test_suite="unittest",

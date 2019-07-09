@@ -1,5 +1,3 @@
-__version__ = '0.4.1'
-
 import json
 import os
 import warnings
@@ -121,3 +119,7 @@ def set_debug_mode(mode: bool):
     """
     global __DEBUG_MODE
     __DEBUG_MODE = mode
+
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
