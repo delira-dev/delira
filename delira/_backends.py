@@ -9,8 +9,6 @@ import json
 __POSSIBLE_BACKENDS = [("torch", "torch"), ("tensorflow", "tf")]
 __BACKENDS = []
 
-__DEBUG_MODE = False
-
 
 def _determine_backends():
 
