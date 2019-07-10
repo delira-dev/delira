@@ -32,6 +32,8 @@ def read_file(file):
     with open(file) as f:
         content = f.read()
     return content
+
+
 whole_version = versioneer.get_version()
 # The short X.Y version
 version = whole_version.split("+", 1)[0]
