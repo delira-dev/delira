@@ -15,10 +15,11 @@
 import os
 import sys
 import re
-import versioneer
 
 # source code directory, relative to this file, for sphinx-build
 sys.path.insert(0, os.path.abspath('../.'))
+
+import versioneer
 
 
 # -- Project information -----------------------------------------------------
