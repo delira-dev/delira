@@ -97,4 +97,4 @@ Testing is done with a `unittest` suite
 for formatting docstrings. Length of line inside docstrings block must be limited to 80 characters to
 fit into Jupyter documentation popups.
 
-[this repo]: https://github.com/justusschock/delira
+[this repo]: https://github.com/delira-dev/delira
