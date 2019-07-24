@@ -27,6 +27,7 @@ matrix:
 before_install:
     - if [[ "$TEST_TYPE" == "unittests" ]]; then
           bash scripts/ci/install_before_tests.sh;
+          pip install codecov;
       else
           bash scripts/ci/install_before_style_check.sh;
           pip install -r docs/requirements.txt;
@@ -47,6 +48,11 @@ script:
     # build docs if python == 3.7
     - if [[ "$TRAVIS_PYTHON_VERSION" == 3.7 ]] && [[ "$TEST_TYPE" == "style-check" ]]; then
           bash scripts/ci/build_docs.sh;
+      fi
+      
+after_success:
+    - if [[ "$TEST_TYPE" == "unittests" ]]; then
+          codecov;
       fi
 
 before_deploy:
