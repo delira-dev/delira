@@ -139,7 +139,10 @@ class WriterLoggingBackend(BaseBackend):
             run_metadata = TaggedRunMetadata(
                 tag='step1', run_metadata=run_metadata.SerializeToString())
 
-        self._writer._get_file_writer().add_event(Event(graph_def=graphdef.SerializeToString(), tagged_run_metadata=run_metadata))
+        self._writer._get_file_writer().add_event(
+            Event(
+                graph_def=graphdef.SerializeToString(),
+                tagged_run_metadata=run_metadata))
 
     def _graph_onnx(self, prototxt):
         converted_args, converted_kwargs = self.convert_to_npy(

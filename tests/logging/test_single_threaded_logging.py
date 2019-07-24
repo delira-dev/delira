@@ -45,19 +45,19 @@ class TestTensorboardLogging(unittest.TestCase):
 
             layers = tf.keras.layers
             self._model_tf = tf.keras.Sequential(
-                [   layers.Conv2D(
-                        32,
-                        5,
-                        padding='same',
-                        data_format="channels_first",
-                        activation=tf.nn.relu),
+                [layers.Conv2D(
+                    32,
+                    5,
+                    padding='same',
+                    data_format="channels_first",
+                    activation=tf.nn.relu),
                     layers.Conv2D(
                         64,
                         5,
                         padding='same',
                         data_format="channels_first",
                         activation=tf.nn.relu),
-                ])
+                 ])
             self._model_tf.build(input_shape=input.shape)
 
         else:
@@ -435,10 +435,16 @@ class TestTensorboardLogging(unittest.TestCase):
         run_metadata = tf.RunMetadata()
 
         with tf.Session() as sess:
-            outputs = self._model_tf(np.zeros(shape=(1, 1, 28, 28), dtype=np.float32))
+            outputs = self._model_tf(
+                np.zeros(
+                    shape=(
+                        1,
+                        1,
+                        28,
+                        28),
+                    dtype=np.float32))
             sess.run(tf.initializers.global_variables())
             sess.run(outputs, options=run_options, run_metadata=run_metadata)
-
 
         self._logger.log({"graph_tf": {
             "graph": self._model_tf._graph.as_graph_def(add_shapes=True),
