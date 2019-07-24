@@ -41,7 +41,7 @@ class TestTensorboardLogging(unittest.TestCase):
 
         if tf is not None:
             tf.reset_default_graph()
-            input = np.zeros(shape=(1, 1, 28, 28))
+            input = np.zeros(shape=(1, 28, 28, 1))
 
             layers = tf.keras.layers
             self._model_tf = tf.keras.Sequential(
@@ -49,13 +49,13 @@ class TestTensorboardLogging(unittest.TestCase):
                     32,
                     5,
                     padding='same',
-                    data_format="channels_first",
+                    data_format="channels_last",
                     activation=tf.nn.relu),
                     layers.Conv2D(
                         64,
                         5,
                         padding='same',
-                        data_format="channels_first",
+                        data_format="channels_last",
                         activation=tf.nn.relu),
                  ])
             self._model_tf.build(input_shape=input.shape)
@@ -439,9 +439,9 @@ class TestTensorboardLogging(unittest.TestCase):
                 np.zeros(
                     shape=(
                         1,
-                        1,
                         28,
-                        28),
+                        28,
+                        1),
                     dtype=np.float32))
             sess.run(tf.initializers.global_variables())
             sess.run(outputs, options=run_options, run_metadata=run_metadata)
