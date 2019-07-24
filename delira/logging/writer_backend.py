@@ -121,9 +121,9 @@ class WriterLoggingBackend(BaseBackend):
 
         self._writer.add_graph(*converted_args, **converted_kwargs)
 
-    def _graph_tf(self, graph):
+    def _graph_tf(self, graph, run_metadata=None):
         import tensorflow as tf
-        from tensorboardX.proto.event_pb2 import Event
+        from tensorboardX.proto.event_pb2 import Event, TaggedRunMetadata
 
         if isinstance(graph, tf.Graph):
             graphdef = graph.as_graph_def()
@@ -135,7 +135,11 @@ class WriterLoggingBackend(BaseBackend):
             raise TypeError("Invalid type given for graph: %s" %
                             graph.__class__.__name__)
 
-        self._writer.add_event(Event(graph_def=graphdef.SerializeToString()))
+        if run_metadata:
+            run_metadata = TaggedRunMetadata(
+                tag='step1', run_metadata=run_metadata.SerializeToString())
+
+        self._writer._get_file_writer().add_event(Event(graph_def=graphdef.SerializeToString(), tagged_run_metadata=run_metadata))
 
     def _graph_onnx(self, prototxt):
         converted_args, converted_kwargs = self.convert_to_npy(

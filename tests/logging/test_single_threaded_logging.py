@@ -3,14 +3,14 @@ from delira.logging import Logger, TensorboardBackend, make_logger
 import unittest
 
 try:
-    import torch
-except ImportError:
-    torch = None
-
-try:
     import tensorflow as tf
 except ImportError:
     tf = None
+
+try:
+    import torch
+except ImportError:
+    torch = None
 
 try:
     import onnx
@@ -40,23 +40,17 @@ class TestTensorboardLogging(unittest.TestCase):
                             "tuvwxyz0123456789"
 
         if tf is not None:
-            input_shape = [1, 28, 28]
+            tf.reset_default_graph()
+            input = np.zeros(shape=(1, 1, 28, 28))
 
             layers = tf.keras.layers
-            max_pool = layers.MaxPooling2D(
-                (2, 2), (2, 2), padding='same', data_format="channels_first")
             self._model_tf = tf.keras.Sequential(
-                [
-                    layers.Reshape(
-                        target_shape=input_shape,
-                        input_shape=(28 * 28,)),
-                    layers.Conv2D(
+                [   layers.Conv2D(
                         32,
                         5,
                         padding='same',
                         data_format="channels_first",
                         activation=tf.nn.relu),
-                    max_pool,
                     layers.Conv2D(
                         64,
                         5,
@@ -64,6 +58,8 @@ class TestTensorboardLogging(unittest.TestCase):
                         data_format="channels_first",
                         activation=tf.nn.relu),
                 ])
+            self._model_tf.build(input_shape=input.shape)
+
         else:
             self._model_tf = None
 
@@ -434,8 +430,19 @@ class TestTensorboardLogging(unittest.TestCase):
 
     @unittest.skipIf(tf is None, "TF Backend not installed")
     def test_graph_tf(self):
+
+        run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+        run_metadata = tf.RunMetadata()
+
+        with tf.Session() as sess:
+            outputs = self._model_tf(np.zeros(shape=(1, 1, 28, 28), dtype=np.float32))
+            sess.run(tf.initializers.global_variables())
+            sess.run(outputs, options=run_options, run_metadata=run_metadata)
+
+
         self._logger.log({"graph_tf": {
-            "graph": self._model_tf._graph
+            "graph": self._model_tf._graph.as_graph_def(add_shapes=True),
+            "run_metadata": run_metadata
         }})
 
     @unittest.skipIf(torch is None, "Torch Backend not installed")
