@@ -82,7 +82,7 @@ class BaseBackend(object, metaclass=ABCMeta):
         })
 
     def _log_item(self):
-        process_item = self._queue.get_nowait()
+        process_item = self._queue.get(timeout=0.5)
         if isinstance(process_item, dict):
             for key, val in process_item.items():
                 execute_fn = self.KEYWORD_FN_MAPPING[str(key).lower()]
@@ -112,8 +112,8 @@ class BaseBackend(object, metaclass=ABCMeta):
                 # check if tag is already part of internal global steps
                 if val[tag] in self._global_steps:
                     # if already existent: increment step for given tag
-                    step = self._global_steps[val[tag]]
                     self._global_steps[val[tag]] += 1
+                    step = self._global_steps[val[tag]]
 
                 else:
                     # if not existent_ set step for given tag to zero
