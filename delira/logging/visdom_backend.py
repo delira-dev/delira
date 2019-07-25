@@ -9,6 +9,7 @@ class VisdomBackend(WriterLoggingBackend):
     """
     A Visdom Logging backend
     """
+
     def __init__(self, writer_kwargs: dict = None,
                  abort_event: Event = None, queue: Queue = None):
         """

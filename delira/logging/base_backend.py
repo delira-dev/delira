@@ -157,10 +157,11 @@ class BaseBackend(object, metaclass=ABCMeta):
             for key, val in process_item.items():
                 # raise DeprecationWarning for deprecated keys
                 if key in _DEPRECATED_KEYS:
-                    raise DeprecationWarning("The Key %s is deprecated and will"
-                                             " be removed in the next release. "
-                                             "Please use %s instead!"
-                                             % (key, _DEPRECATED_KEYS[key]))
+                    raise DeprecationWarning(
+                        "The Key %s is deprecated and will"
+                        " be removed in the next release. "
+                        "Please use %s instead!" %
+                        (key, _DEPRECATED_KEYS[key]))
 
                 # performs the actual mapping
                 execute_fn = self.KEYWORD_FN_MAPPING[str(key).lower()]

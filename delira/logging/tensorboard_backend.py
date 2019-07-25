@@ -9,6 +9,7 @@ class TensorboardBackend(WriterLoggingBackend):
     """
     A Tensorboard logging backend
     """
+
     def __init__(self, writer_kwargs=None,
                  abort_event: Event = None, queue: Queue = None):
         """

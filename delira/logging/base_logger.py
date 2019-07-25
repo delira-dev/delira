@@ -9,6 +9,7 @@ class Logger(object):
     The actual Logger Frontend, passing logging messages to the assigned
     logging backend if appropriate or to python's logging module if not
     """
+
     def __init__(self, backend: BaseBackend, max_queue_size: int = None,
                  level=logging.NOTSET):
         """
