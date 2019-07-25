@@ -93,8 +93,8 @@ class TestTensorboardLogging(unittest.TestCase):
             logdir = self._logger._backend._writer.logdir
 
         file = [os.path.join(logdir, x)
-                      for x in os.listdir(logdir)
-                      if os.path.isfile(os.path.join(logdir, x))][0]
+                for x in os.listdir(logdir)
+                if os.path.isfile(os.path.join(logdir, x))][0]
 
         # sleep to ensure flushing to file was finished
         from time import sleep
