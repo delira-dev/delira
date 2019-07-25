@@ -8,6 +8,7 @@ class WriterLoggingBackend(BaseBackend):
     """
     A Basic Writer Backend for a unspecified writer class
     """
+
     def __init__(self, writer_cls, writer_kwargs: dict,
                  abort_event: Event = None, queue: Queue = None):
         super().__init__(abort_event, queue)
