@@ -87,11 +87,16 @@ class TestTensorboardLogging(unittest.TestCase):
             {"logdir": os.path.join(".", "runs", self._testMethodName)}
         ))
 
-    def _check_for_tag(self, tag):
+    def _check_for_tag(self, tag, logdir=None):
 
-        logdir = self._logger._backend._writer.logdir
+        if logdir is None:
+            logdir = self._logger._backend._writer.logdir
 
-        file = os.path.join(logdir, list(os.listdir(logdir))[0])
+        file = [os.path.join(logdir, x)
+                      for x in os.listdir(logdir)
+                      if os.path.isfile(os.path.join(logdir, x))][0]
+
+        # sleep to ensure flushing to file was finished
         from time import sleep
         sleep(0.5)
 
@@ -268,7 +273,6 @@ class TestTensorboardLogging(unittest.TestCase):
                     "scalar_value": torch.tensor(_scalar["1"])
                 }
             })
-        self._check_for_tag("scalar_torch")
 
     def test_value(self):
         for _scalar in self._scalars:
@@ -311,6 +315,9 @@ class TestTensorboardLogging(unittest.TestCase):
             })
 
         self._check_for_tag("scalars")
+        for k in self._scalars[0].keys():
+            self._check_for_tag(k, os.path.join(
+                self._logger._backend._writer.logdir, k))
 
     def test_scalars_npy(self):
         for _scalar in self._scalars:
@@ -323,6 +330,9 @@ class TestTensorboardLogging(unittest.TestCase):
             })
 
         self._check_for_tag("scalars_npy")
+        for k in self._scalars[0].keys():
+            self._check_for_tag(k, os.path.join(
+                self._logger._backend._writer.logdir, k))
 
     @unittest.skipIf(torch is None, "Torch Backend not installed")
     def test_scalars_torch(self):
@@ -336,6 +346,9 @@ class TestTensorboardLogging(unittest.TestCase):
             })
 
         self._check_for_tag("scalars_torch")
+        for k in self._scalars[0].keys():
+            self._check_for_tag(k, os.path.join(
+                self._logger._backend._writer.logdir, k))
 
     def test_values(self):
         for _scalar in self._scalars:
@@ -347,6 +360,9 @@ class TestTensorboardLogging(unittest.TestCase):
             })
 
         self._check_for_tag("values")
+        for k in self._scalars[0].keys():
+            self._check_for_tag(k, os.path.join(
+                self._logger._backend._writer.logdir, k))
 
     def test_values_npy(self):
         for _scalar in self._scalars:
@@ -359,6 +375,9 @@ class TestTensorboardLogging(unittest.TestCase):
             })
 
         self._check_for_tag("values_npy")
+        for k in self._scalars[0].keys():
+            self._check_for_tag(k, os.path.join(
+                self._logger._backend._writer.logdir, k))
 
     @unittest.skipIf(torch is None, "Torch Backend not installed")
     def test_values_torch(self):
@@ -372,6 +391,9 @@ class TestTensorboardLogging(unittest.TestCase):
             })
 
         self._check_for_tag("values_torch")
+        for k in self._scalars[0].keys():
+            self._check_for_tag(k, os.path.join(
+                self._logger._backend._writer.logdir, k))
 
     def test_histogram_npy(self):
         self._logger.log({
@@ -562,14 +584,12 @@ class TestTensorboardLogging(unittest.TestCase):
         self._logger.log({"embedding": {
             "mat": self._embedding_npy
         }})
-        self._check_for_tag("default")
 
     @unittest.skipIf(torch is None, "Torch Backend not installed")
     def test_embedding_torch(self):
         self._logger.log({"embedding": {
             "mat": torch.from_numpy(self._embedding_npy)
         }})
-        self._check_for_tag("default")
 
     def test_pr_curve_npy(self):
         self._logger.log({"pr_curve": {
