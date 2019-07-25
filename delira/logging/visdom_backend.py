@@ -31,3 +31,7 @@ class VisdomBackend(WriterLoggingBackend):
             writer_kwargs,
             abort_event,
             queue)
+
+    @property
+    def name(self):
+        return "VisdomBackend"

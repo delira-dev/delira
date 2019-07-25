@@ -165,3 +165,7 @@ class TensorboardBackend(WriterLoggingBackend):
             global_step=global_step
         )
         self._writer.add_embedding(*converted_args, **converted_kwargs)
+
+    @property
+    def name(self):
+        return "TensorFlow Backend"

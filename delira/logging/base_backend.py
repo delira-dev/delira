@@ -631,7 +631,7 @@ class BaseBackend(object, metaclass=ABCMeta):
 
             scatter(self, **plot_kwargs)
 
-    def _line(self, plot_kwargs={}, figure_kwargs={}, **kwargs):
+    def _line(self, plot_kwargs=None, figure_kwargs=None, **kwargs):
         """
         Function to create a line plot and push it
 
@@ -647,11 +647,15 @@ class BaseBackend(object, metaclass=ABCMeta):
 
         """
 
+        if figure_kwargs is None:
+            figure_kwargs = {}
+        if plot_kwargs is None:
+            plot_kwargs = {}
         with self.FigureManager(self._figure, figure_kwargs, kwargs):
             from matplotlib.pyplot import plot
             plot(**plot_kwargs)
 
-    def _stem(self, plot_kwargs={}, figure_kwargs={}, **kwargs):
+    def _stem(self, plot_kwargs=None, figure_kwargs=None, **kwargs):
         """
         Function to create a stem plot and push it
 
@@ -666,11 +670,15 @@ class BaseBackend(object, metaclass=ABCMeta):
             logging writer
 
         """
+        if figure_kwargs is None:
+            figure_kwargs = {}
+        if plot_kwargs is None:
+            plot_kwargs = {}
         with self.FigureManager(self._figure, figure_kwargs, kwargs):
             from matplotlib.pyplot import stem
             stem(**plot_kwargs)
 
-    def _heatmap(self, plot_kwargs={}, figure_kwargs={}, **kwargs):
+    def _heatmap(self, plot_kwargs=None, figure_kwargs=None, **kwargs):
         """
         Function to create a heatmap plot and push it
 
@@ -685,11 +693,15 @@ class BaseBackend(object, metaclass=ABCMeta):
             logging writer
 
         """
+        if figure_kwargs is None:
+            figure_kwargs = {}
+        if plot_kwargs is None:
+            plot_kwargs = {}
         with self.FigureManager(self._figure, figure_kwargs, kwargs):
             from seaborn import heatmap
             heatmap(**plot_kwargs)
 
-    def _bar(self, plot_kwargs={}, figure_kwargs={}, **kwargs):
+    def _bar(self, plot_kwargs=None, figure_kwargs=None, **kwargs):
         """
         Function to create a bar plot and push it
 
@@ -704,11 +716,15 @@ class BaseBackend(object, metaclass=ABCMeta):
             logging writer
 
         """
+        if figure_kwargs is None:
+            figure_kwargs = {}
+        if plot_kwargs is None:
+            plot_kwargs = {}
         with self.FigureManager(self._figure, figure_kwargs, kwargs):
             from matplotlib.pyplot import bar
             bar(**plot_kwargs)
 
-    def _boxplot(self, plot_kwargs={}, figure_kwargs={}, **kwargs):
+    def _boxplot(self, plot_kwargs=None, figure_kwargs=None, **kwargs):
         """
         Function to create a boxplot and push it
 
@@ -723,11 +739,15 @@ class BaseBackend(object, metaclass=ABCMeta):
             logging writer
 
         """
+        if plot_kwargs is None:
+            plot_kwargs = {}
+        if figure_kwargs is None:
+            figure_kwargs = {}
         with self.FigureManager(self._figure, figure_kwargs, kwargs):
             from matplotlib.pyplot import boxplot
             boxplot(**plot_kwargs)
 
-    def _surface(self, plot_kwargs={}, figure_kwargs={}, **kwargs):
+    def _surface(self, plot_kwargs=None, figure_kwargs=None, **kwargs):
         """
         Function to create a surface plot and push it
 
@@ -742,12 +762,16 @@ class BaseBackend(object, metaclass=ABCMeta):
             logging writer
 
         """
+        if figure_kwargs is None:
+            figure_kwargs = {}
+        if plot_kwargs is None:
+            plot_kwargs = {}
         with self.FigureManager(self._figure, figure_kwargs, kwargs):
             from seaborn import kdeplot
 
             kdeplot(**plot_kwargs)
 
-    def _contour(self, plot_kwargs={}, figure_kwargs={}, **kwargs):
+    def _contour(self, plot_kwargs=None, figure_kwargs=None, **kwargs):
         """
         Function to create a contour plot and push it
 
@@ -762,12 +786,16 @@ class BaseBackend(object, metaclass=ABCMeta):
             logging writer
 
         """
+        if figure_kwargs is None:
+            figure_kwargs = {}
+        if plot_kwargs is None:
+            plot_kwargs = {}
         with self.FigureManager(self._figure, figure_kwargs, kwargs):
             from matplotlib.pyplot import contour
 
             contour(**plot_kwargs)
 
-    def _quiver(self, plot_kwargs={}, figure_kwargs={}, **kwargs):
+    def _quiver(self, plot_kwargs=None, figure_kwargs=None, **kwargs):
         """
         Function to create a quiver plot and push it
 
@@ -782,6 +810,10 @@ class BaseBackend(object, metaclass=ABCMeta):
             logging writer
 
         """
+        if plot_kwargs is None:
+            plot_kwargs = {}
+        if figure_kwargs is None:
+            figure_kwargs = {}
         with self.FigureManager(self._figure, figure_kwargs, kwargs):
             from matplotlib.pyplot import quiver
             quiver(**plot_kwargs)

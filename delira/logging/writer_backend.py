@@ -316,3 +316,7 @@ class WriterLoggingBackend(BaseBackend):
             tag=tag, vid_tensor=vid_tensor, global_step=global_step, fps=fps,
             walltime=walltime)
         self._writer.add_video(*converted_args, **converted_kwargs)
+
+    @property
+    def name(self):
+        return "WriterBackend"
