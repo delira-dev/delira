@@ -3,6 +3,7 @@ from queue import Empty
 from abc import abstractmethod, ABCMeta
 from threading import Event
 from queue import Queue
+import warnings
 
 _FUNCTIONS_WITHOUT_STEP = ("graph_pytorch", "graph_tf", "graph_onnx",
                            "embedding")
@@ -157,10 +158,11 @@ class BaseBackend(object, metaclass=ABCMeta):
             for key, val in process_item.items():
                 # raise DeprecationWarning for deprecated keys
                 if key in _DEPRECATED_KEYS:
-                    raise DeprecationWarning("The Key %s is deprecated and will"
-                                             " be removed in the next release. "
-                                             "Please use %s instead!"
-                                             % (key, _DEPRECATED_KEYS[key]))
+                    warnings.warn("The Key %s is deprecated and will"
+                                  " be removed in the next release. "
+                                  "Please use %s instead!"
+                                  % (key, _DEPRECATED_KEYS[key]),
+                                  DeprecationWarning)
 
                 # performs the actual mapping
                 execute_fn = self.KEYWORD_FN_MAPPING[str(key).lower()]
