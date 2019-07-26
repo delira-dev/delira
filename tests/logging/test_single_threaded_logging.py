@@ -529,7 +529,7 @@ class TestTensorboardLogging(unittest.TestCase):
             "text_string": self._text_string
         }})
 
-        self._check_for_tag("text")
+        self._check_for_tag("text/text_summary")
 
     @unittest.skipIf(tf is None, "TF Backend not installed")
     def test_graph_tf(self):
