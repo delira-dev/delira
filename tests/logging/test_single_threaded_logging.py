@@ -316,7 +316,7 @@ class TestTensorboardLogging(unittest.TestCase):
             })
 
         for k in self._scalars[0].keys():
-            self._check_for_tag("values/" + k)
+            self._check_for_tag("scalars/" + k)
 
     def test_scalars_npy(self):
         for _scalar in self._scalars:
@@ -330,7 +330,7 @@ class TestTensorboardLogging(unittest.TestCase):
             })
 
         for k in self._scalars[0].keys():
-            self._check_for_tag("values_npy/" + k)
+            self._check_for_tag("scalars_npy/" + k)
 
     @unittest.skipIf(torch is None, "Torch Backend not installed")
     def test_scalars_torch(self):
