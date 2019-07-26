@@ -310,14 +310,13 @@ class TestTensorboardLogging(unittest.TestCase):
             self._logger.log({
                 "scalars": {
                     "main_tag": "scalars",
-                    "tag_scalar_dict": _scalar
+                    "tag_scalar_dict": _scalar,
+                    "sep": "/"
                 }
             })
 
-        self._check_for_tag("scalars")
         for k in self._scalars[0].keys():
-            self._check_for_tag(k, os.path.join(
-                self._logger._backend._writer.logdir, k))
+            self._check_for_tag("values/" + k)
 
     def test_scalars_npy(self):
         for _scalar in self._scalars:
@@ -325,14 +324,13 @@ class TestTensorboardLogging(unittest.TestCase):
                 "scalars": {
                     "main_tag": "scalars_npy",
                     "tag_scalar_dict": {k: np.array(v)
-                                        for k, v in _scalar.items()}
+                                        for k, v in _scalar.items()},
+                    "sep": "/"
                 }
             })
 
-        self._check_for_tag("scalars_npy")
         for k in self._scalars[0].keys():
-            self._check_for_tag(k, os.path.join(
-                self._logger._backend._writer.logdir, k))
+            self._check_for_tag("values_npy/" + k)
 
     @unittest.skipIf(torch is None, "Torch Backend not installed")
     def test_scalars_torch(self):
@@ -341,28 +339,26 @@ class TestTensorboardLogging(unittest.TestCase):
                 "scalars": {
                     "main_tag": "scalars_torch",
                     "tag_scalar_dict": {k: torch.tensor(v)
-                                        for k, v in _scalar.items()}
+                                        for k, v in _scalar.items()},
+                    "sep": "/"
                 }
             })
 
-        self._check_for_tag("scalars_torch")
         for k in self._scalars[0].keys():
-            self._check_for_tag(k, os.path.join(
-                self._logger._backend._writer.logdir, k))
+            self._check_for_tag("scalars_torch/" + k)
 
     def test_values(self):
         for _scalar in self._scalars:
             self._logger.log({
                 "values": {
                     "main_tag": "values",
-                    "tag_scalar_dict": _scalar
+                    "tag_scalar_dict": _scalar,
+                    "sep": "/"
                 }
             })
 
-        self._check_for_tag("values")
         for k in self._scalars[0].keys():
-            self._check_for_tag(k, os.path.join(
-                self._logger._backend._writer.logdir, k))
+            self._check_for_tag("values/" + k)
 
     def test_values_npy(self):
         for _scalar in self._scalars:
@@ -370,14 +366,13 @@ class TestTensorboardLogging(unittest.TestCase):
                 "values": {
                     "main_tag": "values_npy",
                     "tag_scalar_dict": {k: np.array(v)
-                                        for k, v in _scalar.items()}
+                                        for k, v in _scalar.items()},
+                    "sep": "/"
                 }
             })
 
-        self._check_for_tag("values_npy")
         for k in self._scalars[0].keys():
-            self._check_for_tag(k, os.path.join(
-                self._logger._backend._writer.logdir, k))
+            self._check_for_tag("values_npy/" + k)
 
     @unittest.skipIf(torch is None, "Torch Backend not installed")
     def test_values_torch(self):
@@ -386,14 +381,13 @@ class TestTensorboardLogging(unittest.TestCase):
                 "values": {
                     "main_tag": "values_torch",
                     "tag_scalar_dict": {k: torch.tensor(v)
-                                        for k, v in _scalar.items()}
+                                        for k, v in _scalar.items()},
+                    "sep": "/"
                 }
             })
 
-        self._check_for_tag("values_torch")
         for k in self._scalars[0].keys():
-            self._check_for_tag(k, os.path.join(
-                self._logger._backend._writer.logdir, k))
+            self._check_for_tag("values_torch/" + k)
 
     def test_histogram_npy(self):
         self._logger.log({
