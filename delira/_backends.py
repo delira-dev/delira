@@ -7,11 +7,17 @@ from delira._version import __version__
 # being the package import name and the second being the backend abbreviation.
 # E.g. TensorFlow's package is named 'tensorflow' but if the package is found,
 # it will be considered as 'tf' later on
-__POSSIBLE_BACKENDS = [("torch", "torch"), ("tensorflow", "tf")]
-__BACKENDS = []
+__POSSIBLE_BACKENDS = (("torch", "torch"), ("tensorflow", "tf"))
+__BACKENDS = ()
 
 
 def _determine_backends():
+    """
+    Internal Helper Function to determine the currently valid backends by
+    trying to import them. The valid backends are not returned, but appended
+    to the global ``__BACKENDS`` variable
+
+    """
 
     _config_file = __file__.replace("_backends.py", ".delira")
     # look for config file to determine backend
@@ -46,7 +52,9 @@ def _determine_backends():
 
         del _backends
 
-    # set values from config file to variable
+    # set values from config file to variable and empty Backend-List before
+    global __BACKENDS
+    __BACKENDS = []
     with open(_config_file) as f:
         _config_dict = json.load(f)
     for key, val in _config_dict.pop("backend").items():
@@ -55,6 +63,9 @@ def _determine_backends():
     del _config_dict
 
     del _config_file
+
+    # make __BACKENDS non mutable
+    __BACKENDS = tuple(__BACKENDS)
 
 
 def get_backends():
