@@ -167,6 +167,36 @@ class TensorboardBackend(WriterLoggingBackend):
         )
         self._writer.add_embedding(*converted_args, **converted_kwargs)
 
+    def _scalars(self, main_tag: str, tag_scalar_dict: dict, global_step=None,
+                 walltime=None, sep="/"):
+        """
+        Function to log multiple scalars at once. Opposing to the base
+        function, this is done sequentially rather then parallel to avoid
+        creating new event files
+
+        Parameters
+        ----------
+        main_tag : str
+            the main tag, will be combined with the subtags inside the
+            ``tag_scalar_dict``
+        tag_scalar_dict : dict
+            dictionary of (key, scalar) pairs
+        global_step : int
+            the global step
+        walltime :
+            the overall time
+        sep : str
+            the character separating maintag and subtag in the final tag
+
+        """
+
+        # log scalars sequentially
+        for key, val in tag_scalar_dict.items():
+            # combine tags
+            new_tag = main_tag + sep + key
+            self._scalar(new_tag, val, global_step=global_step,
+                         walltime=walltime)
+
     @property
     def name(self):
         return "TensorFlow Backend"
