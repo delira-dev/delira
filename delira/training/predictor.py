@@ -3,6 +3,7 @@ import copy
 
 import numpy as np
 from tqdm import tqdm
+from functools import partial
 
 from ..data_loading import BaseDataManager
 from .train_utils import convert_batch_to_numpy_identity
@@ -28,7 +29,7 @@ class Predictor(object):
             self, model, key_mapping: dict,
             convert_batch_to_npy_fn=convert_batch_to_numpy_identity,
             prepare_batch_fn=lambda x: x,
-            tta_transforms: tuple = None, tta_reduce_fn=None,
+            tta_transforms: tuple = (), tta_reduce_fn=None,
             tta_transform_back=False, **kwargs):
         """
 
@@ -631,7 +632,7 @@ class Predictor(object):
 
         # use mean as default reduce function
         if reduce_fn is None:
-            reduce_fn = np.mean(axis=0)
+            reduce_fn = partial(np.mean, axis=0)
 
         # add no transformation to transforms to also predict original data
         transforms = (None, *transforms)
@@ -663,7 +664,3 @@ class Predictor(object):
                 return results
             return wrapper
         return decorate_fn
-
-
-
-
