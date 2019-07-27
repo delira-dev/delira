@@ -1,6 +1,6 @@
 import os
 import json
-from delira._version import __version__
+from delira._version import get_versions as _get_versions
 
 # to register new possible backends, they have to be added to this list.
 # each backend should consist of a tuple of length 2 with the first entry
@@ -47,7 +47,8 @@ def _determine_backends():
                 _backends[curr_backend[1]] = False
 
         with open(_config_file, "w") as f:
-            json.dump({"version": __version__, "backend": _backends},
+            json.dump({"version": _get_versions()['version'], 
+                       "backend": _backends},
                       f, sort_keys=True, indent=4)
 
         del _backends
