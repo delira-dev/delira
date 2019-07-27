@@ -96,10 +96,6 @@ class TestTensorboardLogging(unittest.TestCase):
                 for x in os.listdir(logdir)
                 if os.path.isfile(os.path.join(logdir, x))][0]
 
-        # sleep to ensure flushing to file was finished
-        from time import sleep
-        sleep(0.5)
-
         if tf is not None:
             ret_val = False
             for e in tf.train.summary_iterator(file):
