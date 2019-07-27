@@ -18,7 +18,7 @@ class BaseConfig(dict):
         super().__setattr__(key, value)
 
     def __setitem__(self, key, value):
-        if not '.' in key:
+        if '.' not in key:
             super().__setitem__(key, value)
         else:
             current_level = self
@@ -33,7 +33,7 @@ class BaseConfig(dict):
             current_level[final_key] = value
 
     def __getitem__(self, key):
-        if not '.' in key:
+        if '.' not in key:
             return super().__getitem__(key)
         else:
             current_level = self
@@ -45,7 +45,7 @@ class BaseConfig(dict):
             return current_level[final_key]
 
     def __contains__(self, key):
-        if not '.' in key:
+        if '.' not in key:
             return super().__contains__(key)
         else:
             current_level = self
