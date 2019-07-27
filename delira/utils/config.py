@@ -1,5 +1,77 @@
+import copy
+
 from nested_lookup import nested_lookup
 from trixi.util import Config
+
+# TODO: check deepcopy
+
+
+class BaseConfig(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.__dict__ = self
+
+    def __setattr__(self, key, value):
+        if isinstance(value, dict) and not isinstance(value, BaseConfig):
+            # convert dict to config for additional funtionality
+            value = BaseConfig.create_from_dict(value)
+        super().__setattr__(key, value)
+
+    def __setitem__(self, key, value):
+        if not '.' in key:
+            super().__setitem__(key, value)
+        else:
+            current_level = self
+            key_split = key.split(".")
+            final_key = key_split.pop(-1)
+            for k in key_split:
+                # traverse to needed dict
+                if k not in current_level:
+                    new_config = BaseConfig()
+                    current_level[k] = new_config
+                current_level = current_level[k]
+            current_level[final_key] = value
+
+    def __getitem__(self, key):
+        if not '.' in key:
+            return super().__getitem__(key)
+        else:
+            current_level = self
+            key_split = key.split(".")
+            final_key = key_split.pop(-1)
+            for k in key_split:
+                # traverse to needed dict
+                current_level = current_level[k]
+            return current_level[final_key]
+
+    def __contains__(self, key):
+        if not '.' in key:
+            return super().__contains__(key)
+        else:
+            current_level = self
+            key_split = key.split(".")
+            final_key = key_split.pop(-1)
+            for k in key_split:
+                # traverse to needed dict
+                if isinstance(current_level, dict) or k not in current_level:
+                    return False
+                else:
+                    current_level = current_level[k]
+            return (final_key in current_level)
+
+    @staticmethod
+    def create_from_dict(value, val_copy=False):
+        # TODO: maybe remove recursion
+        assert isinstance(value, dict)
+        new_config = BaseConfig()
+        for key, item in value.items():
+            if isinstance(item, dict):
+                item = BaseConfig.create_from_dict(item, val_copy=val_copy)
+            if val_copy:
+                new_config[key] = copy.deepcopy(item)
+            else:
+                new_config[key] = item
+        return new_config
 
 
 class LookupConfig(Config):
