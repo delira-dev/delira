@@ -644,7 +644,3 @@ class Predictor(object):
                 return results
             return wrapper
         return decorate_fn
-
-
-
-
