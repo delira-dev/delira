@@ -2,3 +2,5 @@ include *.txt
 include *.md
 include LICENSE
 include notebooks/*.ipynb
+include versioneer.py
+include delira/_version.py
