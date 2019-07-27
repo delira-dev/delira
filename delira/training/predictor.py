@@ -28,7 +28,8 @@ class Predictor(object):
             self, model, key_mapping: dict,
             convert_batch_to_npy_fn=convert_batch_to_numpy_identity,
             prepare_batch_fn=lambda x: x,
-            tta_transforms: tuple = None, tta_reduce_fn=None, **kwargs):
+            tta_transforms: tuple = None, tta_reduce_fn=None,
+            tta_transform_back=False, **kwargs):
         """
 
         Parameters
@@ -54,18 +55,22 @@ class Predictor(object):
             new data_dict.
         tta_reduce_fn :
             function to reduce the tta_results along the newly added axis.
+        tta_transform_back : bool
+            whether to transform back the TTA results
         **kwargs :
             additional keyword arguments
 
         """
 
         self._setup(model, key_mapping, convert_batch_to_npy_fn,
-                    prepare_batch_fn, tta_transforms, tta_reduce_fn, **kwargs)
+                    prepare_batch_fn, tta_transforms, tta_reduce_fn,
+                    tta_transform_back, **kwargs)
 
         self._tqdm_desc = "Test"
 
     def _setup(self, network, key_mapping, convert_batch_args_kwargs_to_npy_fn,
-               prepare_batch_fn, tta_transforms, tta_reduce_fn, **kwargs):
+               prepare_batch_fn, tta_transforms, tta_reduce_fn,
+               tta_transform_back, **kwargs):
         """
 
         Parameters
@@ -91,6 +96,8 @@ class Predictor(object):
             new data_dict.
         tta_reduce_fn :
             function to reduce the tta_results along the newly added axis.
+        tta_transform_back : bool
+            whether to transform back the TTA results
 
         """
         self.module = network
@@ -99,6 +106,12 @@ class Predictor(object):
         self._prepare_batch = prepare_batch_fn
         self._tta_transforms = tta_transforms
         self._tta_reduce_fn = tta_reduce_fn
+
+        # must contain an option to calculate an inverse funtion
+        if tta_transform_back:
+            for trafo in self._tta_transforms:
+                assert hasattr(trafo, "inverse")
+        self._tta_transform_back = tta_transform_back
 
     def __call__(self, data: dict, **kwargs):
         """
@@ -138,7 +151,8 @@ class Predictor(object):
 
         """
         # wrap into internal function to decorate it with tta decorator
-        @self.tta(self._tta_transforms, self._tta_reduce_fn)
+        @self.tta(self._tta_transforms, self._tta_reduce_fn,
+                  self._tta_transform_back)
         def _predict(data, **kwargs):
             """
             Predict single batch
@@ -593,7 +607,7 @@ class Predictor(object):
                 for key, metric_fn in metrics.items()}
 
     @staticmethod
-    def tta(transforms: tuple = (), reduce_fn=None):
+    def tta(transforms: tuple = (), reduce_fn=None, transform_back=False):
         """
         Decorator function to apply test-time augmentation during prediction
 
@@ -603,9 +617,10 @@ class Predictor(object):
             a tuple of transforms to call on the ``data_dict`` for test-time
             augmentation. Each transform will be executed separately on a
             new data_dict.
-
         reduce_fn :
             function to reduce the ``tta_results`` along the newly added axis
+        transform_back : bool
+            whether to transform the TTA result back
 
         Returns
         -------
@@ -631,8 +646,13 @@ class Predictor(object):
                     if trafo is not None:
                         data_dict = trafo(**data_dict)
 
+                    _result = function(data_dict, **kwargs)
+
+                    if transform_back:
+                        _result = trafo.inverse(**_result)
+
                     # add results to list
-                    results.append(function(data_dict, **kwargs))
+                    results.append(_result)
 
                 # convert results to numpy array (will have new additional
                 # first dimension)
