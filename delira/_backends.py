@@ -47,7 +47,7 @@ def _determine_backends():
                 _backends[curr_backend[1]] = False
 
         with open(_config_file, "w") as f:
-            json.dump({"version": _get_versions()['version'], 
+            json.dump({"version": _get_versions()['version'],
                        "backend": _backends},
                       f, sort_keys=True, indent=4)
 
