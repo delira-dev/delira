@@ -132,14 +132,12 @@ class SlackExperiment(object):
         Any
             attribute
         """
-        # see if this object has attr
-        # NOTE do not use hasattr, it goes into
-        # infinite recurrsion
-        if attr in self.__dict__:
-            # this object has it
+        try:
+            # this object has the attribute
             return getattr(self, attr)
-        # proxy to the wrapped object
-        return getattr(self._wrapped_exp, attr)
+        except AttributeError:
+            # forward to wrapped object
+            return getattr(self._wrapped_exp, attr)
 
     def emit_message(self, msg) -> dict:
         """
@@ -286,9 +284,11 @@ class SlackExperiment(object):
         Any
             result of experiment
         """
+        # append own callback for fold messages
         callbacks = kwargs.pop("callbacks", [])
         callbacks.append(SlackFoldCallback(self))
 
+        # append own callback for epoch messages
         if self._notify_epochs is not None:
             callbacks.append(SlackEpochsCallback(self._notify_epochs,
                                                  self))
@@ -298,13 +298,14 @@ class SlackExperiment(object):
         msg = str(self._wrapped_exp.name) + " : Kfold started."
         self.emit_message(msg)
 
+        # execute k-fold
         try:
             out = self._wrapped_exp.kfold(*args, **kwargs)
         except Exception as e:
             msg = str(self._wrapped_exp.name) + " : Kfold failed. \n" + str(e)
             self.emit_message(msg)
             raise e
-
+        
         msg = str(self._wrapped_exp.name) + " : Kfold completed."
         self.emit_message(msg)
 
