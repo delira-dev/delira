@@ -305,7 +305,7 @@ class SlackExperiment(object):
             msg = str(self._wrapped_exp.name) + " : Kfold failed. \n" + str(e)
             self.emit_message(msg)
             raise e
-        
+
         msg = str(self._wrapped_exp.name) + " : Kfold completed."
         self.emit_message(msg)
 
