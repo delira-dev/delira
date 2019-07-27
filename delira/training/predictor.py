@@ -27,7 +27,8 @@ class Predictor(object):
     def __init__(
             self, model, key_mapping: dict,
             convert_batch_to_npy_fn=convert_batch_to_numpy_identity,
-            prepare_batch_fn=lambda x: x, **kwargs):
+            prepare_batch_fn=lambda x: x,
+            tta_transforms: tuple = None, tta_reduce_fn=None, **kwargs):
         """
 
         Parameters
@@ -47,18 +48,24 @@ class Predictor(object):
             function converting a batch-tensor to the framework specific
             tensor-type and pushing it to correct device, default: identity
             function
+        tta_transforms : tuple
+            a tuple of transforms to call on the ``data_dict`` for test-time
+            augmentation. Each transform will be executed separately on a
+            new data_dict.
+        tta_reduce_fn :
+            function to reduce the tta_results along the newly added axis.
         **kwargs :
             additional keyword arguments
 
         """
 
         self._setup(model, key_mapping, convert_batch_to_npy_fn,
-                    prepare_batch_fn, **kwargs)
+                    prepare_batch_fn, tta_transforms, tta_reduce_fn, **kwargs)
 
         self._tqdm_desc = "Test"
 
     def _setup(self, network, key_mapping, convert_batch_args_kwargs_to_npy_fn,
-               prepare_batch_fn, **kwargs):
+               prepare_batch_fn, tta_transforms, tta_reduce_fn, **kwargs):
         """
 
         Parameters
@@ -78,12 +85,20 @@ class Predictor(object):
             function converting a batch-tensor to the framework specific
             tensor-type and pushing it to correct device, default: identity
             function
+        tta_transforms : tuple
+            a tuple of transforms to call on the ``data_dict`` for test-time
+            augmentation. Each transform will be executed separately on a
+            new data_dict.
+        tta_reduce_fn :
+            function to reduce the tta_results along the newly added axis.
 
         """
         self.module = network
         self.key_mapping = key_mapping
         self._convert_to_npy_fn = convert_batch_args_kwargs_to_npy_fn
         self._prepare_batch = prepare_batch_fn
+        self._tta_transforms = tta_transforms
+        self._tta_reduce_fn = tta_reduce_fn
 
     def __call__(self, data: dict, **kwargs):
         """
@@ -122,21 +137,44 @@ class Predictor(object):
             predicted data
 
         """
-        data = self._prepare_batch(data, **kwargs)
+        # wrap into internal function to decorate it with tta decorator
+        @self.tta(self._tta_transforms, self._tta_reduce_fn)
+        def _predict(data, **kwargs):
+            """
+            Predict single batch
+            Returns the predictions corresponding to the given data
+            obtained by the model
 
-        mapped_data = {
-            k: data[v] for k, v in self.key_mapping.items()}
+            Parameters
+            ----------
+            data : dict
+                batch dictionary
+            **kwargs :
+                keyword arguments(directly passed to ``prepare_batch``)
 
-        pred = self.module(
-            **mapped_data
-        )
+            Returns
+            -------
+            dict
+                predicted data
 
-        # converts positional arguments and keyword arguments,
-        # but returns only keyword arguments, since positional
-        # arguments are not given.
-        return self._convert_to_npy_fn(
-            **pred
-        )[1]
+            """
+            data = self._prepare_batch(data, **kwargs)
+
+            mapped_data = {
+                k: data[v] for k, v in self.key_mapping.items()}
+
+            pred = self.module(
+                **mapped_data
+            )
+
+            # converts positional arguments and keyword arguments,
+            # but returns only keyword arguments, since positional
+            # arguments are not given.
+            return self._convert_to_npy_fn(
+                **pred
+            )[1]
+
+        return _predict(data, **kwargs)
 
     def predict_data_mgr(self, datamgr, batchsize=None, metrics=None,
                          metric_keys=None, verbose=False, **kwargs):
@@ -553,3 +591,59 @@ class Predictor(object):
         return {key: metric_fn(*[batch.nested_get(k)
                                  for k in metric_keys[key]])
                 for key, metric_fn in metrics.items()}
+
+    @staticmethod
+    def tta(transforms: tuple = (), reduce_fn=None):
+        """
+        Decorator function to apply test-time augmentation during prediction
+
+        Parameters
+        ----------
+        transforms : tuple
+            a tuple of transforms to call on the ``data_dict`` for test-time
+            augmentation. Each transform will be executed separately on a
+            new data_dict.
+
+        reduce_fn :
+            function to reduce the ``tta_results`` along the newly added axis
+
+        Returns
+        -------
+        function
+            the decorated function
+
+        """
+
+        # use mean as default reduce function
+        if reduce_fn is None:
+            reduce_fn = np.mean(axis=0)
+
+        # add no transformation to transforms to also predict original data
+        transforms = (None, *transforms)
+
+        # decorates the actual function
+        def decorate_fn(function):
+            # wraps the actual function by iterating over the transforms
+            def wrapper(data_dict, **kwargs):
+                results = []
+                for trafo in transforms:
+                    # apply transforms if possible
+                    if trafo is not None:
+                        data_dict = trafo(**data_dict)
+
+                    # add results to list
+                    results.append(function(data_dict, **kwargs))
+
+                # convert results to numpy array (will have new additional
+                # first dimension)
+                results = np.array(results)
+                # reduce TTA results
+                results = reduce_fn(results)
+
+                return results
+            return wrapper
+        return decorate_fn
+
+
+
+
