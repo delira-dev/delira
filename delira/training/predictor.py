@@ -28,7 +28,7 @@ class Predictor(object):
             self, model, key_mapping: dict,
             convert_batch_to_npy_fn=convert_batch_to_numpy_identity,
             prepare_batch_fn=lambda x: x,
-            tta_transforms: tuple = None, tta_reduce_fn=None, **kwargs):
+            tta_transforms: tuple = (), tta_reduce_fn=None, **kwargs):
         """
 
         Parameters
