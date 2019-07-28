@@ -3,11 +3,10 @@ import copy
 from nested_lookup import nested_lookup
 from trixi.util import Config
 
-# TODO: check deepcopy
-
 
 class BaseConfig(dict):
     def __init__(self, *args, **kwargs):
+        #TODO: adjust with proper arguments
         super().__init__()
         self.__dict__ = self
 
@@ -34,15 +33,24 @@ class BaseConfig(dict):
 
     def __getitem__(self, key):
         if not isinstance(key, str) or '.' not in key:
-            return super().__getitem__(key)
+            try:
+                return super().__getitem__(int(key))
+            except (KeyError, ValueError):
+                return super().__getitem__(key)
         else:
             current_level = self
             key_split = key.split(".")
             final_key = key_split.pop(-1)
             for k in key_split:
                 # traverse to needed dict
-                current_level = current_level[k]
-            return current_level[final_key]
+                try:
+                    current_level = current_level[int(k)]
+                except (KeyError, ValueError):
+                    current_level = current_level[k]
+            try:
+                return current_level[int(final_key)]
+            except (KeyError, ValueError):
+                return current_level[final_key]
 
     def __contains__(self, key):
         if not isinstance(key, str) or '.' not in key:
@@ -97,6 +105,38 @@ class BaseConfig(dict):
                     else:
                         self[key] = item
 
+    # TODO: support for json, yaml
+    # TODO: support for saving complex objects
+    def dump():
+        raise NotImplementedError
+
+    def dumps():
+        raise NotImplementedError
+
+    # TODO: support for json, yaml and argparse
+    # TODO: support for loading complex objects
+    def load():
+        raise NotImplementedError
+
+    def loads():
+        raise NotImplementedError
+
+    # TODO: check if copy and deepcopy works out of the box
+    def __copy__(self, *args, **kwargs):
+        super().__copy__(*args, **kwargs)
+
+    def __deepcopy__(self, *args, **kwargs):
+        super().__deepcopy__(*args, **kwargs)
+
+    # TODO: logging as string
+    def logg_as_string():
+        raise NotImplementedError
+
+    # TODO: logging as hyperparameters
+    def logg_as_hyperparameter():
+        raise NotImplementedError
+    
+    # TODO: save_get: like default dict
 
 class LookupConfig(Config):
     """
