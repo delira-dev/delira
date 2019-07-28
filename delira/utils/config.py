@@ -6,7 +6,7 @@ from trixi.util import Config
 
 class BaseConfig(dict):
     def __init__(self, *args, **kwargs):
-        #TODO: adjust with proper arguments
+        # TODO: adjust with proper arguments
         super().__init__()
         self.__dict__ = self
 
@@ -135,8 +135,9 @@ class BaseConfig(dict):
     # TODO: logging as hyperparameters
     def logg_as_hyperparameter():
         raise NotImplementedError
-    
+
     # TODO: save_get: like default dict
+
 
 class LookupConfig(Config):
     """
