@@ -18,7 +18,7 @@ class BaseConfig(dict):
         super().__setattr__(key, value)
 
     def __setitem__(self, key, value):
-        if '.' not in key:
+        if not isinstance(key, str) or '.' not in key:
             super().__setitem__(key, value)
         else:
             current_level = self
@@ -33,7 +33,7 @@ class BaseConfig(dict):
             current_level[final_key] = value
 
     def __getitem__(self, key):
-        if '.' not in key:
+        if not isinstance(key, str) or '.' not in key:
             return super().__getitem__(key)
         else:
             current_level = self
@@ -45,7 +45,7 @@ class BaseConfig(dict):
             return current_level[final_key]
 
     def __contains__(self, key):
-        if '.' not in key:
+        if not isinstance(key, str) or '.' not in key:
             return super().__contains__(key)
         else:
             current_level = self
@@ -61,7 +61,6 @@ class BaseConfig(dict):
 
     @staticmethod
     def create_from_dict(value, val_copy=False):
-        # TODO: maybe remove recursion
         assert isinstance(value, dict)
         new_config = BaseConfig()
         for key, item in value.items():
@@ -72,6 +71,31 @@ class BaseConfig(dict):
             else:
                 new_config[key] = item
         return new_config
+
+    def update(self, update_dict, val_copy=False, overwrite=False):
+        for key, item in update_dict.items():
+            if key in self:
+                if isinstance(item, dict):
+                    self[key].update(update_dict[key], val_copy=val_copy,
+                                     overwrite=overwrite)
+                else:
+                    if overwrite:
+                        if val_copy:
+                            self[key] = copy.deepcopy(item)
+                        else:
+                            self[key] = item
+                    else:
+                        raise ValueError("{} already in config. Can "
+                                         "not overwrite value.".format(key))
+            else:
+                if isinstance(item, dict) and not isinstance(item, BaseConfig):
+                    self[key] = BaseConfig.create_from_dict(
+                        item, val_copy=val_copy)
+                else:
+                    if val_copy:
+                        self[key] = copy.deepcopy(item)
+                    else:
+                        self[key] = item
 
 
 class LookupConfig(Config):
