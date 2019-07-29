@@ -43,6 +43,7 @@ class TestAbstractModels(unittest.TestCase):
     @staticmethod
     def _setup_tfeager(*args):
         import tensorflow as tf
+        tf.enable_eager_execution()
         tf.reset_default_graph()
         from delira.models.backends.tf_eager import AbstractTfEagerNetwork
 
@@ -60,6 +61,7 @@ class TestAbstractModels(unittest.TestCase):
     @staticmethod
     def _setup_tfgraph(*args):
         import tensorflow as tf
+        tf.disable_eager_execution()
         tf.reset_default_graph()
         from delira.models import AbstractTfGraphNetwork
         from delira.training.backends.tf_graph.utils import \
@@ -160,17 +162,9 @@ class TestAbstractModels(unittest.TestCase):
             self._model = self._setup_torchscript()
 
         elif "tf_graph" in self._testMethodName.lower():
-            from delira.training.backends.tf_eager import \
-                switch_tf_execution_mode
-
-            switch_tf_execution_mode("graph")
             self._model = self._setup_tfgraph()
 
         elif "tf_eager" in self._testMethodName.lower():
-            from delira.training.backends.tf_eager import \
-                switch_tf_execution_mode
-
-            switch_tf_execution_mode("eager")
             self._model = self._setup_tfeager()
 
     @unittest.skipUnless(check_for_sklearn_backend(),
@@ -210,6 +204,27 @@ class TestAbstractModels(unittest.TestCase):
     def test_tf_graph(self):
 
         self.run_model_kwarg()
+
+    def tearDown(self) -> None:
+        import sys
+        import gc
+        try:
+            del sys.modules["tf"]
+        except KeyError:
+            pass
+        try:
+            del tf
+        except (UnboundLocalError, NameError):
+            pass
+        try:
+            del sys.modules["tensorflow"]
+        except KeyError:
+            pass
+        try:
+            del tensorflow
+        except (UnboundLocalError, NameError):
+            pass
+        gc.collect()
 
 
 if __name__ == '__main__':
