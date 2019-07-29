@@ -84,6 +84,7 @@ class TestTfGraphBackend(
         super().setUp()
 
     def tearDown(self):
+        import sys
         try:
             del sys.modules["tf"]
         except KeyError:
