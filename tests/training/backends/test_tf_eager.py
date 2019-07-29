@@ -75,12 +75,15 @@ class TestTfEagerBackend(
         super().setUp()
 
     def tearDown(self):
+        import sys
         try:
+            del sys.modules["tf"]
             del tf
         except (UnboundLocalError, NameError):
             pass
 
         try:
+            del sys.modules["tensorflow"]
             del tensorflow
         except (UnboundLocalError, NameError):
             pass

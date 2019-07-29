@@ -5,19 +5,25 @@ from ..utils import check_for_tf_backend
 
 class IoTfTest(unittest.TestCase):
 
+    def setUp(self) -> None:
+        import tensorflow as tf
+        tf.reset_default_graph()
+        if "_eager" in self._testMethodName:
+            tf.enable_eager_execution()
+        else:
+            tf.disable_eager_execution()
+
     @unittest.skipUnless(check_for_tf_backend(),
                          "Test should be only executed if tensorflow backend "
                          "is installed and specified")
     def test_load_save(self):
+        import tensorflow as tf
+        tf.disable_eager_execution()
         from delira.io.tf import load_checkpoint, save_checkpoint
         from delira.models import AbstractTfGraphNetwork
-        from delira.training.backends import switch_tf_execution_mode
         from delira.training.backends import initialize_uninitialized
 
-        import tensorflow as tf
         import numpy as np
-
-        switch_tf_execution_mode("graph")
 
         class DummyNetwork(AbstractTfGraphNetwork):
             def __init__(self, in_channels, n_outputs):
@@ -64,13 +70,12 @@ class IoTfTest(unittest.TestCase):
                          "Test should be only executed if tensorflow backend "
                          "is installed and specified")
     def test_load_save_eager(self):
+        import tensorflow as tf
+        tf.enable_eager_execution()
         from delira.io.tf import load_checkpoint_eager, save_checkpoint_eager
         from delira.models import AbstractTfEagerNetwork
-        from delira.training.backends import switch_tf_execution_mode
-        import tensorflow as tf
-        import numpy as np
 
-        switch_tf_execution_mode("eager")
+        import numpy as np
 
         class DummyNetwork(AbstractTfEagerNetwork):
             def __init__(self, in_channels, n_outputs):
@@ -104,6 +109,24 @@ class IoTfTest(unittest.TestCase):
         result_post_save = loaded_net(input_tensor)
 
         self.assertTrue(np.array_equal(result_post_save, result_pre_save))
+
+    def tearDown(self) -> None:
+        import gc
+        import sys
+
+        try:
+            del sys.modules["tf"]
+            del tf
+        except (UnboundLocalError, NameError, KeyError):
+            pass
+
+        try:
+            del sys.modules["tensorflow"]
+            del tensorflow
+        except (UnboundLocalError, NameError, KeyError):
+            pass
+
+        gc.collect()
 
 
 if __name__ == '__main__':
