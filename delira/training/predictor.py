@@ -21,7 +21,7 @@ class Predictor(object):
 
     """
 
-    # static variable to prevent certain attributers from overwriting
+    # static variable to prevent certain attributes from overwriting
     __KEYS_TO_GUARD = []
 
     def __init__(

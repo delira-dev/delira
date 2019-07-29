@@ -208,7 +208,7 @@ class TorchScriptNetworkTrainer(PyTorchNetworkTrainer):
 
         Returns
         -------
-        :class:`PyTorchNetworkJITTrainer`
+        :class:`TorchScriptNetworkTrainer`
             the trainer with a modified state
 
         """

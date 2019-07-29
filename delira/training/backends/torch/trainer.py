@@ -452,9 +452,6 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
         if metrics is None:
             metrics = {}
 
-        if metric_keys is None:
-            metric_keys = {}
-
         return super().predict_data_mgr(datamgr, batchsize, metrics,
                                         metric_keys, verbose, **kwargs)
 
