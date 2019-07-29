@@ -80,7 +80,8 @@ class IoTfTest(unittest.TestCase):
         class DummyNetwork(AbstractTfEagerNetwork):
             def __init__(self, in_channels, n_outputs):
                 super().__init__(in_channels=in_channels, n_outputs=n_outputs)
-                self.net = self._build_model(in_channels, n_outputs)
+                with tf.init_scope():
+                    self.net = self._build_model(in_channels, n_outputs)
 
             @staticmethod
             def _build_model(in_channels, n_outputs):
@@ -99,7 +100,7 @@ class IoTfTest(unittest.TestCase):
                 return self.net(inputs)
 
         net = DummyNetwork((32,), 1)
-        input_tensor = np.random.rand(1, 32).astype(np.float32)
+        input_tensor = tf.constant(np.random.rand(1, 32).astype(np.float32))
         result_pre_save = net(input_tensor)
         save_checkpoint_eager("./model_eager", model=net)
 
