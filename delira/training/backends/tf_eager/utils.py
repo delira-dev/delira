@@ -1,5 +1,4 @@
 import tensorflow as tf
-from tensorflow.python.eager.context import context, EAGER_MODE, GRAPH_MODE
 
 from delira.training.utils import convert_to_numpy_identity, \
     recursively_convert_elements
@@ -54,36 +53,3 @@ def create_optims_default(optim_cls, **optim_params):
         dictionary containing all created optimizers
     """
     return {"default": optim_cls(**optim_params)}
-
-
-# hacky switch function
-def switch_tf_execution_mode(mode: str):
-    """
-    Function to change Tensorflow execution mode
-
-    Parameters
-    ----------
-    mode : str
-        the new execution mode, must be of one of
-        ['eager', 'eager_mode', 'graph', 'graph_mode']
-
-    Raises
-    ------
-    ValueError
-        If the given mode is not any of the above mentioned
-
-    """
-    mode = mode.lower()
-
-    mode = mode.replace("_mode", "")
-
-    if mode == "eager":
-        _mode = EAGER_MODE
-    elif mode == "graph":
-        _mode = GRAPH_MODE
-    else:
-        raise ValueError("Invalid Execution mode given: %s" % mode)
-
-    ctx = context()._eager_context
-    ctx.mode = _mode
-    ctx.is_eager = _mode == EAGER_MODE

@@ -1,6 +1,5 @@
 from delira.training.backends.tf_eager.utils import create_optims_default
 from delira.training.backends.tf_eager.utils import convert_to_numpy
-from delira.training.backends.tf_eager.utils import switch_tf_execution_mode
 from delira.training.base_trainer import BaseNetworkTrainer
 from delira.io.tf import save_checkpoint_eager, load_checkpoint_eager
 from delira.models.backends.tf_eager import AbstractTfEagerNetwork, \
@@ -21,18 +20,18 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
                  key_mapping: dict,
                  losses: dict,
                  optimizer_cls,
-                 optimizer_params={},
-                 train_metrics={},
-                 val_metrics={},
+                 optimizer_params=None,
+                 train_metrics=None,
+                 val_metrics=None,
                  lr_scheduler_cls=None,
-                 lr_scheduler_params={},
-                 gpu_ids=[],
+                 lr_scheduler_params=None,
+                 gpu_ids=None,
                  save_freq=1,
                  optim_fn=create_optims_default,
                  logging_type="tensorboardx",
-                 logging_kwargs={},
+                 logging_kwargs=None,
                  fold=0,
-                 callbacks=[],
+                 callbacks=None,
                  start_epoch=1,
                  metric_keys=None,
                  convert_batch_to_npy_fn=convert_to_numpy,
@@ -104,8 +103,24 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
 
         """
 
-        # switch to eager execution
-        switch_tf_execution_mode("eager")
+        # prevent mutable default arguments
+        if logging_kwargs is None:
+            logging_kwargs = {}
+        if callbacks is None:
+            callbacks = []
+        if gpu_ids is None:
+            gpu_ids = []
+        if lr_scheduler_params is None:
+            lr_scheduler_params = {}
+        if val_metrics is None:
+            val_metrics = {}
+        if train_metrics is None:
+            train_metrics = {}
+        if optimizer_params is None:
+            optimizer_params = {}
+
+        # check if eager execution is enabled
+        assert tf.executing_eagerly()
 
         super().__init__(network=network,
                          save_path=save_path,
@@ -244,8 +259,8 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
 
         return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
 
-    def predict_data_mgr(self, datamgr, batch_size=None, metrics={},
-                         metric_keys={}, verbose=False, **kwargs):
+    def predict_data_mgr(self, datamgr, batch_size=None, metrics=None,
+                         metric_keys=None, verbose=False, **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator
 
@@ -267,6 +282,8 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
             additional keword arguments
 
         """
+        if metrics is None:
+            metrics = {}
         self.module.trainable = False
 
         return super().predict_data_mgr(datamgr, batch_size, metrics,

@@ -1,12 +1,13 @@
 from delira.training.backends.tf_graph.utils import initialize_uninitialized
 from delira.training.backends.tf_eager.utils import create_optims_default
-from delira.training.backends.tf_eager.utils import switch_tf_execution_mode
 from delira.training.utils import convert_to_numpy_identity as convert_to_numpy
 from delira.training.base_trainer import BaseNetworkTrainer
 from delira.io.tf import load_checkpoint, save_checkpoint
 from delira.models.backends.tf_graph import AbstractTfGraphNetwork
 import os
 import logging
+
+from tensorflow import executing_eagerly
 
 from batchgenerators.dataloading import MultiThreadedAugmenter
 
@@ -113,8 +114,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
             Additional keyword arguments
 
         """
-        # switch to graph execution
-        switch_tf_execution_mode("graph")
+        assert not executing_eagerly()
 
         if optimizer_params is None:
             optimizer_params = {}

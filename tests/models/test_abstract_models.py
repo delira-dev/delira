@@ -1,6 +1,5 @@
 import unittest
 import numpy as np
-from delira import get_backends
 from ..utils import check_for_chainer_backend, check_for_torch_backend, \
     check_for_tf_backend, check_for_sklearn_backend
 

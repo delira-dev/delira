@@ -29,13 +29,13 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
                  estimator: SklearnEstimator,
                  save_path: str,
                  key_mapping,
-                 train_metrics={},
-                 val_metrics={},
+                 train_metrics=None,
+                 val_metrics=None,
                  save_freq=1,
                  logging_type="tensorboardx",
-                 logging_kwargs={},
+                 logging_kwargs=None,
                  fold=0,
-                 callbacks=[],
+                 callbacks=None,
                  start_epoch=1,
                  metric_keys=None,
                  convert_batch_to_npy_fn=convert_to_numpy,
@@ -92,6 +92,15 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             additional keyword arguments
 
         """
+        # prevent mutable defaults
+        if callbacks is None:
+            callbacks = []
+        if logging_kwargs is None:
+            logging_kwargs = {}
+        if val_metrics is None:
+            val_metrics = {}
+        if train_metrics is None:
+            train_metrics = {}
 
         super().__init__(
             estimator, save_path, {}, None, {},

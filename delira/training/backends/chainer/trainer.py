@@ -29,18 +29,18 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
                  key_mapping,
                  losses=None,
                  optimizer_cls=None,
-                 optimizer_params={},
-                 train_metrics={},
-                 val_metrics={},
+                 optimizer_params=None,
+                 train_metrics=None,
+                 val_metrics=None,
                  lr_scheduler_cls=None,
-                 lr_scheduler_params={},
-                 gpu_ids=[],
+                 lr_scheduler_params=None,
+                 gpu_ids=None,
                  save_freq=1,
                  optim_fn=create_optims_default,
                  logging_type="tensorboardx",
-                 logging_kwargs={},
+                 logging_kwargs=None,
                  fold=0,
-                 callbacks=[],
+                 callbacks=None,
                  start_epoch=1,
                  metric_keys=None,
                  convert_batch_to_npy_fn=convert_to_numpy,
@@ -116,6 +116,22 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             additional keyword arguments
 
         """
+
+        # prevent mutable defaults
+        if callbacks is None:
+            callbacks = []
+        if logging_kwargs is None:
+            logging_kwargs = {}
+        if gpu_ids is None:
+            gpu_ids = []
+        if lr_scheduler_params is None:
+            lr_scheduler_params = {}
+        if val_metrics is None:
+            val_metrics = {}
+        if train_metrics is None:
+            train_metrics = {}
+        if optimizer_params is None:
+            optimizer_params = {}
 
         super().__init__(
             network, save_path, losses, optimizer_cls, optimizer_params,

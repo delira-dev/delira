@@ -34,10 +34,8 @@ class TestTfEagerBackend(
     def setUp(self) -> None:
         if check_for_tf_backend():
             import tensorflow as tf
+            tf.enable_eager_execution()
             from delira.training import TfEagerExperiment
-            from delira.training.backends import switch_tf_execution_mode
-
-            switch_tf_execution_mode("eager")
 
             params = Parameters(fixed_params={
                 "model": {},

@@ -129,6 +129,7 @@ class TorchScriptNetworkTrainer(PyTorchNetworkTrainer):
             train_metrics = {}
         if optimizer_params is None:
             optimizer_params = {}
+
         if len(gpu_ids) > 1:
             # only use first GPU due to
             # https://github.com/pytorch/pytorch/issues/15421

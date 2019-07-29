@@ -43,10 +43,8 @@ class TestTfGraphBackend(
     def setUp(self) -> None:
         if check_for_tf_backend():
             import tensorflow as tf
+            tf.disable_eager_execution()
             from delira.training import TfGraphExperiment
-            from delira.training.backends import switch_tf_execution_mode
-
-            switch_tf_execution_mode("graph")
 
             params = Parameters(fixed_params={
                 "model": {},
