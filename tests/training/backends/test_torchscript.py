@@ -1,11 +1,11 @@
 import unittest
-from tests.utils import check_for_torch_backend
+from tests.utils import check_for_torchscript_backend
 from delira.training import Parameters
 from sklearn.metrics import mean_absolute_error
 from .utils import create_experiment_test_template_for_backend
 
 
-if check_for_torch_backend():
+if check_for_torchscript_backend():
     from delira.models import AbstractTorchScriptNetwork
     import torch
 
@@ -33,7 +33,7 @@ class TestTorchScriptBackend(
     create_experiment_test_template_for_backend("TORCHSCRIPT")
 ):
     def setUp(self) -> None:
-        if check_for_torch_backend():
+        if check_for_torchscript_backend():
             import torch
             from delira.training import TorchScriptExperiment
 
