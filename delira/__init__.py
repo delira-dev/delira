@@ -11,4 +11,3 @@ warnings.simplefilter('ignore', ImportWarning)
 
 __version__ = _get_versions()['version']
 del _get_versions
-
