@@ -22,4 +22,3 @@ try:
         NumbaTransformWrapper, NumbaCompose
 except ImportError:
     pass
-
