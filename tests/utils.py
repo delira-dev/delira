@@ -20,8 +20,16 @@ def check_for_torch_backend():
     return check_for_backend("TORCH", "Torch")
 
 
-def check_for_tf_backend():
-    return check_for_backend("TF", "TF")
+def check_for_torchscript_backend():
+    return check_for_backend("TORCH", "TorchScript")
+
+
+def check_for_tf_eager_backend():
+    return check_for_backend("TF", "TFEager")
+
+
+def check_for_tf_graph_backend():
+    return check_for_backend("TF", "TFGraph")
 
 
 def check_for_chainer_backend():

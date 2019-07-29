@@ -29,7 +29,7 @@ if check_for_tf_backend():
 
 
 class TestTfEagerBackend(
-    create_experiment_test_template_for_backend("TF")
+    create_experiment_test_template_for_backend("TFEAGER")
 ):
     def setUp(self) -> None:
         if check_for_tf_backend():

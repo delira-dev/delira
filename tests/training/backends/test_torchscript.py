@@ -30,7 +30,7 @@ if check_for_torch_backend():
 
 
 class TestTorchScriptBackend(
-    create_experiment_test_template_for_backend("TORCH")
+    create_experiment_test_template_for_backend("TORCHSCRIPT")
 ):
     def setUp(self) -> None:
         if check_for_torch_backend():

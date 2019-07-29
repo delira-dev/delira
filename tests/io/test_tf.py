@@ -1,6 +1,6 @@
 import unittest
 
-from ..utils import check_for_tf_backend
+from ..utils import check_for_tf_eager_backend, check_for_tf_graph_backend
 
 
 class IoTfTest(unittest.TestCase):
@@ -13,7 +13,7 @@ class IoTfTest(unittest.TestCase):
         else:
             tf.disable_eager_execution()
 
-    @unittest.skipUnless(check_for_tf_backend(),
+    @unittest.skipUnless(check_for_tf_graph_backend(),
                          "Test should be only executed if tensorflow backend "
                          "is installed and specified")
     def test_load_save(self):
@@ -66,7 +66,7 @@ class IoTfTest(unittest.TestCase):
             with self.subTest(var_1=var_1, var_3=var_3):
                 self.assertTrue(np.all(var_1 == var_3))
 
-    @unittest.skipUnless(check_for_tf_backend(),
+    @unittest.skipUnless(check_for_tf_eager_backend(),
                          "Test should be only executed if tensorflow backend "
                          "is installed and specified")
     def test_load_save_eager(self):

@@ -1,7 +1,8 @@
 import unittest
 import numpy as np
 from ..utils import check_for_chainer_backend, check_for_torch_backend, \
-    check_for_tf_backend, check_for_sklearn_backend
+    check_for_tf_graph_backend, check_for_tf_eager_backend, \
+    check_for_torchscript_backend, check_for_sklearn_backend
 
 
 class TestAbstractModels(unittest.TestCase):
@@ -186,19 +187,19 @@ class TestAbstractModels(unittest.TestCase):
     def test_pytorch(self):
         self.run_model_arg("cpu")
 
-    @unittest.skipUnless(check_for_torch_backend(),
+    @unittest.skipUnless(check_for_torchscript_backend(),
                          "Test should be only executed if torch backend is "
                          "installed and specified")
     def test_torchscript(self):
         self.run_model_arg("cpu")
 
-    @unittest.skipUnless(check_for_tf_backend(),
+    @unittest.skipUnless(check_for_tf_eager_backend(),
                          "Test should be only executed if tf backend is "
                          "installed and specified")
     def test_tf_eager(self):
         self.run_model_arg("/cpu:0")
 
-    @unittest.skipUnless(check_for_tf_backend(),
+    @unittest.skipUnless(check_for_tf_graph_backend(),
                          "Test should be only executed if tf backend is "
                          "installed and specified")
     def test_tf_graph(self):

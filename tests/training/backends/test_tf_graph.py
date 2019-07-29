@@ -38,7 +38,7 @@ if check_for_tf_backend():
 
 
 class TestTfGraphBackend(
-    create_experiment_test_template_for_backend("TF")
+    create_experiment_test_template_for_backend("TFGRAPH")
 ):
     def setUp(self) -> None:
         if check_for_tf_backend():

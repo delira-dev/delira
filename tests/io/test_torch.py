@@ -1,6 +1,6 @@
 import unittest
 
-from ..utils import check_for_torch_backend
+from ..utils import check_for_torch_backend, check_for_torchscript_backend
 
 
 class IoTorchTest(unittest.TestCase):
@@ -35,7 +35,7 @@ class IoTorchTest(unittest.TestCase):
         save_checkpoint_torch("./model_torch.pt", model=net)
         self.assertTrue(load_checkpoint_torch("./model_torch.pt"))
 
-    @unittest.skipUnless(check_for_torch_backend(),
+    @unittest.skipUnless(check_for_torchscript_backend(),
                          "Test should be only executed if torch backend is "
                          "installed and specified")
     def test_torchscript_save(self):

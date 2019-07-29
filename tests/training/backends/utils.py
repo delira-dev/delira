@@ -1,14 +1,17 @@
 import numpy as np
 from delira.data_loading import AbstractDataset, BaseDataManager
 from delira.training import BaseExperiment
-from tests.utils import check_for_chainer_backend, check_for_tf_backend, \
-    check_for_sklearn_backend, check_for_torch_backend
+from tests.utils import check_for_chainer_backend, check_for_tf_eager_backend, \
+    check_for_tf_graph_backend, check_for_sklearn_backend, \
+    check_for_torch_backend, check_for_torchscript_backend
 import unittest
 
 _SKIP_CONDITIONS = {
     "CHAINER": check_for_chainer_backend,
-    "TF": check_for_tf_backend,
+    "TFEAGER": check_for_tf_eager_backend,
+    "TFGRAPH": check_for_tf_graph_backend,
     "TORCH": check_for_torch_backend,
+    "TORCHSCRIPT": check_for_torchscript_backend,
     "SKLEARN": check_for_sklearn_backend
 }
 
