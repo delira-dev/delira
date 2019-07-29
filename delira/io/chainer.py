@@ -1,4 +1,3 @@
-from delira import get_backends
 
 import chainer
 import numpy as np

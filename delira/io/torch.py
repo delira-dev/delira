@@ -8,7 +8,7 @@ from collections import OrderedDict
 logger = logging.getLogger(__name__)
 
 
-def save_checkpoint_torch(file: str, model=None, optimizers={},
+def save_checkpoint_torch(file: str, model=None, optimizers=None,
                           epoch=None, **kwargs):
     """
     Save checkpoint
@@ -26,6 +26,8 @@ def save_checkpoint_torch(file: str, model=None, optimizers={},
         current epoch (will also be pickled)
 
     """
+    if optimizers is None:
+        optimizers = {}
     if isinstance(model, torch.nn.DataParallel):
         _model = model.module
     else:
@@ -83,7 +85,7 @@ def load_checkpoint_torch(file, **kwargs):
     return checkpoint
 
 
-def save_checkpoint_torchscript(file: str, model=None, optimizers={},
+def save_checkpoint_torchscript(file: str, model=None, optimizers=None,
                                 epoch=None, **kwargs):
     """
     Save current checkpoint to two different files:
@@ -108,6 +110,8 @@ def save_checkpoint_torchscript(file: str, model=None, optimizers={},
     """
 
     # remove file extension if given
+    if optimizers is None:
+        optimizers = {}
     if any([file.endswith(ext) for ext in [".pth", ".pt", ".ptj"]]):
 
         file, old_ext = file.rsplit(".", 1)
@@ -118,10 +122,10 @@ def save_checkpoint_torchscript(file: str, model=None, optimizers={},
                         "torchscript module (including the graph)")
 
     if isinstance(model, AbstractTorchScriptNetwork):
-        torch.jit.save(model, file + "_model.ptj")
+        torch.jit.save(model, file + ".model.ptj")
 
     if optimizers or epoch is not None:
-        save_checkpoint_torch(file + "_trainer_state.pt", None,
+        save_checkpoint_torch(file + ".trainer_state.pt", None,
                               optimizers=optimizers, epoch=epoch, **kwargs)
 
 
@@ -149,13 +153,13 @@ def load_checkpoint_torchscript(file: str, **kwargs):
     # load model
     if os.path.isfile(file):
         model_file = file
-    elif os.path.isfile(file.replace(".ptj", "_model.ptj")):
-        model_file = file.replace(".ptj", "_model.ptj")
+    elif os.path.isfile(file.replace(".ptj", ".model.ptj")):
+        model_file = file.replace(".ptj", ".model.ptj")
     else:
         raise ValueError("No Model File found for %s" % file)
 
     # load trainer state (if possible)
-    trainer_file = model_file.replace("_model.ptj", "_trainer_state.pt")
+    trainer_file = model_file.replace(".model.ptj", ".trainer_state.pt")
     if os.path.isfile(trainer_file):
         trainer_state = load_checkpoint_torch(trainer_file, **kwargs)
 

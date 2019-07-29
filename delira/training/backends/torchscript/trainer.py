@@ -21,18 +21,18 @@ class TorchScriptNetworkTrainer(PyTorchNetworkTrainer):
                  key_mapping,
                  losses=None,
                  optimizer_cls=None,
-                 optimizer_params={},
-                 train_metrics={},
-                 val_metrics={},
+                 optimizer_params=None,
+                 train_metrics=None,
+                 val_metrics=None,
                  lr_scheduler_cls=None,
-                 lr_scheduler_params={},
-                 gpu_ids=[],
+                 lr_scheduler_params=None,
+                 gpu_ids=None,
                  save_freq=1,
                  optim_fn=create_optims_default,
                  logging_type="tensorboardx",
-                 logging_kwargs={},
+                 logging_kwargs=None,
                  fold=0,
-                 callbacks=[],
+                 callbacks=None,
                  start_epoch=1,
                  metric_keys=None,
                  convert_batch_to_npy_fn=convert_to_numpy,
@@ -115,6 +115,20 @@ class TorchScriptNetworkTrainer(PyTorchNetworkTrainer):
 
         """
 
+        if callbacks is None:
+            callbacks = []
+        if logging_kwargs is None:
+            logging_kwargs = {}
+        if gpu_ids is None:
+            gpu_ids = []
+        if lr_scheduler_params is None:
+            lr_scheduler_params = {}
+        if val_metrics is None:
+            val_metrics = {}
+        if train_metrics is None:
+            train_metrics = {}
+        if optimizer_params is None:
+            optimizer_params = {}
         if len(gpu_ids) > 1:
             # only use first GPU due to
             # https://github.com/pytorch/pytorch/issues/15421
@@ -204,7 +218,7 @@ class TorchScriptNetworkTrainer(PyTorchNetworkTrainer):
         return super()._update_state(new_state)
 
     @staticmethod
-    def _search_for_prev_state(path, extensions=[".ptj"]):
+    def _search_for_prev_state(path, extensions=None):
         """
         Helper function to search in a given path for previous epoch states
         (indicated by extensions)
@@ -227,4 +241,6 @@ class TorchScriptNetworkTrainer(PyTorchNetworkTrainer):
             the latest epoch (1 if no checkpoint was found)
 
         """
+        if extensions is None:
+            extensions = [".model.ptj"]
         return BaseNetworkTrainer._search_for_prev_state(path, extensions)

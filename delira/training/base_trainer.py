@@ -801,7 +801,7 @@ class BaseNetworkTrainer(Predictor):
 
         if files:
             latest_epoch = max([
-                int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
+                int(x.rsplit("_", 1)[-1].split(".", 1)[0])
                 for x in files])
 
             latest_state_filename = [x for x in files
