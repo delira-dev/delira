@@ -42,19 +42,19 @@ matrix:
               - BACKEND="Sklearn"
               
     # TENSORFLOW EAGER BACKEND TESTS
-        - name: "Unittests Python 3.5 TF Backend"
+        - name: "Unittests Python 3.5 TF Eager Backend"
           python: 3.5
           dist: xenial
           env:
               - TEST_TYPE="unittests"
               - BACKEND="TFEager"
-        - name: "Unittests Python 3.6 TF Backend"
+        - name: "Unittests Python 3.6 TF Eager Backend"
           python: 3.6
           dist: xenial
           env:
               - TEST_TYPE="unittests"
               - BACKEND="TFEager"
-        - name: "Unittests Python 3.7 TF Backend"
+        - name: "Unittests Python 3.7 TF Eager Backend"
           python: 3.7
           dist: xenial
           env:
@@ -62,19 +62,19 @@ matrix:
               - BACKEND="TFEager"
 
         # TENSORFLOW GRAPH BACKEND TESTS
-        -   name: "Unittests Python 3.5 TF Backend"
+        -   name: "Unittests Python 3.5 TF Graph Backend"
             python: 3.5
             dist: xenial
             env:
                 - TEST_TYPE="unittests"
                 - BACKEND="TFGraph"
-        -   name: "Unittests Python 3.6 TF Backend"
+        -   name: "Unittests Python 3.6 TF Graph Backend"
             python: 3.6
             dist: xenial
             env:
                 - TEST_TYPE="unittests"
                 - BACKEND="TFGraph"
-        -   name: "Unittests Python 3.7 TF Backend"
+        -   name: "Unittests Python 3.7 TF Graph Backend"
             python: 3.7
             dist: xenial
             env:
@@ -102,19 +102,19 @@ matrix:
               - BACKEND="Torch"
 
         # TORCHSCRIPT BACKEND TESTS
-        -   name: "Unittests Python 3.5 Torch Backend"
+        -   name: "Unittests Python 3.5 TorchScript Backend"
             python: 3.5
             dist: xenial
             env:
                 - TEST_TYPE="unittests"
                 - BACKEND="TorchScript"
-        -   name: "Unittests Python 3.6 Torch Backend"
+        -   name: "Unittests Python 3.6 TorchScript Backend"
             python: 3.6
             dist: xenial
             env:
                 - TEST_TYPE="unittests"
                 - BACKEND="TorchScript"
-        -   name: "Unittests Python 3.7 Torch Backend"
+        -   name: "Unittests Python 3.7 TorchScript Backend"
             python: 3.7
             dist: xenial
             env:
