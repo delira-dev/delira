@@ -1,5 +1,4 @@
 import unittest
-from delira import get_backends
 from delira.training import Parameters
 from sklearn.metrics import mean_absolute_error
 from .utils import create_experiment_test_template_for_backend
