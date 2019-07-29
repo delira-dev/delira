@@ -85,10 +85,17 @@ class TestTfGraphBackend(
 
     def tearDown(self):
         try:
+            del sys.modules["tf"]
+        except KeyError:
+            pass
+        try:
             del tf
         except (UnboundLocalError, NameError):
             pass
-
+        try:
+            del sys.modules["tensorflow"]
+        except KeyError:
+            pass
         try:
             del tensorflow
         except (UnboundLocalError, NameError):

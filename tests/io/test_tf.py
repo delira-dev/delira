@@ -117,14 +117,19 @@ class IoTfTest(unittest.TestCase):
 
         try:
             del sys.modules["tf"]
-            del tf
-        except (UnboundLocalError, NameError, KeyError):
+        except KeyError:
             pass
-
+        try:
+            del tf
+        except (UnboundLocalError, NameError):
+            pass
         try:
             del sys.modules["tensorflow"]
+        except KeyError:
+            pass
+        try:
             del tensorflow
-        except (UnboundLocalError, NameError, KeyError):
+        except (UnboundLocalError, NameError):
             pass
 
         gc.collect()
