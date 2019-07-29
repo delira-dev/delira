@@ -137,7 +137,6 @@ script:
           bash scripts/ci/run_style_checks.sh;
       fi
 
-
 after_success:
     - if [[ "$TEST_TYPE" == "unittests" ]]; then
           codecov;
@@ -161,3 +160,4 @@ deploy:
               tags: true
               distributions: "sdist bdist_wheel"
               skip_existing: true
+              condition: $TEST_TYPE = style-check

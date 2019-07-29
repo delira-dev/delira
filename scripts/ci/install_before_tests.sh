@@ -6,7 +6,7 @@ pip install -r requirements/base.txt;
 if [[ "$BACKEND" == "TF" ]]; then
     pip install -r requirements/tensorflow.txt
     pip uninstall -y tensorflow-gpu;
-    pip install tensorflow==1.13.1;
+    pip install tensorflow==1.14;
 elif [[ "$BACKEND" == "Torch" ]]; then
     pip install -r requirements/torch.txt
 elif [[ "$BACKEND" == "Chainer" ]]; then

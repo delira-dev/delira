@@ -1,6 +1,6 @@
 import os
-import re
 from setuptools import find_packages, setup
+import versioneer
 
 
 def resolve_requirements(file):
@@ -22,14 +22,6 @@ def read_file(file):
     with open(file) as f:
         content = f.read()
     return content
-
-
-def find_version(file):
-    content = read_file(file)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", content,
-                              re.M)
-    if version_match:
-        return version_match.group(1)
 
 
 def unify_requirements(base_requirements: list, *additional_requirement_lists):
@@ -81,14 +73,13 @@ requirement_files = {
 requirement_dict = parse_all_requirements(requirement_files)
 
 readme = read_file(os.path.join(os.path.dirname(__file__), "README.md"))
-delira_version = find_version(os.path.join(os.path.dirname(__file__), "delira",
-                                           "__init__.py"))
 
 setup(
     name='delira',
-    version=delira_version,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     packages=find_packages(),
-    url='https://github.com/justusschock/delira/',
+    url='https://github.com/delira-dev/delira/',
     test_suite="unittest",
     long_description=readme,
     long_description_content_type='text/markdown',

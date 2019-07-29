@@ -18,7 +18,6 @@ delira - Deep Learning In RAdiology
    :caption: Tutorials:
 
    tutorial_delira
-   tutorial_dataset
    classification_pytorch
    gan_pytorch
    segmentation_2d_pytorch
@@ -33,7 +32,7 @@ delira - Deep Learning In RAdiology
 
    _api/_build/modules
 
-   GitHub <https://github.com/justusschock/delira>
+   GitHub <https://github.com/delira-dev/delira>
 
 
 

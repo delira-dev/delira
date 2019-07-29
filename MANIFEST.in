@@ -3,3 +3,5 @@ include *.md
 include LICENSE
 include notebooks/*.ipynb
 include setup.cfg
+include versioneer.py
+include delira/_version.py

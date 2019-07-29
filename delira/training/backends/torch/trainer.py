@@ -1,7 +1,6 @@
 import logging
 import os
 from functools import partial
-import warnings
 
 import torch
 from batchgenerators.dataloading import MultiThreadedAugmenter
@@ -35,18 +34,18 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
                  key_mapping,
                  losses=None,
                  optimizer_cls=None,
-                 optimizer_params={},
-                 train_metrics={},
-                 val_metrics={},
+                 optimizer_params=None,
+                 train_metrics=None,
+                 val_metrics=None,
                  lr_scheduler_cls=None,
-                 lr_scheduler_params={},
-                 gpu_ids=[],
+                 lr_scheduler_params=None,
+                 gpu_ids=None,
                  save_freq=1,
                  optim_fn=create_optims_default,
                  logging_type="tensorboardx",
-                 logging_kwargs={},
+                 logging_kwargs=None,
                  fold=0,
-                 callbacks=[],
+                 callbacks=None,
                  start_epoch=1,
                  metric_keys=None,
                  convert_batch_to_npy_fn=convert_to_numpy,
@@ -60,7 +59,6 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
                                          "cast_model_outputs": None,
                                          "num_losses": 1,
                                          "verbosity": 1},
-                 criterions=None,
                  val_freq=1,
                  ** kwargs):
         """
@@ -179,25 +177,23 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
 
         """
 
-        if (criterions is not None) ^ (losses is not None):
-            if losses is not None:
-                crits = losses
-            elif criterions is not None:
-                warnings.warn(DeprecationWarning(
-                    "The 'criterions' argument is deprecated and will \
-                     be removed in next release to unify APIs across \
-                     backends. Use 'losses' instead "))
-                crits = criterions
-        else:
-            crits = losses
-            warnings.warn(
-                RuntimeWarning("'criterions' and 'losses' have \
-                                been specified.Using the values in \
-                                'losses' since 'criterions' is deprecated \
-                                and will be removed"))
+        if callbacks is None:
+            callbacks = []
+        if logging_kwargs is None:
+            logging_kwargs = {}
+        if gpu_ids is None:
+            gpu_ids = []
+        if lr_scheduler_params is None:
+            lr_scheduler_params = {}
+        if val_metrics is None:
+            val_metrics = {}
+        if train_metrics is None:
+            train_metrics = {}
+        if optimizer_params is None:
+            optimizer_params = {}
 
         super().__init__(
-            network, save_path, crits, optimizer_cls, optimizer_params,
+            network, save_path, losses, optimizer_cls, optimizer_params,
             train_metrics, val_metrics, lr_scheduler_cls,
             lr_scheduler_params, gpu_ids, save_freq, optim_fn, key_mapping,
             logging_type, logging_kwargs, fold, callbacks, start_epoch,
@@ -421,8 +417,8 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
         return super()._train_single_epoch(batchgen, epoch,
                                            verbose=verbose)
 
-    def predict_data_mgr(self, datamgr, batchsize=None, metrics={},
-                         metric_keys={}, verbose=False, **kwargs):
+    def predict_data_mgr(self, datamgr, batchsize=None, metrics=None,
+                         metric_keys=None, verbose=False, **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator
 
@@ -453,6 +449,12 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
         """
         self.module.eval()
 
+        if metrics is None:
+            metrics = {}
+
+        if metric_keys is None:
+            metric_keys = {}
+
         return super().predict_data_mgr(datamgr, batchsize, metrics,
                                         metric_keys, verbose, **kwargs)
 
@@ -472,7 +474,7 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
         """
         if not (file_name.endswith(".pth") or file_name.endswith(".pt")):
             file_name = file_name + ".pt"
-        save_checkpoint_torch(file_name, self.module, self.optimizers,
+        save_checkpoint_torch(file_name, self.module, self.optimizers, epoch,
                               **kwargs)
 
     @staticmethod
@@ -551,7 +553,7 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
         return super()._update_state(new_state)
 
     @staticmethod
-    def _search_for_prev_state(path, extensions=[".pt", ".pth"]):
+    def _search_for_prev_state(path, extensions=None):
         """
         Helper function to search in a given path for previous epoch states
         (indicated by extensions)
@@ -574,4 +576,6 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
             the latest epoch (1 if no checkpoint was found)
 
         """
+        if extensions is None:
+            extensions = [".pt", ".pth"]
         return BaseNetworkTrainer._search_for_prev_state(path, extensions)

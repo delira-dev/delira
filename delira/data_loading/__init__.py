@@ -1,5 +1,5 @@
 
-from delira import get_backends
+from delira import get_backends as _get_backends
 from delira.data_loading.data_loader import BaseDataLoader
 from delira.data_loading.data_manager import BaseDataManager
 from delira.data_loading.dataset import AbstractDataset
@@ -14,5 +14,12 @@ from delira.data_loading.sampler import LambdaSampler
 from delira.data_loading.sampler import RandomSampler
 from delira.data_loading.sampler import SequentialSampler
 
-if "TORCH" in get_backends():
+if "TORCH" in _get_backends():
     from delira.data_loading.dataset import TorchvisionClassificationDataset
+
+try:
+    from delira.data_loading.numba_transform import NumbaTransform, \
+        NumbaTransformWrapper, NumbaCompose
+except ImportError:
+    pass
+
