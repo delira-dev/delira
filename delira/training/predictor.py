@@ -30,7 +30,7 @@ class Predictor(object):
             convert_batch_to_npy_fn=convert_batch_to_numpy_identity,
             prepare_batch_fn=lambda x: x,
             tta_transforms: tuple = (), tta_reduce_fn=None,
-            tta_transform_back=False, **kwargs):
+            tta_inverse_transforms: tuple = (), **kwargs):
         """
 
         Parameters
@@ -56,8 +56,9 @@ class Predictor(object):
             new data_dict.
         tta_reduce_fn :
             function to reduce the tta_results along the newly added axis.
-        tta_transform_back : bool
-            whether to transform back the TTA results
+        tta_inverse_transforms : tuple
+            transforms to apply, if the transform has to be reverted before
+            reducing (e.g. in Segmentation tasks)
         **kwargs :
             additional keyword arguments
 
@@ -65,13 +66,13 @@ class Predictor(object):
 
         self._setup(model, key_mapping, convert_batch_to_npy_fn,
                     prepare_batch_fn, tta_transforms, tta_reduce_fn,
-                    tta_transform_back, **kwargs)
+                    tta_inverse_transforms, **kwargs)
 
         self._tqdm_desc = "Test"
 
     def _setup(self, network, key_mapping, convert_batch_args_kwargs_to_npy_fn,
                prepare_batch_fn, tta_transforms, tta_reduce_fn,
-               tta_transform_back, **kwargs):
+               tta_inverse_transforms, **kwargs):
         """
 
         Parameters
@@ -97,8 +98,9 @@ class Predictor(object):
             new data_dict.
         tta_reduce_fn :
             function to reduce the tta_results along the newly added axis.
-        tta_transform_back : bool
-            whether to transform back the TTA results
+        tta_inverse_transforms : tuple
+            transforms to apply, if the transform has to be reverted before
+            reducing (e.g. in Segmentation tasks)
 
         """
         self.module = network
@@ -108,11 +110,11 @@ class Predictor(object):
         self._tta_transforms = tta_transforms
         self._tta_reduce_fn = tta_reduce_fn
 
-        # must contain an option to calculate an inverse funtion
-        if tta_transform_back:
-            for trafo in self._tta_transforms:
-                assert hasattr(trafo, "inverse")
-        self._tta_transform_back = tta_transform_back
+        # if inverse transforms are provided, the number must be the same as in
+        # tta_transforms
+        if tta_inverse_transforms:
+            assert len(tta_inverse_transforms) == len(tta_transforms)
+        self._tta_inverse_transforms = tta_inverse_transforms
 
     def __call__(self, data: dict, **kwargs):
         """
@@ -608,7 +610,7 @@ class Predictor(object):
                 for key, metric_fn in metrics.items()}
 
     @staticmethod
-    def tta(transforms: tuple = (), reduce_fn=None, transform_back=False):
+    def tta(transforms: tuple = (), reduce_fn=None, inverse_transforms=()):
         """
         Decorator function to apply test-time augmentation during prediction
 
@@ -620,8 +622,9 @@ class Predictor(object):
             new data_dict.
         reduce_fn :
             function to reduce the ``tta_results`` along the newly added axis
-        transform_back : bool
-            whether to transform the TTA result back
+        inverse_transforms : tuple
+            transforms to apply, if the transform has to be reverted before
+            reducing (e.g. in Segmentation tasks)
 
         Returns
         -------
@@ -637,20 +640,32 @@ class Predictor(object):
         # add no transformation to transforms to also predict original data
         transforms = (None, *transforms)
 
+        # check whether to transform back and add None to inverse transforms
+        # if necessary
+        if inverse_transforms:
+            transform_back = True
+            inverse_transforms = (None, *inverse_transforms)
+        else:
+            transform_back = False
+
         # decorates the actual function
         def decorate_fn(function):
             # wraps the actual function by iterating over the transforms
             def wrapper(data_dict, **kwargs):
                 results = []
-                for trafo in transforms:
+                for idx, trafo in enumerate(transforms):
                     # apply transforms if possible
                     if trafo is not None:
                         data_dict = trafo(**data_dict)
 
                     _result = function(data_dict, **kwargs)
 
+                    # check whether to transform back
                     if transform_back:
-                        _result = trafo.inverse(**_result)
+                        _inv_trafo = inverse_transforms[idx]
+                        # check if trafo must be applied
+                        if _inv_trafo is not None:
+                            _result = _inv_trafo(**_result)
 
                     # add results to list
                     results.append(_result)
