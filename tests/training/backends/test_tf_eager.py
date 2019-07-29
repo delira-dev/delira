@@ -1,12 +1,12 @@
 import unittest
 import gc
-from tests.utils import check_for_tf_backend
+from tests.utils import check_for_tf_eager_backend
 from delira.training import Parameters
 from sklearn.metrics import mean_absolute_error
 from .utils import create_experiment_test_template_for_backend
 
 
-if check_for_tf_backend():
+if check_for_tf_eager_backend():
     from delira.models import AbstractTfEagerNetwork
     import tensorflow as tf
 
@@ -32,7 +32,7 @@ class TestTfEagerBackend(
     create_experiment_test_template_for_backend("TFEAGER")
 ):
     def setUp(self) -> None:
-        if check_for_tf_backend():
+        if check_for_tf_eager_backend():
             import tensorflow as tf
             tf.enable_eager_execution()
             from delira.training import TfEagerExperiment
