@@ -12,7 +12,7 @@ git config user.name "Travis AutoPEP8 Fixes";
 git checkout $TRAVIS_BRANCH;
 
 # fix pep8 erros in place if possible
-find . -name \*.py -exec autopep8 --recursive --aggressive --aggressive --in-place {} +;
+find . -name \*.py -exec autopep8 --recursive --aggressive --aggressive --in-place --exclude *conf.py {} +;
 num_errors_after=`find . -name \*.py -exec pycodestyle --ignore=E402 {} + | wc -l`;
 echo $num_errors_after;
 
