@@ -259,7 +259,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
 
         return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
 
-    def predict_data_mgr(self, datamgr, batch_size=None, metrics=None,
+    def predict_data_mgr(self, datamgr, batchsize=None, metrics=None,
                          metric_keys=None, verbose=False, **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator
@@ -268,7 +268,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
         ----------
         datamgr : :class:`BaseDataManager`
             Manager producing a generator holding the batches
-        batch_size : int
+        batchsize : int
             Artificial batchsize (sampling will be done with batchsize
             1 and sampled data will be stacked to match the artificial
             batchsize)(default: None)
@@ -286,7 +286,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
             metrics = {}
         self.module.trainable = False
 
-        return super().predict_data_mgr(datamgr, batch_size, metrics,
+        return super().predict_data_mgr(datamgr, batchsize, metrics,
                                         metric_keys, verbose=verbose, **kwargs)
 
     def save_state(self, file_name, *args, **kwargs):
