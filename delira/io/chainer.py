@@ -109,8 +109,9 @@ def load_checkpoint(file, old_state: dict = None,
     with zipfile.ZipFile(file) as f:
 
         # load config
-        config = json.loads(str(f.read(os.path.basename(file.replace("chain",
-                                                                 "config")))))
+        config = json.loads(f.read(os.path.basename(file.replace("chain",
+                                                                 "config"))
+                                   ).decode("utf-8"))
 
         # load model if path is inside config
         if "model" in config:
