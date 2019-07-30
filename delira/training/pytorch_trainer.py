@@ -436,7 +436,7 @@ if "TORCH" in get_backends():
             """
             if not (file_name.endswith(".pth") or file_name.endswith(".pt")):
                 file_name = file_name + ".pt"
-            save_checkpoint(file_name, self.module, self.optimizers,
+            save_checkpoint(file_name, self.module, self.optimizers, epoch,
                             **kwargs)
 
         @staticmethod

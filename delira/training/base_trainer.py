@@ -5,8 +5,8 @@ import typing
 
 import numpy as np
 from tqdm import tqdm
+from delira.logging import LoggingContext, log
 
-from delira.logging import TrixiHandler
 from .callbacks import AbstractCallback
 from .predictor import Predictor
 from ..data_loading.data_manager import Augmenter
@@ -151,6 +151,7 @@ class BaseNetworkTrainer(Predictor):
         self.stop_training = False
         self.save_freq = save_freq
         self.metric_keys = metric_keys
+        self._logger_name = None
 
         for cbck in callbacks:
             self.register_callback(cbck)
@@ -417,79 +418,84 @@ class BaseNetworkTrainer(Predictor):
 
                 val_metric_keys[k] = v
 
-        for epoch in range(self.start_epoch, num_epochs + 1):
+        with LoggingContext(self._logger_name):
 
-            self._at_epoch_begin(metrics_val, val_score_key, epoch,
-                                 num_epochs)
+            for epoch in range(self.start_epoch, num_epochs + 1):
 
-            batch_gen_train = datamgr_train.get_batchgen(seed=epoch)
+                self._at_epoch_begin(metrics_val, val_score_key, epoch,
+                                     num_epochs)
 
-            # train single network epoch
-            train_metrics, train_losses = self._train_single_epoch(
-                batch_gen_train, epoch, verbose=verbose)
+                batch_gen_train = datamgr_train.get_batchgen(seed=epoch)
 
-            total_metrics = {
-                **train_metrics,
-                **train_losses}
+                # train single network epoch
+                train_metrics, train_losses = self._train_single_epoch(
+                    batch_gen_train, epoch, verbose=verbose)
 
-            # validate network
-            if datamgr_valid is not None and (epoch % self.val_freq == 0):
-                # next must be called here because self.predict_data_mgr
-                # returns a generator (of size 1) and we want to get the first
-                # (and only) item
-                val_metrics = next(
-                    self.predict_data_mgr_cache_metrics_only(
-                        datamgr_valid, datamgr_valid.batch_size,
-                        metrics=val_metric_fns, metric_keys=val_metric_keys,
-                        verbose=verbose))
+                total_metrics = {
+                    **train_metrics,
+                    **train_losses}
 
-                total_metrics.update(val_metrics)
+                # validate network
+                if datamgr_valid is not None and (epoch % self.val_freq == 0):
+                    # next must be called here because self.predict_data_mgr
+                    # returns a generator (of size 1) and we want to get the
+                    # first (and only) item
+                    val_metrics = next(
+                        self.predict_data_mgr_cache_metrics_only(
+                            datamgr_valid, datamgr_valid.batch_size,
+                            metrics=val_metric_fns,
+                            metric_keys=val_metric_keys,
+                            verbose=verbose))
 
-            _, total_metrics = self._convert_to_npy_fn(**total_metrics)
+                    total_metrics.update(val_metrics)
+                _, total_metrics = self._convert_to_npy_fn(**total_metrics)
 
-            for k, v in total_metrics.items():
-                total_metrics[k] = reduce_fn(v)
+                for k, v in total_metrics.items():
+                    total_metrics[k] = reduce_fn(v)
 
-            # check if metric became better
-            if val_score_key is not None:
-                if val_score_key not in total_metrics:
-                    if "val_" + val_score_key not in total_metrics:
-                        logger.warning(
-                            "val_score_key '%s' not a valid key for \
-                                    validation metrics" % str(val_score_key))
+                # check if metric became better
+                if val_score_key is not None:
+                    if val_score_key not in total_metrics:
+                        if "val_" + val_score_key not in total_metrics:
+                            logger.warning(
+                                "val_score_key '%s' not a valid key for \
+                                        validation metrics" %
+                                str(val_score_key))
 
-                        new_val_score = best_val_score
+                            new_val_score = best_val_score
 
+                        else:
+                            new_val_score = \
+                                total_metrics["val_" + val_score_key]
+                            val_score_key = "val_" + val_score_key
                     else:
-                        new_val_score = total_metrics["val_" + val_score_key]
-                        val_score_key = "val_" + val_score_key
-                else:
-                    new_val_score = total_metrics.get(val_score_key)
+                        new_val_score = total_metrics.get(val_score_key)
 
-            if new_val_score != best_val_score:
-                is_best = self._is_better_val_scores(
-                    best_val_score, new_val_score, val_score_mode)
+                if new_val_score != best_val_score:
+                    is_best = self._is_better_val_scores(
+                        best_val_score, new_val_score, val_score_mode)
 
-                # set best_val_score to new_val_score if is_best
-                if is_best:
-                    best_val_score = new_val_score
+                    # set best_val_score to new_val_score if is_best
+                    if is_best:
+                        best_val_score = new_val_score
 
-                if is_best and verbose:
-                    logging.info("New Best Value at Epoch %03d : %03.3f" %
-                                 (epoch, best_val_score))
+                    if is_best and verbose:
+                        logging.info("New Best Value at Epoch %03d : %03.3f" %
+                                     (epoch, best_val_score))
 
-            # log metrics and loss values
-            for key, val in total_metrics.items():
-                logging.info({"value": {"value": val, "name": key
-                                        }})
+                    # log metrics and loss values
+                    for key, val in total_metrics.items():
+                        log({"value": {"scalar_value": val, "tag": key
+                                       }})
 
-            self._at_epoch_end(total_metrics, val_score_key, epoch, is_best)
+                    self._at_epoch_end(total_metrics, val_score_key, epoch,
+                                       is_best)
 
-            is_best = False
+                    is_best = False
 
-            # stop training (might be caused by early stopping)
-            if self.stop_training:
-                break
+                    # stop training (might be caused by early stopping)
+                    if self.stop_training:
+                        break
 
         return self._at_training_end()
 
@@ -677,28 +683,49 @@ class BaseNetworkTrainer(Predictor):
         elif mode == 'lowest':
             return new_val_score < old_val_score
 
+    @property
+    def name(self):
+        return os.path.basename(os.path.dirname(os.path.dirname(
+            os.path.dirname(self.save_path))))
+
     def _reinitialize_logging(self, logging_type, logging_kwargs: dict):
-        from ..logging import TensorboardXLoggingHandler, VisdomLoggingHandler
+        from delira.logging import TensorboardBackend, VisdomBackend, \
+            BaseBackend, make_logger, register_logger, unregister_logger, \
+            get_available_loggers
+
+        for logger_name in get_available_loggers():
+            if logger_name.startswith(self.name):
+                unregister_logger(logger_name)
 
         if isinstance(logging_type, str):
             if logging_type.lower() == "visdom":
-                logging_cls = VisdomLoggingHandler
+                backend_cls = VisdomBackend
 
             elif logging_type.lower() == "tensorboardx":
-                logging_cls = TensorboardXLoggingHandler
+                backend_cls = TensorboardBackend
 
             else:
                 raise ValueError("Invalid Logging Type")
 
-        else:
-            logging_cls = logging_type
+        elif issubclass(logging_type, BaseBackend):
+            backend_cls = logging_type
 
-        if logging_cls == VisdomLoggingHandler:
-            _logging_kwargs = {"exp_name": "main",
-                               "level": 0}
-        elif logging_cls == TensorboardXLoggingHandler:
-            _logging_kwargs = {"log_dir": self.save_path,
-                               "level": 0}
+        else:
+            raise ValueError("Invalid logging_type passed")
+
+        _logging_kwargs = {}
+
+        if backend_cls == VisdomBackend:
+            _logging_kwargs.update({"exp_name": "main",
+                                    "level": 0})
+        elif backend_cls == TensorboardBackend:
+            _logging_kwargs.update(
+                {
+                    "logdir":
+                        os.path.join(os.path.basename(
+                            os.path.basename(self.save_path)),
+                            "logs", "run_%02d" % self.fold),
+                    "level": 0})
 
         _logging_kwargs.update(logging_kwargs)
 
@@ -712,21 +739,15 @@ class BaseNetworkTrainer(Predictor):
         # tensorboard-instance by means of
         # different tf.Summary.FileWriters()
 
-        root_logger = logging.getLogger()
-        new_handlers = []
-        for handler in root_logger.handlers:
-            if isinstance(handler, TrixiHandler):
-                handler.close()
-            else:
-                new_handlers.append(handler)
+        level = _logging_kwargs.pop("level")
 
-        root_logger.handlers = []
+        logger = make_logger(backend_cls(_logging_kwargs),
+                             level=level)
 
-        new_handlers.append(
-            logging_cls(**_logging_kwargs)
-        )
-        logging.basicConfig(level=logging.INFO,
-                            handlers=new_handlers)
+        logger_name = self.name + "_run_%02d" % self.fold
+        register_logger(logger, logger_name)
+
+        self._logger_name = logger_name
 
     @staticmethod
     def _search_for_prev_state(path, extensions=None):

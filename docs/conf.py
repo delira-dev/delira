@@ -17,8 +17,8 @@ import sys
 import re
 
 # source code directory, relative to this file, for sphinx-build
-sys.path.insert(0, os.path.abspath('../.'))
-
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.path.pardir))
+from delira._version import get_versions
 
 # -- Project information -----------------------------------------------------
 
@@ -33,18 +33,11 @@ def read_file(file):
     return content
 
 
-def find_version(file):
-    content = read_file(file)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", content,
-                              re.M)
-    if version_match:
-        return version_match.group(1)
-
-
+whole_version = get_versions()["version"]
 # The short X.Y version
-version = find_version("../delira/__init__.py")  # delira.__version__
+version = whole_version.split("+", 1)[0]
 # The full version, including alpha/beta/rc tags
-release = version  # delira.__version__
+release = whole_version  # delira.__version__
 
 
 # -- General configuration ---------------------------------------------------
