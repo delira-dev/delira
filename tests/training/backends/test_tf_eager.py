@@ -41,8 +41,8 @@ class TestTfEagerBackend(
                 "model": {},
                 "training": {
                     "losses": {
-                        "CE":
-                            tf.losses.softmax_cross_entropy},
+                        "L1":
+                            tf.losses.absolute_difference},
                     "optimizer_cls": tf.train.AdamOptimizer,
                     "optimizer_params": {"learning_rate": 1e-3},
                     "num_epochs": 2,
