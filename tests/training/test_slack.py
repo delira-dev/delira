@@ -39,7 +39,13 @@ class TestSlackExperiment(SlackExperiment):
     Overwrite emit message because no slack client present
     """
 
-    def __init__(self, experiment, token, channel, notify_epochs=None, **kwargs):
+    def __init__(
+            self,
+            experiment,
+            token,
+            channel,
+            notify_epochs=None,
+            **kwargs):
         super().__init__(experiment, token, channel,
                          notify_epochs=notify_epochs, **kwargs)
 
