@@ -344,4 +344,3 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
         if extensions is None:
             extensions = [".meta"]
         return BaseNetworkTrainer._search_for_prev_state(path, extensions)
-
