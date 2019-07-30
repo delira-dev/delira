@@ -503,7 +503,7 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
         """
 
         if "model" in new_state:
-           self.module = new_state.pop("model")
+            self.module = new_state.pop("model")
 
         if "optimizers" in new_state and new_state["optimizers"]:
             self.optimizers = new_state.pop("optimizers")

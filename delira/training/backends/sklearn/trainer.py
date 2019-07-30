@@ -467,4 +467,3 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
         if extensions is None:
             extensions = [".pkl"]
         return BaseNetworkTrainer._search_for_prev_state(path, extensions)
-
