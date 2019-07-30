@@ -147,8 +147,7 @@ class AbstractTfEagerNetwork(AbstractNetwork, tf.keras.layers.Layer):
                 eval_losses["val_" + str(key)] = loss_vals[key]
 
             for key in metric_vals:
-                eval_metrics["val_" +
-                             str(key)] = metric_vals[key]
+                eval_metrics["val_" + str(key)] = metric_vals[key]
 
             loss_vals = eval_losses
             metric_vals = eval_metrics

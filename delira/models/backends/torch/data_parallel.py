@@ -7,8 +7,8 @@ from delira.models.backends.torch.abstract_network import \
 class DataParallelPyTorchNetwork(AbstractPyTorchNetwork,
                                  torch.nn.DataParallel):
     """
-    A Wrapper around a :class:`AbstractPyTorchNetwork` instance to implement parallel
-    training by splitting the batches
+    A Wrapper around a :class:`AbstractPyTorchNetwork` instance to
+    implement parallel training by splitting the batches
     """
 
     def __init__(self, module: AbstractPyTorchNetwork,

@@ -33,8 +33,8 @@ class SklearnEstimator(AbstractNetwork):
         # be passed at least at first time (we pass it every time), because
         # not every class is present in  every batch
         # variable is initialized here, but feeded during the training
-        if (self.iterative_training and
-                "classes" in get_signature(self.partial_fit).parameters):
+        if (self.iterative_training and "classes" in get_signature(
+                self.partial_fit).parameters):
             self.classes = None
 
     def __call__(self, *args, **kwargs):

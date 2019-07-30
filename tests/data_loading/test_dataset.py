@@ -181,7 +181,8 @@ class DataSubsetConcatTest(unittest.TestCase):
                 np.random.randint(20)
 
         # check loading of a single sample
-        sample_fn = LoadSample({'data': ['data', 'data', 'data'], 'seg': ['data'],
+        sample_fn = LoadSample({'data': ['data', 'data', 'data'],
+                                'seg': ['data'],
                                 'data2': ['data', 'data', 'data']},
                                load_dummy_data,
                                dtype={'seg': 'uint8'},
