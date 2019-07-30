@@ -3,7 +3,7 @@ import os
 
 
 def check_for_environment_variable(variable: str, value: str):
-    if variable in os.environ and os.environ[variable] == value:
+    if variable not in os.environ or os.environ[variable] == value:
         return True
     return False
 
