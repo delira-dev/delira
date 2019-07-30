@@ -190,37 +190,21 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
 
         # Load latest epoch file if available
         if os.path.isdir(self.save_path):
-            # check all files in directory starting with "checkpoint" and
-            # not ending with "_best.pth"
-            files = [x for x in os.listdir(self.save_path)
-                     if os.path.isfile(os.path.join(self.save_path, x))
-                     and x.startswith("checkpoint")
-                     and not x.endswith("_best.chain")]
+            if os.path.isdir(self.save_path):
+                latest_state_path, latest_epoch = self._search_for_prev_state(
+                    self.save_path)
 
-            # if list is not empty: load previous state
-            if files:
+                if latest_state_path is not None:
 
-                latest_epoch = max([
-                    int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
-                    for x in files])
+                    # if pth file does not exist, load pt file instead
+                    if not os.path.isfile(latest_state_path):
+                        latest_state_path = latest_state_path[:-1]
 
-                latest_state_path = os.path.join(
-                    self.save_path,
-                    "checkpoint_epoch_%d.chain"
-                    % latest_epoch)
+                    logger.info("Attempting to load state from previous \
+                                training from %s" % latest_state_path)
 
-                # if pth file does not exist, load pt file instead
-                if not os.path.isfile(latest_state_path):
-                    latest_state_path = latest_state_path[:-1]
-
-                logger.info("Attempting to load state from previous \
-                            training from %s" % latest_state_path)
-                try:
                     self.update_state(latest_state_path)
-                except KeyError:
-                    logger.warning("Previous State could not be loaded, \
-                                although it exists.Training will be \
-                                restarted")
+                    self.start_epoch = latest_epoch
 
         if chainer.chainerx.is_available():
             gpu_device_prefix = "cuda:"
@@ -496,7 +480,11 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             the trainer with a modified state
 
         """
-        self._update_state(self.load_state(file_name, *args, **kwargs))
+        self._update_state(self.load_state(file_name,
+                                           old_state={
+                                               "model": self.module,
+                                               "optimizers": self.optimizers},
+                                           **kwargs))
 
     def _update_state(self, new_state):
         """
@@ -515,14 +503,40 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
         """
 
         if "model" in new_state:
-            self.module = new_state.pop("model")
+           self.module = new_state.pop("model")
 
-        if "optimizer" in new_state and new_state["optimizer"]:
-            optim_state = new_state.pop("optimizer")
-            for key in self.optimizers.keys():
-                self.optimizers[key] = optim_state[key]
+        if "optimizers" in new_state and new_state["optimizers"]:
+            self.optimizers = new_state.pop("optimizers")
 
         if "epoch" in new_state:
             self.start_epoch = new_state.pop("epoch")
 
         return super()._update_state(new_state)
+
+    @staticmethod
+    def _search_for_prev_state(path, extensions=None):
+        """
+        Helper function to search in a given path for previous epoch states
+        (indicated by extensions)
+
+        Parameters
+        ----------
+        path : str
+            the path to search in
+        extensions : list
+            list of strings containing valid file extensions for checkpoint
+            files
+
+        Returns
+        -------
+        str
+            the file containing the latest checkpoint (if available)
+        None
+            if no latst checkpoint was found
+        int
+            the latest epoch (1 if no checkpoint was found)
+
+        """
+        if extensions is None:
+            extensions = [".chain"]
+        return BaseNetworkTrainer._search_for_prev_state(path, extensions)

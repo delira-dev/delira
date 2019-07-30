@@ -210,7 +210,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
         # Load latest epoch file if available
         if os.path.isdir(self.save_path):
             latest_state_path, latest_epoch = self._search_for_prev_state(
-                self.save_path, [".meta"])
+                self.save_path)
 
             if latest_state_path is not None:
 
@@ -319,3 +319,32 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
 
         """
         return load_checkpoint(file_name, self.module)
+
+    @staticmethod
+    def _search_for_prev_state(path, extensions=None):
+        """
+        Helper function to search in a given path for previous epoch states
+        (indicated by extensions)
+
+        Parameters
+        ----------
+        path : str
+            the path to search in
+        extensions : list
+            list of strings containing valid file extensions for checkpoint
+            files
+
+        Returns
+        -------
+        str
+            the file containing the latest checkpoint (if available)
+        None
+            if no latst checkpoint was found
+        int
+            the latest epoch (1 if no checkpoint was found)
+
+        """
+        if extensions is None:
+            extensions = [".meta"]
+        return BaseNetworkTrainer._search_for_prev_state(path, extensions)
+

@@ -211,7 +211,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
             # check all files in directory starting with "checkpoint" and
             # not ending with "_best.meta"
             latest_state_path, latest_epoch = self._search_for_prev_state(
-                self.save_path, [".meta"]
+                self.save_path
             )
 
             if latest_state_path is not None:
@@ -316,3 +316,32 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
         """
         return load_checkpoint_eager(
             file_name, self.module, self.optimizers)
+
+    @staticmethod
+    def _search_for_prev_state(path, extensions=None):
+        """
+        Helper function to search in a given path for previous epoch states
+        (indicated by extensions)
+
+        Parameters
+        ----------
+        path : str
+            the path to search in
+        extensions : list
+            list of strings containing valid file extensions for checkpoint
+            files
+
+        Returns
+        -------
+        str
+            the file containing the latest checkpoint (if available)
+        None
+            if no latst checkpoint was found
+        int
+            the latest epoch (1 if no checkpoint was found)
+
+        """
+        if extensions is None:
+            extensions = [".meta"]
+        return BaseNetworkTrainer._search_for_prev_state(path, extensions)
+

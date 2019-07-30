@@ -62,6 +62,6 @@ def create_optims_default(model, optim_cls, **optimizer_params):
     else:
         optim = optim_cls(**optimizer_params)
 
-    optim.setup(model)
+    optim = optim.setup(model)
 
     return {"default": optim}

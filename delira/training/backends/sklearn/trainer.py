@@ -145,7 +145,7 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             # check all files in directory starting with "checkpoint" and
             # not ending with "_best.pth"
             latest_state_path, latest_epoch = self._search_for_prev_state(
-                self.save_path, [".pkl"])
+                self.save_path)
 
             # if list is not empty: load previous state
             if latest_state_path is not None:
@@ -439,3 +439,32 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             self.start_epoch = new_state.pop("epoch")
 
         return super()._update_state(new_state)
+
+    @staticmethod
+    def _search_for_prev_state(path, extensions=None):
+        """
+        Helper function to search in a given path for previous epoch states
+        (indicated by extensions)
+
+        Parameters
+        ----------
+        path : str
+            the path to search in
+        extensions : list
+            list of strings containing valid file extensions for checkpoint
+            files
+
+        Returns
+        -------
+        str
+            the file containing the latest checkpoint (if available)
+        None
+            if no latst checkpoint was found
+        int
+            the latest epoch (1 if no checkpoint was found)
+
+        """
+        if extensions is None:
+            extensions = [".pkl"]
+        return BaseNetworkTrainer._search_for_prev_state(path, extensions)
+

@@ -34,7 +34,7 @@ class IoChainerTest(unittest.TestCase):
         net = Model()
 
         save_checkpoint("./model_chainer.chain", model=net)
-        self.assertTrue(load_checkpoint("./model_chainer.chain"))
+        self.assertTrue(load_checkpoint("./model_chainer.chain", model=net))
 
 
 if __name__ == '__main__':
