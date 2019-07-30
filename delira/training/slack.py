@@ -81,7 +81,7 @@ class SlackFoldCallback(AbstractCallback):
 
 class SlackExperiment(object):
     def __init__(self, experiment: BaseExperiment, token: str,
-                 channel: str, *args, notify_epochs=None, **kwargs):
+                 channel: str, notify_epochs=None, **kwargs):
         """
         Wrap arbitrary experiments and connect its functions to slack
         notification
@@ -94,15 +94,13 @@ class SlackExperiment(object):
             User or Bot token from slack
         channel : str
             channel id (destination of messages)
-        args :
-            additional positional arguments passed to :class:`SlackClient`
         notify_epochs : int
             Activates additional notifications with frequency `notify_epochs`.
         kwargs :
             additional keyword arguments passed to :class:`SlackClient`
         """
         # wrap the object
-        self._client = SlackClient(token, *args, **kwargs)
+        self._client = SlackClient(token, **kwargs)
         self._channel = channel
         self._wrapped_exp = experiment
         self._notify_epochs = notify_epochs
@@ -113,9 +111,10 @@ class SlackExperiment(object):
                                      channel=self._channel,
                                      text=msg)
         if not resp["ok"]:
+            pass
             logging.error(
                 "Slack message was not emitted correctly! \n {}".format(msg))
-        self._ts = resp['ts']
+        self._ts = resp['ts'] if 'ts' in resp else None
 
     def __getattr__(self, attr):
         """
@@ -253,7 +252,7 @@ class SlackExperiment(object):
         Any
             result of experiment
         """
-        msg = str(self._wrapped_exp.name) + " : Test completed."
+        msg = str(self._wrapped_exp.name) + " : Test started."
         self.emit_message(msg)
 
         try:
