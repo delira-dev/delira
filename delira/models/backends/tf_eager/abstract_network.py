@@ -117,12 +117,15 @@ class AbstractTfEagerNetwork(AbstractNetwork, tf.keras.layers.Layer):
         # calculate loss with graph created by gradient taping
         with tf.GradientTape() as tape:
             preds = model(data_dict["data"])
-            total_loss = 0
+            total_loss = None
             for k, loss_fn in losses.items():
                 _loss_val = loss_fn(preds["pred"],
                                     data_dict["label"])
                 loss_vals[k] = _loss_val.numpy()
-                total_loss += _loss_val
+                if total_loss is None:
+                    total_loss = _loss_val
+                else:
+                    total_loss += _loss_val
 
         # calculate gradients
         grads = tape.gradient(total_loss,
