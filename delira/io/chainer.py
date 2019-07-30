@@ -71,6 +71,40 @@ def save_checkpoint(file, model=None, optimizers=None, epoch=None):
             os.remove(_file)
 
 
+def _deserialize_and_load(archive: zipfile.ZipFile, file: str, obj,
+                          temp_dir: str):
+    """
+    Helper Function to temporarily extract a file from a given archive,
+    deserialize the object in this file and remove the temporary file
+
+    Parameters
+    ----------
+    archive : :class:`zipfile.Zipfile`
+        the archive containing the file to deserialize
+    file : str
+        identifier specifying the file inside the archive to extract and
+        deserialize
+    obj : Any
+        the object to load the deserialized state to. Must provide a
+        `serialize` function
+    temp_dir : str
+        the directory the file will be temporarily extracted to
+
+    Returns
+    -------
+    Any
+        the object with the loaded and deserialized state
+
+    """
+    # temporary extract file
+    archive.extract(file, temp_dir)
+    # deserialize object
+    chainer.serializers.load_hdf5(os.path.join(temp_dir, file), obj)
+    # remove temporary file
+    os.remove(os.path.join(temp_dir, file))
+    return obj
+
+
 def load_checkpoint(file, old_state: dict = None,
                     model: chainer.link.Link = None, optimizers: dict = None):
     """
@@ -110,23 +144,20 @@ def load_checkpoint(file, old_state: dict = None,
 
         # load config
         _curr_file = file.replace("chain", "config")
-        # temporarliy extract json file to dir
+        # temporarily extract json file to dir
         f.extract(os.path.basename(_curr_file),
                   os.path.dirname(file))
         # load config dict
-        config = json.load(_curr_file)
+        with open(_curr_file) as _file:
+            config = json.load(_file)
         # remove temporary json file
         os.remove(_curr_file)
 
         # load model if path is inside config
         if "model" in config:
-            # open file in archive
-            with f.open(config["model"]) as model_file:
-                # deserialize
-                chainer.serializers.load_hdf5(model_file,
-                                              old_state["model"])
-
-            loaded_state["model"] = old_state["model"]
+            # open file in archive by temporary extracting it
+            loaded_state["model"] = _deserialize_and_load(
+                f, config["model"], old_state["model"], os.path.dirname(file))
 
         # load optimizers if path mapping is inside config
         if "optimizers" in config:
@@ -134,13 +165,9 @@ def load_checkpoint(file, old_state: dict = None,
             optimizer_config = config["optimizers"]
 
             for k, v in optimizer_config.items():
-                # open file in archive
-                with f.open(v) as optim_file:
-                    # deserialize
-                    chainer.serializers.load_hdf5(
-                        optim_file, old_state["optimizers"][k])
-
-                loaded_state["optimizers"][k] = old_state["optimizers"][k]
+                # open file in archive by temporary extracting it
+                loaded_state["optimizers"][k] = _deserialize_and_load(
+                    f, v, old_state["optimizers"][k], os.path.dirname(file))
 
         # load epoch from config if possible
         if "epoch" in config:
