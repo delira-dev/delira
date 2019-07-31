@@ -521,4 +521,3 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             metric_keys = {k: ("pred", "y") for k in metrics.keys()}
 
         return BaseNetworkTrainer.calc_metrics(batch, metrics, metric_keys)
-
