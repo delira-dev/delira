@@ -1,5 +1,6 @@
 import copy
-
+from delira.utils.time import now
+from delira._version import get_versions
 from nested_lookup import nested_lookup
 from delira.utils._external import Config
 import warnings
@@ -19,10 +20,11 @@ def non_string_warning(func):
 
 
 class BaseConfig(dict):
-    def __init__(self, *args, **kwargs):
-        # TODO: adjust with proper arguments
+    def __init__(self, dict_like, deep=False, overwrite=False, **kwargs):
         super().__init__()
         self.__dict__ = self
+        self.update(dict_like, val_copy=deep, overwrite=overwrite)
+        self.update(kwargs, val_copy=deep, overwrite=overwrite)
 
     @non_string_warning
     def __setattr__(self, key, value):
@@ -123,7 +125,7 @@ class BaseConfig(dict):
                     else:
                         self[key] = item
 
-    # TODO: support for json, yaml
+    # TODO: support for json, yaml and pickle
     # TODO: support for saving complex objects
     def dump():
         raise NotImplementedError
@@ -131,15 +133,17 @@ class BaseConfig(dict):
     def dumps():
         raise NotImplementedError
 
-    # TODO: support for json, yaml and argparse
+    # TODO: support for json, yaml, pickle and argparse
     # TODO: support for loading complex objects
-    def load():
+    # TODO: make this a class function
+    def load(self):
         raise NotImplementedError
 
-    def loads():
+    def loads(self):
         raise NotImplementedError
 
     # TODO: check if copy and deepcopy works out of the box
+    #  (If it does, we don't need these methods at all)
     def __copy__(self, *args, **kwargs):
         super().__copy__(*args, **kwargs)
 
@@ -147,11 +151,11 @@ class BaseConfig(dict):
         super().__deepcopy__(*args, **kwargs)
 
     # TODO: logging as string
-    def logg_as_string():
+    def log_as_string(self):
         raise NotImplementedError
 
     # TODO: logging as hyperparameters
-    def logg_as_hyperparameter():
+    def log_as_hyperparameter(self):
         raise NotImplementedError
 
     # TODO: save_get: like default dict
@@ -223,3 +227,147 @@ class LookupConfig(Config):
             value = LookupConfig(config=value)
 
         return super().__setattr__(key, value)
+
+
+class DeliraConfig(LookupConfig):
+    # ToDo: Init with proper arguments
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fixed_model = LookupConfig()
+        self.fixed_training = LookupConfig()
+        self.variable_model = LookupConfig()
+        self.variable_training = LookupConfig()
+        self.timestamp = now()
+        self.delira_version = get_versions()["version"]
+
+    @property
+    def variable_params(self):
+        return LookupConfig(model=self.variable_model,
+                            training=self.variable_training)
+
+    @variable_params.setter
+    def variable_params(self, new_params: dict = None,
+                        model_params: dict = None,
+                        training_params: dict = None):
+
+        # create empty dict
+        if new_params is None:
+            new_params = {}
+
+        # create empty default dict if necessary
+        if "model" not in new_params:
+            new_params["model"] = {}
+
+        # priorize explicit model params higher than general new_params
+        if model_params is not None:
+            new_params["model"].update(model_params)
+
+        # create empty default dict
+        if "training" not in new_params:
+            new_params["training"] = {}
+
+        # priorize explicit training params higher than general new_params
+        if training_params is not None:
+            new_params["training"].update(training_params)
+
+        self.variable_model.update(new_params["model"])
+        self.variable_training.update(new_params["training"])
+
+    @property
+    def fixed_params(self):
+        return LookupConfig(model=self.fixed_model,
+                            training=self.fixed_training)
+
+    @fixed_params.setter
+    def fixed_params(self, new_params: dict = None,
+                     model_params: dict = None,
+                     training_params: dict = None):
+
+        # create empty dict
+        if new_params is None:
+            new_params = {}
+
+        # create empty default dict if necessary
+        if "model" not in new_params:
+            new_params["model"] = {}
+
+        # priorize explicit model params higher than general new_params
+        if model_params is not None:
+            new_params["model"].update(model_params)
+
+        # create empty default dict
+        if "training" not in new_params:
+            new_params["training"] = {}
+
+        # priorize explicit training params higher than general new_params
+        if training_params is not None:
+            new_params["training"].update(training_params)
+
+        self.fixed_model.update(new_params["model"])
+        self.fixed_training.update(new_params["training"])
+
+    @property
+    def model_params(self):
+        return LookupConfig(variable=self.variable_model,
+                            fixed=self.fixed_model)
+
+    @model_params.setter
+    def model_params(self, new_params: dict = None,
+                     fixed_params: dict = None,
+                     variable_params: dict = None):
+
+        # create empty dict
+        if new_params is None:
+            new_params = {}
+
+        # create empty default dict if necessary
+        if "fixed" not in new_params:
+            new_params["fixed"] = {}
+
+        # priorize explicit fixed params higher than general new_params
+        if fixed_params is not None:
+            new_params["fixed"].update(fixed_params)
+
+        # create empty default dict
+        if "variable" not in new_params:
+            new_params["variable"] = {}
+
+        # priorize explicit variable params higher than general new_params
+        if variable_params is not None:
+            new_params["variable"].update(variable_params)
+
+        self.fixed_model.update(new_params["fixed"])
+        self.variable_model.update(new_params["variable"])
+
+    @property
+    def training_params(self):
+        return LookupConfig(variable=self.variable_training,
+                            fixed=self.fixed_training)
+
+    @training_params.setter
+    def training_params(self, new_params: dict = None,
+                        fixed_params: dict = None,
+                        variable_params: dict = None):
+
+        # create empty dict
+        if new_params is None:
+            new_params = {}
+
+        # create empty default dict if necessary
+        if "fixed" not in new_params:
+            new_params["fixed"] = {}
+
+        # priorize explicit fixed params higher than general new_params
+        if fixed_params is not None:
+            new_params["fixed"].update(fixed_params)
+
+        # create empty default dict
+        if "variable" not in new_params:
+            new_params["variable"] = {}
+
+        # priorize explicit variable params higher than general new_params
+        if variable_params is not None:
+            new_params["variable"].update(variable_params)
+
+        self.fixed_training.update(new_params["fixed"])
+        self.variable_training.update(new_params["variable"])
