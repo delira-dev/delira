@@ -514,8 +514,11 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
 
     @staticmethod
     def calc_metrics(batch, metrics: dict = None, metric_keys=None):
+        if metrics is None:
+            metrics = {}
+
         if metric_keys is None:
             metric_keys = {k: ("pred", "y") for k in metrics.keys()}
 
-        BaseNetworkTrainer.calc_metrics(batch, metrics, metric_keys)
+        return BaseNetworkTrainer.calc_metrics(batch, metrics, metric_keys)
 
