@@ -1,7 +1,21 @@
 import copy
 
 from nested_lookup import nested_lookup
-from trixi.util import Config
+from delira.utils._external import Config
+import warnings
+
+
+def non_string_warning(func):
+    def warning_wrapper(key, *args, **kwargs):
+        if not isinstance(key, str):
+            warnings.warn("The key {} is not a string, but a {}. "
+                          "This may lead to unwanted behavior upon encoding "
+                          "and decoding!".format(key, type(key)),
+                          RuntimeWarning)
+
+        return func(key, *args, **kwargs)
+
+    return warning_wrapper
 
 
 class BaseConfig(dict):
@@ -10,12 +24,14 @@ class BaseConfig(dict):
         super().__init__()
         self.__dict__ = self
 
+    @non_string_warning
     def __setattr__(self, key, value):
         if isinstance(value, dict) and not isinstance(value, BaseConfig):
             # convert dict to config for additional funtionality
             value = BaseConfig.create_from_dict(value)
         super().__setattr__(key, value)
 
+    @non_string_warning
     def __setitem__(self, key, value):
         if not isinstance(key, str) or '.' not in key:
             super().__setitem__(key, value)
@@ -31,6 +47,7 @@ class BaseConfig(dict):
                 current_level = current_level[k]
             current_level[final_key] = value
 
+    @non_string_warning
     def __getitem__(self, key):
         if not isinstance(key, str) or '.' not in key:
             try:
@@ -52,6 +69,7 @@ class BaseConfig(dict):
             except (KeyError, ValueError):
                 return current_level[final_key]
 
+    @non_string_warning
     def __contains__(self, key):
         if not isinstance(key, str) or '.' not in key:
             return super().__contains__(key)
