@@ -8,6 +8,7 @@ pip install tensorflow==1.14;
 pip install -r requirements_extra_torch.txt;
 pip install coverage;
 pip install codecov;
+pip install slackclient;
 
 # only build docs with python 3.7
 if [[ "$TRAVIS_PYTHON_VERSION" == "3.7" ]]; then
