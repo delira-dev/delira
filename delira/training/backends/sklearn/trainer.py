@@ -511,3 +511,11 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
         if extensions is None:
             extensions = [".pkl"]
         return BaseNetworkTrainer._search_for_prev_state(path, extensions)
+
+    @staticmethod
+    def calc_metrics(batch, metrics: dict = None, metric_keys=None):
+        if metric_keys is None:
+            metric_keys = {k: ("pred", "y") for k in metrics.keys()}
+
+        BaseNetworkTrainer.calc_metrics(batch, metrics, metric_keys)
+

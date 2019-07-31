@@ -151,7 +151,7 @@ class AbstractChainerNetwork(chainer.Chain, ChainerMixin):
         preds = model(inputs)
 
         for key, crit_fn in losses.items():
-            _loss_val = crit_fn(preds["pred"], *data_dict.values())
+            _loss_val = crit_fn(preds["pred"], data_dict["label"])
             loss_vals[key] = _loss_val.item()
             total_loss += _loss_val
 
