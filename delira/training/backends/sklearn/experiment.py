@@ -101,8 +101,7 @@ class SklearnExperiment(BaseExperiment):
         model = self._model_wrapper_cls(_model)
 
         training_params = params.permute_training_on_top().training
-        train_metrics = training_params.nested_get("train_metrics", {})
-        val_metrics = training_params.nested_get("val_metrics", {})
+        metrics = training_params.nested_get("metrics")
 
         # necessary for resuming training from a given path
         save_path = kwargs.pop("save_path", os.path.join(
@@ -114,8 +113,7 @@ class SklearnExperiment(BaseExperiment):
             estimator=model,
             save_path=save_path,
             key_mapping=self.key_mapping,
-            train_metrics=train_metrics,
-            val_metrics=val_metrics,
+            metrics=metrics,
             save_freq=self.checkpoint_freq,
             **kwargs
         )
