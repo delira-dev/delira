@@ -31,8 +31,7 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
                  losses=None,
                  optimizer_cls=None,
                  optimizer_params=None,
-                 train_metrics=None,
-                 val_metrics=None,
+                 metrics=None,
                  lr_scheduler_cls=None,
                  lr_scheduler_params=None,
                  gpu_ids=None,
@@ -72,11 +71,8 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             choice
         optimizer_params : dict
             keyword arguments passed to optimizer during construction
-        train_metrics : dict, optional
-            metrics, which will be evaluated during train phase
-            (should work on framework's tensor types)
-        val_metrics : dict, optional
-            metrics, which will be evaluated during test phase
+        metrics : dict, optional
+            metrics, which will be evaluated during train and validation phase
             (should work on numpy arrays)
         lr_scheduler_cls : Any
             learning rate schedule class: must implement step() method
@@ -151,10 +147,8 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             gpu_ids = []
         if lr_scheduler_params is None:
             lr_scheduler_params = {}
-        if val_metrics is None:
-            val_metrics = {}
-        if train_metrics is None:
-            train_metrics = {}
+        if metrics is None:
+            metrics = {}
         if optimizer_params is None:
             optimizer_params = {}
 
@@ -163,8 +157,7 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
                          losses=losses,
                          optimizer_cls=optimizer_cls,
                          optimizer_params=optimizer_params,
-                         train_metrics=train_metrics,
-                         val_metrics=val_metrics,
+                         metrics=metrics,
                          lr_scheduler_cls=lr_scheduler_cls,
                          lr_scheduler_params=lr_scheduler_params,
                          gpu_ids=gpu_ids,

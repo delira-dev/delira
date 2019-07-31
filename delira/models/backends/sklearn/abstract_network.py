@@ -103,8 +103,8 @@ class SklearnEstimator(AbstractNetwork):
         return new_batch
 
     @staticmethod
-    def closure(model, data_dict: dict, optimizers: dict, losses={},
-                metrics={}, fold=0, **kwargs):
+    def closure(model, data_dict: dict, optimizers: dict, losses: dict,
+                fold=0, **kwargs):
         """
         default closure method to do a single training step;
         Could be overwritten for more advanced models
@@ -121,8 +121,6 @@ class SklearnEstimator(AbstractNetwork):
         losses : dict
             dict holding the losses to calculate errors;
             ignored here, just passed for compatibility reasons
-        metrics : dict
-            dict holding the metrics to calculate
         fold : int
             Current Fold in Crossvalidation (default: 0)
         **kwargs:
@@ -130,8 +128,6 @@ class SklearnEstimator(AbstractNetwork):
 
         Returns
         -------
-        dict
-            Metric values (with same keys as input dict metrics)
         dict
             Loss values (with same keys as input dict losses; will always
             be empty here)
@@ -156,9 +152,4 @@ class SklearnEstimator(AbstractNetwork):
 
         preds = model(data_dict.pop("X"))
 
-        metric_vals = {}
-
-        for key, metric_fn in metrics.items():
-            metric_vals[key] = metric_fn(preds["pred"], **data_dict)
-
-        return metric_vals, {}, preds
+        return {}, preds

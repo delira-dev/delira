@@ -24,7 +24,7 @@ class TestSklearnBackend(
                     "optimizer_cls": None,
                     "optimizer_params": {},
                     "num_epochs": 2,
-                    "val_metrics": {"mae": mean_absolute_error},
+                    "metrics": {"mae": mean_absolute_error},
                     "lr_sched_cls": None,
                     "lr_sched_params": {}}
             })
