@@ -85,7 +85,7 @@ class TestSklearnBackend(
                 model.fit(np.random.rand(2, 32), np.array([[0], [1]]))
 
                 exp.test(model, dmgr_test,
-                         params.nested_get("val_metrics", {}))
+                         params.nested_get("metrics", {}))
 
 
 if __name__ == "__main__":

@@ -122,9 +122,9 @@ class BaseExperiment(object):
         self.predictor_cls = predictor_cls
 
         if val_score_key is None:
-            if params.nested_get("val_metrics", False):
+            if params.nested_get("metrics", False):
                 val_score_key = sorted(
-                    params.nested_get("val_metrics").keys())[0]
+                    params.nested_get("metrics").keys())[0]
         self.val_score_key = val_score_key
 
         assert key_mapping is not None

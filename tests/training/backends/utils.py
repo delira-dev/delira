@@ -58,7 +58,7 @@ def test_experiment(experiment_cls, params, network_cls, len_test, **kwargs):
 
     model = network_cls()
 
-    return exp.test(model, dmgr_test, params.nested_get("val_metrics", {}))
+    return exp.test(model, dmgr_test, params.nested_get("metrics", {}))
 
 
 def kfold_experiment(experiment_cls, params, network_cls, len_data,
@@ -71,7 +71,7 @@ def kfold_experiment(experiment_cls, params, network_cls, len_data,
     dset = DummyDataset(len_data)
     dmgr = BaseDataManager(dset, 16, 1, None)
 
-    return exp.kfold(data=dmgr, metrics=params.nested_get("val_metrics"),
+    return exp.kfold(data=dmgr, metrics=params.nested_get("metrics"),
                      shuffle=shuffle, split_type=split_type,
                      num_splits=num_splits, val_split=val_split)
 
