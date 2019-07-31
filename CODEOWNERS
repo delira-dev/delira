@@ -1,0 +1,47 @@
+# Use this CODEOWNERS file for automatically request reviews from owners at PRs. 
+# For Details see https://help.github.com/en/articles/about-code-owners
+# The order of the codeowners is simply alphabetically. 
+
+# General Namespace (versioning backend resolution etc.)
+/delira/* @justusschock
+
+# DataLoading
+/delira/data_loading/ @justusschock @mibaumgartner
+
+# IO
+/delira/io/ @justusschock
+/delira/io/tf.py @ORippler
+
+# Logging
+/delira/logging/ @justusschock @ORippler
+
+# Models
+/delira/models/* @justusschock
+/delira/models/backends/* @justusschock
+/delira/models/backends/chainer/ @justusschock
+/delira/models/backends/sklearn/ @justusschock
+/delira/models/backends/tf_eager/ @justusschock @ORippler
+/delira/models/backends/tf_graph/ @ORippler
+/delira/models/backends/torch/ @justusschock @mibaumgartner
+/delira/models/backends/torchscript/ @justusschock
+
+# Training
+/delira/training/__init__.py @justusschock
+/delira/training/base_experiment.py @justusschock @mibaumgartner @ORippler
+/delira/training/base_trainer.py @justusschock @mibaumgartner @ORippler
+/delira/training/losses.py @mibaumgartner
+/delira/training/metrics.py @justusschock @mibaumgartner
+/delira/training/parameters.py @justusschock @mibaumgartner
+/delira/training/predictor.py @justusschock @mibaumgartner @ORippler
+/delira/training/utils.py @justusschock
+/delira/training/backends/* @justusschock
+/delira/training/backends/chainer/ @justusschock
+/delira/training/backends/sklearn/ @justusschock
+/delira/training/backends/tf_eager/ @justusschock @ORippler
+/delira/training/backends/tf_graph/ @ORippler
+/delira/taining/backends/torch/ @justusschock @mibaumgartner
+/delira/training/backends/torchscript/ @justusschock
+/delira/training/callbacks/ @justusschock
+
+# Utils
+/delira/utils/ @justusschock @mibaumgartner
