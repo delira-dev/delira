@@ -205,7 +205,7 @@ class BaseExperiment(object):
         lr_scheduler_cls = training_params.nested_get("lr_sched_cls", None)
         lr_scheduler_params = training_params.nested_get("lr_sched_params",
                                                          {})
-        val_metrics = training_params.nested_get("val_metrics", {})
+        metrics = training_params.nested_get("metrics", {})
 
         # necessary for resuming training from a given path
         save_path = kwargs.pop("save_path", os.path.join(
@@ -221,7 +221,7 @@ class BaseExperiment(object):
             optimizer_cls=optimizer_cls,
             optimizer_params=optimizer_params,
             train_metrics=train_metrics,
-            val_metrics=val_metrics,
+            metrics=metrics,
             lr_scheduler_cls=lr_scheduler_cls,
             lr_scheduler_params=lr_scheduler_params,
             optim_fn=self._optim_builder,

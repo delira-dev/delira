@@ -51,8 +51,8 @@ class AbstractNetwork(object):
 
     @staticmethod
     @abc.abstractmethod
-    def closure(model, data_dict: dict, optimizers: dict, losses=None,
-                metrics=None, fold=0, **kwargs):
+    def closure(model, data_dict: dict, optimizers: dict, losses: dict,
+                fold=0, **kwargs):
         """
         Function which handles prediction from batch, logging, loss calculation
         and optimizer step
@@ -67,8 +67,6 @@ class AbstractNetwork(object):
             dictionary containing all optimizers to perform parameter update
         losses : dict
             Functions or classes to calculate losses
-        metrics : dict
-            Functions or classes to calculate other metrics
         fold : int
             Current Fold in Crossvalidation (default: 0)
         kwargs : dict
@@ -76,8 +74,6 @@ class AbstractNetwork(object):
 
         Returns
         -------
-        dict
-            Metric values (with same keys as input dict metrics)
         dict
             Loss values (with same keys as input dict losses)
         dict
@@ -89,10 +85,6 @@ class AbstractNetwork(object):
             If not overwritten by subclass
 
         """
-        if losses is None:
-            losses = {}
-        if metrics is None:
-            metrics = {}
         raise NotImplementedError()
 
     @staticmethod

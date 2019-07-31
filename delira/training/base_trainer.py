@@ -3,11 +3,7 @@ import os
 import pickle
 import typing
 
-from delira.data_loading.data_manager import Augmenter
-
-from delira.training.predictor import Predictor
-from delira.training.callbacks import AbstractCallback
-from delira.models import AbstractNetwork
+from delira.utils.config import LookupConfig
 
 import numpy as np
 from tqdm import tqdm
@@ -43,8 +39,7 @@ class BaseNetworkTrainer(Predictor):
                  losses: dict,
                  optimizer_cls: type,
                  optimizer_params: dict,
-                 train_metrics: dict,
-                 val_metrics: dict,
+                 metrics: dict,
                  lr_scheduler_cls: type,
                  lr_scheduler_params: dict,
                  gpu_ids: typing.List[int],
@@ -75,11 +70,8 @@ class BaseNetworkTrainer(Predictor):
             optimizer class implementing the optimization algorithm of choice
         optimizer_params : dict
             keyword arguments passed to optimizer during construction
-        train_metrics : dict, optional
-            metrics, which will be evaluated during train phase
-            (should work on numpy arrays)
-        val_metrics : dict, optional
-            metrics, which will be evaluated during test phase
+        metrics : dict, optional
+            metrics, which will be evaluated during train and validation phase
             (should work on numpy arrays)
         lr_scheduler_cls : Any
             learning rate schedule class: must implement step() method
@@ -136,8 +128,7 @@ class BaseNetworkTrainer(Predictor):
         assert isinstance(save_path, str)
         assert isinstance(losses, dict)
         assert isinstance(optimizer_params, dict)
-        assert isinstance(train_metrics, dict)
-        assert isinstance(val_metrics, dict)
+        assert isinstance(metrics, dict)
         assert isinstance(lr_scheduler_params, dict)
         assert isinstance(gpu_ids, list)
 
@@ -152,8 +143,7 @@ class BaseNetworkTrainer(Predictor):
         self.start_epoch = start_epoch
         self.save_path = save_path
         self.losses = losses
-        self.train_metrics = train_metrics
-        self.val_metrics = val_metrics
+        self.metrics = metrics
         self.stop_training = False
         self.save_freq = save_freq
         self.metric_keys = metric_keys
@@ -317,12 +307,15 @@ class BaseNetworkTrainer(Predictor):
 
             data_dict = self._prepare_batch(batch)
 
-            _metrics, _losses, _ = self.closure_fn(self.module, data_dict,
-                                                   optimizers=self.optimizers,
-                                                   losses=self.losses,
-                                                   metrics=self.train_metrics,
-                                                   fold=self.fold,
-                                                   batch_nr=batch_nr)
+            _losses, _preds = self.closure_fn(self.module, data_dict,
+                                              optimizers=self.optimizers,
+                                              losses=self.losses,
+                                              fold=self.fold,
+                                              batch_nr=batch_nr)
+            _metrics = self.calc_metrics(
+                LookupConfig(config={**data_dict, **_preds}),
+                self.metrics,
+                self.metric_keys)
             metrics.append(_metrics)
             losses.append(_losses)
 
@@ -405,25 +398,6 @@ class BaseNetworkTrainer(Predictor):
 
         metrics_val = {}
 
-        val_metric_fns = {}
-
-        for k, v in self.val_metrics.items():
-            if not k.startswith("val_"):
-                k = "val_" + k
-
-            val_metric_fns[k] = v
-
-        if self.metric_keys is None:
-            val_metric_keys = None
-
-        else:
-            val_metric_keys = {}
-            for k, v in self.metric_keys.items():
-                if not k.startswith("val_"):
-                    k = "val_" + k
-
-                val_metric_keys[k] = v
-
         with LoggingContext(self._logger_name):
 
             for epoch in range(self.start_epoch, num_epochs + 1):
@@ -449,9 +423,12 @@ class BaseNetworkTrainer(Predictor):
                     val_metrics = next(
                         self.predict_data_mgr_cache_metrics_only(
                             datamgr_valid, datamgr_valid.batch_size,
-                            metrics=val_metric_fns,
-                            metric_keys=val_metric_keys,
+                            metrics=self.metrics,
+                            metric_keys=self.metric_keys,
                             verbose=verbose))
+
+                    val_metrics = {"val_" + k: v
+                                   for k, v in val_metrics.items()}
 
                     total_metrics.update(val_metrics)
                 _, total_metrics = self._convert_to_npy_fn(**total_metrics)
@@ -737,7 +714,7 @@ class BaseNetworkTrainer(Predictor):
 
         if "exp_name" in _logging_kwargs.keys():
             _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
-                "_%02d" % self.fold
+                                          "_%02d" % self.fold
 
         # remove prior Trixihandlers and reinitialize it with given logging
         # type

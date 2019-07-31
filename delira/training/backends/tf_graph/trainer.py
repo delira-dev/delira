@@ -32,8 +32,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
                  losses: dict,
                  optimizer_cls,
                  optimizer_params=None,
-                 train_metrics=None,
-                 val_metrics=None,
+                 metrics=None,
                  lr_scheduler_cls=None,
                  lr_scheduler_params=None,
                  gpu_ids=None,
@@ -69,11 +68,8 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
             optimizer class implementing the optimization algorithm of choice
         optimizer_params : dict
             keyword arguments passed to optimizer during construction
-        train_metrics : dict, optional
-            metrics, which will be evaluated during train phase
-            (should work on numpy arrays)
-        val_metrics : dict, optional
-            metrics, which will be evaluated during test phase
+        metrics : dict, optional
+            metrics, which will be evaluated during train and validation phase
             (should work on numpy arrays)
         lr_scheduler_cls : Any
             learning rate schedule class: must implement step() method
@@ -118,10 +114,8 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
 
         if optimizer_params is None:
             optimizer_params = {}
-        if train_metrics is None:
-            train_metrics = {}
-        if val_metrics is None:
-            val_metrics = {}
+        if metrics is None:
+            metrics = {}
         if lr_scheduler_params is None:
             lr_scheduler_params = {}
         if gpu_ids is None:
@@ -133,7 +127,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
 
         super().__init__(
             network, save_path, losses, optimizer_cls, optimizer_params,
-            train_metrics, val_metrics, lr_scheduler_cls, lr_scheduler_params,
+            metrics, lr_scheduler_cls, lr_scheduler_params,
             gpu_ids, save_freq, optim_fn, key_mapping, logging_type,
             logging_kwargs, fold, callbacks, start_epoch, metric_keys,
             convert_batch_to_npy_fn, val_freq)

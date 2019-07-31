@@ -35,8 +35,7 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
                  losses=None,
                  optimizer_cls=None,
                  optimizer_params=None,
-                 train_metrics=None,
-                 val_metrics=None,
+                 metrics=None,
                  lr_scheduler_cls=None,
                  lr_scheduler_params=None,
                  gpu_ids=None,
@@ -82,11 +81,8 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
             choice
         optimizer_params : dict
             keyword arguments passed to optimizer during construction
-        train_metrics : dict, optional
-            metrics, which will be evaluated during train phase
-            (should work on framework's tensor types)
-        val_metrics : dict, optional
-            metrics, which will be evaluated during test phase
+        metrics : dict, optional
+            metrics, which will be evaluated during train and validation phase
             (should work on numpy arrays)
         lr_scheduler_cls : Any
             learning rate schedule class: must implement step() method
@@ -185,16 +181,14 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
             gpu_ids = []
         if lr_scheduler_params is None:
             lr_scheduler_params = {}
-        if val_metrics is None:
-            val_metrics = {}
-        if train_metrics is None:
-            train_metrics = {}
+        if metrics is None:
+            metrics = {}
         if optimizer_params is None:
             optimizer_params = {}
 
         super().__init__(
             network, save_path, losses, optimizer_cls, optimizer_params,
-            train_metrics, val_metrics, lr_scheduler_cls,
+            metrics, lr_scheduler_cls,
             lr_scheduler_params, gpu_ids, save_freq, optim_fn, key_mapping,
             logging_type, logging_kwargs, fold, callbacks, start_epoch,
             metric_keys, convert_batch_to_npy_fn, val_freq)

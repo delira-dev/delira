@@ -29,8 +29,7 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
                  estimator: SklearnEstimator,
                  save_path: str,
                  key_mapping,
-                 train_metrics=None,
-                 val_metrics=None,
+                 metrics=None,
                  save_freq=1,
                  logging_type="tensorboardx",
                  logging_kwargs=None,
@@ -55,11 +54,8 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             E.g. if a model accepts one input named 'x' and the data_dict
             contains one entry named 'data' this argument would have to
             be ``{'x': 'data'}``
-        train_metrics : dict, optional
-            metrics, which will be evaluated during train phase
-            (should work on framework's tensor types)
-        val_metrics : dict, optional
-            metrics, which will be evaluated during test phase
+        metrics : dict, optional
+            metrics, which will be evaluated during train and validation phase
             (should work on numpy arrays)
         save_freq : int
             integer specifying how often to save the current model's state.
@@ -97,14 +93,12 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             callbacks = []
         if logging_kwargs is None:
             logging_kwargs = {}
-        if val_metrics is None:
-            val_metrics = {}
-        if train_metrics is None:
-            train_metrics = {}
+        if metrics is None:
+            metrics = {}
 
         super().__init__(
             estimator, save_path, {}, None, {},
-            train_metrics, val_metrics, None,
+            metrics, None,
             {}, [], save_freq, None, key_mapping,
             logging_type, logging_kwargs, fold, callbacks, start_epoch,
             metric_keys, convert_batch_to_npy_fn, val_freq)
