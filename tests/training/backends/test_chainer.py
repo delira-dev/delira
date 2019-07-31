@@ -15,6 +15,7 @@ if check_for_chainer_backend():
     class DummyNetworkChainer(AbstractChainerNetwork):
         def __init__(self):
             super().__init__()
+            chainer.functions.max_pooling_2d()
 
             with self.init_scope():
                 self.dense_1 = chainer.links.Linear(32, 64)
