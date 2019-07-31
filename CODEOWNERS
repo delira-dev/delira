@@ -45,3 +45,22 @@
 
 # Utils
 /delira/utils/ @justusschock @mibaumgartner
+
+
+# Global repo stuff
+/* @justusschock
+/docker/ @haarburger
+/docs/ @justusschock
+/notebooks/* @mibaumgartner
+/paper/ @haarburger
+/requirements/ @haarburger @justusschock @mibaumgartner @ORippler
+/scripts/ci/ @justusschock
+
+# Tests
+/tests/* @justusschock
+/tests/data_loading @justusschock @mibaumgartner
+/tests/io/ @justusschock @ORippler
+/logging/ @justusschock @ORippler
+/tests/models/ @justusschock
+/tests/training/* @mibaumgarnter
+/tests/training/backends/ @justusschock
