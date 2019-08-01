@@ -234,9 +234,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
         if os.path.isfile(os.path.join(self.save_path,
                                        'checkpoint_best.meta')):
 
-            # load best model and return it. Since the state is hidden in the
-            # graph, we don't actually need to use
-            # self._update_state.
+            # load best model and return it.
             self.update_state(os.path.join(self.save_path,
                                            'checkpoint_best')
                               )
