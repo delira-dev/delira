@@ -8,6 +8,7 @@ class DefaultLoggingCallback(AbstractCallback):
     A default Logging backend which logs only the metrics; Should be
     subclassed for additional logging
     """
+
     def __init__(self, backend: BaseBackend, max_queue_size: int = None,
                  logging_frequencies=None, reduce_types=None,
                  level=logging.NOTSET):
@@ -49,7 +50,7 @@ class DefaultLoggingCallback(AbstractCallback):
                                    logging_frequencies=logging_frequencies,
                                    reduce_types=reduce_types, level=level)
 
-    def at_iter_end(self,  trainer, epoch=None, iter_num=None, data_dict=None,
+    def at_iter_end(self, trainer, epoch=None, iter_num=None, data_dict=None,
                     **kwargs):
         """
         Function logging the metrics at the end of each iteration
