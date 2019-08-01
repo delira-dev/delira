@@ -1,6 +1,7 @@
 from delira import get_backends
 from .abstract_callback import AbstractCallback
 from .early_stopping import EarlyStopping
+from .logging_callback import DefaultLoggingCallback
 
 if "TORCH" in get_backends():
     from .pytorch_schedulers import DefaultPyTorchSchedulerCallback
