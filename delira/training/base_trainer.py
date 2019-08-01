@@ -750,7 +750,7 @@ class BaseNetworkTrainer(Predictor):
 
         if "exp_name" in _logging_kwargs.keys():
             _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
-                                          "_%02d" % self.fold
+                "_%02d" % self.fold
 
         # remove prior Trixihandlers and reinitialize it with given logging
         # type
