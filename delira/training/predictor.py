@@ -298,7 +298,9 @@ class Predictor(object):
                                                  metric_keys=metric_keys)
 
                 self._at_iter_end(data_dict={**batch_dict, **preds_batch},
-                                  metrics=_metric_vals, iter_num=i)
+                                  metrics={"val_" + k: v
+                                           for k, v in _metric_vals.items()},
+                                  iter_num=i)
 
                 yield preds, _metric_vals
 
