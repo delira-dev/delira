@@ -59,3 +59,41 @@ class AbstractCallback(object):
 
         """
         return {}
+
+    def at_iter_begin(self, trainer, **kwargs):
+        """
+        Function which will be executed at begin of each iteration
+
+        Parameters
+        ----------
+        trainer : :class:`AbstractNetworkTrainer`
+        **kwargs :
+            additional keyword arguments
+
+        Returns
+        -------
+        dict
+            modified trainer attributes, where the name must correspond to the
+            trainer's attribute name
+
+        """
+        return {}
+
+    def at_iter_end(self, trainer, **kwargs):
+        """
+        Function which will be executed at end of each iteration
+
+        Parameters
+        ----------
+        trainer : :class:`AbstractNetworkTrainer`
+        **kwargs :
+            additional keyword arguments
+
+        Returns
+        -------
+        dict
+            modified trainer attributes, where the name must correspond to the
+            trainer's attribute name
+
+        """
+        return {}

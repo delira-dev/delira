@@ -141,7 +141,6 @@ class BaseNetworkTrainer(Predictor):
         else:
             os.makedirs(save_path)
 
-        self._callbacks = []
         self._fold = fold
         self.start_epoch = start_epoch
         self.save_path = save_path
@@ -153,18 +152,17 @@ class BaseNetworkTrainer(Predictor):
         self.metric_keys = metric_keys
         self._logger_name = None
 
-        for cbck in callbacks:
-            self.register_callback(cbck)
-
         self._reinitialize_logging(logging_type, logging_kwargs)
         self._tqdm_desc = "Validate"
         self.val_freq = val_freq
+        self._global_iter_num = 1
 
     def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-               key_mapping, convert_batch_to_npy_fn, prepare_batch_fn):
+               key_mapping, convert_batch_to_npy_fn, prepare_batch_fn,
+               callbacks):
 
         super()._setup(network, key_mapping, convert_batch_to_npy_fn,
-                       prepare_batch_fn)
+                       prepare_batch_fn, callbacks)
 
         self.closure_fn = network.closure
 
@@ -280,6 +278,49 @@ class BaseNetworkTrainer(Predictor):
             self.save_state(os.path.join(self.save_path,
                                          "checkpoint_best"))
 
+    def _at_iter_begin(self, iter_num, epoch=0, **kwargs):
+        """
+        Defines the behavior executed at an iteration's begin
+
+        Parameters
+        ----------
+        iter_num : int
+            number of current iter
+        epoch : int
+            number of current epoch
+        **kwargs :
+            additional keyword arguments (forwarded to callback calls)
+
+        """
+        for cb in self._callbacks:
+            self._update_state(cb.at_iter_begin(
+                self, epoch=epoch, iter_num=iter_num,
+                global_iter_num=self._global_iter_num, **kwargs))
+
+    def _at_iter_end(self, data_dict, iter_num, epoch=0, **kwargs):
+        """
+        Defines the behavior executed at an iteration's end
+
+        Parameters
+        ----------
+        data_dict : dict
+            dictionary holding input data and predictions
+        iter_num : int
+            number of current iter
+        epoch : int
+            number of current epoch
+        **kwargs :
+            additional keyword arguments (forwarded to callback calls)
+
+        """
+
+        for cb in self._callbacks:
+            self._update_state(cb.at_iter_begin(
+                self, epoch=epoch, iter_num=iter_num, data_dict=data_dict,
+                global_iter_num=self._global_iter_num, **kwargs))
+
+        self._global_iter_num += 1
+
     def _train_single_epoch(self, batchgen: Augmenter, epoch,
                             verbose=False):
         """
@@ -308,17 +349,23 @@ class BaseNetworkTrainer(Predictor):
             iterable = enumerate(batchgen)
 
         for batch_nr, batch in iterable:
+            self._at_iter_begin(epoch=epoch, iter_num=batch_nr)
 
             data_dict = self._prepare_batch(batch)
 
-            _metrics, _losses, _ = self.closure_fn(self.module, data_dict,
-                                                   optimizers=self.optimizers,
-                                                   losses=self.losses,
-                                                   metrics=self.train_metrics,
-                                                   fold=self.fold,
-                                                   batch_nr=batch_nr)
+            _metrics, _losses, preds = self.closure_fn(
+                self.module, data_dict,
+                optimizers=self.optimizers,
+                losses=self.losses,
+                metrics=self.train_metrics,
+                fold=self.fold,
+                batch_nr=batch_nr)
+
             metrics.append(_metrics)
             losses.append(_losses)
+
+            self._at_iter_end(epoch=epoch, iter_num=batch_nr,
+                              data_dict={**batch, **preds})
 
         batchgen._finish()
 
@@ -535,34 +582,6 @@ class BaseNetworkTrainer(Predictor):
             logger.error(e)
             raise e
 
-    def register_callback(self, callback: AbstractCallback):
-        """
-        Register Callback to Trainer
-
-        Parameters
-        ----------
-        callback : :class:`AbstractCallback`
-            the callback to register
-
-        Raises
-        ------
-        AssertionError
-            `callback` is not an instance of :class:`AbstractCallback` and has
-            not both methods ['at_epoch_begin', 'at_epoch_end']
-
-        """
-        assertion_str = "Given callback is not valid; Must be instance of " \
-                        "AbstractCallback or provide functions " \
-                        "'at_epoch_begin' and 'at_epoch_end'"
-        instance_check = isinstance(callback, AbstractCallback)
-        attr_check_begin = hasattr(callback, "at_epoch_begin")
-        attr_check_end = hasattr(callback, "at_epoch_end")
-        attr_check_both = attr_check_begin and attr_check_end
-
-        assert instance_check or attr_check_both, assertion_str
-
-        self._callbacks.append(callback)
-
     def save_state(self, file_name, *args, **kwargs):
         """
         saves the current state
@@ -731,7 +750,7 @@ class BaseNetworkTrainer(Predictor):
 
         if "exp_name" in _logging_kwargs.keys():
             _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
-                "_%02d" % self.fold
+                                          "_%02d" % self.fold
 
         # remove prior Trixihandlers and reinitialize it with given logging
         # type
@@ -805,3 +824,14 @@ class BaseNetworkTrainer(Predictor):
             return latest_state_path, latest_epoch
 
         return None, 1
+
+    def register_callback(self, callback: AbstractCallback):
+        has_all_attrs = True
+        for attr in ("iter", "epoch", "training"):
+            has_all_attrs = has_all_attrs and hasattr(callback,
+                                                      "at_%s_begin" % attr)
+            has_all_attrs = has_all_attrs and hasattr(callback,
+                                                      "at_%s_end" % attr)
+
+        assert has_all_attrs
+        super().register_callback(callback)

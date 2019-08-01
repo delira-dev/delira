@@ -8,6 +8,8 @@ from ..data_loading import BaseDataManager
 from .train_utils import convert_batch_to_numpy_identity
 from ..utils.config import LookupConfig
 
+from delira.training.callbacks import AbstractCallback
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,7 +29,8 @@ class Predictor(object):
     def __init__(
             self, model, key_mapping: dict,
             convert_batch_to_npy_fn=convert_batch_to_numpy_identity,
-            prepare_batch_fn=lambda x: x, **kwargs):
+            prepare_batch_fn=lambda x: x,
+            callbacks=None, **kwargs):
         """
 
         Parameters
@@ -47,18 +50,22 @@ class Predictor(object):
             function converting a batch-tensor to the framework specific
             tensor-type and pushing it to correct device, default: identity
             function
+        callbacks : list
+            initial callbacks to register
         **kwargs :
             additional keyword arguments
 
         """
+        if callbacks is None:
+            callbacks = []
 
         self._setup(model, key_mapping, convert_batch_to_npy_fn,
-                    prepare_batch_fn, **kwargs)
+                    prepare_batch_fn, callbacks, **kwargs)
 
         self._tqdm_desc = "Test"
 
     def _setup(self, network, key_mapping, convert_batch_args_kwargs_to_npy_fn,
-               prepare_batch_fn, **kwargs):
+               prepare_batch_fn, callbacks, **kwargs):
         """
 
         Parameters
@@ -78,12 +85,19 @@ class Predictor(object):
             function converting a batch-tensor to the framework specific
             tensor-type and pushing it to correct device, default: identity
             function
+        callbacks : list
+            initial callbacks to register
 
         """
+
+        self._callbacks = []
         self.module = network
         self.key_mapping = key_mapping
         self._convert_to_npy_fn = convert_batch_args_kwargs_to_npy_fn
         self._prepare_batch = prepare_batch_fn
+
+        for cb in callbacks:
+            self.register_callback(cb)
 
     def __call__(self, data: dict, **kwargs):
         """
@@ -137,6 +151,57 @@ class Predictor(object):
         return self._convert_to_npy_fn(
             **pred
         )[1]
+
+    def _at_iter_begin(self, iter_num, **kwargs):
+        """
+        Function defining the behavior executed at beginning of each iteration
+
+        Parameters
+        ----------
+        iter_num : int
+            the number of the current iteration
+        **kwargs :
+            additional keyword arguments (forwarded to callbacks call)
+
+        Returns
+        -------
+        dict
+            combined dicts returned by the callbacks
+
+        """
+        return_dict = {}
+        for cb in self._callbacks:
+            return_dict.update(cb.at_iter_begin(iter_num=iter_num, **kwargs))
+
+        return return_dict
+
+    def _at_iter_end(self, data_dict, iter_num, **kwargs):
+        """
+        Function defining the behavior executed at beginning of each iteration
+
+        Parameters
+        ----------
+        data_dict : dict
+            dictionary holding input data and predictions
+        iter_num : int
+            the number of the current iteration
+        **kwargs :
+            additional keyword arguments (forwarded to callbacks call)
+
+        Returns
+        -------
+        dict
+            combined dicts returned by the callbacks
+
+        """
+        return_dict = {}
+        for cb in self._callbacks:
+            return_dict.update(cb.at_iter_end(data_dict=data_dict,
+                                              iter_num=iter_num,
+                                              global_iter_num=iter_num,
+                                              **kwargs))
+
+        return return_dict
 
     def predict_data_mgr(self, datamgr, batchsize=None, metrics=None,
                          metric_keys=None, verbose=False, **kwargs):
@@ -194,6 +259,7 @@ class Predictor(object):
         batch_list = []
 
         for i, batch in iterable:
+            self._at_iter_begin(iter_num=i)
 
             if not batch_list and (n_batches - i) < batchsize:
                 batchsize = n_batches - i
@@ -230,6 +296,9 @@ class Predictor(object):
                 _metric_vals = self.calc_metrics(preds_batch,
                                                  metrics=metrics,
                                                  metric_keys=metric_keys)
+
+                self._at_iter_end(data_dict={**batch_dict, **preds_batch},
+                                  metrics=_metric_vals, iter_num=i)
 
                 yield preds, _metric_vals
 
@@ -553,3 +622,31 @@ class Predictor(object):
         return {key: metric_fn(*[batch.nested_get(k)
                                  for k in metric_keys[key]])
                 for key, metric_fn in metrics.items()}
+
+    def register_callback(self, callback: AbstractCallback):
+        """
+        Register Callback to Trainer
+
+        Parameters
+        ----------
+        callback : :class:`AbstractCallback`
+            the callback to register
+
+        Raises
+        ------
+        AssertionError
+            `callback` is not an instance of :class:`AbstractCallback` and has
+            not both methods ['at_epoch_begin', 'at_epoch_end']
+
+        """
+        assertion_str = "Given callback is not valid; Must be instance of " \
+                        "AbstractCallback or provide functions " \
+                        "'at_epoch_begin' and 'at_epoch_end'"
+        instance_check = isinstance(callback, AbstractCallback)
+        attr_check_begin = hasattr(callback, "at_iter_begin")
+        attr_check_end = hasattr(callback, "at_iter_end")
+        attr_check_both = attr_check_begin and attr_check_end
+
+        assert instance_check or attr_check_both, assertion_str
+
+        self._callbacks.append(callback)
