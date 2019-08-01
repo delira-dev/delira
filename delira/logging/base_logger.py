@@ -391,6 +391,7 @@ class SingleThreadedLogger(Logger):
 
 
 def make_logger(backend: BaseBackend, max_queue_size: int = None,
+                logging_frequencies=None, reduce_types=None,
                 level=logging.NOTSET):
     """
     Function to create a logger
@@ -401,6 +402,25 @@ def make_logger(backend: BaseBackend, max_queue_size: int = None,
         the logging backend
     max_queue_size : int
         the maximum queue size
+    logging_frequencies : int or dict
+            specifies how often to log for each key.
+            If int: integer will be applied to all valid keys
+            if dict: should contain a frequency per valid key. Missing keys
+            will be filled with a frequency of 1 (log every time)
+            None is equal to empty dict here.
+        reduce_types : str of FunctionType or dict
+            if str:
+                specifies the reduction type to use. Valid types are
+                'last' | 'first' | 'mean' | 'max' | 'min'.
+                The given type will be mapped to all valid keys.
+            if FunctionType:
+                specifies the actual reduction function. Will be applied for
+                all keys.
+            if dict: should contain pairs of valid logging keys and either str
+                or FunctionType. Specifies the logging value per key.
+                Missing keys will be filles with a default value of 'last'.
+                Valid types for strings are
+                'last' | 'first' | 'mean' | 'max' | 'min'.
     level : int
         the logging level for python's internal logging module
 
@@ -417,4 +437,6 @@ def make_logger(backend: BaseBackend, max_queue_size: int = None,
 
     """
 
-    return SingleThreadedLogger(backend, max_queue_size, level)
+    return SingleThreadedLogger(backend=backend, max_queue_size=max_queue_size,
+                                logging_frequencies=logging_frequencies,
+                                reduce_types=reduce_types, level=level)
