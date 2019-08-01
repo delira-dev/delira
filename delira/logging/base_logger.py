@@ -190,6 +190,14 @@ class Logger(object):
             the logging value to use if passing the logging message to
             python's logging module because it is not appropriate for logging
             with the assigned logging backend
+
+        Warnings
+        --------
+        Since the intermediate values between to logging steps  are stored in
+        memory to enable reduction, this might cause OOM errors easily
+        (especially if the logged items are still on GPU).
+        If this occurs you may want to choose a lower logging frequency.
+
         """
 
         # 0 means unlimited size, but None is more readable
