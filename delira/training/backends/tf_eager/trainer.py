@@ -177,18 +177,24 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
             the identity function
         gpu_ids : list
             list containing ids of GPUs to use; if empty: use cpu instead
+
+        Raises
+        ------
+        RuntimeError
+            if multiple GPU ids passed
         """
 
         if gpu_ids and tf.test.is_gpu_available():
             self.use_gpu = True
             if len(gpu_ids) > 1:
-                logger.warning(
-                    "multi-GPU training not yet tested!")
+                raise RuntimeError("Multiple GPUs not yet supported")
+                # logger.warning(
+                #     "multi-GPU training not yet tested!")
 
-                network = DataParallelTfEagerNetwork(network, gpu_ids)
-
-                self.input_device = "/cpu:0"
-                self.output_device = "/cpu:0"
+                # network = DataParallelTfEagerNetwork(network, gpu_ids)
+                #
+                # self.input_device = "/cpu:0"
+                # self.output_device = "/cpu:0"
             else:
                 self.input_device = "/gpu:%d" % gpu_ids[0]
                 self.output_device = "/gpu:%d" % gpu_ids[0]
@@ -277,7 +283,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
         verbose : bool
             whether to show a progress-bar or not, default: False
         **kwargs :
-            additional keword arguments
+            additional keyword arguments
 
         """
         if metrics is None:
