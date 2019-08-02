@@ -3,6 +3,12 @@ import os
 import pickle
 import typing
 
+from delira.data_loading.data_manager import Augmenter
+
+from delira.training.predictor import Predictor
+from delira.training.callbacks import AbstractCallback
+from delira.models import AbstractNetwork
+
 import numpy as np
 from tqdm import tqdm
 from delira.logging import LoggingContext, log
@@ -192,13 +198,9 @@ class BaseNetworkTrainer(Predictor):
         **kwargs :
             keyword arguments
 
-        Raises
-        ------
-        NotImplementedError
-            If not overwritten by subclass
-
         """
-        self.save_state(os.path.join(self.save_path, "checkpoint_epoch_0"))
+        self.save_state(os.path.join(self.save_path, "checkpoint_epoch_%d"
+                                     % self.start_epoch), self.start_epoch)
 
     def _at_training_end(self, *args, **kwargs):
         """
@@ -211,10 +213,10 @@ class BaseNetworkTrainer(Predictor):
         **kwargs :
             keyword arguments
 
-        Raises
-        ------
-        NotImplementedError
-            If not overwritten by subclass
+        Returns
+        -------
+        :class:`AbstractNetwork`
+            the network with the loaded state
 
         """
         return self.module
@@ -363,11 +365,6 @@ class BaseNetworkTrainer(Predictor):
             'mean','sum','first_only'
         verbose : bool
             whether to show progress bars or not
-
-        Raises
-        ------
-        NotImplementedError
-            If not overwritten by subclass
 
         """
         self._at_training_begin()
@@ -795,7 +792,7 @@ class BaseNetworkTrainer(Predictor):
 
         if files:
             latest_epoch = max([
-                int(x.rsplit("_", 1)[-1].rsplit(".", 1)[0])
+                int(x.rsplit("_", 1)[-1].split(".", 1)[0])
                 for x in files])
 
             latest_state_filename = [x for x in files

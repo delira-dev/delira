@@ -1,15 +1,18 @@
 import unittest
 
 import numpy as np
-from batchgenerators.dataloading import MultiThreadedAugmenter
 
 from delira.data_loading import BaseDataManager
+from .utils import DummyDataset
 from delira.data_loading.data_manager import Augmenter
-from . import DummyDataset
+from ..utils import check_for_no_backend
 
 
 class DataManagerTest(unittest.TestCase):
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_base_datamanager(self):
 
         batch_size = 16

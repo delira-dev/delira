@@ -1,8 +1,8 @@
 from collections import OrderedDict
 from random import shuffle
 
-from .abstract_sampler import AbstractSampler
-from ..dataset import AbstractDataset
+from delira.data_loading.sampler.abstract_sampler import AbstractSampler
+from delira.data_loading.dataset import AbstractDataset
 
 
 class SequentialSampler(AbstractSampler):

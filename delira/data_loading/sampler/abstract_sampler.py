@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from ..dataset import AbstractDataset
+from delira.data_loading.dataset import AbstractDataset
 
 
 class AbstractSampler(object):
