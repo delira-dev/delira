@@ -8,8 +8,8 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
 from delira import get_backends
-from ..utils import subdirs
-from ..utils.decorators import make_deprecated
+from delira.utils import subdirs
+from delira.utils.decorators import make_deprecated
 
 
 class AbstractDataset:
@@ -864,7 +864,7 @@ if "TORCH" in get_backends():
 
             img = resize(img, self.img_shape,
                          mode='reflect', anti_aliasing=True)
-            if len(img.shape) <= 3:
+            if len(img.shape) < 3:
                 img = img.reshape(
                     *img.shape, 1)
 

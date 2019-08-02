@@ -1,5 +1,7 @@
 from delira.logging import Logger, TensorboardBackend, make_logger
 
+from tests.utils import check_for_torch_backend, check_for_tf_graph_backend
+
 import unittest
 
 try:
@@ -119,7 +121,8 @@ class TestTensorboardLogging(unittest.TestCase):
                                     "img_tensor": self._npy_imgs[0]}})
         self._check_for_tag("image_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_image_torch(self):
         self._logger.log({"image": {"tag": "image_torch",
                                     "img_tensor":
@@ -131,7 +134,8 @@ class TestTensorboardLogging(unittest.TestCase):
                                   "img_tensor": self._npy_imgs[0]}})
         self._check_for_tag("img_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_img_torch(self):
         self._logger.log({"img": {"tag": "img_torch",
                                   "img_tensor":
@@ -143,7 +147,8 @@ class TestTensorboardLogging(unittest.TestCase):
                                       "img_tensor": self._npy_imgs[0]}})
         self._check_for_tag("picture_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_picture_torch(self):
         self._logger.log({
             "picture": {
@@ -156,7 +161,8 @@ class TestTensorboardLogging(unittest.TestCase):
                                      "img_tensor": self._npy_imgs}})
         self._check_for_tag("images_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_images_torch(self):
         self._logger.log({"images": {"tag": "images_torch",
                                      "img_tensor":
@@ -168,7 +174,8 @@ class TestTensorboardLogging(unittest.TestCase):
                                    "img_tensor": self._npy_imgs}})
         self._check_for_tag("imgs_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_imgs_torch(self):
         self._logger.log({"imgs": {"tag": "imgs_torch",
                                    "img_tensor":
@@ -180,7 +187,8 @@ class TestTensorboardLogging(unittest.TestCase):
                                        "img_tensor": self._npy_imgs}})
         self._check_for_tag("pictures_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_pictures_torch(self):
         self._logger.log({"pictures": {"tag": "pictures_torch",
                                        "img_tensor":
@@ -195,7 +203,8 @@ class TestTensorboardLogging(unittest.TestCase):
         }})
         self._check_for_tag("image_with_boxes_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_image_with_boxes_torch(self):
         self._logger.log({"image_with_boxes": {
             "tag": "image_with_boxes_torch",
@@ -212,7 +221,8 @@ class TestTensorboardLogging(unittest.TestCase):
         }})
         self._check_for_tag("bounding_boxes_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_bounding_boxes_torch(self):
 
         self._logger.log({"bounding_boxes": {
@@ -230,7 +240,8 @@ class TestTensorboardLogging(unittest.TestCase):
         }})
         self._check_for_tag("bboxes_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_bboxes_torch(self):
         self._logger.log({"bboxes": {
             "tag": "bboxes_torch",
@@ -260,7 +271,8 @@ class TestTensorboardLogging(unittest.TestCase):
 
         self._check_for_tag("scalar_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_scalar_torch(self):
         for _scalar in self._scalars:
             self._logger.log({
@@ -290,7 +302,8 @@ class TestTensorboardLogging(unittest.TestCase):
             })
         self._check_for_tag("value_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_value_torch(self):
         for _scalar in self._scalars:
             self._logger.log({
@@ -328,7 +341,8 @@ class TestTensorboardLogging(unittest.TestCase):
         for k in self._scalars[0].keys():
             self._check_for_tag("scalars_npy/" + k)
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_scalars_torch(self):
         for _scalar in self._scalars:
             self._logger.log({
@@ -370,7 +384,8 @@ class TestTensorboardLogging(unittest.TestCase):
         for k in self._scalars[0].keys():
             self._check_for_tag("values_npy/" + k)
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_values_torch(self):
         for _scalar in self._scalars:
             self._logger.log({
@@ -395,7 +410,8 @@ class TestTensorboardLogging(unittest.TestCase):
 
         self._check_for_tag("histogram_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_histogram_torch(self):
         self._logger.log({
             "histogram": {
@@ -416,7 +432,8 @@ class TestTensorboardLogging(unittest.TestCase):
 
         self._check_for_tag("hist_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_hist_torch(self):
         self._logger.log({
             "hist": {
@@ -463,7 +480,8 @@ class TestTensorboardLogging(unittest.TestCase):
 
         self._check_for_tag("audio_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_audio_torch(self):
         self._logger.log({"audio": {
             "tag": "audio_torch",
@@ -480,7 +498,8 @@ class TestTensorboardLogging(unittest.TestCase):
 
         self._check_for_tag("sound_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_sound_torch(self):
         self._logger.log({"sound": {
             "tag": "sound_torch",
@@ -500,7 +519,8 @@ class TestTensorboardLogging(unittest.TestCase):
         }})
         self._check_for_tag("video_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_video_torch(self):
         # add channel and batch dimension for format BTCHW
         vid = self._npy_imgs.reshape((1, *self._npy_imgs.shape))
@@ -521,7 +541,8 @@ class TestTensorboardLogging(unittest.TestCase):
 
         self._check_for_tag("text/text_summary")
 
-    @unittest.skipIf(tf is None, "TF Backend not installed")
+    @unittest.skipUnless(check_for_tf_graph_backend(),
+                         "TF Backend not installed")
     def test_graph_tf(self):
 
         run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
@@ -544,7 +565,8 @@ class TestTensorboardLogging(unittest.TestCase):
             "run_metadata": run_metadata
         }})
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_graph_torch(self):
 
         input_tensor = self._npy_imgs[0]
@@ -557,7 +579,8 @@ class TestTensorboardLogging(unittest.TestCase):
             }
         })
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     @unittest.skipIf(onnx is None, reason="ONNX not installed")
     def test_graph_onnx(self):
         import os
@@ -575,7 +598,8 @@ class TestTensorboardLogging(unittest.TestCase):
             "mat": self._embedding_npy
         }})
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_embedding_torch(self):
         self._logger.log({"embedding": {
             "mat": torch.from_numpy(self._embedding_npy)
@@ -589,7 +613,8 @@ class TestTensorboardLogging(unittest.TestCase):
         }})
         self._check_for_tag("pr_curve_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_pr_curve_torch(self):
         self._logger.log({"pr_curve": {
             "tag": "pr_curve_torch",
@@ -606,7 +631,8 @@ class TestTensorboardLogging(unittest.TestCase):
         }})
         self._check_for_tag("pr_npy")
 
-    @unittest.skipIf(torch is None, "Torch Backend not installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Torch Backend not installed")
     def test_pr_torch(self):
         self._logger.log({"pr": {
             "tag": "pr_torch",

@@ -1,4 +1,4 @@
-from .abstract_callback import AbstractCallback
+from delira.training.callbacks.abstract_callback import AbstractCallback
 
 
 class EarlyStopping(AbstractCallback):
