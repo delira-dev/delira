@@ -19,7 +19,8 @@ class SequentialSampler(AbstractSampler):
         """
         super().__init__(indices)
 
-        self._indices = iter(range(len(indices)))
+        self._indices = range(len(indices))
+        self._iterable = iter(self._indices)
 
     def _get_next_index(self):
         """
@@ -32,7 +33,10 @@ class SequentialSampler(AbstractSampler):
         int
             the next index
         """
-        return next(self._indices)
+        try:
+            return next(self._iterable)
+        except StopIteration:
+            self._iterable = iter(self._indices)
 
     def __len__(self):
         return self._num_samples
