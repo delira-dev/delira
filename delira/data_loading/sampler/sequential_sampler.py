@@ -25,9 +25,11 @@ class SequentialSampler(AbstractSampler):
     def _get_next_index(self):
         """
         Actual Sampling
+
         Raises
         ------
         StopIteration : If end of dataset reached
+
         Returns
         -------
         int
@@ -35,8 +37,9 @@ class SequentialSampler(AbstractSampler):
         """
         try:
             return next(self._iterable)
-        except StopIteration:
+        except StopIteration as e:
             self._iterable = iter(self._indices)
+            raise e
 
     def __len__(self):
         return self._num_samples
