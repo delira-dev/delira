@@ -266,6 +266,8 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
                                 although it exists.Training will be \
                                 restarted")
 
+                self.start_epoch = latest_epoch
+
         if gpu_ids and torch.cuda.is_available():
             self.use_gpu = True
             if (len(gpu_ids) > 1) and (torch.cuda.device_count() > 1):
