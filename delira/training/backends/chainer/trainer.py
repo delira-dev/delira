@@ -295,7 +295,8 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
 
         """
         self.save_state(os.path.join(
-            self.save_path, "checkpoint_epoch_0"), 0)
+            self.save_path, "checkpoint_epoch_%d" % self.start_epoch),
+            self.start_epoch)
 
     def _at_training_end(self):
         """
@@ -532,7 +533,7 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
         str
             the file containing the latest checkpoint (if available)
         None
-            if no latst checkpoint was found
+            if no latest checkpoint was found
         int
             the latest epoch (1 if no checkpoint was found)
 
