@@ -260,6 +260,8 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
                                 although it exists.Training will be \
                                 restarted")
 
+                self.start_epoch = latest_epoch
+
         if gpu_ids and torch.cuda.is_available():
             self.use_gpu = True
             if (len(gpu_ids) > 1) and (torch.cuda.device_count() > 1):
@@ -328,7 +330,8 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
 
         """
         self.save_state(os.path.join(
-            self.save_path, "checkpoint_epoch_0"), 0)
+            self.save_path, "checkpoint_epoch_%d" % self.start_epoch),
+            self.start_epoch)
 
     def _at_training_end(self):
         """

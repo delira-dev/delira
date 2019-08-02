@@ -168,7 +168,8 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
 
         """
         self.save_state(os.path.join(
-            self.save_path, "checkpoint_epoch_0"), 0)
+            self.save_path, "checkpoint_epoch_%d" % self.start_epoch),
+            self.start_epoch)
 
     def _get_classes_if_necessary(self, dmgr: BaseDataManager, verbose,
                                   label_key=None):

@@ -163,6 +163,11 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
             the identity function
         gpu_ids : list
             list containing ids of GPUs to use; if empty: use cpu instead
+
+        Raises
+        ------
+        RuntimeError
+            if multiple GPU ids passed
         """
 
         # TODO: implement multi-GPU and single GPU training with help of
@@ -188,6 +193,8 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
         # else:
         #     self.use_gpu = False
         #
+        if len(gpu_ids) > 1:
+            raise RuntimeError("Multiple GPUs not yet supported")
 
         self.optimizers = optim_fn(optimizer_cls, **optimizer_params)
 
@@ -232,9 +239,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
         if os.path.isfile(os.path.join(self.save_path,
                                        'checkpoint_best.meta')):
 
-            # load best model and return it. Since the state is hidden in the
-            # graph, we don't actually need to use
-            # self._update_state.
+            # load best model and return it.
 
             self.update_state(os.path.join(self.save_path,
                                            'checkpoint_best')
@@ -278,7 +283,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
         verbose : bool
             whether to show a progress-bar or not, default: False
         **kwargs :
-            additional keword arguments
+            additional keyword arguments
 
         """
         if metrics is None:
@@ -333,7 +338,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
         str
             the file containing the latest checkpoint (if available)
         None
-            if no latst checkpoint was found
+            if no latest checkpoint was found
         int
             the latest epoch (1 if no checkpoint was found)
 
