@@ -1,4 +1,3 @@
-
 # basic imports
 from delira.data_loading.data_loader import DataLoader
 from delira.data_loading.dataset import AbstractDataset, IterableDataset, \
@@ -9,8 +8,6 @@ from delira.data_loading.data_manager import DataManager
 from delira.data_loading.load_utils import LoadSample, LoadSampleLabel
 
 from delira.data_loading.sampler import *
-
-
 from delira import get_backends as _get_backends
 
 # If torch backend is available: Import Torchvision dataset

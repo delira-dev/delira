@@ -1,4 +1,3 @@
-import inspect
 import logging
 
 from batchgenerators.transforms import AbstractTransform
@@ -10,6 +9,7 @@ from delira.data_loading.augmenter import Augmenter
 from delira.data_loading.dataset import DictDataset, IterableDataset, \
     AbstractDataset
 from collections import Iterable
+import inspect
 
 logger = logging.getLogger(__name__)
 

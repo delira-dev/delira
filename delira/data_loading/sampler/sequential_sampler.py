@@ -1,6 +1,4 @@
 from delira.data_loading.sampler.abstract_sampler import AbstractSampler
-
-
 from delira.data_loading.sampler.per_class_sampler import PerClassSampler, \
     StoppingPerClassSampler
 

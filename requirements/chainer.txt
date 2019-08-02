@@ -1,0 +1,2 @@
+chainer >= 6.0.0
+h5py

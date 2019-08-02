@@ -1,15 +1,17 @@
 import unittest
 
-from delira import get_backends
+from ..utils import check_for_torch_backend, check_for_torchscript_backend
 
 
 class IoTorchTest(unittest.TestCase):
 
-    @unittest.skipIf("TORCH" not in get_backends(),
-                     reason="No TORCH Backend Installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         "Test should be only executed if torch backend is "
+                         "installed and specified")
     def test_load_save(self):
 
-        from delira.io import torch_load_checkpoint, torch_save_checkpoint
+        from delira.io.torch import load_checkpoint_torch, \
+            save_checkpoint_torch
         from delira.models import AbstractPyTorchNetwork
         import torch
 
@@ -30,8 +32,31 @@ class IoTorchTest(unittest.TestCase):
                 )
 
         net = DummyNetwork(32, 1)
-        torch_save_checkpoint("./model.pt", model=net)
-        self.assertTrue(torch_load_checkpoint("./model.pt"))
+        save_checkpoint_torch("./model_torch.pt", model=net)
+        self.assertTrue(load_checkpoint_torch("./model_torch.pt"))
+
+    @unittest.skipUnless(check_for_torchscript_backend(),
+                         "Test should be only executed if torch backend is "
+                         "installed and specified")
+    def test_torchscript_save(self):
+        from delira.io.torch import load_checkpoint_torchscript, \
+            save_checkpoint_torchscript
+        from delira.models import AbstractTorchScriptNetwork
+        import torch
+
+        class DummyNetwork(AbstractTorchScriptNetwork):
+
+            def __init__(self):
+                super().__init__()
+                self.dense = torch.nn.Linear(3, 1)
+
+            @torch.jit.script_method
+            def forward(self, x):
+                return self.dense(x)
+
+        net = DummyNetwork()
+        save_checkpoint_torchscript("./model_jit.ptj", model=net)
+        self.assertTrue(load_checkpoint_torchscript("./model_jit.ptj"))
 
 
 if __name__ == '__main__':

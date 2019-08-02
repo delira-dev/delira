@@ -1,15 +1,23 @@
 #!/usr/bin/env bash
 
 pip install -U pip wheel;
-pip install -r requirements.txt;
-pip install -r requirements_extra_tf.txt;
-pip uninstall -y tensorflow-gpu;
-pip install tensorflow==1.13.1;
-pip install -r requirements_extra_torch.txt;
+pip install -r requirements/base.txt;
+
+if [[ "$BACKEND" == "TFEager" ]]; then
+    pip install -r requirements/tensorflow.txt
+    pip uninstall -y tensorflow-gpu;
+    pip install tensorflow==1.14;
+elif [[ "$BACKEND" == "TFGraph" ]]; then
+    pip install -r requirements/tensorflow.txt
+    pip uninstall -y tensorflow-gpu;
+    pip install tensorflow==1.14;
+elif [[ "$BACKEND" == "Torch" ]]; then
+    pip install -r requirements/torch.txt
+elif [[ "$BACKEND" == "TorchScript" ]]; then
+    pip install -r requirements/torch.txt
+elif [[ "$BACKEND" == "Chainer" ]]; then
+    pip install -r requirements/chainer.txt
+fi
+
 pip install coverage;
 pip install codecov;
-
-# only build docs with python 3.7
-if [[ "$TRAVIS_PYTHON_VERSION" == "3.7" ]]; then
-    pip install -r docs/requirements.txt;
-fi

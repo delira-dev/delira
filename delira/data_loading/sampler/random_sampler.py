@@ -7,7 +7,7 @@ from delira.data_loading.sampler.per_class_sampler import PerClassSampler, \
 
 class RandomSampler(AbstractSampler):
     """
-    Implements Random Sampling from whole Dataset
+    Implements Random Sampling With Replacement from whole Dataset
     """
 
     def __init__(self, indices):
