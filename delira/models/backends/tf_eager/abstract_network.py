@@ -67,7 +67,7 @@ class AbstractTfEagerNetwork(AbstractNetwork, tf.keras.layers.Layer):
         *args :
             arbitrary positional arguments
         **kwargs :
-            arbbitrary keyword arguments
+            arbitrary keyword arguments
 
         """
 
