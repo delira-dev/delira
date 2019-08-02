@@ -183,7 +183,8 @@ class SamplerTest(unittest.TestCase):
 
         assert len(next(batchsampler_iter)) == 199
 
-        # checks if labels are all the same (should not happen if random sampled)
+        # checks if labels are all the same (should not happen if random
+        # sampled)
         assert len(set([dset[_idx]["label"]
                         for _idx in [*next(batchsampler_iter),
                                      *next(batchsampler_iter)]])) > 1
@@ -199,14 +200,14 @@ class SamplerTest(unittest.TestCase):
         np.random.seed(1)
         dset = DummyDataset(2000, [0.5, 0.3, 0.2])
 
-
         sampler = WeightedPrevalenceRandomSampler.from_dataset(dset)
         batchsampler = BatchSampler(sampler, 250)
         sampler_iter = iter(batchsampler)
 
         assert len(next(sampler_iter)) == 250
 
-        # checks if labels are all the same (should not happen if random sampled)
+        # checks if labels are all the same (should not happen if random
+        # sampled)
         n_draw = 1000
         label_list = []
         for tmp in range(n_draw // 250):
