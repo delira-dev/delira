@@ -2,32 +2,163 @@ language: python
 
 matrix:
     include:
-        - name: "Unittests Python 3.5"
+        # basic tests withut a backend
+        - name: "Unittests Python 3.5 No Backend"
           python: 3.5
           dist: xenial
           env:
               - TEST_TYPE="unittests"
-        - name: "Unittests Python 3.6"
+              - BACKEND="None"
+        - name: "Unittests Python 3.6 No Backend"
           python: 3.6
           dist: xenial
           env:
               - TEST_TYPE="unittests"
-        - name: "Unittests Python 3.7"
+              - BACKEND="None"
+        - name: "Unittests Python 3.7 No Backend"
           python: 3.7
           dist: xenial
           env:
               - TEST_TYPE="unittests"
+              - BACKEND="None"
+    # SCIKIT-LEARN BACKEND TESTS
+        - name: "Unittests Python 3.5 Sklearn Backend"
+          python: 3.5
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Sklearn"
+        - name: "Unittests Python 3.6 Sklearn Backend"
+          python: 3.6
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Sklearn"
+        - name: "Unittests Python 3.7 Sklearn Backend"
+          python: 3.7
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Sklearn"
+              
+    # TENSORFLOW EAGER BACKEND TESTS
+        - name: "Unittests Python 3.5 TF Eager Backend"
+          python: 3.5
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="TFEager"
+        - name: "Unittests Python 3.6 TF Eager Backend"
+          python: 3.6
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="TFEager"
+        - name: "Unittests Python 3.7 TF Eager Backend"
+          python: 3.7
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="TFEager"
+
+        # TENSORFLOW GRAPH BACKEND TESTS
+        -   name: "Unittests Python 3.5 TF Graph Backend"
+            python: 3.5
+            dist: xenial
+            env:
+                - TEST_TYPE="unittests"
+                - BACKEND="TFGraph"
+        -   name: "Unittests Python 3.6 TF Graph Backend"
+            python: 3.6
+            dist: xenial
+            env:
+                - TEST_TYPE="unittests"
+                - BACKEND="TFGraph"
+        -   name: "Unittests Python 3.7 TF Graph Backend"
+            python: 3.7
+            dist: xenial
+            env:
+                - TEST_TYPE="unittests"
+                - BACKEND="TFGraph"
+
+      # PYTORCH BACKEND TESTS
+        - name: "Unittests Python 3.5 Torch Backend"
+          python: 3.5
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Torch"
+        - name: "Unittests Python 3.6 Torch Backend"
+          python: 3.6
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Torch"
+        - name: "Unittests Python 3.7 Torch Backend"
+          python: 3.7
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Torch"
+
+        # TORCHSCRIPT BACKEND TESTS
+        -   name: "Unittests Python 3.5 TorchScript Backend"
+            python: 3.5
+            dist: xenial
+            env:
+                - TEST_TYPE="unittests"
+                - BACKEND="TorchScript"
+        -   name: "Unittests Python 3.6 TorchScript Backend"
+            python: 3.6
+            dist: xenial
+            env:
+                - TEST_TYPE="unittests"
+                - BACKEND="TorchScript"
+        -   name: "Unittests Python 3.7 TorchScript Backend"
+            python: 3.7
+            dist: xenial
+            env:
+                - TEST_TYPE="unittests"
+                - BACKEND="TorchScript"
+
+      # CHAINER BACKEND TESTS
+        - name: "Unittests Python 3.5 Chainer Backend"
+          python: 3.5
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Chainer"
+        - name: "Unittests Python 3.6 Chainer Backend"
+          python: 3.6
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Chainer"
+        - name: "Unittests Python 3.7 Chainer Backend"
+          python: 3.7
+          dist: xenial
+          env:
+              - TEST_TYPE="unittests"
+              - BACKEND="Chainer"
+              
+      # STATIC CHECKS
         - name: "Static Style Checks"
           python: 3.7
           dist: xenial
           env:
               - TEST_TYPE="style-check"
+        - name: "Documentation"
+          python: 3.7
+          dist: xenial
+          env:
+              - TEST_TYPE="docs"
 
 # command to install dependencies
 before_install:
     - if [[ "$TEST_TYPE" == "unittests" ]]; then
           bash scripts/ci/install_before_tests.sh;
-          pip install codecov;
+      elif [[ "$TEST_TYPE" == "docs" ]]; then
+          bash scripts/ci/install_before_docs.sh;
       else
           bash scripts/ci/install_before_style_check.sh;
           pip install -r docs/requirements.txt;
@@ -41,19 +172,15 @@ script:
     # run tests or stylechecks
     - if [[ "$TEST_TYPE" == "unittests" ]]; then
           bash scripts/ci/run_tests.sh;
+      elif [[ "$TEST_TYPE" == "docs" ]]; then
+          bash scripts/ci/build_docs.sh;
       else
           bash scripts/ci/run_style_checks.sh;
       fi
-    
-    # build docs if python == 3.7
-    - if [[ "$TRAVIS_PYTHON_VERSION" == 3.7 ]] && [[ "$TEST_TYPE" == "style-check" ]]; then
-          bash scripts/ci/build_docs.sh;
-      fi
-      
+
 after_success:
     - if [[ "$TEST_TYPE" == "unittests" ]]; then
           codecov;
-      fi
 
 before_deploy:
     - cd $TRAVIS_BUILD_DIR
@@ -65,7 +192,7 @@ deploy:
           keep-history: true
           on:
               branch: master
-              condition: $TEST_TYPE = style-check
+              condition: $TEST_TYPE = Docs
               local_dir: docs/_build/html
         - provider: pypi
           user: $PYPI_USERNAME

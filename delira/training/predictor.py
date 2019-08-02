@@ -4,9 +4,9 @@ import copy
 import numpy as np
 from tqdm import tqdm
 
-from ..data_loading import BaseDataManager
-from .train_utils import convert_batch_to_numpy_identity
-from ..utils.config import LookupConfig
+from delira.data_loading import BaseDataManager
+from delira.training.utils import convert_to_numpy_identity
+from delira.utils.config import LookupConfig
 
 logger = logging.getLogger(__name__)
 
@@ -21,13 +21,13 @@ class Predictor(object):
 
     """
 
-    # static variable to prevent certain attributers from overwriting
+    # static variable to prevent certain attributes from overwriting
     __KEYS_TO_GUARD = []
 
     def __init__(
             self, model, key_mapping: dict,
-            convert_batch_to_npy_fn=convert_batch_to_numpy_identity,
-            prepare_batch_fn=lambda x: x, **kwargs):
+            convert_batch_to_npy_fn=convert_to_numpy_identity,
+            prepare_batch_fn=lambda **x: x, **kwargs):
         """
 
         Parameters
@@ -74,7 +74,7 @@ class Predictor(object):
         convert_batch_to_npy_fn : type
             a callable function to convert tensors in positional and keyword
             arguments to numpy
-        prepare_batch_fn : type
+        prepare_batch_fn : (dict, str, str) -> dict
             function converting a batch-tensor to the framework specific
             tensor-type and pushing it to correct device, default: identity
             function

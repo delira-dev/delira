@@ -1,4 +1,4 @@
-from .abstract_sampler import AbstractSampler
+from delira.data_loading.sampler.abstract_sampler import AbstractSampler
 
 
 class LambdaSampler(AbstractSampler):
