@@ -204,7 +204,8 @@ class BaseNetworkTrainer(Predictor):
             If not overwritten by subclass
 
         """
-        self.save_state(os.path.join(self.save_path, "checkpoint_epoch_0"))
+        self.save_state(os.path.join(self.save_path, "checkpoint_epoch_%d"
+                                     % self.start_epoch), self.start_epoch)
 
     def _at_training_end(self, *args, **kwargs):
         """
