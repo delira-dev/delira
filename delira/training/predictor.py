@@ -31,7 +31,6 @@ class Predictor(object):
             convert_batch_to_npy_fn=convert_batch_to_numpy_identity,
             prepare_batch_fn=lambda x: x,
             callbacks=None, **kwargs):
-      
         """
 
         Parameters
