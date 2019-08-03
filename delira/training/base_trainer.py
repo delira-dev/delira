@@ -458,9 +458,7 @@ class BaseNetworkTrainer(Predictor):
         else:
             raise ValueError("No valid reduce mode given")
 
-
         for epoch in range(self.start_epoch, num_epochs + 1):
-
 
             self._at_epoch_begin(val_score_key, epoch,
                                  num_epochs)

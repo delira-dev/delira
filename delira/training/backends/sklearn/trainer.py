@@ -119,7 +119,6 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             callbacks = []
         if logging_kwargs is None:
             logging_kwargs = {}
-
         if metrics is None:
             metrics = {}
 
