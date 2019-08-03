@@ -28,7 +28,7 @@ class Predictor(object):
 
     def __init__(
             self, model, key_mapping: dict,
-            convert_batch_to_npy_fn=convert_batch_to_numpy_identity,
+            convert_batch_to_npy_fn=convert_to_numpy_identity,
             prepare_batch_fn=lambda x: x,
             callbacks=None, **kwargs):
         """

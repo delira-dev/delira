@@ -212,11 +212,11 @@ class Logger(object):
         if isinstance(logging_frequencies, int):
             logging_frequencies = {
                 k: logging_frequencies
-                for k in self._backend.KEYWORD_FN_MAPPING.keys()}
+                for k in backend.KEYWORD_FN_MAPPING.keys()}
         # if dict: update missing keys with 1 and make sure other values
         # are ints
         elif isinstance(logging_frequencies, dict):
-            for k in self._backend.KEYWORD_FN_MAPPING.keys():
+            for k in backend.KEYWORD_FN_MAPPING.keys():
                 if k not in logging_frequencies:
                     logging_frequencies[k] = 1
                 else:
@@ -228,19 +228,19 @@ class Logger(object):
         # assign frequencies and create empty queues
         self._logging_frequencies = logging_frequencies
         self._logging_queues = {
-            k: [] for k in self._backend.KEYWORD_FN_MAPPING.keys()}
+            k: [] for k in backend.KEYWORD_FN_MAPPING.keys()}
 
         default_reduce_type = "last"
         # map string and function to all valid keys
         if isinstance(reduce_types, (str, FunctionType)):
             reduce_types = {
                 k: reduce_types
-                for k in self._backend.KEYWORD_FN_MAPPING.keys()}
+                for k in backend.KEYWORD_FN_MAPPING.keys()}
 
         # should be dict by now!
         if isinstance(reduce_types, dict):
             # check all valid keys for occurences
-            for k in self._backend.KEYWORD_FN_MAPPING.keys():
+            for k in backend.KEYWORD_FN_MAPPING.keys():
                 # use default reduce type if necessary
                 if k not in reduce_types:
                     reduce_types[k] = default_reduce_type
@@ -408,19 +408,19 @@ def make_logger(backend: BaseBackend, max_queue_size: int = None,
             if dict: should contain a frequency per valid key. Missing keys
             will be filled with a frequency of 1 (log every time)
             None is equal to empty dict here.
-        reduce_types : str of FunctionType or dict
-            if str:
-                specifies the reduction type to use. Valid types are
-                'last' | 'first' | 'mean' | 'max' | 'min'.
-                The given type will be mapped to all valid keys.
-            if FunctionType:
-                specifies the actual reduction function. Will be applied for
-                all keys.
-            if dict: should contain pairs of valid logging keys and either str
-                or FunctionType. Specifies the logging value per key.
-                Missing keys will be filles with a default value of 'last'.
-                Valid types for strings are
-                'last' | 'first' | 'mean' | 'max' | 'min'.
+    reduce_types : str of FunctionType or dict
+        if str:
+            specifies the reduction type to use. Valid types are
+            'last' | 'first' | 'mean' | 'max' | 'min'.
+            The given type will be mapped to all valid keys.
+        if FunctionType:
+            specifies the actual reduction function. Will be applied for
+            all keys.
+        if dict: should contain pairs of valid logging keys and either str
+            or FunctionType. Specifies the logging value per key.
+            Missing keys will be filles with a default value of 'last'.
+            Valid types for strings are
+            'last' | 'first' | 'mean' | 'max' | 'min'.
     level : int
         the logging level for python's internal logging module
 
