@@ -231,6 +231,9 @@ class Logger(object):
             k: [] for k in backend.KEYWORD_FN_MAPPING.keys()}
 
         default_reduce_type = "last"
+        if reduce_types is None:
+            reduce_types = default_reduce_type
+
         # map string and function to all valid keys
         if isinstance(reduce_types, (str, FunctionType)):
             reduce_types = {
@@ -255,7 +258,7 @@ class Logger(object):
 
         else:
             raise TypeError("Invalid Type for logging reductions: %s"
-                            % type(logging_frequencies).__name__)
+                            % type(reduce_types).__name__)
 
         self._reduce_types = reduce_types
 
