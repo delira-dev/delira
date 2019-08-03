@@ -113,3 +113,15 @@ venv.bak/
 
 # delira config
 */.delira
+
+# backend extensions
+*.pkl
+events.*
+*.pt
+*.pth
+*.ptj
+*.chain
+*.meta
+
+# Test results
+*/UnnamedExperiment/*

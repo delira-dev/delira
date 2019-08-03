@@ -1,0 +1,17 @@
+numpy>=1.15.0
+scikit-image>=0.14.0
+scikit-learn>=0.20.0
+jupyter>=1.0.0
+ipython
+joblib
+pillow>=5.4.1
+SimpleITK>=1.1.0
+pylint
+tqdm
+visdom>=0.1.8.5
+pyyaml
+trixi-slim>0.1.2.1
+batchgenerators>=0.18.2,!=0.19.2
+tensorboardX
+psutil
+nested_lookup

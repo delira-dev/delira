@@ -1,5 +1,5 @@
 from delira import get_backends
-from .abstract_callback import AbstractCallback
+from delira.training.callbacks.abstract_callback import AbstractCallback
 
 if 'TORCH' in get_backends():
     from torch.optim.lr_scheduler import ReduceLROnPlateau, \

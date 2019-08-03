@@ -13,8 +13,13 @@ The currently supported backends are:
 
   .. note::
     ``delira`` supports mixed-precision training via `apex <https://github.com/NVIDIA/apex>`_, but ``apex`` must be installed separately
+
+  .. note::
+    ``delira`` supports Multi-GPU training currently only with ``torch`` backend.
+   
+* `torchscript <https://pytorch.org/docs/stable/jit.html>`_ : Suffix ``torchscript``
     
-* `tf <https://tensorflow.org>`_ (very experimental): Suffix ``tensorflow``
+* `tensorflow <https://tensorflow.org>`_: Suffix ``tensorflow``
 
   .. note::
     the ``tensorflow`` backend is still very experimental and may be unstable.
@@ -32,60 +37,20 @@ The currently supported backends are:
 Installation
 ------------
 
-+---------+-----+--------------------+---------------------------------+
-| Backend | Bin | Source             | Notes                           |
-|         | ary | Installation       |                                 |
-|         | Ins |                    |                                 |
-|         | tal |                    |                                 |
-|         | lat |                    |                                 |
-|         | ion |                    |                                 |
-+=========+=====+====================+=================================+
-| None    | ``p | ``pip install git+ | Training not possible if        |
-|         | ip  | https://github.com | backend is not installed        |
-|         | ins | /justusschock/deli | separately                      |
-|         | tal | ra.git``           |                                 |
-|         | l d |                    |                                 |
-|         | eli |                    |                                 |
-|         | ra` |                    |                                 |
-|         | `   |                    |                                 |
-+---------+-----+--------------------+---------------------------------+
-| `torch` | ``p | ``git clone https: | ``delira`` with ``torch``       |
-| _       | ip  | //github.com/justu | backend supports                |
-|         | ins | sschock/delira.git | mixed-precision training via    |
-|         | tal |  && cd delira && p | `NVIDIA/apex`_ (must be         |
-|         | l d | ip install .[torch | installed separately).          |
-|         | eli | ]``                |                                 |
-|         | ra[ |                    |                                 |
-|         | tor |                    |                                 |
-|         | ch] |                    |                                 |
-|         | ``  |                    |                                 |
-+---------+-----+--------------------+---------------------------------+
-| `tensor | ``p | ``git clone https: | the ``tensorflow`` backend is   |
-| flow`_  | ip  | //github.com/justu | still very experimental and     |
-|         | ins | sschock/delira.git | lacks some `features`_          |
-|         | tal |  && cd delira && p |                                 |
-|         | l d | ip install .[tenso |                                 |
-|         | eli | rflow]``           |                                 |
-|         | ra[ |                    |                                 |
-|         | ten |                    |                                 |
-|         | sor |                    |                                 |
-|         | flo |                    |                                 |
-|         | w]` |                    |                                 |
-|         | `   |                    |                                 |
-+---------+-----+--------------------+---------------------------------+
-| Full    | ``p | ``git clone https: | All backends will be installed. |
-|         | ip  | //github.com/justu |                                 |
-|         | ins | sschock/delira.git |                                 |
-|         | tal |  && cd delira && p |                                 |
-|         | l d | ip install .[full] |                                 |
-|         | eli | ``                 |                                 |
-|         | ra[ |                    |                                 |
-|         | ful |                    |                                 |
-|         | l]` |                    |                                 |
-|         | `   |                    |                                 |
-+---------+-----+--------------------+---------------------------------+
+<<<<<<< HEAD
+============== =================================== =================================================================================================== ======================================================================================================================
+Backend        Binary Installation                 Source Installation                                                                                 Notes
+============== =================================== =================================================================================================== ======================================================================================================================
+None           ``pip install delira``              ``pip install git+https://github.com/justusschock/delira.git``                                      Training not possible if backend is not installed separately
+`torch`_       ``pip install delira[torch]``       ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[torch]``       ``delira`` with ``torch`` backend supports mixed-precision training via `NVIDIA/apex`_ (must be installed separately).
+`torchscript`_ ``pip install delira[torchscript]`` ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[torchscript]`` The ``torchscript`` backend currently supports only single-GPU-training
+`tensorflow`_  ``pip install delira[tensorflow]``  ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[tensorflow]``  The ``tensorflow`` backend is still very experimental and lacks some `features`_
+Full           ``pip install delira[full]``        ``git clone https://github.com/justusschock/delira.git && cd delira && pip install .[full]``        All backends will be installed.
+============== =================================== =================================================================================================== ======================================================================================================================
 
 .. _torch: https://pytorch.org
 .. _NVIDIA/apex: https://github.com/NVIDIA/apex.git
+.. _torchscript: https://pytorch.org/docs/stable/jit.html
 .. _tensorflow: https://www.tensorflow.org/
 .. _features: https://github.com/justusschock/delira/issues/47
+
