@@ -1,5 +1,6 @@
 from delira.training.backends.chainer.utils import convert_to_numpy
 from delira.training.backends.chainer.utils import create_optims_default
+from delira.training.callbacks.logging_callback import DefaultLoggingCallback
 from delira.io.chainer import load_checkpoint, save_checkpoint
 from delira.models.backends.chainer import AbstractChainerNetwork, \
     DataParallelChainerNetwork, \
@@ -46,6 +47,9 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
                  convert_batch_to_npy_fn=convert_to_numpy,
                  mixed_precision=False,
                  val_freq=1,
+                 logging_callback_cls=DefaultLoggingCallback,
+                 logging_frequencies=None,
+                 logging_reduce_types=None,
                  ** kwargs):
         """
 
@@ -112,6 +116,27 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             trained model (a value of 1 denotes validating every epoch,
             a value of 2 denotes validating every second epoch etc.);
             defaults to 1
+        logging_callback_cls : class
+            the callback class to create and register for logging
+        logging_frequencies : int or dict
+            specifies how often to log for each key.
+            If int: integer will be applied to all valid keys
+            if dict: should contain a frequency per valid key. Missing keys
+                will be filled with a frequency of 1 (log every time)
+            None is equal to empty dict here.
+        logging_reduce_types : str of FunctionType or dict
+            if str:
+                specifies the reduction type to use. Valid types are
+                'last' | 'first' | 'mean' | 'max' | 'min'.
+                The given type will be mapped to all valid keys.
+            if FunctionType:
+                specifies the actual reduction function. Will be applied
+                for all keys.
+            if dict: should contain pairs of valid logging keys and either
+                str or FunctionType. Specifies the logging value per key.
+                Missing keys will be filles with a default value of 'last'.
+                Valid types for strings are
+                'last' | 'first' | 'mean' | 'max' | 'min'.
         **kwargs :
             additional keyword arguments
 
@@ -133,24 +158,45 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
         if optimizer_params is None:
             optimizer_params = {}
 
-        super().__init__(
-            network, save_path, losses, optimizer_cls, optimizer_params,
-            train_metrics, val_metrics, lr_scheduler_cls,
-            lr_scheduler_params, gpu_ids, save_freq, optim_fn, key_mapping,
-            logging_type, logging_kwargs, fold, callbacks, start_epoch,
-            metric_keys, convert_batch_to_npy_fn, val_freq)
+        super().__init__(network=network,
+                         save_path=save_path,
+                         losses=losses,
+                         optimizer_cls=optimizer_cls,
+                         optimizer_params=optimizer_params,
+                         train_metrics=train_metrics,
+                         val_metrics=val_metrics,
+                         lr_scheduler_cls=lr_scheduler_cls,
+                         lr_scheduler_params=lr_scheduler_params,
+                         gpu_ids=gpu_ids,
+                         save_freq=save_freq,
+                         optim_fn=optim_fn,
+                         key_mapping=key_mapping,
+                         logging_type=logging_type,
+                         logging_kwargs=logging_kwargs,
+                         fold=fold,
+                         callbacks=callbacks,
+                         start_epoch=start_epoch,
+                         metric_keys=metric_keys,
+                         convert_batch_to_npy_fn=convert_batch_to_npy_fn,
+                         val_freq=val_freq,
+                         logging_callback_cls=logging_callback_cls,
+                         logging_frequencies=logging_frequencies,
+                         logging_reduce_types=logging_reduce_types,
+                         **kwargs
+                         )
 
         self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                     lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                     key_mapping, convert_batch_to_npy_fn,
-                    mixed_precision)
+                    mixed_precision, callbacks)
 
         for key, val in kwargs.items():
             setattr(self, key, val)
 
     def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
                lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-               key_mapping, convert_batch_to_npy_fn, mixed_precision):
+               key_mapping, convert_batch_to_npy_fn, mixed_precision,
+               callbacks):
         """
         Defines the Trainers Setup
 
@@ -174,6 +220,8 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             function converting a batch-tensor to numpy
         mixed_precision : bool
             whether to use mixed precision or not (False per default)
+        callbacks : list
+            initial callbacks to register
 
         """
 
@@ -182,7 +230,7 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
 
         super()._setup(network, None, lr_scheduler_params,
                        gpu_ids, key_mapping, convert_batch_to_npy_fn,
-                       network.prepare_batch)
+                       network.prepare_batch, callbacks)
 
         if mixed_precision:
             # enable chainer mixed precision globally

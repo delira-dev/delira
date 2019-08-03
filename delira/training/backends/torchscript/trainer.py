@@ -10,6 +10,8 @@ from delira.training.backends.torch.trainer import PyTorchNetworkTrainer
 from delira.training.backends.torch.utils import convert_to_numpy
 from delira.training.backends.torch.utils import create_optims_default
 
+from delira.training.callbacks.logging_callback import DefaultLoggingCallback
+
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,9 @@ class TorchScriptNetworkTrainer(PyTorchNetworkTrainer):
                  convert_batch_to_npy_fn=convert_to_numpy,
                  criterions=None,
                  val_freq=1,
+                 logging_callback_cls=DefaultLoggingCallback,
+                 logging_frequencies=None,
+                 logging_reduce_types=None,
                  **kwargs):
         """
 
@@ -110,6 +115,27 @@ class TorchScriptNetworkTrainer(PyTorchNetworkTrainer):
             model (a value of 1 denotes validating every epoch,
             a value of 2 denotes validating every second epoch etc.);
             defaults to 1
+        logging_callback_cls : class
+            the callback class to create and register for logging
+        logging_frequencies : int or dict
+            specifies how often to log for each key.
+            If int: integer will be applied to all valid keys
+            if dict: should contain a frequency per valid key. Missing keys
+                will be filled with a frequency of 1 (log every time)
+            None is equal to empty dict here.
+        logging_reduce_types : str of FunctionType or dict
+            if str:
+                specifies the reduction type to use. Valid types are
+                'last' | 'first' | 'mean' | 'max' | 'min'.
+                The given type will be mapped to all valid keys.
+            if FunctionType:
+                specifies the actual reduction function. Will be applied
+                for all keys.
+            if dict: should contain pairs of valid logging keys and either
+                str or FunctionType. Specifies the logging value per key.
+                Missing keys will be filles with a default value of 'last'.
+                Valid types for strings are
+                'last' | 'first' | 'mean' | 'max' | 'min'.
         **kwargs :
             additional keyword arguments
 
@@ -139,22 +165,33 @@ class TorchScriptNetworkTrainer(PyTorchNetworkTrainer):
                             "Switching to use only the first GPU "
                             "for now...")
 
-        super().__init__(network=network, save_path=save_path,
-                         key_mapping=key_mapping, losses=losses,
+        super().__init__(network=network,
+                         save_path=save_path,
+                         losses=losses,
                          optimizer_cls=optimizer_cls,
                          optimizer_params=optimizer_params,
                          train_metrics=train_metrics,
                          val_metrics=val_metrics,
                          lr_scheduler_cls=lr_scheduler_cls,
                          lr_scheduler_params=lr_scheduler_params,
-                         gpu_ids=gpu_ids, save_freq=save_freq,
-                         optim_fn=optim_fn, logging_type=logging_type,
-                         logging_kwargs=logging_kwargs, fold=fold,
+                         gpu_ids=gpu_ids,
+                         save_freq=save_freq,
+                         optim_fn=optim_fn,
+                         key_mapping=key_mapping,
+                         logging_type=logging_type,
+                         logging_kwargs=logging_kwargs,
+                         fold=fold,
                          callbacks=callbacks,
-                         start_epoch=start_epoch, metric_keys=metric_keys,
+                         start_epoch=start_epoch,
+                         metric_keys=metric_keys,
                          convert_batch_to_npy_fn=convert_batch_to_npy_fn,
-                         mixed_precision=False, mixed_precision_kwargs={},
-                         criterions=criterions, val_freq=val_freq, **kwargs
+                         val_freq=val_freq,
+                         logging_callback_cls=logging_callback_cls,
+                         logging_frequencies=logging_frequencies,
+                         logging_reduce_types=logging_reduce_types,
+                         mixed_precision=False,
+                         mixed_precision_kwargs={},
+                         **kwargs
                          )
 
     def save_state(self, file_name, epoch, **kwargs):

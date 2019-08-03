@@ -1,11 +1,13 @@
 from delira.training.backends.sklearn.utils import create_optims_default
-from delira.training.utils import convert_to_numpy_identity as convert_to_numpy
+from delira.training.utils import convert_to_numpy_identity as \
+    convert_to_numpy
 from delira.training.base_trainer import BaseNetworkTrainer
 from delira.io.sklearn import save_checkpoint, load_checkpoint
 from delira.models.backends.sklearn import SklearnEstimator
 from delira.data_loading import BaseDataManager
 from delira.data_loading.sampler import RandomSampler, \
     RandomSamplerNoReplacement
+from delira.training.callbacks.logging_callback import DefaultLoggingCallback
 import os
 import logging
 import numpy as np
@@ -40,6 +42,9 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
                  metric_keys=None,
                  convert_batch_to_npy_fn=convert_to_numpy,
                  val_freq=1,
+                 logging_callback_cls=DefaultLoggingCallback,
+                 logging_frequencies=None,
+                 logging_reduce_types=None,
                  ** kwargs):
         """
 
@@ -88,6 +93,27 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             model (a value of 1 denotes validating every epoch,
             a value of 2 denotes validating every second epoch etc.);
             defaults to 1
+        logging_callback_cls : class
+            the callback class to create and register for logging
+        logging_frequencies : int or dict
+            specifies how often to log for each key.
+            If int: integer will be applied to all valid keys
+            if dict: should contain a frequency per valid key. Missing keys
+                will be filled with a frequency of 1 (log every time)
+            None is equal to empty dict here.
+        logging_reduce_types : str of FunctionType or dict
+            if str:
+                specifies the reduction type to use. Valid types are
+                'last' | 'first' | 'mean' | 'max' | 'min'.
+                The given type will be mapped to all valid keys.
+            if FunctionType:
+                specifies the actual reduction function. Will be applied
+                for all keys.
+            if dict: should contain pairs of valid logging keys and either
+                str or FunctionType. Specifies the logging value per key.
+                Missing keys will be filles with a default value of 'last'.
+                Valid types for strings are
+                'last' | 'first' | 'mean' | 'max' | 'min'.
         **kwargs :
             additional keyword arguments
 
@@ -101,21 +127,41 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             val_metrics = {}
         if train_metrics is None:
             train_metrics = {}
-
-        super().__init__(
-            estimator, save_path, {}, None, {},
-            train_metrics, val_metrics, None,
-            {}, [], save_freq, None, key_mapping,
-            logging_type, logging_kwargs, fold, callbacks, start_epoch,
-            metric_keys, convert_batch_to_npy_fn, val_freq)
+            super().__init__(network=estimator,
+                             save_path=save_path,
+                             losses={},
+                             optimizer_cls=None,
+                             optimizer_params={},
+                             train_metrics=train_metrics,
+                             val_metrics=val_metrics,
+                             lr_scheduler_cls=None,
+                             lr_scheduler_params={},
+                             gpu_ids=[],
+                             save_freq=save_freq,
+                             optim_fn=create_optims_default,
+                             key_mapping=key_mapping,
+                             logging_type=logging_type,
+                             logging_kwargs=logging_kwargs,
+                             fold=fold,
+                             callbacks=callbacks,
+                             start_epoch=start_epoch,
+                             metric_keys=metric_keys,
+                             convert_batch_to_npy_fn=convert_batch_to_npy_fn,
+                             val_freq=val_freq,
+                             logging_callback_cls=logging_callback_cls,
+                             logging_frequencies=logging_frequencies,
+                             logging_reduce_types=logging_reduce_types,
+                             **kwargs
+                             )
 
         self._setup(estimator,
-                    key_mapping, convert_batch_to_npy_fn)
+                    key_mapping, convert_batch_to_npy_fn, callbacks)
 
         for key, val in kwargs.items():
             setattr(self, key, val)
 
-    def _setup(self, estimator, key_mapping, convert_batch_to_npy_fn):
+    def _setup(self, estimator, key_mapping, convert_batch_to_npy_fn,
+               callbacks):
         """
         Defines the Trainers Setup
 
@@ -131,6 +177,8 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             be ``{'x': 'data'}``
         convert_batch_to_npy_fn : type
             function converting a batch-tensor to numpy
+        callbacks : list
+            initial callbacks to register
 
         """
 
@@ -138,7 +186,7 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
 
         super()._setup(estimator, None, {},
                        [], key_mapping, convert_batch_to_npy_fn,
-                       estimator.prepare_batch)
+                       estimator.prepare_batch, callbacks)
 
         # Load latest epoch file if available
         if os.path.isdir(self.save_path):

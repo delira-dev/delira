@@ -13,6 +13,7 @@ from delira.training.base_trainer import BaseNetworkTrainer
 
 from delira.training.backends.torch.utils import create_optims_default
 from delira.training.backends.torch.utils import convert_to_numpy
+from delira.training.callbacks.logging_callback import DefaultLoggingCallback
 
 
 logger = logging.getLogger(__name__)
@@ -60,6 +61,9 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
                                          "num_losses": 1,
                                          "verbosity": 1},
                  val_freq=1,
+                 logging_callback_cls=DefaultLoggingCallback,
+                 logging_frequencies=None,
+                 logging_reduce_types=None,
                  ** kwargs):
         """
 
@@ -166,12 +170,32 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
                     loss scale for all of them; default: 1
                 verbosity : int
                     Set to 0 to suppress Amp-related output; default: 1
-
         val_freq : int
             validation frequency specifying how often to validate the
             trained model (a value of 1 denotes validating every epoch,
             a value of 2 denotes validating every second epoch etc.);
             defaults to 1
+        logging_callback_cls : class
+            the callback class to create and register for logging
+        logging_frequencies : int or dict
+            specifies how often to log for each key.
+            If int: integer will be applied to all valid keys
+            if dict: should contain a frequency per valid key. Missing keys
+                will be filled with a frequency of 1 (log every time)
+            None is equal to empty dict here.
+        logging_reduce_types : str of FunctionType or dict
+            if str:
+                specifies the reduction type to use. Valid types are
+                'last' | 'first' | 'mean' | 'max' | 'min'.
+                The given type will be mapped to all valid keys.
+            if FunctionType:
+                specifies the actual reduction function. Will be applied
+                for all keys.
+            if dict: should contain pairs of valid logging keys and either
+                str or FunctionType. Specifies the logging value per key.
+                Missing keys will be filles with a default value of 'last'.
+                Valid types for strings are
+                'last' | 'first' | 'mean' | 'max' | 'min'.
         **kwargs :
             additional keyword arguments
 
@@ -192,17 +216,37 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
         if optimizer_params is None:
             optimizer_params = {}
 
-        super().__init__(
-            network, save_path, losses, optimizer_cls, optimizer_params,
-            train_metrics, val_metrics, lr_scheduler_cls,
-            lr_scheduler_params, gpu_ids, save_freq, optim_fn, key_mapping,
-            logging_type, logging_kwargs, fold, callbacks, start_epoch,
-            metric_keys, convert_batch_to_npy_fn, val_freq)
+        super().__init__(network=network,
+                         save_path=save_path,
+                         losses=losses,
+                         optimizer_cls=optimizer_cls,
+                         optimizer_params=optimizer_params,
+                         train_metrics=train_metrics,
+                         val_metrics=val_metrics,
+                         lr_scheduler_cls=lr_scheduler_cls,
+                         lr_scheduler_params=lr_scheduler_params,
+                         gpu_ids=gpu_ids,
+                         save_freq=save_freq,
+                         optim_fn=optim_fn,
+                         key_mapping=key_mapping,
+                         logging_type=logging_type,
+                         logging_kwargs=logging_kwargs,
+                         fold=fold,
+                         callbacks=callbacks,
+                         start_epoch=start_epoch,
+                         metric_keys=metric_keys,
+                         convert_batch_to_npy_fn=convert_batch_to_npy_fn,
+                         val_freq=val_freq,
+                         logging_callback_cls=logging_callback_cls,
+                         logging_frequencies=logging_frequencies,
+                         logging_reduce_types=logging_reduce_types,
+                         **kwargs
+                         )
 
         self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                     lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                     key_mapping, convert_batch_to_npy_fn,
-                    mixed_precision, mixed_precision_kwargs)
+                    mixed_precision, mixed_precision_kwargs, callbacks)
 
         for key, val in kwargs.items():
             setattr(self, key, val)
@@ -210,7 +254,7 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
     def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
                lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                key_mapping, convert_batch_to_npy_fn, mixed_precision,
-               mixed_precision_kwargs):
+               mixed_precision_kwargs, callbacks):
         """
         Defines the Trainers Setup
 
@@ -236,6 +280,8 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
             whether to use mixed precision or not (False per default)
         mixed_precision_kwargs : dict
             additional keyword arguments for mixed precision
+        callbacks : list
+            initial callbacks to register
 
         """
 
@@ -244,7 +290,7 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
 
         super()._setup(network, lr_scheduler_cls, lr_scheduler_params,
                        gpu_ids, key_mapping, convert_batch_to_npy_fn,
-                       network.prepare_batch)
+                       network.prepare_batch, callbacks)
 
         # Load latest epoch file if available
         if os.path.isdir(self.save_path):
