@@ -201,7 +201,23 @@ intersphinx_mapping = {
         None),
     'torch': (
         'https://pytorch.org/docs/stable/',
-        None)}
+        None),
+    'tensorflow': (
+        'https://www.tensorflow.org/api_docs/python/',
+        None),
+    'chainer': (
+        'https://docs.chainer.org/en/stable/',
+        None),
+    'sklearn': (
+        'https://scikit-learn.org/stable/documentation/',
+        None),
+    'numpy': (
+        'https://docs.scipy.org/doc/numpy/reference/',
+        None),
+    'scipy': (
+        'https://docs.scipy.org/doc/scipy/reference/'
+    )
+}
 
 # -- Options for todo extension ----------------------------------------------
 
@@ -253,7 +269,8 @@ autodoc_mock_imports = [
     "PIL",
     "umap",
     "tensorflow",
-    "yaml"
+    "yaml",
+    "chainer"
 ]
 
 # autodoc_mock_imports = [
