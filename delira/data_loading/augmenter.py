@@ -252,7 +252,8 @@ class _ParallelAugmenter(AbstractAugmenter):
         """
 
         # create copy to avoid modifying the list we iterate over
-        worker = list(zip(self._data_pipes, self._index_pipes, self._processes))
+        worker = list(
+            zip(self._data_pipes, self._index_pipes, self._processes))
         # for each process:
         for _data_conn, _index_conn, _process in worker:
 
