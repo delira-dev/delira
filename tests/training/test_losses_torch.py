@@ -1,13 +1,13 @@
 
 import unittest
 
-from delira import get_backends
+from ..utils import check_for_torch_backend
 
 
 class FocalLossTestPyTorch(unittest.TestCase):
 
-    @unittest.skipIf("TORCH" not in get_backends(),
-                     reason="No torch backend installed")
+    @unittest.skipUnless(check_for_torch_backend(),
+                         reason="No torch backend installed")
     def test_focalloss(self):
         """
         Test some predefines focal loss values

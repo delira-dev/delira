@@ -3,11 +3,15 @@ import unittest
 import numpy as np
 from multiprocessing import Queue
 from delira.data_loading import BaseDataLoader, SequentialSampler
-from . import DummyDataset
+from .utils import DummyDataset
+from ..utils import check_for_no_backend
 
 
 class DataLoaderTest(unittest.TestCase):
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_data_loader(self):
         np.random.seed(1)
         sampler_queue = Queue()

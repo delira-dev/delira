@@ -7,7 +7,10 @@ from delira._version import get_versions as _get_versions
 # being the package import name and the second being the backend abbreviation.
 # E.g. TensorFlow's package is named 'tensorflow' but if the package is found,
 # it will be considered as 'tf' later on
-__POSSIBLE_BACKENDS = (("torch", "torch"), ("tensorflow", "tf"))
+__POSSIBLE_BACKENDS = (("torch", "torch"),
+                       ("tensorflow", "tf"),
+                       ("chainer", "chainer"),
+                       ("sklearn", "sklearn"))
 __BACKENDS = ()
 
 
@@ -83,3 +86,37 @@ def get_backends():
     if not __BACKENDS:
         _determine_backends()
     return __BACKENDS
+
+
+def seed_all(seed):
+    """
+    Helper Function to seed all available backends
+
+    Parameters
+    ----------
+    seed : int
+        the new random seed
+
+    """
+    import sys
+
+    import numpy as np
+    np.random.seed(seed)
+
+    import random
+    random.seed = seed
+
+    if "torch" in sys.modules and "TORCH" in get_backends():
+        import torch
+        torch.random.manual_seed(seed)
+
+    elif "tensorflow" in sys.modules and "TF" in get_backends():
+        import tensorflow as tf
+        tf.random.set_random_seed(seed)
+
+    elif "chainer" in sys.modules and "CHAINER" in get_backends():
+        try:
+            import cupy
+            cupy.random.seed(seed)
+        except ImportError:
+            pass
