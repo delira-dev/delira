@@ -4,7 +4,7 @@ from delira.logging.base_backend import BaseBackend
 import logging
 import numpy as np
 from types import FunctionType
-from collections import Iterable
+from collections import Iterable, MutableMapping
 
 
 # Reduction Functions
@@ -98,6 +98,30 @@ def _reduce_min(items: list):
     return np.min(items)
 
 
+def _flatten_dict(d, parent_key='', sep='.'):
+    items = []
+    for k, v in d.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if isinstance(v, MutableMapping):
+            items.extend(_flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return type(d)(items)
+
+
+def _unflatten_dict(dictionary, sep="."):
+    return_dict = {}
+    for key, value in dictionary.items():
+        parts = key.split(sep)
+        d = return_dict
+        for part in parts[:-1]:
+            if part not in d:
+                d[part] = dict()
+            d = d[part]
+        d[parts[-1]] = value
+    return return_dict
+
+
 def _reduce_dict(items: list, reduce_fn):
     """
     A function to reduce all entries inside a dict
@@ -115,27 +139,32 @@ def _reduce_dict(items: list, reduce_fn):
         the reduced dict
 
     """
+
     result_dict = {}
     # assuming the type of all items is same for all queued logging dicts and
     # all dicts have the same keys
-    for k, v in items[0].items():
-        # recursively reduce dicts
-        if isinstance(v, dict):
-            result_dict[k] = {_k: _reduce_dict(_v, reduce_fn)
-                              for _k, _v in v.items()}
-        # reduce iterables
-        elif isinstance(v, Iterable):
-            # if elements are all equal: use first element (necessary for tags)
-            compare_list = [_tmp[k] for _tmp in items]
-            if all([_tmp == v for _tmp in compare_list]):
-                result_dict[k] = v
-            # else: apply reduce function
-            else:
-                result_dict[k] = reduce_fn(v)
-        else:
-            result_dict[k] = v
 
-    return result_dict
+    flattened_dicts = [_flatten_dict(_tmp, sep=".") for _tmp in items]
+
+    # from list of dicts to dict of lists:
+    for d in flattened_dicts:
+        for k, v in d.items():
+            try:
+                result_dict[k].append(v)
+            except KeyError:
+                result_dict[k] = [v]
+
+    for k, v in result_dict.items():
+        # check if all items are equal
+        if all([_v == v[0] for _v in v[1:]]):
+            # use first item since they are equal
+            result_dict[k] = v[0]
+        else:
+            # apply reduce function
+            result_dict[k] = reduce_fn(v)
+
+    # unflatten reduced dict
+    return _unflatten_dict(result_dict, sep=".")
 
 
 # string mapping for reduction functions
@@ -297,7 +326,7 @@ class Logger(object):
             # convert tuple to dict if necessary
             if isinstance(log_message, (tuple, list)):
                 if len(log_message) == 2:
-                    log_message = (log_message, )
+                    log_message = (log_message,)
                 log_message = dict(log_message)
 
             # try logging and drop item if queue is full
