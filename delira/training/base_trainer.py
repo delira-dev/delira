@@ -218,9 +218,6 @@ class BaseNetworkTrainer(Predictor):
             keyword arguments
 
         """
-        self._reinitialize_logging(logging_type, logging_kwargs,
-                                   logging_callback_cls, logging_frequencies,
-                                   logging_reduce_types)
 
         self.save_state(os.path.join(self.save_path, "checkpoint_epoch_%d"
                                      % self.start_epoch), self.start_epoch)
