@@ -3,13 +3,13 @@ from collections import OrderedDict
 from numpy import concatenate
 from numpy.random import choice, shuffle
 
-from .abstract_sampler import AbstractSampler
-from ..dataset import AbstractDataset
+from delira.data_loading.sampler.abstract_sampler import AbstractSampler
+from delira.data_loading.dataset import AbstractDataset
 
 
 class RandomSampler(AbstractSampler):
     """
-    Implements Random Sampling from whole Dataset
+    Implements Random Sampling With Replacement from whole Dataset
     """
 
     def __init__(self, indices):
@@ -25,6 +25,8 @@ class RandomSampler(AbstractSampler):
         """
         super().__init__(indices)
         self._indices = list(range(len(indices)))
+
+        self._replace = True
 
     def _get_indices(self, n_indices):
         """
@@ -49,12 +51,33 @@ class RandomSampler(AbstractSampler):
         n_indices = self._check_batchsize(n_indices)
 
         indices = choice(self._indices,
-                         size=n_indices)
+                         size=n_indices,
+                         replace=self._replace)
 
         return indices
 
     def __len__(self):
         return len(self._indices)
+
+
+class RandomSamplerNoReplacement(RandomSampler):
+    """
+    Implements Random Sampling Without Replacement from whole Dataset
+    """
+
+    def __init__(self, indices):
+        """
+
+        Parameters
+        ----------
+        indices : list
+            list of classes each sample belongs to. List index corresponds to
+            data index and the value at a certain index indicates the
+            corresponding class
+
+        """
+        super().__init__(indices)
+        self._replace = False
 
 
 class PrevalenceRandomSampler(AbstractSampler):

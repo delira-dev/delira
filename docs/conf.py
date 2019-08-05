@@ -21,7 +21,6 @@ import re
 # source code directory, relative to this file, for sphinx-build
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.path.pardir))
 
-
 # -- Project information -----------------------------------------------------
 
 project = 'delira'
