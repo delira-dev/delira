@@ -7,7 +7,6 @@ from delira.utils.config import LookupConfig
 
 import numpy as np
 from tqdm import tqdm
-from delira.logging import LoggingContext, log
 
 from .callbacks import AbstractCallback, DefaultLoggingCallback
 from .predictor import Predictor
@@ -390,7 +389,7 @@ class BaseNetworkTrainer(Predictor):
 
             self._at_iter_end(epoch=epoch, iter_num=batch_nr,
                               data_dict={**batch, **_preds},
-                              metrics={**metrics, **losses})
+                              metrics={**_metrics, **_losses})
 
         batchgen._finish()
 
