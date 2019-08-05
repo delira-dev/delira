@@ -847,7 +847,7 @@ class BaseNetworkTrainer(Predictor):
 
     def register_callback(self, callback: AbstractCallback):
         has_all_attrs = True
-        for attr in ("iter", "epoch", "training"):
+        for attr in ("iter", "epoch",):
             has_all_attrs = has_all_attrs and hasattr(callback,
                                                       "at_%s_begin" % attr)
             has_all_attrs = has_all_attrs and hasattr(callback,
