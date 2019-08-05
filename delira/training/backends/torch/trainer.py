@@ -362,22 +362,6 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
                 "\n%s" %
                 str(e))
 
-    def _at_training_begin(self, *args, **kwargs):
-        """
-        Defines behaviour at beginning of training
-
-        Parameters
-        ----------
-        *args :
-            positional arguments
-        **kwargs :
-            keyword arguments
-
-        """
-        self.save_state(os.path.join(
-            self.save_path, "checkpoint_epoch_%d" % self.start_epoch),
-            self.start_epoch)
-
     def _at_training_end(self):
         """
         Defines Behaviour at end of training: Loads best model if

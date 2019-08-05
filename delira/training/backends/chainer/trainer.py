@@ -323,22 +323,6 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             self._prepare_batch, input_device=self.input_device,
             output_device=self.output_device)
 
-    def _at_training_begin(self, *args, **kwargs):
-        """
-        Defines behaviour at beginning of training
-
-        Parameters
-        ----------
-        *args :
-            positional arguments
-        **kwargs :
-            keyword arguments
-
-        """
-        self.save_state(os.path.join(
-            self.save_path, "checkpoint_epoch_%d" % self.start_epoch),
-            self.start_epoch)
-
     def _at_training_end(self):
         """
         Defines Behaviour at end of training: Loads best model if

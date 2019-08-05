@@ -172,12 +172,15 @@ class BaseNetworkTrainer(Predictor):
         self.save_freq = save_freq
         self.metric_keys = metric_keys
 
-        self._reinitialize_logging(logging_type, logging_kwargs,
-                                   logging_callback_cls, logging_frequencies,
-                                   logging_reduce_types)
         self._tqdm_desc = "Validate"
         self.val_freq = val_freq
         self._global_iter_num = 1
+        self._logging_setup_kwargs = {
+            "logging_type": logging_type,
+            "logging_kwargs": logging_kwargs,
+            "logging_callback_cls": logging_callback_cls,
+            "logging_frequencies": logging_frequencies,
+            "reduce_types": logging_reduce_types}
 
     def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                key_mapping, convert_batch_to_npy_fn, prepare_batch_fn,
@@ -185,6 +188,8 @@ class BaseNetworkTrainer(Predictor):
 
         super()._setup(network, key_mapping, convert_batch_to_npy_fn,
                        prepare_batch_fn, callbacks)
+
+        self._reinitialize_logging(**self._logging_setup_kwargs)
 
         self.closure_fn = network.closure
 
@@ -213,6 +218,10 @@ class BaseNetworkTrainer(Predictor):
             keyword arguments
 
         """
+        self._reinitialize_logging(logging_type, logging_kwargs,
+                                   logging_callback_cls, logging_frequencies,
+                                   logging_reduce_types)
+
         self.save_state(os.path.join(self.save_path, "checkpoint_epoch_%d"
                                      % self.start_epoch), self.start_epoch)
 
@@ -772,7 +781,7 @@ class BaseNetworkTrainer(Predictor):
 
         if "exp_name" in _logging_kwargs.keys():
             _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
-                "_%02d" % self.fold
+                                          "_%02d" % self.fold
 
         # remove prior Trixihandlers and reinitialize it with given logging
         # type

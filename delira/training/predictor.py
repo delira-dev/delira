@@ -90,11 +90,11 @@ class Predictor(object):
 
         """
 
-        self._callbacks = []
         self.module = network
         self.key_mapping = key_mapping
         self._convert_to_npy_fn = convert_batch_args_kwargs_to_npy_fn
         self._prepare_batch = prepare_batch_fn
+        self._callbacks = []
 
         for cb in callbacks:
             self.register_callback(cb)
