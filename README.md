@@ -36,7 +36,7 @@ and are working on constantly factoring them out.
 
 ### Choose Backend
 
-Currently the only available backends are [PyTorch](https://pytorch.org) and [TensorFlow](https://tensorflow.org)(or no backend at all). If you want to add another backend, please open an issue (it should not be hard at all) and we will guide you during the process of doing so.
+You may choose a backend from the list below. If your desired backend is not listed and you want to add it, please open an issue (it should not be hard at all) and we will guide you during the process of doing so.
 
 
 | Backend                                                   | Binary Installation               | Source Installation                                                                               | Notes                                                                                                                                                 |
