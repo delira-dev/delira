@@ -117,7 +117,7 @@ class Predictor(object):
         """
         return self.predict(data, **kwargs)
 
-    def predict(self, data: dict, **kwargs):
+    def predict(self, data: dict, already_prepared=False, **kwargs):
         """
         Predict single batch
         Returns the predictions corresponding to the given data
@@ -127,6 +127,9 @@ class Predictor(object):
         ----------
         data : dict
             batch dictionary
+        already_prepared : bool
+            if True, the `prepare_batch` function won't be called on the data
+            anymore
         **kwargs :
             keyword arguments(directly passed to ``prepare_batch``)
 
@@ -136,7 +139,8 @@ class Predictor(object):
             predicted data
 
         """
-        data = self._prepare_batch(data, **kwargs)
+        if not already_prepared:
+            data = self._prepare_batch(data, **kwargs)
 
         mapped_data = {
             k: data[v] for k, v in self.key_mapping.items()}
@@ -282,7 +286,9 @@ class Predictor(object):
                 for key, val_list in batch_dict.items():
                     batch_dict[key] = np.concatenate(val_list)
 
-                preds = self.predict(copy.copy(batch_dict), **kwargs)
+                batch_dict = self._prepare_batch(batch_dict)
+                preds = self.predict(batch_dict, already_prepared=True,
+                                     **kwargs)
 
                 # convert batchdict back to numpy (self.predict may convert it
                 # to backend-specific tensor type) - no-op if already numpy
