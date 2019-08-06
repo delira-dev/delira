@@ -46,6 +46,9 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
                  convert_batch_to_npy_fn=convert_to_numpy,
                  mixed_precision=False,
                  val_freq=1,
+                 tta_transforms=(),
+                 tta_reduce_fn=None,
+                 tta_inverse_transforms=(),
                  ** kwargs):
         """
 
@@ -112,6 +115,15 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             trained model (a value of 1 denotes validating every epoch,
             a value of 2 denotes validating every second epoch etc.);
             defaults to 1
+        tta_transforms : tuple
+            a tuple of transforms to call on the ``data_dict`` for test-time
+            augmentation. Each transform will be executed separately on a
+            new data_dict.
+        tta_reduce_fn :
+            function to reduce the tta_results along the newly added axis.
+        tta_inverse_transforms : tuple
+            transforms to apply, if the transform has to be reverted before
+            reducing (e.g. in Segmentation tasks)
         **kwargs :
             additional keyword arguments
 
@@ -143,14 +155,16 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
         self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                     lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                     key_mapping, convert_batch_to_npy_fn,
-                    mixed_precision)
+                    mixed_precision, tta_transforms, tta_reduce_fn,
+                    tta_inverse_transforms)
 
         for key, val in kwargs.items():
             setattr(self, key, val)
 
     def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
                lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-               key_mapping, convert_batch_to_npy_fn, mixed_precision):
+               key_mapping, convert_batch_to_npy_fn, mixed_precision,
+               tta_transforms, tta_reduce_fn, tta_inverse_transforms):
         """
         Defines the Trainers Setup
 
@@ -174,6 +188,15 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             function converting a batch-tensor to numpy
         mixed_precision : bool
             whether to use mixed precision or not (False per default)
+        tta_transforms : tuple
+            a tuple of transforms to call on the ``data_dict`` for test-time
+            augmentation. Each transform will be executed separately on a
+            new data_dict.
+        tta_reduce_fn :
+            function to reduce the tta_results along the newly added axis.
+        tta_inverse_transforms : tuple
+            transforms to apply, if the transform has to be reverted before
+            reducing (e.g. in Segmentation tasks)
 
         """
 
@@ -182,7 +205,8 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
 
         super()._setup(network, None, lr_scheduler_params,
                        gpu_ids, key_mapping, convert_batch_to_npy_fn,
-                       network.prepare_batch)
+                       network.prepare_batch, tta_transforms, tta_reduce_fn,
+                       tta_inverse_transforms)
 
         if mixed_precision:
             # enable chainer mixed precision globally

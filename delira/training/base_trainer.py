@@ -167,10 +167,13 @@ class BaseNetworkTrainer(Predictor):
         self.val_freq = val_freq
 
     def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-               key_mapping, convert_batch_to_npy_fn, prepare_batch_fn):
+               key_mapping, convert_batch_to_npy_fn, prepare_batch_fn,
+               tta_transforms, tta_reduce_fn,
+               tta_inverse_transforms):
 
         super()._setup(network, key_mapping, convert_batch_to_npy_fn,
-                       prepare_batch_fn)
+                       prepare_batch_fn, tta_transforms, tta_reduce_fn,
+                       tta_inverse_transforms)
 
         self.closure_fn = network.closure
 
@@ -728,7 +731,7 @@ class BaseNetworkTrainer(Predictor):
 
         if "exp_name" in _logging_kwargs.keys():
             _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
-                "_%02d" % self.fold
+                                          "_%02d" % self.fold
 
         # remove prior Trixihandlers and reinitialize it with given logging
         # type

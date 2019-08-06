@@ -40,6 +40,9 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
                  metric_keys=None,
                  convert_batch_to_npy_fn=convert_to_numpy,
                  val_freq=1,
+                 tta_transforms=(),
+                 tta_reduce_fn=None,
+                 tta_inverse_transforms=(),
                  ** kwargs):
         """
 
@@ -88,6 +91,15 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             model (a value of 1 denotes validating every epoch,
             a value of 2 denotes validating every second epoch etc.);
             defaults to 1
+        tta_transforms : tuple
+            a tuple of transforms to call on the ``data_dict`` for test-time
+            augmentation. Each transform will be executed separately on a
+            new data_dict.
+        tta_reduce_fn :
+            function to reduce the tta_results along the newly added axis.
+        tta_inverse_transforms : tuple
+            transforms to apply, if the transform has to be reverted before
+            reducing (e.g. in Segmentation tasks)
         **kwargs :
             additional keyword arguments
 
@@ -110,12 +122,14 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             metric_keys, convert_batch_to_npy_fn, val_freq)
 
         self._setup(estimator,
-                    key_mapping, convert_batch_to_npy_fn)
+                    key_mapping, convert_batch_to_npy_fn, tta_transforms,
+                    tta_reduce_fn, tta_inverse_transforms)
 
         for key, val in kwargs.items():
             setattr(self, key, val)
 
-    def _setup(self, estimator, key_mapping, convert_batch_to_npy_fn):
+    def _setup(self, estimator, key_mapping, convert_batch_to_npy_fn,
+               tta_transforms, tta_reduce_fn, tta_inverse_transforms):
         """
         Defines the Trainers Setup
 
@@ -131,6 +145,15 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             be ``{'x': 'data'}``
         convert_batch_to_npy_fn : type
             function converting a batch-tensor to numpy
+        tta_transforms : tuple
+            a tuple of transforms to call on the ``data_dict`` for test-time
+            augmentation. Each transform will be executed separately on a
+            new data_dict.
+        tta_reduce_fn :
+            function to reduce the tta_results along the newly added axis.
+        tta_inverse_transforms : tuple
+            transforms to apply, if the transform has to be reverted before
+            reducing (e.g. in Segmentation tasks)
 
         """
 
@@ -138,7 +161,8 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
 
         super()._setup(estimator, None, {},
                        [], key_mapping, convert_batch_to_npy_fn,
-                       estimator.prepare_batch)
+                       estimator.prepare_batch, tta_transforms, tta_reduce_fn,
+                       tta_inverse_transforms)
 
         # Load latest epoch file if available
         if os.path.isdir(self.save_path):

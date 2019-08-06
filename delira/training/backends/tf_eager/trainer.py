@@ -36,6 +36,9 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
                  metric_keys=None,
                  convert_batch_to_npy_fn=convert_to_numpy,
                  val_freq=1,
+                 tta_transforms=(),
+                 tta_reduce_fn=None,
+                 tta_inverse_transforms=(),
                  **kwargs):
         """
 
@@ -98,6 +101,15 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
             model (a value of 1 denotes validating every epoch,
             a value of 2 denotes validating every second epoch etc.);
             defaults to 1
+        tta_transforms : tuple
+            a tuple of transforms to call on the ``data_dict`` for test-time
+            augmentation. Each transform will be executed separately on a
+            new data_dict.
+        tta_reduce_fn :
+            function to reduce the tta_results along the newly added axis.
+        tta_inverse_transforms : tuple
+            transforms to apply, if the transform has to be reverted before
+            reducing (e.g. in Segmentation tasks)
         **kwargs :
             Additional keyword arguments
 
@@ -148,14 +160,16 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
 
         self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                     lr_scheduler_cls, lr_scheduler_params,
-                    key_mapping, convert_batch_to_npy_fn, gpu_ids)
+                    key_mapping, convert_batch_to_npy_fn, gpu_ids,
+                    tta_transforms, tta_reduce_fn, tta_inverse_transforms)
 
         for key, val in kwargs.items():
             setattr(self, key, val)
 
     def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
                lr_scheduler_cls, lr_scheduler_params, key_mapping,
-               convert_batch_to_npy_fn, gpu_ids):
+               convert_batch_to_npy_fn, gpu_ids,
+               tta_transforms, tta_reduce_fn, tta_inverse_transforms):
         """
         Defines the Trainers Setup
 
@@ -177,6 +191,15 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
             the identity function
         gpu_ids : list
             list containing ids of GPUs to use; if empty: use cpu instead
+        tta_transforms : tuple
+            a tuple of transforms to call on the ``data_dict`` for test-time
+            augmentation. Each transform will be executed separately on a
+            new data_dict.
+        tta_reduce_fn :
+            function to reduce the tta_results along the newly added axis.
+        tta_inverse_transforms : tuple
+            transforms to apply, if the transform has to be reverted before
+            reducing (e.g. in Segmentation tasks)
 
         Raises
         ------
@@ -207,7 +230,8 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
 
         super()._setup(network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                        key_mapping, convert_batch_to_npy_fn,
-                       network.prepare_batch)
+                       network.prepare_batch, tta_transforms, tta_reduce_fn,
+                       tta_inverse_transforms)
         self._prepare_batch = partial(self._prepare_batch,
                                       input_device=self.input_device,
                                       output_device=self.output_device)

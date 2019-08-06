@@ -60,6 +60,9 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
                                          "num_losses": 1,
                                          "verbosity": 1},
                  val_freq=1,
+                 tta_transforms=(),
+                 tta_reduce_fn=None,
+                 tta_inverse_transforms=(),
                  ** kwargs):
         """
 
@@ -172,6 +175,15 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
             trained model (a value of 1 denotes validating every epoch,
             a value of 2 denotes validating every second epoch etc.);
             defaults to 1
+        tta_transforms : tuple
+            a tuple of transforms to call on the ``data_dict`` for test-time
+            augmentation. Each transform will be executed separately on a
+            new data_dict.
+        tta_reduce_fn :
+            function to reduce the tta_results along the newly added axis.
+        tta_inverse_transforms : tuple
+            transforms to apply, if the transform has to be reverted before
+            reducing (e.g. in Segmentation tasks)
         **kwargs :
             additional keyword arguments
 
@@ -202,7 +214,10 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
         self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                     lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                     key_mapping, convert_batch_to_npy_fn,
-                    mixed_precision, mixed_precision_kwargs)
+                    mixed_precision, mixed_precision_kwargs,
+                    tta_transforms, tta_reduce_fn,
+                    tta_inverse_transforms
+                    )
 
         for key, val in kwargs.items():
             setattr(self, key, val)
@@ -210,7 +225,8 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
     def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
                lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                key_mapping, convert_batch_to_npy_fn, mixed_precision,
-               mixed_precision_kwargs):
+               mixed_precision_kwargs, tta_transforms, tta_reduce_fn,
+               tta_inverse_transforms):
         """
         Defines the Trainers Setup
 
@@ -236,6 +252,15 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
             whether to use mixed precision or not (False per default)
         mixed_precision_kwargs : dict
             additional keyword arguments for mixed precision
+        tta_transforms : tuple
+            a tuple of transforms to call on the ``data_dict`` for test-time
+            augmentation. Each transform will be executed separately on a
+            new data_dict.
+        tta_reduce_fn :
+            function to reduce the tta_results along the newly added axis.
+        tta_inverse_transforms : tuple
+            transforms to apply, if the transform has to be reverted before
+            reducing (e.g. in Segmentation tasks)
 
         """
 
@@ -244,7 +269,8 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
 
         super()._setup(network, lr_scheduler_cls, lr_scheduler_params,
                        gpu_ids, key_mapping, convert_batch_to_npy_fn,
-                       network.prepare_batch)
+                       network.prepare_batch, tta_transforms, tta_reduce_fn,
+                       tta_inverse_transforms)
 
         # Load latest epoch file if available
         if os.path.isdir(self.save_path):
