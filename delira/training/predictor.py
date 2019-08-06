@@ -155,7 +155,7 @@ class Predictor(object):
         """
         # wrap into internal function to decorate it with tta decorator
         @self.tta(self._tta_transforms, self._tta_reduce_fn,
-                  self._tta_transform_back)
+                  self._tta_inverse_transforms)
         def _predict(data, **kwargs):
             """
             Predict single batch
