@@ -680,7 +680,7 @@ class Predictor(object):
 
                 # convert every value list inside the results dict to arrays
                 # and apply the reduce function afterwards.
-                for k, v in results:
+                for k, v in results.items():
                     results[k] = reduce_fn(np.array(v))
 
                 return results
