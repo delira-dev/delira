@@ -127,6 +127,10 @@ class Decoder:
             # object, since using object directly raises
             # "TypeError: __class__ assignment only supported for heap types
             # or ModuleType subclasses"
+            # After a bit of research this kind of class re-creation only
+            # seems to be possible, if the intermediate class was created in
+            # python (which is not True for the object type since this is part
+            # of Python's C Core)
             tmp_cls = type("__tmp", (), {})
             # create instance of temporary class
             tmp_instance = tmp_cls()
