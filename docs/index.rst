@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 =====================================================================
-delira - delira - A Backend Agnostic High Level Deep Learning Library
+delira - A Backend Agnostic High Level Deep Learning Library
 =====================================================================
 
 .. toctree::
