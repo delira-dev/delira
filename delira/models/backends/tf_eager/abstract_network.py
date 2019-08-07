@@ -9,6 +9,7 @@ class AbstractTfEagerNetwork(AbstractNetwork, tf.keras.layers.Layer):
     """
     Abstract Network for TF eager execution backend.
     All models to use with this backend should be derived from this class
+
     """
 
     def __init__(self, data_format="channels_first", trainable=True,

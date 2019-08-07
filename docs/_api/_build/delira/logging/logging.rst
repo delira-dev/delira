@@ -1,10 +1,14 @@
-
 Logging
 =======
 
-This module handles the embedding of ``trixi``'s loggers into the python
-``logging`` module.
+The logging module provides the utilities for logging arbitrary values to
+different backends and a logger registry.
 
 .. toctree::
 
-    Logging Handlers <handlers>
+Logger <base_logger>
+Logging Backends <backends>
+Logging Context <logging_context>
+Registry <registry>
+
+
