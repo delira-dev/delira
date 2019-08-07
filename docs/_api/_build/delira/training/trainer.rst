@@ -7,28 +7,12 @@
 NetworkTrainer
 ==============
 The network trainer implements the actual training routine and can be subclassed
- for special routines.
+ for special routines. More specific trainers can be found in the backend-specific sections
 
 :hidden:`BaseNetworkTrainer`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: BaseNetworkTrainer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:hidden:`PyTorchNetworkTrainer`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: PyTorchNetworkTrainer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:hidden:`TfNetworkTrainer`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: TfNetworkTrainer
     :members:
     :undoc-members:
     :show-inheritance:

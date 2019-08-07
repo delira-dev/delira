@@ -24,8 +24,8 @@ from delira._version import get_versions
 # -- Project information -----------------------------------------------------
 
 project = 'delira'
-copyright = '2019, Justus Schock, Oliver Rippel, Christoph Haarburger'
-author = 'Justus Schock, Oliver Rippel, Christoph Haarburger'
+copyright = '2019, Justus Schock, Michael Baumgartner, Oliver Rippel, Christoph Haarburger'
+author = 'Justus Schock, Michael Baumgartner, Oliver Rippel, Christoph Haarburger'
 
 
 def read_file(file):
@@ -163,7 +163,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'delira.tex', 'delira Documentation',
-     'Justus Schock, Oliver Rippel, Christoph Haarburger', 'manual'),
+     author, 'manual'),
 ]
 
 
@@ -201,7 +201,23 @@ intersphinx_mapping = {
         None),
     'torch': (
         'https://pytorch.org/docs/stable/',
-        None)}
+        None),
+    'tensorflow': (
+        'https://www.tensorflow.org/api_docs/python/',
+        None),
+    'chainer': (
+        'https://docs.chainer.org/en/stable/',
+        None),
+    'sklearn': (
+        'https://scikit-learn.org/stable/documentation/',
+        None),
+    'numpy': (
+        'https://docs.scipy.org/doc/numpy/reference/',
+        None),
+    'scipy': (
+        'https://docs.scipy.org/doc/scipy/reference/'
+    )
+}
 
 # -- Options for todo extension ----------------------------------------------
 
@@ -253,7 +269,8 @@ autodoc_mock_imports = [
     "PIL",
     "umap",
     "tensorflow",
-    "yaml"
+    "yaml",
+    "chainer"
 ]
 
 # autodoc_mock_imports = [

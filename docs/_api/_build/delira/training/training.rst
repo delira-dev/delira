@@ -9,6 +9,7 @@ training routines and wrapping experiments.
     Network Trainer <trainer>
     Predictor <predictor>
     Experiment <experiment>
+    Backends <backends/backends>
     Callbacks <callbacks>
     Losses <losses>
     Metrics <metrics>
