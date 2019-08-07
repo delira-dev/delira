@@ -621,7 +621,10 @@ class Predictor(object):
             augmentation. Each transform will be executed separately on a
             new data_dict.
         reduce_fn :
-            function to reduce the ``tta_results`` along the newly added axis
+            function to reduce the ``tta_results``. The reduction should
+            only be applied along axis 0, since the other dimensions must be
+            retained (these are the output dimensions).
+
         inverse_transforms : tuple
             transforms to apply, if the transform has to be reverted before
             reducing (e.g. in Segmentation tasks)
@@ -652,7 +655,7 @@ class Predictor(object):
         def decorate_fn(function):
             # wraps the actual function by iterating over the transforms
             def wrapper(data_dict, **kwargs):
-                results = []
+                results = {}
                 for idx, trafo in enumerate(transforms):
                     # apply transforms if possible
                     if trafo is not None:
@@ -667,14 +670,18 @@ class Predictor(object):
                         if _inv_trafo is not None:
                             _result = _inv_trafo(**_result)
 
-                    # add results to list
-                    results.append(_result)
+                    # add each item in current result dict to total results
+                    # dict
+                    for k, v in _result.items():
+                        if k in results:
+                            results[k] += [v]
+                        else:
+                            results[k] = [v]
 
-                # convert results to numpy array (will have new additional
-                # first dimension)
-                results = np.array(results)
-                # reduce TTA results
-                results = reduce_fn(results)
+                # convert every value list inside the results dict to arrays
+                # and apply the reduce function afterwards.
+                for k, v in results:
+                    results[k] = reduce_fn(np.array(v))
 
                 return results
             return wrapper
