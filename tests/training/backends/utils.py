@@ -66,6 +66,8 @@ def kfold_experiment(experiment_cls, params, network_cls, len_data,
                      num_splits=2, val_split=None, **kwargs):
     assert issubclass(experiment_cls, BaseExperiment)
 
+    metric_keys = kwargs.pop("metric_keys", None)
+
     exp = experiment_cls(params, network_cls, **kwargs)
 
     dset = DummyDataset(len_data)
@@ -73,7 +75,8 @@ def kfold_experiment(experiment_cls, params, network_cls, len_data,
 
     return exp.kfold(data=dmgr, metrics=params.nested_get("metrics"),
                      shuffle=shuffle, split_type=split_type,
-                     num_splits=num_splits, val_split=val_split)
+                     num_splits=num_splits, val_split=val_split,
+                     metric_keys=metric_keys)
 
 
 def create_experiment_test_template_for_backend(backend: str):
