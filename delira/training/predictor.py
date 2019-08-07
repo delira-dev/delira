@@ -29,7 +29,7 @@ class Predictor(object):
     def __init__(
             self, model, key_mapping: dict,
             convert_batch_to_npy_fn=convert_to_numpy_identity,
-            prepare_batch_fn=lambda **x: x,
+            prepare_batch_fn=lambda x: x,
             tta_transforms: tuple = (), tta_reduce_fn=None,
             tta_inverse_transforms: tuple = (), **kwargs):
         """
@@ -659,10 +659,12 @@ class Predictor(object):
                 results = {}
                 for idx, trafo in enumerate(transforms):
                     # apply transforms if possible
-                    if trafo is not None:
-                        data_dict = trafo(**data_dict)
 
-                    _result = function(data_dict, **kwargs)
+                    curr_data = copy.deepcopy(data_dict)
+                    if trafo is not None:
+                        curr_data = trafo(**curr_data)
+
+                    _result = function(curr_data, **kwargs)
 
                     # check whether to transform back
                     if transform_back:
