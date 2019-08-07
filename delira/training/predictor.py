@@ -8,6 +8,7 @@ from functools import partial
 from delira.data_loading import BaseDataManager
 from delira.training.utils import convert_to_numpy_identity
 from delira.utils.config import LookupConfig
+from delira.utils.misc import flatten_dict, unflatten_dict
 
 logger = logging.getLogger(__name__)
 
@@ -672,7 +673,7 @@ class Predictor(object):
 
                     # add each item in current result dict to total results
                     # dict
-                    for k, v in _result.items():
+                    for k, v in flatten_dict(_result).items():
                         if k in results:
                             results[k] += [v]
                         else:
@@ -683,6 +684,6 @@ class Predictor(object):
                 for k, v in results.items():
                     results[k] = reduce_fn(np.array(v))
 
-                return results
+                return unflatten_dict(results)
             return wrapper
         return decorate_fn
