@@ -4,6 +4,7 @@ import collections
 import inspect
 import numpy as np
 import logging
+import json
 
 
 # ToDo: If pickling whole torch.nn.Modules (and not only state-dicts),
@@ -108,7 +109,11 @@ class Decoder:
         elif obj.startswith("__array__"):
             return self.convert(self.decode(obj[10: -1]), np.array)
         elif obj.startswith("__dict__"):
-            return self.convert(self.decode(obj[9:-1]), dict)
+            obj = json.loads(obj[9:-1].replace("\'", "\""))
+            for k, v in obj.items():
+                obj[self.decode(k)] = self.decode(v)
+            return self.convert(obj, dict)
+
         elif obj.startswith("__convert__"):
             dtype, items = obj[12:-1].split(self._sep, 1)
             return self.convert(self.decode(items), self.decode(dtype))
@@ -122,7 +127,9 @@ class Decoder:
             return getattr(importlib.import_module(module), name)
         elif obj.startswith("__class__"):
 
-            cls_type, cls_dict = obj[10:-1].split(self._sep, 1)
+            cls_type, cls_dict = obj[10:-1].split("__dict__")
+            cls_type = cls_type[:-1]
+            cls_dict = "__dict__" + cls_dict
 
             # need to create a temporary type here (which is basically a raw
             # object, since using object directly raises
