@@ -50,7 +50,7 @@ class Encoder:
             return obj
         # if dict: add specific dict specifier
         elif isinstance(obj, dict):
-            "__dict__({})".format(obj)
+            return "__dict__({})".format(obj)
         # encode via encoding the type and the mapping converted to dict
         # separately and add a conversion specifier
         elif isinstance(obj, collections.Mapping):
@@ -72,12 +72,13 @@ class Encoder:
         # (the second uglier one serves as fallback here in case inspect
         # does not cover all cases)
         elif inspect.isclass(obj) or type(obj) == type:
-            return "__type__({}{}{})".format(obj.__module__, self._sep,
+            return "__type__({}{}{})".format(obj.__module__,
+                                             self._sep,
                                              obj.__name__)
         elif isinstance(obj, (types.BuiltinFunctionType, types.FunctionType)):
             return "__function__({}{}{})".format(obj.__module__,
                                                  self._sep,
-                                                 obj.__module__)
+                                                 obj.__name__)
 
         else:
             try:
@@ -146,3 +147,6 @@ class Decoder:
     @staticmethod
     def convert(obj, dtype):
         return dtype(obj)
+
+    def __call__(self, obj):
+        return self.decode(obj)
