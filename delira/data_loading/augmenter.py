@@ -103,7 +103,7 @@ class AbstractAugmenter(object):
         batchsize : int
             the batchsize to use for sampling
         sampler : :class:`AbstractSampler`
-            the sampler (may be batch sampler or usual sampler), defining the
+            the sampler_old (may be batch sampler_old or usual sampler_old), defining the
             actual sampling strategy; Is an iterable yielding indices
         transforms : :class:`collections.Callable`
             the transforms to apply; defaults to None
@@ -154,7 +154,7 @@ class _ParallelAugmenter(AbstractAugmenter):
          batchsize : int
             the batchsize to use for sampling
         sampler : :class:`AbstractSampler`
-            the sampler (may be batch sampler or usual sampler), defining the
+            the sampler_old (may be batch sampler_old or usual sampler_old), defining the
             actual sampling strategy; Is an iterable yielding indices
         num_processes : int
             the number of processes to use for dataloading + augmentation;
@@ -342,7 +342,7 @@ class _ParallelAugmenter(AbstractAugmenter):
         self._start_processes()
         _index_pipe = self._next_index_pipe
 
-        # create sampler iterator
+        # create sampler_old iterator
         sampler_iter = iter(self._sampler)
         all_sampled = False
 
@@ -367,7 +367,7 @@ class _ParallelAugmenter(AbstractAugmenter):
                     raise RuntimeError("Abort Event was set in one of the "
                                        "workers")
 
-                # enqueue additional indices if sampler was not already
+                # enqueue additional indices if sampler_old was not already
                 # exhausted
                 try:
                     if not all_sampled:
@@ -413,7 +413,7 @@ class _SequentialAugmenter(AbstractAugmenter):
         data_loader : :class:`DataLoader`
             the dataloader, loading samples for given indices
         sampler : :class:`AbstractSampler`
-            the sampler (may be batch sampler or usual sampler), defining the
+            the sampler_old (may be batch sampler_old or usual sampler_old), defining the
             actual sampling strategy; Is an iterable yielding indices
         transforms : :class:`collections.Callable`
             the transforms to apply; defaults to None
@@ -427,7 +427,7 @@ class _SequentialAugmenter(AbstractAugmenter):
                          drop_last=drop_last)
 
     def __iter__(self):
-        # create sampler iterator
+        # create sampler_old iterator
         sampler_iter = iter(self._sampler)
 
         # for every index load and augment the data
@@ -458,7 +458,7 @@ class Augmenter(object):
         data_loader : :class:`DataLoader`
             the dataloader, loading samples for given indices
         sampler : :class:`AbstractSampler`
-            the sampler (may be batch sampler or usual sampler), defining the
+            the sampler_old (may be batch sampler_old or usual sampler_old), defining the
             actual sampling strategy; Is an iterable yielding indices
         num_processes : int
             the number of processes to use for dataloading + augmentation;

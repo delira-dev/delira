@@ -180,7 +180,7 @@ class DataManager(object):
                 * ``batch_size``
                 * ``n_process_augmentation``
                 * ``data_loader_cls``
-                * ``sampler``
+                * ``sampler_old``
                 * ``sampling_kwargs``
                 * ``transforms``
 
@@ -203,7 +203,7 @@ class DataManager(object):
         self.data_loader_cls = new_state.pop("data_loader_cls",
                                              self.data_loader_cls)
         # update
-        new_sampler = new_state.pop("sampler", None)
+        new_sampler = new_state.pop("sampler_old", None)
         if new_sampler is not None:
             self.sampler = new_sampler.from_dataset(
                 self.data,
@@ -340,13 +340,13 @@ class DataManager(object):
     @property
     def sampler(self):
         """
-        Property to access the current sampler
+        Property to access the current sampler_old
 
         Returns
         -------
 
         :class:`AbstractSampler`
-            the current sampler
+            the current sampler_old
         """
 
         return self._sampler
@@ -354,14 +354,14 @@ class DataManager(object):
     @sampler.setter
     def sampler(self, new_sampler):
         """
-        Setter for current sampler.
-        If a valid class instance is passed, the sampler is simply assigned, if
-        a valid class type is passed, the sampler is created from the dataset
+        Setter for current sampler_old.
+        If a valid class instance is passed, the sampler_old is simply assigned, if
+        a valid class type is passed, the sampler_old is created from the dataset
 
         Parameters
         ----------
         new_sampler : :class:`AbstractSampler`, type
-            instance or class object of new sampler
+            instance or class object of new sampler_old
 
         Raises
         ------
@@ -379,7 +379,7 @@ class DataManager(object):
 
         else:
             raise ValueError("Given Sampler is neither a subclass of \
-                            AbstractSampler, nor an instance of a sampler ")
+                            AbstractSampler, nor an instance of a sampler_old ")
 
     @property
     def n_samples(self):
