@@ -6,6 +6,7 @@ class BatchSampler(object):
     A Sampler-Wrapper combining the single indices sampled by a sampler to
     batches of a given size
     """
+
     def __init__(self, sampler: AbstractSampler, batch_size, truncate=False):
         """
 

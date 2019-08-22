@@ -7,6 +7,7 @@ class WeightedRandomSampler(AbstractSampler):
     """
     Class implementing Weighted Random Sampling
     """
+
     def __init__(self, weights, num_samples=None):
         """
 
@@ -53,6 +54,7 @@ class PrevalenceRandomSampler(WeightedRandomSampler):
     """
     Class implementing prevalence weighted sampling
     """
+
     def __init__(self, indices):
         """
 
@@ -61,7 +63,7 @@ class PrevalenceRandomSampler(WeightedRandomSampler):
         indices : list
             list of class indices to calculate a weighting from
         """
-        class_weights = 1/np.bincount(indices)
+        class_weights = 1 / np.bincount(indices)
 
         new_weights = [class_weights[_index] for _index in indices]
         super().__init__(new_weights, num_samples=len(indices))

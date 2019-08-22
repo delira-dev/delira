@@ -5,4 +5,3 @@ from delira.data_loading.sampler.random import RandomSampler, \
 from delira.data_loading.sampler.sequential import SequentialSampler
 from delira.data_loading.sampler.weighted import WeightedRandomSampler, \
     PrevalenceRandomSampler
-

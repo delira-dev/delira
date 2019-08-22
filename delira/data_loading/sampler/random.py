@@ -6,6 +6,7 @@ class RandomSampler(AbstractSampler):
     """
     A Generic Random Sampler
     """
+
     def __init__(self, indices, replacement=False, num_samples=None):
         """
 
@@ -23,7 +24,7 @@ class RandomSampler(AbstractSampler):
         super().__init__(indices)
 
         if replacement and num_samples is None:
-                num_samples = len(self._indices)
+            num_samples = len(self._indices)
 
         self._replacement = replacement
         self._num_samples = num_samples
@@ -67,6 +68,7 @@ class RandomSamplerNoReplacement(RandomSampler):
     """
     A Random Sampler without replacement
     """
+
     def __init__(self, indices):
         """
 
@@ -83,6 +85,7 @@ class RandomSamplerWithReplacement(RandomSampler):
     """
     A Random Sampler With Replacement
     """
+
     def __init__(self, indices, num_samples):
         """
 

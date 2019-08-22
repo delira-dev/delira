@@ -5,6 +5,7 @@ class AbstractSampler(object):
     """
     Abstract Class defining a sampler interface
     """
+
     def __init__(self, indices):
         """
 
@@ -53,4 +54,3 @@ class AbstractSampler(object):
 
         """
         return cls(list(range(len(dset))), **kwargs)
-
