@@ -5,6 +5,7 @@ class SequentialSampler(AbstractSampler):
     """
     Class to implement sequential sampling
     """
+
     def __iter__(self):
         """
         Creates an iterator returning sequential samples
