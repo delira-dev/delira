@@ -1,9 +1,11 @@
 
 from delira.data_loading import AbstractDataset
 from delira.training import Parameters
-from delira.training.slack import SlackExperiment
+from delira.utils import BaseMessenger
 from delira import get_backends
 import unittest
+from ..training.backends.utils import run_experiment, test_experiment, \
+    kfold_experiment
 
 import numpy as np
 from functools import partial
@@ -27,14 +29,7 @@ class DummyDataset(AbstractDataset):
         return self.__getitem__(index)
 
 
-class EmitMessage(Exception):
-    """
-    Custom Message exception to catch emitted messages
-    """
-    pass
-
-
-class TestSlackExperiment(SlackExperiment):
+class TestMessenger(BaseMessenger):
     """
     Overwrite emit message because no slack client present
     """
@@ -42,12 +37,10 @@ class TestSlackExperiment(SlackExperiment):
     def __init__(
             self,
             experiment,
-            token,
-            channel,
             notify_epochs=None,
             **kwargs):
-        super().__init__(experiment, token, channel,
-                         notify_epochs=notify_epochs, **kwargs)
+        super().__init__(experiment, notify_epochs=notify_epochs,
+                         **kwargs)
 
     def emit_message(self, msg):
         logging.info(msg)
@@ -135,9 +128,9 @@ class ExperimentTest(unittest.TestCase):
                                         val_score_mode=val_score_mode)
 
                 with self.assertLogs(level='ERROR') as log:
-                    exp = TestSlackExperiment(exp, "token_here",
-                                              "channel_here",
-                                              notify_epochs=1)
+                    exp = TestMessenger(exp, "token_here",
+                                        "channel_here",
+                                        notify_epochs=1)
                     self.assertIn('Slack message was not emitted correctly!',
                                   log.output[0])
 
@@ -171,9 +164,9 @@ class ExperimentTest(unittest.TestCase):
                                         val_score_mode=val_score_mode)
 
                 with self.assertLogs(level='ERROR') as log:
-                    exp = TestSlackExperiment(exp, "token_here",
-                                              "channel_here",
-                                              notify_epochs=1)
+                    exp = TestMessenger(exp, "token_here",
+                                        "channel_here",
+                                        notify_epochs=1)
                     self.assertIn('Slack message was not emitted correctly!',
                                   log.output[0])
 
@@ -226,9 +219,9 @@ class ExperimentTest(unittest.TestCase):
                             val_score_mode=val_score_mode)
 
                         with self.assertLogs(level='ERROR') as log:
-                            exp = TestSlackExperiment(exp, "token_here",
-                                                      "channel_here",
-                                                      notify_epochs=1)
+                            exp = TestMessenger(exp, "token_here",
+                                                "channel_here",
+                                                notify_epochs=1)
                             self.assertIn(
                                 'Slack message was not emitted correctly!',
                                 log.output[0])
