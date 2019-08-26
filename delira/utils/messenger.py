@@ -95,7 +95,7 @@ class BaseMessenger(ABC):
             msg = \
                 str(self._experiment.name) + " : Training failed. \n" + str(e)
             self.emit_message(msg)
-            raise e
+            raise
 
         msg = str(self._experiment.name) + " : Training completed."
         self.emit_message(msg)
@@ -264,6 +264,26 @@ class MessengerFoldCallback(AbstractCallback):
         """
         super().__init__()
         self._messenger = messenger
+
+    def at_training_start(self, trainer, **kwargs) -> dict:
+        """
+        End of training callback
+
+        Parameters
+        ----------
+        trainer : :class:`BaseTrainer`
+            instance of trainer
+        kwargs :
+            additional keyword arguments (not used)
+
+        Returns
+        -------
+        dict
+            empty dict
+        """
+        msg = "Fold " + str(trainer.fold) + " started."
+        self._messenger.emit_message(msg)
+        return {}
 
     def at_training_end(self, trainer, **kwargs) -> dict:
         """

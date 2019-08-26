@@ -1,4 +1,5 @@
-from delira.training import BaseExperiment, BaseNetworkTrainer, Parameters
+from delira.training import BaseExperiment, BaseNetworkTrainer, Predictor, \
+    Parameters
 from delira.models import AbstractNetwork
 from delira.data_loading import BaseDataManager, AbstractDataset
 
@@ -6,6 +7,7 @@ from delira.utils.messenger import BaseMessenger, SlackMessenger
 
 import unittest
 import logging
+import copy
 
 import numpy as np
 
@@ -28,23 +30,11 @@ class DummyDataset(AbstractDataset):
         return self.__getitem__(index)
 
 
-class DummyBaseMessenger(BaseMessenger):
-    def __init__(
-            self,
-            experiment,
-            notify_epochs=None,
-            **kwargs):
-        """
-        Test messenger for Basemessenger
-        """
-        super().__init__(experiment, notify_epochs=notify_epochs,
-                         **kwargs)
-
-    def emit_message(self, msg):
-        logger.info(msg)
-
-
 class DummyNetwork(AbstractNetwork):
+    """
+    Emulate Network
+    """
+
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -61,67 +51,142 @@ class DummyNetwork(AbstractNetwork):
         return {}
 
 
+class DummyTrainer(BaseNetworkTrainer):
+    """
+    Emulate Trainer states
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.module = DummyNetwork()
+
+    def train(self, *args, num_epochs=2, **kwargs):
+        self._at_training_begin()
+        for epoch in range(self.start_epoch, num_epochs + 1):
+            self._at_epoch_begin({}, None, epoch,
+                                 num_epochs)
+            is_best = True if epoch % 2 == 1 else False
+            self._at_epoch_end({}, None, epoch, is_best)
+        self._at_training_end()
+        return DummyNetwork()
+
+    def test(self, *args, **kwargs):
+        return [{}], [{}]
+
+
+class DummyPredictor(Predictor):
+    """
+    Emulate predictor
+    """
+
+    def predict(self, *args, **kwargs):
+        return {}
+
+    def predict_data_mgr(self, *args, **kwargs):
+        yield {}, {}
+        return
+
+
 class DummyExperiment(BaseExperiment):
     def __init__(self):
-        self.dummy_params = Parameters(fixed_params={
+        dummy_params = Parameters(fixed_params={
             "model": {},
             "training": {
                 "losses": {},
                 "optimizer_cls": None,
                 "optimizer_params": {},
                 "num_epochs": 2,
-                "val_metrics": {},
                 "lr_sched_cls": None,
                 "lr_sched_params": {}}
         })
-        super().__init__(self.dummy_params,
+        super().__init__(dummy_params,
                          DummyNetwork,
                          key_mapping={},
-                         name="TestExperiment")
+                         name="TestExperiment",
+                         trainer_cls=DummyTrainer,
+                         predictor_cls=DummyPredictor)
 
-    def run(self, raise_error=False, **kwargs):
+    def run(self, *args, raise_error=False, **kwargs):
         if raise_error:
             raise RuntimeError()
         else:
-            trainer = self.setup(self.dummy_params, training=True, **kwargs)
-            for i in self.dummy_params.nested_get("num_epochs"):
-                # execute callbacks
-                pass
+            return super().run(*args, **kwargs)
 
     def resume(self, *args, raise_error=False, **kwargs):
         if raise_error:
             raise RuntimeError()
         else:
-            super().resume(*args, **kwargs)
+            return super().resume(*args, **kwargs)
 
     def test(self, *args, raise_error=False, **kwargs):
         if raise_error:
             raise RuntimeError()
         else:
-            super().test(*args, **kwargs)
+            return super().test(*args, **kwargs)
 
     def kfold(self, *args, raise_error=False, **kwargs):
         if raise_error:
             raise RuntimeError()
         else:
-            super().kfold(*args, **kwargs)
+            return super().kfold(*args, **kwargs)
 
 
-class TemplateMessengerT(unittest.TestCase):
+class LoggingBaseMessenger(BaseMessenger):
+    def __init__(
+            self,
+            experiment,
+            notify_epochs=None,
+            **kwargs):
+        """
+        Test messenger for BaseMessenger
+        """
+        super().__init__(experiment, notify_epochs=notify_epochs,
+                         **kwargs)
+
+    def emit_message(self, msg):
+        logger.info(msg)
+
+
+class TestBaseMessenger(unittest.TestCase):
     def setUp(self) -> None:
-        self.msg_run_successful = []
-        self.msg_run_failed = []
+        self.msg_run_successful = [
+            "INFO:UnitTestMessenger:TestExperiment : Training started.",
+            "INFO:UnitTestMessenger:Epoch 1 trained.",
+            "INFO:UnitTestMessenger:Epoch 2 trained.",
+            "INFO:UnitTestMessenger:TestExperiment : Training completed.",
+        ]
+        self.msg_run_failed = [
+            "INFO:UnitTestMessenger:TestExperiment : Training started.",
+            "INFO:UnitTestMessenger:TestExperiment : Training failed. \n",
+        ]
         # self.msg_resume_successful = []
         # self.msg_resume_failed = []
-        self.msg_test_successful = []
-        self.msg_test_failed = []
-        self.msg_kfold_successful = []
-        self.msg_kfold_failed = []
+        self.msg_test_successful = [
+            "INFO:UnitTestMessenger:TestExperiment : Test started.",
+            "INFO:UnitTestMessenger:TestExperiment : Test completed.",
+        ]
+        self.msg_test_failed = [
+            "INFO:UnitTestMessenger:TestExperiment : Test started.",
+            "INFO:UnitTestMessenger:TestExperiment : Test failed. \n",
+        ]
+        self.msg_kfold_successful = [
+            "INFO:UnitTestMessenger:TestExperiment : Kfold started.",
+            "INFO:UnitTestMessenger:Epoch 1 trained.",
+            "INFO:UnitTestMessenger:Epoch 2 trained.",
+            "INFO:UnitTestMessenger:Epoch 1 trained.",
+            "INFO:UnitTestMessenger:Epoch 2 trained.",
+            "INFO:UnitTestMessenger:TestExperiment : Kfold completed.",
+        ]
+        self.msg_kfold_failed = [
+            "INFO:UnitTestMessenger:TestExperiment : Kfold started.",
+            "INFO:UnitTestMessenger:TestExperiment : Kfold failed. \n",
+        ]
 
         self.msg_create_experiment = []
 
-        self.messenger_cls = None
+        self.messenger_cls = LoggingBaseMessenger
         self.messenger_kwargs = {"notify_epochs": 1}
+        self.run_kwargs = {"gpu_ids": [], "logging_type": "tensorboardX",
+                           "logging_kwargs": {}, "fold": 3}
 
     def create_experiment(self, expected_msg=None):
         with self.assertLogs(logger, level='INFO') as cm:
@@ -149,11 +214,12 @@ class TemplateMessengerT(unittest.TestCase):
 
         with self.assertLogs(logger, level='INFO') as cm:
             if raise_error:
-                self.assertRaises(RuntimeError,
-                                  dummy_exp.run(dmgr_train, dmgr_test,
-                                                raise_error=True))
+                with self.assertRaises(RuntimeError):
+                    dummy_exp.run(dmgr_train, dmgr_test,
+                                  raise_error=True, **self.run_kwargs)
             else:
-                dummy_exp.run(dmgr_train, dmgr_test, raise_error=False)
+                dummy_exp.run(dmgr_train, dmgr_test, raise_error=False,
+                              **self.run_kwargs,)
 
             if expected_msg is None or not expected_msg:
                 logger.info("NoExpectedMessage")
@@ -175,9 +241,9 @@ class TemplateMessengerT(unittest.TestCase):
 
         with self.assertLogs(logger, level='INFO') as cm:
             if raise_error:
-                self.assertRaises(RuntimeError,
-                                  dummy_exp.test(model, dmgr_test, {},
-                                                 raise_error=True))
+                with self.assertRaises(RuntimeError):
+                    dummy_exp.test(model, dmgr_test, {},
+                                   raise_error=True)
             else:
                 dummy_exp.test(model, dmgr_test, {}, raise_error=False)
 
@@ -191,6 +257,9 @@ class TemplateMessengerT(unittest.TestCase):
             self.assertEqual(cm.output, expected_msg)
 
     def kfold_experiment(self, raise_error=False, expected_msg=None):
+        kfold_kwargs = copy.deepcopy(self.run_kwargs)
+        kfold_kwargs.pop("fold")
+
         dummy_exp = DummyExperiment()
         dummy_exp = self.messenger_cls(dummy_exp, **self.messenger_kwargs)
 
@@ -199,13 +268,12 @@ class TemplateMessengerT(unittest.TestCase):
 
         with self.assertLogs(logger, level='INFO') as cm:
             if raise_error:
-                self.assertRaises(RuntimeError,
-                                  dummy_exp.kfold(data=dmgr, metrics={},
-                                                  num_splits=5,
-                                                  raise_error=True))
+                with self.assertRaises(RuntimeError):
+                    dummy_exp.kfold(data=dmgr, metrics={}, num_splits=2,
+                                    raise_error=True, **kfold_kwargs)
             else:
-                dummy_exp.kfold(data=dmgr, metrics={},
-                                num_splits=5, raise_error=False)
+                dummy_exp.kfold(data=dmgr, metrics={}, num_splits=2,
+                                raise_error=False, **kfold_kwargs)
 
             if expected_msg is None:
                 logger.info("NoExpectedMessage")
@@ -215,7 +283,6 @@ class TemplateMessengerT(unittest.TestCase):
                              ["INFO:UnitTestMessenger:NoExpectedMessage"])
         else:
             self.assertEqual(cm.output, expected_msg)
-        self.assertEqual(cm.output, self.create_experiment)
 
     def test_create_experiment(self):
         self.create_experiment(self.msg_create_experiment)
@@ -245,21 +312,17 @@ class TemplateMessengerT(unittest.TestCase):
                               expected_msg=self.msg_kfold_failed)
 
 
-class TestBaseMessenger(TemplateMessengerT):
+class LoggingSlackMessenger(SlackMessenger):
+    def emit_message(self, msg):
+        logger.info(msg)
+
+
+class TestSlackMessenger(TestBaseMessenger):
     def setUp(self) -> None:
         super().setUp()
-        self.msg_run_successful = []
-        self.msg_run_failed = []
-        # self.msg_resume_successful = []
-        # self.msg_resume_failed = []
-        self.msg_test_successful = []
-        self.msg_test_failed = []
-        self.msg_kfold_successful = []
-        self.msg_kfold_failed = []
-
-        self.msg_create_experiment = []
-
-        self.messenger_cls = DummyBaseMessenger
+        self.messenger_cls = LoggingSlackMessenger
+        self.messenger_kwargs = {"notify_epochs": 1, "token": "dummyToken",
+                                 "channel": "dummyChannel"}
 
     def test_create_experiment(self):
         self.create_experiment(self.msg_create_experiment)
