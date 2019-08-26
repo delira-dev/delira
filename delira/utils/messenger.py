@@ -9,7 +9,7 @@ from delira.training.callbacks import AbstractCallback
 class BaseMessenger(ABC):
     def __init__(self, experiment: BaseExperiment, notify_epochs: int = None):
         """
-        Wrap arbitrary experiments and connect its functions to a 
+        Wrap arbitrary experiments and connect its functions to a
         notification service.
 
         Parameters
@@ -17,7 +17,7 @@ class BaseMessenger(ABC):
         experiment : :class:`BaseExperiment`
             instance of current experiment
         notify_epochs : int
-            Activates notifications about finished epochs with frequency 
+            Activates notifications about finished epochs with frequency
             `notify_epochs`.
         """
         super().__init__()
@@ -28,7 +28,7 @@ class BaseMessenger(ABC):
     def emit_message(self, msg: str) -> dict:
         """
         Emit message.
-        Implement this method in base class to create new notification 
+        Implement this method in base class to create new notification
         services.
 
         Parameters
@@ -322,7 +322,7 @@ class SlackMessenger(BaseMessenger):
         channel : str
             channel id (destination of messages)
         notify_epochs : int
-            Activates notifications about finished epochs with frequency 
+            Activates notifications about finished epochs with frequency
             `notify_epochs`.
         kwargs :
             additional keyword arguments passed to :class:`SlackClient`
