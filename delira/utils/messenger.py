@@ -337,7 +337,6 @@ class SlackMessenger(BaseMessenger):
                                      channel=self._channel,
                                      text=msg)
         if not resp["ok"]:
-            pass
             logging.error(
                 "Slack message was not emitted correctly! \n {}".format(msg))
         self._ts = resp['ts'] if 'ts' in resp else None

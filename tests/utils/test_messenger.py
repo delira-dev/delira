@@ -1,33 +1,17 @@
 from delira.training import BaseExperiment, BaseNetworkTrainer, Predictor, \
     Parameters
 from delira.models import AbstractNetwork
-from delira.data_loading import BaseDataManager, AbstractDataset
+from delira.data_loading import BaseDataManager
 
 from delira.utils.messenger import BaseMessenger, SlackMessenger
+
+from ..training.backends.utils import DummyDataset
 
 import unittest
 import logging
 import copy
 
-import numpy as np
-
 logger = logging.getLogger("UnitTestMessenger")
-
-
-class DummyDataset(AbstractDataset):
-    def __init__(self, length):
-        super().__init__(None, None)
-        self.length = length
-
-    def __getitem__(self, index):
-        return {"data": np.random.rand(32),
-                "label": np.random.randint(0, 1, 1)}
-
-    def __len__(self):
-        return self.length
-
-    def get_sample_from_index(self, index):
-        return self.__getitem__(index)
 
 
 class DummyNetwork(AbstractNetwork):
@@ -320,36 +304,18 @@ class LoggingSlackMessenger(SlackMessenger):
 class TestSlackMessenger(TestBaseMessenger):
     def setUp(self) -> None:
         super().setUp()
+        self.msg_create_experiment_error = [
+            ("ERROR:root:Slack message was not emitted correctly! \n "
+             "Created new experiment: TestExperiment"),
+        ]
         self.messenger_cls = LoggingSlackMessenger
         self.messenger_kwargs = {"notify_epochs": 1, "token": "dummyToken",
                                  "channel": "dummyChannel"}
 
     def test_create_experiment(self):
-        self.create_experiment(self.msg_create_experiment)
-
-    def test_run_successful(self):
-        self.run_experiment(raise_error=False,
-                            expected_msg=self.msg_run_successful)
-
-    def test_run_failed(self):
-        self.run_experiment(raise_error=True,
-                            expected_msg=self.msg_run_failed)
-
-    def test_test_successful(self):
-        self.t_experiment(raise_error=False,
-                          expected_msg=self.msg_test_successful)
-
-    def test_test_failed(self):
-        self.t_experiment(raise_error=True,
-                          expected_msg=self.msg_test_failed)
-
-    def test_kfold_successful(self):
-        self.kfold_experiment(raise_error=False,
-                              expected_msg=self.msg_kfold_successful)
-
-    def test_kfold_failed(self):
-        self.kfold_experiment(raise_error=True,
-                              expected_msg=self.msg_kfold_failed)
+        with self.assertLogs(level='ERROR') as cm:
+            self.create_experiment(self.msg_create_experiment)
+        self.assertEqual(cm.output, self.msg_create_experiment_error)
 
 
 if __name__ == '__main__':
