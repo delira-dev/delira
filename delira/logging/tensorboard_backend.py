@@ -1,8 +1,13 @@
-import tensorboardX
 from threading import Event
 from queue import Queue
 
 from delira.logging.writer_backend import WriterLoggingBackend
+
+# use torch SummaryWriter if possible, since this one has latest pytorch capabilities
+try:
+    from torch.utils.tensorboard import SummaryWriter
+except ImportError:
+    from tensorboardX import SummaryWriter
 
 
 class TensorboardBackend(WriterLoggingBackend):
@@ -27,7 +32,7 @@ class TensorboardBackend(WriterLoggingBackend):
         if writer_kwargs is None:
             writer_kwargs = {}
 
-        super().__init__(tensorboardX.SummaryWriter, writer_kwargs,
+        super().__init__(SummaryWriter, writer_kwargs,
                          abort_event, queue)
 
     def _call_exec_fn(self, exec_fn, args):
