@@ -39,6 +39,7 @@ class DummyTrainer(BaseNetworkTrainer):
     """
     Emulate Trainer states
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.module = DummyNetwork()
