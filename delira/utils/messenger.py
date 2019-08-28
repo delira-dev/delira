@@ -7,10 +7,13 @@ from delira.training.callbacks import AbstractCallback
 
 
 class BaseMessenger(ABC):
+    """
+    Wrap arbitrary experiments and connect its functions to a
+    notification service.
+    """
+
     def __init__(self, experiment: BaseExperiment, notify_epochs: int = None):
         """
-        Wrap arbitrary experiments and connect its functions to a
-        notification service.
 
         Parameters
         ----------
@@ -213,9 +216,16 @@ class BaseMessenger(ABC):
 
 
 class MessengerEpochCallback(AbstractCallback):
+    """
+    Callback for "Epoch X trained" message
+
+    See Also
+    --------
+    :class:`BaseMessenger`
+    """
+
     def __init__(self, n_epochs: int, messenger: BaseMessenger):
         """
-        Callback for "Epoch X trained" message
 
         Parameters
         ----------
@@ -253,9 +263,16 @@ class MessengerEpochCallback(AbstractCallback):
 
 
 class MessengerFoldCallback(AbstractCallback):
+    """
+    Callback for "Fold X completed" in slack
+
+    See Also
+    --------
+    :class:`BaseMessenger`
+    """
+
     def __init__(self, messenger: BaseMessenger):
         """
-        Callback for "Fold X completed" in slack
 
         Parameters
         ----------
@@ -307,20 +324,23 @@ class MessengerFoldCallback(AbstractCallback):
 
 
 class SlackMessenger(BaseMessenger):
+    """
+    Wrap arbitrary experiments and connect its functions to slack
+    notification
+
+    .. note:: `token`can be either your personal user token or a token
+              from an artifical bot. To create your own bot you can
+              visit https://api.slack.com/ and click 'Your Apps' at the
+              top-right corner (you may need to create an own workspace
+              where you can install your bot).
+
+    .. warning:: Slack messenger has ´slackclient´ as a dependency which
+                 is not included in the requirement!
+    """
+
     def __init__(self, experiment: BaseExperiment, token: str,
                  channel: str, notify_epochs: int = None, **kwargs):
         """
-        Wrap arbitrary experiments and connect its functions to slack
-        notification
-
-        .. note:: `token`can be either your personal user token or a token
-                   from an artifical bot. To create your own bot you can
-                   visit https://api.slack.com/ and click 'Your Apps' at the
-                   top-right corner (you may need to create an own workspace
-                   where you can install your bot).
-
-        .. warning:: Slack messenger has ´slackclient´ as a dependency which
-                  is not included in the requirement!
 
         Parameters
         ----------
@@ -335,6 +355,11 @@ class SlackMessenger(BaseMessenger):
             `notify_epochs`.
         kwargs :
             additional keyword arguments passed to :class:`SlackClient`
+
+        Raises
+        ------
+        ImportError
+            if `slackclient` is not installed
 
         See Also
         --------
