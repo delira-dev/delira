@@ -3,7 +3,8 @@ from queue import Queue
 
 from delira.logging.writer_backend import WriterLoggingBackend
 
-# use torch SummaryWriter if possible, since this one has latest pytorch capabilities
+# use torch SummaryWriter if possible, since this one has latest pytorch
+# capabilities
 try:
     from torch.utils.tensorboard import SummaryWriter
 except ImportError:
