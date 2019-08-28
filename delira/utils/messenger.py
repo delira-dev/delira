@@ -1,6 +1,6 @@
 import logging
+import warnings
 from abc import ABC, abstractmethod
-from slackclient import SlackClient
 
 from delira.training import BaseExperiment
 from delira.training.callbacks import AbstractCallback
@@ -313,6 +313,15 @@ class SlackMessenger(BaseMessenger):
         Wrap arbitrary experiments and connect its functions to slack
         notification
 
+        .. note:: `token`can be either your personal user token or a token
+                   from an artifical bot. To create your own bot you can 
+                   visit https://api.slack.com/ and click 'Your Apps' at the
+                   top-right corner (you may need to create an own workspace
+                   where you can install your bot).
+
+        .. warning:: Slack messenger has ´slackclient´ as a dependency which
+                  is not included in the requirement!
+
         Parameters
         ----------
         experiment : :class:`BaseExperiment`
@@ -326,8 +335,19 @@ class SlackMessenger(BaseMessenger):
             `notify_epochs`.
         kwargs :
             additional keyword arguments passed to :class:`SlackClient`
+
+        See Also
+        --------
+        :class:`BaseMessenger`
         """
         super().__init__(experiment, notify_epochs=notify_epochs)
+        try:
+            from slackclient import SlackClient
+        except ImportError as e:
+            warnings.warn("Coudl not import `slackclient`. This package is not"
+                          "included in the default depencies of delira!")
+            raise e
+
         self._client = SlackClient(token, **kwargs)
         self._channel = channel
 
