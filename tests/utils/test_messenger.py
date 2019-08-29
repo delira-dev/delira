@@ -7,6 +7,8 @@ from delira.utils.messenger import BaseMessenger, SlackMessenger
 
 from ..training.backends.utils import DummyDataset
 
+from . import check_for_no_backend
+
 import unittest
 import logging
 import copy
@@ -269,29 +271,43 @@ class TestBaseMessenger(unittest.TestCase):
         else:
             self.assertEqual(cm.output, expected_msg)
 
+    @unittest.skipUnless(check_for_no_backend(), "Test should only be executed "
+                                                 "if no backend is installed")
     def test_create_experiment(self):
         self.create_experiment(self.msg_create_experiment)
 
+    @unittest.skipUnless(check_for_no_backend(), "Test should only be executed "
+                                                 "if no backend is installed")
     def test_run_successful(self):
         self.run_experiment(raise_error=False,
                             expected_msg=self.msg_run_successful)
 
+    @unittest.skipUnless(check_for_no_backend(), "Test should only be executed "
+                                                 "if no backend is installed")
     def test_run_failed(self):
         self.run_experiment(raise_error=True,
                             expected_msg=self.msg_run_failed)
 
+    @unittest.skipUnless(check_for_no_backend(), "Test should only be executed "
+                                                 "if no backend is installed")
     def test_test_successful(self):
         self.t_experiment(raise_error=False,
                           expected_msg=self.msg_test_successful)
 
+    @unittest.skipUnless(check_for_no_backend(), "Test should only be executed "
+                                                 "if no backend is installed")
     def test_test_failed(self):
         self.t_experiment(raise_error=True,
                           expected_msg=self.msg_test_failed)
 
+    @unittest.skipUnless(check_for_no_backend(), "Test should only be executed "
+                                                 "if no backend is installed")
     def test_kfold_successful(self):
         self.kfold_experiment(raise_error=False,
                               expected_msg=self.msg_kfold_successful)
 
+    @unittest.skipUnless(check_for_no_backend(), "Test should only be executed "
+                                                 "if no backend is installed")
     def test_kfold_failed(self):
         self.kfold_experiment(raise_error=True,
                               expected_msg=self.msg_kfold_failed)
@@ -313,6 +329,8 @@ class TestSlackMessenger(TestBaseMessenger):
         self.messenger_kwargs = {"notify_epochs": 1, "token": "dummyToken",
                                  "channel": "dummyChannel"}
 
+    @unittest.skipUnless(check_for_no_backend(), "Test should only be executed "
+                                                 "if no backend is installed")
     def test_create_experiment(self):
         with self.assertLogs(level='ERROR') as cm:
             self.create_experiment(self.msg_create_experiment)
