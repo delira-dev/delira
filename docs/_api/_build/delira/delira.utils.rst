@@ -30,6 +30,9 @@ path operations and time operations.
     :show-inheritance:
 
 .. automodule:: delira.utils.config
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 .. automodule:: delira.utils.messenger
     :members:

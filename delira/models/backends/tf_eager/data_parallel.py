@@ -6,6 +6,10 @@ from delira.models.backends.tf_eager.abstract_network import \
 class DataParallelTfEagerNetwork(AbstractTfEagerNetwork):
     """
     DataParallel Module for the TF eager execution backend
+
+    Warnings
+    --------
+    This Module is highly experimental and not guaranteed to work properly!
     """
 
     def __init__(self, module, devices):
