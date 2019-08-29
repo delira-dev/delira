@@ -92,7 +92,10 @@ class TestTensorboardLogging(unittest.TestCase):
     def _check_for_tag(self, tag, logdir=None):
 
         if logdir is None:
-            logdir = self._logger._backend._writer.logdir
+            try:
+                logdir = self._logger._backend._writer.logdir
+            except AttributeError:
+                logdir = self._logger._backend._writer.log_dir
 
         file = [os.path.join(logdir, x)
                 for x in os.listdir(logdir)
