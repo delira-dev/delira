@@ -17,6 +17,8 @@ elif [[ "$BACKEND" == "TorchScript" ]]; then
     pip install -r requirements/torch.txt
 elif [[ "$BACKEND" == "Chainer" ]]; then
     pip install -r requirements/chainer.txt
+else
+    pip install slackclient==1.3.1
 fi
 
 pip install coverage;
