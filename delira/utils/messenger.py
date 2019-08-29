@@ -334,8 +334,8 @@ class SlackMessenger(BaseMessenger):
               top-right corner (you may need to create an own workspace
               where you can install your bot).
 
-    .. warning:: Slack messenger has ´slackclient´ as a dependency which
-                 is not included in the requirement!
+    .. warning:: Slack messenger has ´slackclient==1.3.1´ as a dependency which
+                 is not included in the requirements!
     """
 
     def __init__(self, experiment: BaseExperiment, token: str,
@@ -366,12 +366,18 @@ class SlackMessenger(BaseMessenger):
         :class:`BaseMessenger`
         """
         super().__init__(experiment, notify_epochs=notify_epochs)
+
+        # switch between different versions (with changed imports)
         try:
             from slackclient import SlackClient
         except ImportError as e:
-            warnings.warn("Coudl not import `slackclient`. This package is not"
-                          "included in the default depencies of delira!")
-            raise e
+            try:
+                from slack import WebClient as SlackClient
+            except ImportError as e:
+
+                warnings.warn("Could not import `slackclient`. This package is not"
+                              "included in the default depencies of delira!")
+                raise e
 
         self._client = SlackClient(token, **kwargs)
         self._channel = channel
