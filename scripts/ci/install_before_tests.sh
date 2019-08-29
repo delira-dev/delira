@@ -2,7 +2,6 @@
 
 pip install -U pip wheel;
 pip install -r requirements/base.txt;
-pip install slackclient; # install slackclient for all tests (it is not in requirements on purpose)
 
 if [[ "$BACKEND" == "TFEager" ]]; then
     pip install -r requirements/tensorflow.txt
@@ -18,6 +17,8 @@ elif [[ "$BACKEND" == "TorchScript" ]]; then
     pip install -r requirements/torch.txt
 elif [[ "$BACKEND" == "Chainer" ]]; then
     pip install -r requirements/chainer.txt
+else
+    pip install slackclient==1.3.1
 fi
 
 pip install coverage;
