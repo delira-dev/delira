@@ -375,8 +375,9 @@ class SlackMessenger(BaseMessenger):
                 from slack import WebClient as SlackClient
             except ImportError as e:
 
-                warnings.warn("Could not import `slackclient`. This package is not"
-                              "included in the default depencies of delira!")
+                warnings.warn(
+                    "Could not import `slackclient`. This package is not"
+                    "included in the default depencies of delira!")
                 raise e
 
         self._client = SlackClient(token, **kwargs)
