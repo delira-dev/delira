@@ -7,8 +7,10 @@ from delira.logging.writer_backend import WriterLoggingBackend
 # capabilities
 try:
     from torch.utils.tensorboard import SummaryWriter
+    LOGDIR_KWARG = "log_dir"
 except ImportError:
     from tensorboardX import SummaryWriter
+    LOGDIR_KWARG = "logdir"
 
 
 class TensorboardBackend(WriterLoggingBackend):
@@ -32,6 +34,11 @@ class TensorboardBackend(WriterLoggingBackend):
 
         if writer_kwargs is None:
             writer_kwargs = {}
+
+        if "logdir" in writer_kwargs:
+            writer_kwargs[LOGDIR_KWARG] = writer_kwargs.pop("logdir")
+        elif "log_dir" in writer_kwargs:
+            writer_kwargs[LOGDIR_KWARG] = writer_kwargs.pop("log_dir")
 
         super().__init__(SummaryWriter, writer_kwargs,
                          abort_event, queue)
