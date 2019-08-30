@@ -330,11 +330,16 @@ class TestBaseMessenger(unittest.TestCase):
 class LoggingSlackMessenger(SlackMessenger):
     def emit_message(self, msg):
         logger.info(msg)
+        return {}
 
 
 class TestSlackMessenger(TestBaseMessenger):
     def setUp(self) -> None:
         super().setUp()
+
+        self.msg_create_experiment = [
+            "INFO:UnitTestMessenger:Created new experiment: TestExperiment",
+        ]
 
         self.messenger_cls = LoggingSlackMessenger
         self.messenger_kwargs = {"notify_epochs": 1, "token": "dummyToken",
