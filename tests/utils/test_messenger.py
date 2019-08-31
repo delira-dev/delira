@@ -330,27 +330,20 @@ class TestBaseMessenger(unittest.TestCase):
 class LoggingSlackMessenger(SlackMessenger):
     def emit_message(self, msg):
         logger.info(msg)
+        return {}
 
 
 class TestSlackMessenger(TestBaseMessenger):
     def setUp(self) -> None:
         super().setUp()
-        self.msg_create_experiment_error = [
-            ("ERROR:root:Slack message was not emitted correctly! \n "
-             "Created new experiment: TestExperiment"),
+
+        self.msg_create_experiment = [
+            "INFO:UnitTestMessenger:Created new experiment: TestExperiment",
         ]
+
         self.messenger_cls = LoggingSlackMessenger
         self.messenger_kwargs = {"notify_epochs": 1, "token": "dummyToken",
                                  "channel": "dummyChannel"}
-
-    @unittest.skipUnless(
-        check_for_no_backend(),
-        "Test should only be executed "
-        "if no backend is installed")
-    def test_create_experiment(self):
-        with self.assertLogs(level='ERROR') as cm:
-            self.create_experiment(self.msg_create_experiment)
-        self.assertEqual(cm.output, self.msg_create_experiment_error)
 
 
 if __name__ == '__main__':

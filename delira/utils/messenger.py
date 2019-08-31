@@ -329,12 +329,12 @@ class SlackMessenger(BaseMessenger):
     notification
 
     .. note:: `token`can be either your personal user token or a token
-              from an artifical bot. To create your own bot you can
+              from an artificial bot. To create your own bot you can
               visit https://api.slack.com/ and click 'Your Apps' at the
               top-right corner (you may need to create an own workspace
               where you can install your bot).
 
-    .. warning:: Slack messenger has ´slackclient==1.3.1´ as a dependency which
+    .. warning:: Slack messenger has `slackclient` as a dependency which
                  is not included in the requirements!
     """
 
@@ -370,50 +370,116 @@ class SlackMessenger(BaseMessenger):
         # switch between different versions (with changed imports)
         try:
             from slackclient import SlackClient
+            self._client = SlackClient(token, **kwargs)
+            self._version = 1
         except ImportError as e:
             try:
-                from slack import WebClient as SlackClient
+                from slack import WebClient
+                self._client = WebClient(token=token, **kwargs)
+                self._version = 2
             except ImportError as e:
-
                 warnings.warn(
                     "Could not import `slackclient`. This package is not"
-                    "included in the default depencies of delira!")
+                    "included in the default dependencies of delira!")
                 raise e
+        assert self._version in [1, 2], "Only version 1 and 2 supported"
 
-        self._client = SlackClient(token, **kwargs)
         self._channel = channel
+        self._ts = None  # Set to None for initial message
 
         # initial slack message
         msg = "Created new experiment: " + str(self._experiment.name)
-        resp = self._client.api_call("chat.postMessage",
-                                     channel=self._channel,
-                                     text=msg)
-        if not resp["ok"]:
-            logging.error(
-                "Slack message was not emitted correctly! \n {}".format(msg))
-        self._ts = resp['ts'] if 'ts' in resp else None
+        resp = self.emit_message(msg)
 
-    def emit_message(self, msg) -> dict:
+        if self._version == 1:
+            # old api
+            self._ts = resp['ts'] if 'ts' in resp else None
+        elif self._version == 2:
+            # new api
+            self._ts = resp.data['ts'] if hasattr(resp, 'data') else None
+
+    def emit_message(self, msg, **kwargs):
         """
-        Emit message to current experiment thread
+        Emit message (is possible the current thread is used)
 
         Parameters
         ----------
         msg : str
             message which should be emitted
+        kwargs:
+            additional keyword arguments passed to slack api calls
 
         Returns
         -------
         dict
             dict with additional information from message
+
+        Raises
+        ------
+        ValueError
+            unknown `self._version`
+        """
+        # use thread of current post if possible
+        if self._ts is not None and 'thread_ts' not in kwargs:
+            kwargs['thread_ts'] = self._ts
+
+        if self._version == 1:
+            resp = self._emit_message_v1(msg, **kwargs)
+        elif self._version == 2:
+            resp = self._emit_message_v2(msg, **kwargs)
+        else:
+            raise ValueError("Unknown version detected!")
+        return resp
+
+    def _emit_message_v1(self, msg, **kwargs) -> dict:
+        """
+        Emit message with old slack api
+
+        Parameters
+        ----------
+        msg : str
+            message which should be emitted
+        kwargs:
+            additional keyword arguments passed to slack api calls
+
+        Returns
+        -------
+        dict
+            representation dict of message
         """
         resp = self._client.api_call(
             "chat.postMessage",
             channel=self._channel,
             text=msg,
-            thread_ts=self._ts,
+            **kwargs,
         )
+
         if not resp["ok"]:
-            logging.error(
-                "Slack message was not emitted correctly! \n {}".format(msg))
+            logging.error("Slack message was not emitted correctly!"
+                          " \n {}".format(msg))
+        return resp
+
+    def _emit_message_v2(self, msg, **kwargs):
+        """
+        Emit message with new slack api
+
+        Parameters
+        ----------
+        msg : str
+            message which should be emitted
+        kwargs:
+            additional keyword arguments passed to slack api calls
+
+        Returns
+        -------
+        :class:`slack.web.slack_response.SlackResponse`
+            slack api response
+        """
+        resp = self._client.chat_postMessage(channel=self._channel,
+                                             text=msg,
+                                             **kwargs,
+                                             )
+        if not resp.data["ok"]:
+            logging.error("Slack message was not emitted correctly!"
+                          " \n {}".format(msg))
         return resp
