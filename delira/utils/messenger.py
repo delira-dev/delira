@@ -329,7 +329,7 @@ class SlackMessenger(BaseMessenger):
     notification
 
     .. note:: `token`can be either your personal user token or a token
-              from an artifical bot. To create your own bot you can
+              from an artificial bot. To create your own bot you can
               visit https://api.slack.com/ and click 'Your Apps' at the
               top-right corner (you may need to create an own workspace
               where you can install your bot).
