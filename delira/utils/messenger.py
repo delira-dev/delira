@@ -334,7 +334,7 @@ class SlackMessenger(BaseMessenger):
               top-right corner (you may need to create an own workspace
               where you can install your bot).
 
-    .. warning:: Slack messenger has ´slackclient==1.3.1´ as a dependency which
+    .. warning:: Slack messenger has `slackclient` as a dependency which
                  is not included in the requirements!
     """
 
