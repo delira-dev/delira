@@ -73,6 +73,7 @@ class TestSklearnBackend(
                 # pop arguments (to use remaining case as kwargs later)
                 _ = case.pop("len_train")
                 params = case.pop("params")
+                metric_keys = case.pop("metric_keys")
                 network_cls = case.pop("network_cls")
                 len_test = case.pop("len_test")
                 exp = self._experiment_cls(params, network_cls, **case)
@@ -87,7 +88,8 @@ class TestSklearnBackend(
                 model.fit(np.random.rand(2, 32), np.array([[0], [1]]))
 
                 exp.test(model, dmgr_test,
-                         params.nested_get("metrics", {}))
+                         params.nested_get("metrics", {}),
+                         metric_keys)
 
 
 if __name__ == "__main__":
