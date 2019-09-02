@@ -49,10 +49,9 @@ class DummyTrainer(BaseNetworkTrainer):
     def train(self, *args, num_epochs=2, **kwargs):
         self._at_training_begin()
         for epoch in range(self.start_epoch, num_epochs + 1):
-            self._at_epoch_begin({}, None, epoch,
-                                 num_epochs)
+            self._at_epoch_begin(None, epoch, num_epochs)
             is_best = True if epoch % 2 == 1 else False
-            self._at_epoch_end({}, None, epoch, is_best)
+            self._at_epoch_end(None, epoch, is_best)
         self._at_training_end()
         return DummyNetwork()
 
