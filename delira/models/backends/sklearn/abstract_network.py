@@ -153,4 +153,3 @@ class SklearnEstimator(AbstractNetwork):
         preds = model(data_dict["X"])
 
         return {}, preds
-
