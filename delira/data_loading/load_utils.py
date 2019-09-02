@@ -152,7 +152,8 @@ class LoadSample:
     def __init__(self,
                  sample_ext: dict,
                  sample_fn: collections.abc.Callable,
-                 dtype=None, normalize=(), norm_fn=norm_range('-1,1'),
+                 dtype: dict = None, normalize: tuple = (),
+                 norm_fn=norm_range('-1,1'),
                  **kwargs):
         """
 
@@ -162,7 +163,7 @@ class LoadSample:
             Defines the data _sample_ext. The dict key defines the position of
             the sample inside the returned data dict, while the list defines
             the the files which should be loaded inside the data dict.
-        sample_fn : callable
+        sample_fn : function
             function to load a single sample
         dtype : dict
             defines the data type which should be used for the respective key
@@ -170,8 +171,8 @@ class LoadSample:
             list of hashable which should be normalized. Can contain
             entire keys of extension (normalizes each element individually)
             or provide the file name which should be normalized
-        norm_fn : callable
-            callable to normalize input. Default: normalize range to [-1, 1]
+        norm_fn : function
+            function to normalize input. Default: normalize range to [-1, 1]
         kwargs :
             variable number of keyword arguments passed to load function
 
@@ -198,7 +199,7 @@ class LoadSample:
         self._norm_fn = norm_fn
         self._kwargs = kwargs
 
-    def __call__(self, path):
+    def __call__(self, path) -> dict:
         """
         Load sample from multiple files
 
@@ -239,8 +240,10 @@ class LoadSampleLabel(LoadSample):
     def __init__(self,
                  sample_ext: dict,
                  sample_fn: collections.abc.Callable,
-                 label_ext: collections.abc.Iterable,
+                 label_ext: str,
                  label_fn: collections.abc.Callable,
+                 dtype: dict = None, normalize: tuple = (),
+                 norm_fn=norm_range('-1,1'),
                  sample_kwargs=None, **kwargs):
         """
         Load sample and label from folder
@@ -252,15 +255,21 @@ class LoadSampleLabel(LoadSample):
             the sample inside the returned data dict, while the list defines
             the the files which should be loaded inside the data dict.
             Passed to LoadSample.
-        sample_fn : callable
+        sample_fn : function
             function to load a single sample
             Passed to LoadSample.
         label_ext : str
             extension for label
         label_fn: function
             functions which returns the label inside a dict
-        args :
-            variable number of positional arguments passed to LoadSample
+        dtype : dict
+            defines the data type which should be used for the respective key
+        normalize : iterable of hashable
+            list of hashable which should be normalized. Can contain
+            entire keys of extension (normalizes each element individually)
+            or provide the file name which should be normalized
+        norm_fn : function
+            function to normalize input. Default: normalize range to [-1, 1]
         sample_kwargs :
             additional keyword arguments passed to LoadSample
         kwargs :
@@ -273,12 +282,14 @@ class LoadSampleLabel(LoadSample):
         if sample_kwargs is None:
             sample_kwargs = {}
 
-        super().__init__(sample_ext, sample_fn, **sample_kwargs)
+        super().__init__(sample_ext=sample_ext, sample_fn=sample_fn,
+                         dtype=dtype, normalize=normalize, norm_fn=norm_fn,
+                         **sample_kwargs)
         self._label_ext = label_ext
         self._label_fn = label_fn
         self._label_kwargs = kwargs
 
-    def __call__(self, path):
+    def __call__(self, path) -> dict:
         """
         Loads a sample and a label
 

@@ -533,14 +533,14 @@ class BaseNetworkTrainer(Predictor):
                     logging.info("New Best Value at Epoch %03d : %03.3f" %
                                  (epoch, best_val_score))
 
-                self._at_epoch_end(total_metrics, val_score_key, epoch,
-                                   is_best)
+            self._at_epoch_end(total_metrics, val_score_key, epoch,
+                               is_best)
 
-                is_best = False
+            is_best = False
 
-                # stop training (might be caused by early stopping)
-                if self.stop_training:
-                    break
+            # stop training (might be caused by early stopping)
+            if self.stop_training:
+                break
 
         return self._at_training_end()
 

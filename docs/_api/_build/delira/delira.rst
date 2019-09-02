@@ -12,5 +12,6 @@ Delira
     Training <training/training>
     Utilities <delira.utils>
     Backend Resolution <backend_resolution>
+    Debug Mode <debug_mode>
 
     Class Hierarchy Diagrams <class_hierarchy>

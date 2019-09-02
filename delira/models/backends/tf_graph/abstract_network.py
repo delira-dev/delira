@@ -200,7 +200,7 @@ class AbstractTfGraphNetwork(AbstractNetwork, metaclass=abc.ABCMeta):
 
         """
 
-        inputs = data_dict.pop('data')
+        inputs = data_dict['data']
 
         outputs = model.run(data=inputs, label=data_dict['label'])
         loss_vals = outputs['losses']

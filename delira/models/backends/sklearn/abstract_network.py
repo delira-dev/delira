@@ -96,7 +96,7 @@ class SklearnEstimator(AbstractNetwork):
 
         """
 
-        new_batch = {"X": batch["data"]}
+        new_batch = {"X": batch["data"].reshape(batch["data"].shape[0], -1)}
         if "label" in batch:
             new_batch["y"] = batch["label"].ravel()
 
@@ -150,6 +150,7 @@ class SklearnEstimator(AbstractNetwork):
         else:
             fit_fn(**data_dict)
 
-        preds = model(data_dict.pop("X"))
+        preds = model(data_dict["X"])
 
         return {}, preds
+

@@ -186,7 +186,7 @@ class DataSubsetConcatTest(unittest.TestCase):
                                 'data2': ['data', 'data', 'data']},
                                load_dummy_data,
                                dtype={'seg': 'uint8'},
-                               normalize=['data2'])
+                               normalize=('data2',))
         sample = sample_fn('load')
         assert not np.isclose(np.mean(sample['data']), 0)
         assert not np.isclose(np.mean(sample['seg']), 0)
@@ -197,7 +197,7 @@ class DataSubsetConcatTest(unittest.TestCase):
         # check different normalization function
         sample_fn = LoadSample({'data': ['data', 'data', 'data']},
                                load_dummy_data,
-                               normalize=['data'],
+                               normalize=('data',),
                                norm_fn=norm_zero_mean_unit_std)
         sample = sample_fn('load')
         assert np.isclose(np.mean(sample['data']), 0)
@@ -208,7 +208,7 @@ class DataSubsetConcatTest(unittest.TestCase):
             {'data': ['data', 'data', 'data'], 'seg': ['data'],
              'data2': ['data', 'data', 'data']}, load_dummy_data,
             'label', load_dummy_label,
-            sample_kwargs={'dtype': {'seg': 'uint8'}, 'normalize': ['data2']})
+            dtype={'seg': 'uint8'}, normalize=('data2',))
         sample = sample_fn('load')
         assert not np.isclose(np.mean(sample['data']), 0)
         assert not np.isclose(np.mean(sample['seg']), 0)

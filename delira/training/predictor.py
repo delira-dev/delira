@@ -1,4 +1,5 @@
 import logging
+import gc
 
 import numpy as np
 from tqdm import tqdm
@@ -294,6 +295,8 @@ class Predictor(object):
                 batch_dict = self._convert_to_npy_fn(**batch_dict)[1]
 
                 preds_batch = LookupConfig()
+                # explicitly free memory of old lookup config
+                gc.collect()
                 preds_batch.update(batch_dict)
                 preds_batch.update(preds)
 
