@@ -161,4 +161,3 @@ class AbstractChainerNetwork(chainer.Chain, ChainerMixin):
         for k, v in preds.items():
             v.unchain()
         return loss_vals, preds
-
