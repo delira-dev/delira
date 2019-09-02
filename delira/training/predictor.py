@@ -624,7 +624,7 @@ class Predictor(object):
         if metrics is None:
             metrics = {}
         if metric_keys is None:
-            metric_keys = {k: ("pred", "label") for k in metrics.keys()}
+            metric_keys = {k: ("label", "pred") for k in metrics.keys()}
 
         return {key: metric_fn(*[batch.nested_get(k)
                                  for k in metric_keys[key]])
