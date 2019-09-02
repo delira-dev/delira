@@ -231,21 +231,20 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
 
         # Load latest epoch file if available
         if os.path.isdir(self.save_path):
-            if os.path.isdir(self.save_path):
-                latest_state_path, latest_epoch = self._search_for_prev_state(
-                    self.save_path)
+            latest_state_path, latest_epoch = self._search_for_prev_state(
+                self.save_path)
 
-                if latest_state_path is not None:
+            if latest_state_path is not None:
 
-                    # if pth file does not exist, load pt file instead
-                    if not os.path.isfile(latest_state_path):
-                        latest_state_path = latest_state_path[:-1]
+                # if pth file does not exist, load pt file instead
+                if not os.path.isfile(latest_state_path):
+                    latest_state_path = latest_state_path[:-1]
 
-                    logger.info("Attempting to load state from previous \
-                                training from %s" % latest_state_path)
+                logger.info("Attempting to load state from previous \
+                            training from %s" % latest_state_path)
 
-                    self.update_state(latest_state_path)
-                    self.start_epoch = latest_epoch
+                self.update_state(latest_state_path)
+                self.start_epoch = latest_epoch
 
         if chainer.chainerx.is_available():
             gpu_device_prefix = "cuda:"

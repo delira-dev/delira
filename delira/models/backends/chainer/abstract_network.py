@@ -158,6 +158,6 @@ class AbstractChainerNetwork(chainer.Chain, ChainerMixin):
         model.cleargrads()
         total_loss.backward()
         optimizers['default'].update()
-
-        return loss_vals, {k: v.unchain()
-                           for k, v in preds.items()}
+        for k, v in preds.items():
+            v.unchain()
+        return loss_vals, preds

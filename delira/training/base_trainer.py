@@ -379,6 +379,10 @@ class BaseNetworkTrainer(Predictor):
                                               losses=self.losses,
                                               fold=self.fold,
                                               batch_nr=batch_nr)
+
+            data_dict = self._convert_to_npy_fn(**data_dict)[1]
+            _preds = self._convert_to_npy_fn(**_preds)[1]
+
             _metrics = self.calc_metrics(
                 LookupConfig(config={**data_dict, **_preds}),
                 self.metrics,
