@@ -2,6 +2,7 @@ from delira.training import BaseExperiment, BaseNetworkTrainer, Predictor, \
     Parameters
 from delira.models import AbstractNetwork
 from delira.data_loading import BaseDataManager
+from delira.training.utils import convert_to_numpy_identity
 
 from delira.utils.messenger import BaseMessenger, SlackMessenger
 
@@ -45,6 +46,11 @@ class DummyTrainer(BaseNetworkTrainer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.module = DummyNetwork()
+
+        self._setup(network=self.module, lr_scheduler_cls=None,
+                    lr_scheduler_params={}, gpu_ids=[], key_mapping={},
+                    convert_batch_to_npy_fn=convert_to_numpy_identity,
+                    prepare_batch_fn=self.module.prepare_batch, callbacks=[])
 
     def train(self, *args, num_epochs=2, **kwargs):
         self._at_training_begin()
