@@ -46,23 +46,27 @@ class DummyTrainer(BaseNetworkTrainer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.module = DummyNetwork()
-
+        callbacks = kwargs.pop("callbacks", [])
         self._setup(network=self.module, lr_scheduler_cls=None,
                     lr_scheduler_params={}, gpu_ids=[], key_mapping={},
                     convert_batch_to_npy_fn=convert_to_numpy_identity,
-                    prepare_batch_fn=self.module.prepare_batch, callbacks=[])
+                    prepare_batch_fn=self.module.prepare_batch,
+                    callbacks=callbacks)
 
     def train(self, *args, num_epochs=2, **kwargs):
         self._at_training_begin()
         for epoch in range(self.start_epoch, num_epochs + 1):
             self._at_epoch_begin(None, epoch, num_epochs)
             is_best = True if epoch % 2 == 1 else False
-            self._at_epoch_end(None, epoch, is_best)
+            self._at_epoch_end({}, None, epoch, is_best)
         self._at_training_end()
         return DummyNetwork()
 
     def test(self, *args, **kwargs):
         return [{}], [{}]
+
+    def save_state(self, file_name, *args, **kwargs):
+        pass
 
 
 class DummyPredictor(Predictor):

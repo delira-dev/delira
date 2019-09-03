@@ -84,7 +84,7 @@ class BaseMessenger(ABC):
             result of experiment
         """
         if self._notify_epochs is not None:
-            callbacks = kwargs.pop("callbacks", [])
+            callbacks = list(kwargs.pop("callbacks", []))
             callbacks.append(MessengerEpochCallback(self._notify_epochs,
                                                     self))
             kwargs["callbacks"] = callbacks
