@@ -63,10 +63,17 @@ class PrevalenceRandomSampler(WeightedRandomSampler):
         indices : list
             list of class indices to calculate a weighting from
         """
-        class_weights = 1 / np.bincount(indices)
+        weights = np.array(indices).astype(np.float)
+        classes, classes_count = np.unique(indices, return_counts=True)
 
-        new_weights = [class_weights[_index] for _index in indices]
-        super().__init__(new_weights, num_samples=len(indices))
+        # compute probabilities
+        target_prob = 1 / classes.shape[0]
+
+        # generate weight matrix
+        for i, c in enumerate(classes):
+            weights[weights == c] = (target_prob / classes_count[i])
+
+        super().__init__(weights, num_samples=len(indices))
 
     @classmethod
     def from_dataset(cls, dset: AbstractDataset, key="label", **kwargs):
