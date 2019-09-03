@@ -8,7 +8,7 @@ Experiments
 
 Experiments are the outermost class to control your training, it wraps your
 NetworkTrainer and provides utilities for
-cross-validation.
+cross-validation. More Experiments can be found in the sections for the specific backends
 
 :hidden:`BaseExperiment`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -18,18 +18,3 @@ cross-validation.
     :undoc-members:
     :show-inheritance:
 
-:hidden:`PyTorchExperiment`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: PyTorchExperiment
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    
-:hidden:`TfExperiment`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: TfExperiment
-    :members:
-    :undoc-members:
-    :show-inheritance:

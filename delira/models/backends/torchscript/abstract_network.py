@@ -71,10 +71,12 @@ class AbstractTorchScriptNetwork(AbstractNetwork, torch.jit.ScriptModule):
             correct device
 
         """
-        return_dict = {"data": torch.from_numpy(batch.pop("data")).to(
+        return_dict = {"data": torch.from_numpy(batch["data"]).to(
             input_device).to(torch.float)}
 
         for key, vals in batch.items():
+            if key == "data":
+                continue
             return_dict[key] = torch.from_numpy(vals).to(output_device).to(
                 torch.float)
 
@@ -137,7 +139,7 @@ class AbstractTorchScriptNetwork(AbstractNetwork, torch.jit.ScriptModule):
         with context_man():
 
             # predict
-            inputs = data_dict.pop("data")
+            inputs = data_dict["data"]
             preds = model(inputs)
 
             # calculate losses
