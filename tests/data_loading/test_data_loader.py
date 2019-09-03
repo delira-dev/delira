@@ -1,7 +1,5 @@
 import unittest
 from delira.data_loading import DataLoader, SequentialSampler, BatchSampler
-import numpy as np
-from multiprocessing import Queue
 from .utils import DummyDataset
 from ..utils import check_for_no_backend
 

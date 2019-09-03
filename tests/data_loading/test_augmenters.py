@@ -1,5 +1,6 @@
 from delira.data_loading import Augmenter, DataLoader, SequentialSampler
 from .utils import DummyDataset
+from ..utils import check_for_no_backend
 
 import unittest
 
@@ -51,15 +52,27 @@ class TestAugmenters(unittest.TestCase):
     # multiple test functions running the same test with different
     # configurations. Must be done in different functions, because
     # configurations are switch based on function name
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_parallel(self):
         self._aug_test()
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_parallel_drop_last(self):
         self._aug_test()
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_sequential(self):
         self._aug_test()
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_sequential_drop_last(self):
         self._aug_test()
 
