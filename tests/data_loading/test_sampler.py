@@ -46,7 +46,7 @@ class SamplerTest(unittest.TestCase):
 
         for idx in sampler:
             if prev_index is not None:
-                self.assertEquals(idx, prev_index+1)
+                self.assertEquals(idx, prev_index + 1)
 
             prev_index = idx
 

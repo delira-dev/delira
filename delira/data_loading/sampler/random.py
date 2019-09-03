@@ -85,6 +85,7 @@ class RandomSamplerWithReplacement(RandomSampler):
     """
     A Random Sampler With Replacement
     """
+
     def __init__(self, indices, num_samples=None):
         """
 
