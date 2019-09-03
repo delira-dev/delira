@@ -19,12 +19,12 @@ class WeightedRandomSampler(AbstractSampler):
             number of samples to provide. If not specified this defaults to
             the amount of values given in :param:`num_samples´
         """
-        super().__init__(weights)
-
         if num_samples is None:
             num_samples = len(weights)
 
         self._num_samples = num_samples
+        super().__init__(np.arange(num_samples))
+        self._weights = weights
 
     def __iter__(self):
         """
@@ -35,8 +35,8 @@ class WeightedRandomSampler(AbstractSampler):
         Iterator
             iterator producing random samples
         """
-        return iter(np.random.multinomial(self._num_samples,
-                                          self._indices, size=1))
+        return iter(np.random.choice(self._indices, size=self._num_samples,
+                                     p=self._weights))
 
     def __len__(self):
         """
@@ -63,6 +63,7 @@ class PrevalenceRandomSampler(WeightedRandomSampler):
         indices : list
             list of class indices to calculate a weighting from
         """
+
         weights = np.array(indices).astype(np.float)
         classes, classes_count = np.unique(indices, return_counts=True)
 
