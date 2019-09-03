@@ -6,9 +6,7 @@ Models
 
 ``delira`` comes with it's own model-structure tree - with
 :class:`AbstractNetwork` at it's root - and integrates
-PyTorch Models (:class:`AbstractPyTorchNetwork`) deeply into the model
-structure.
-Tensorflow Integration is planned.
+several backends deeply into it's structure.
 
 .. currentmodule:: delira.models
 
@@ -20,25 +18,14 @@ Tensorflow Integration is planned.
     :undoc-members:
     :show-inheritance:
 
-:hidden:`AbstractPyTorchNetwork`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: AbstractPyTorchNetwork(type)
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    
-:hidden:`AbstractTfNetwork`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: AbstractTfNetwork
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+Backends
+--------
 
 .. toctree::
 
-    Classification <classification>
-    Generative Adversarial Networks <gan>
-    Segmentation <segmentation>
+    Chainer <chainer>
+    SciKit-Learn <sklearn>
+    TensorFLow Eager Execution <tfeager>
+    TensorFlow Graph Execution <tfgraph>
+    PyTorch <torch>
+    TorchScript <torchscript>

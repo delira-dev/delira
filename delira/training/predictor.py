@@ -1,5 +1,6 @@
 import logging
 import copy
+import gc
 
 import numpy as np
 from tqdm import tqdm
@@ -216,13 +217,11 @@ class Predictor(object):
                 for key, val_list in batch_dict.items():
                     batch_dict[key] = np.concatenate(val_list)
 
-                preds = self.predict(copy.copy(batch_dict), **kwargs)
-
-                # convert batchdict back to numpy (self.predict may convert it
-                # to backend-specific tensor type) - no-op if already numpy
-                batch_dict = self._convert_to_npy_fn(**batch_dict)[1]
+                preds = self.predict(copy.deepcopy(batch_dict), **kwargs)
 
                 preds_batch = LookupConfig()
+                # explicitly free memory of old lookup config
+                gc.collect()
                 preds_batch.update(batch_dict)
                 preds_batch.update(preds)
 
