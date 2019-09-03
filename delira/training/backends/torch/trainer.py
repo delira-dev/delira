@@ -1,6 +1,7 @@
 import logging
 import os
 from functools import partial
+import warnings
 
 import torch
 from batchgenerators.dataloading import MultiThreadedAugmenter
@@ -51,7 +52,7 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
                  convert_batch_to_npy_fn=convert_to_numpy,
                  mixed_precision=False,
 
-                 mixed_precision_kwargs={"opt_level": "o1",
+                 mixed_precision_kwargs={"opt_level": "O1",
                                          "cast_model_type": None,
                                          "patch_torch_functions": None,
                                          "master_weights": None,
@@ -316,7 +317,7 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
                 self.optimizers[k] = v
 
         except (ImportError, RuntimeError) as e:
-            logging.debug(
+            warnings.warn(
                 "Either APEX can't be imported correctly or a value "
                 "missmatch occured. Switching to default FP32 "
                 "training insted. The following Exception occured:"
