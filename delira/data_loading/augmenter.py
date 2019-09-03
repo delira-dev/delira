@@ -340,7 +340,6 @@ class _ParallelAugmenter(AbstractAugmenter):
     def __iter__(self):
         # start processes
         self._start_processes()
-        _index_pipe = self._next_index_pipe
 
         # create sampler_old iterator
         sampler_iter = iter(self._sampler)
