@@ -142,9 +142,9 @@ The Datamanager
 ~~~~~~~~~~~~~~~
 
 The data manager is implemented as
-``delira.data_loading.BaseDataManager`` and wraps a ``DataLoader``. It
+``delira.data_loading.DataManager`` and wraps a ``DataLoader``. It
 also encapsulates augmentations. Having a view on the
-``BaseDataManager``'s signature, it becomes obvious that it accepts the
+``DataManager``'s signature, it becomes obvious that it accepts the
 same arguments as the ```DataLoader`` <#The-Dataloader>`__. You can
 either pass a ``dataset`` or a combination of path, dataset class and
 load function. Additionally, you can pass a custom dataloder class if
@@ -161,14 +161,14 @@ The following example shows how to create a data manager instance:
 
 .. code:: ipython3
 
-    from delira.data_loading import BaseDataManager
+    from delira.data_loading import DataManager
     from batchgenerators.transforms.abstract_transforms import Compose
     from batchgenerators.transforms.sample_normalization_transforms import MeanStdNormalizationTransform
     
     batchsize = 64
     transforms = Compose([MeanStdNormalizationTransform(mean=1*[0], std=1*[1])])
     
-    data_manager_train = BaseDataManager(dataset_train,  # dataset to use
+    data_manager_train = DataManager(dataset_train,  # dataset to use
                                         batchsize,  # batchsize
                                         n_process_augmentation=1,  # number of augmentation processes
                                         transforms=transforms)  # augmentation transforms
@@ -183,7 +183,7 @@ containing our ``dataset_val``:
 
 .. code:: ipython3
 
-    data_manager_val = BaseDataManager(dataset_val, 
+    data_manager_val = DataManager(dataset_val,
                                         batchsize, 
                                         n_process_augmentation=1, 
                                         transforms=transforms)
@@ -557,10 +557,10 @@ hyperparameters only have to be done once:
     }) 
     
     # recreating the data managers with the batchsize of the params object
-    manager_train = BaseDataManager(dataset_train, params.nested_get("batch_size"), 1,
+    manager_train = DataManager(dataset_train, params.nested_get("batch_size"), 1,
                                     transforms=None, sampler_cls=RandomSampler,
                                     n_process_loading=4)
-    manager_val = BaseDataManager(dataset_val, params.nested_get("batch_size"), 3,
+    manager_val = DataManager(dataset_val, params.nested_get("batch_size"), 3,
                                   transforms=None, sampler_cls=SequentialSampler,
                                   n_process_loading=4)
     

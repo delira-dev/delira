@@ -120,7 +120,7 @@ class DataManager(object):
         Raises
         ------
         AssertionError
-            :attr:`BaseDataManager.n_batches` is smaller than or equal to zero
+            :attr:`DataManager.n_batches` is smaller than or equal to zero
 
         """
         assert self.n_batches > 0
@@ -149,7 +149,7 @@ class DataManager(object):
 
         Returns
         -------
-        :class:`BaseDataManager`
+        :class:`DataManager`
             manager containing the subset
 
         """
@@ -407,7 +407,7 @@ class DataManager(object):
         Raises
         ------
         AssertionError
-            :attr:`BaseDataManager.n_samples` is smaller than or equal to zero
+            :attr:`DataManager.n_samples` is smaller than or equal to zero
 
         """
         assert self.n_samples > 0

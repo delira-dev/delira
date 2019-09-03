@@ -1,7 +1,7 @@
 from delira.training import BaseExperiment, BaseNetworkTrainer, Predictor, \
     Parameters
 from delira.models import AbstractNetwork
-from delira.data_loading import BaseDataManager
+from delira.data_loading import DataManager
 
 from delira.utils.messenger import BaseMessenger, SlackMessenger
 
@@ -196,8 +196,8 @@ class TestBaseMessenger(unittest.TestCase):
         dset_train = DummyDataset(10)
         dset_test = DummyDataset(10)
 
-        dmgr_train = BaseDataManager(dset_train, 2, 1, None)
-        dmgr_test = BaseDataManager(dset_test, 2, 1, None)
+        dmgr_train = DataManager(dset_train, 2, 1, None)
+        dmgr_test = DataManager(dset_test, 2, 1, None)
 
         with self.assertLogs(logger, level='INFO') as cm:
             if raise_error:
@@ -222,7 +222,7 @@ class TestBaseMessenger(unittest.TestCase):
         dummy_exp = self.messenger_cls(dummy_exp, **self.messenger_kwargs)
 
         dset_test = DummyDataset(10)
-        dmgr_test = BaseDataManager(dset_test, 2, 1, None)
+        dmgr_test = DataManager(dset_test, 2, 1, None)
 
         model = DummyNetwork()
 
@@ -251,7 +251,7 @@ class TestBaseMessenger(unittest.TestCase):
         dummy_exp = self.messenger_cls(dummy_exp, **self.messenger_kwargs)
 
         dset = DummyDataset(10)
-        dmgr = BaseDataManager(dset, 2, 1, None)
+        dmgr = DataManager(dset, 2, 1, None)
 
         with self.assertLogs(logger, level='INFO') as cm:
             if raise_error:

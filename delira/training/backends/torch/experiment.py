@@ -4,7 +4,7 @@ import typing
 import torch
 
 from delira.models.backends.torch import AbstractPyTorchNetwork
-from delira.data_loading import BaseDataManager
+from delira.data_loading import DataManager
 
 from delira.training.base_experiment import BaseExperiment
 from delira.training.parameters import Parameters

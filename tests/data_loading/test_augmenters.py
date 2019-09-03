@@ -1,5 +1,5 @@
 from delira.data_loading import Augmenter, DataLoader, SequentialSampler
-from . import DummyDataset
+from .utils import DummyDataset
 
 import unittest
 

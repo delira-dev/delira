@@ -428,7 +428,7 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
 
         Parameters
         ----------
-        datamgr : :class:`BaseDataManager`
+        datamgr : :class:`DataManager`
             Manager producing a generator holding the batches
         batchsize : int
             Artificial batchsize (sampling will be done with batchsize
