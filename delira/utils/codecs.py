@@ -16,76 +16,81 @@ class Encoder:
         self._sep = sep
 
     def encode(self, obj):
-        if isinstance(obj, str):
-            return obj
-        # for mappings: encode each key and each value separately and then
-        # enocde the whole object to get the type
-        elif isinstance(obj, collections.Mapping):
-            return self._encode(type(obj)({self.encode(k): self.encode(v)
-                                           for k, v in obj.items()}))
-        # for iterables. encode each element separately then encode the whole
-        # iterable to get the type
-        elif isinstance(obj, collections.Iterable):
-            return self._encode(type(obj)([self.encode(_obj)
-                                           for _obj in obj]))
-        else:
-            return self._encode(obj)
-
-    def _encode(self, obj):
-
+        if obj is None:
+            return "__none__"
         # if tuple: add explicit tuple specifier
-        if isinstance(obj, tuple):
-            return "__tuple__({})".format(obj)
+        elif isinstance(obj, tuple):
+            return "__tuple__({})".format(self.encode(list(obj)))
+
         # if list: add explicit list specifier
         elif isinstance(obj, list):
-            return "__list__({})".format(obj)
+            list_repr = json.dumps([self.encode(i) for i in obj])
+            return "__list__({})".format(list_repr)
+
         # # if numpy array: add explicit array specifier
         # use tolist instead of tostring here (even though this requires
         # additional encoding steps and increases memory usage), since tolist
         # retains the shape and tostring doesn't
         elif isinstance(obj, np.ndarray):
             return "__array__({})".format(self.encode(obj.tolist()))
+
         # if object is already a type, which can be decoded directly:
         # return as is
         elif isinstance(obj, (str, int, float)):
             return obj
+
         # if dict: add specific dict specifier
         elif isinstance(obj, dict):
-            return "__dict__({})".format(obj)
+            encoded_dict = {
+                _key: self.encode(_item) for _key, _item in obj.items()}
+            return "__dict__({})".format(json.dumps(encoded_dict))
+
         # encode via encoding the type and the mapping converted to dict
         # separately and add a conversion specifier
         elif isinstance(obj, collections.Mapping):
-            return "__convert__({}{}{})".format(self.encode(type(obj)),
-                                                self._sep,
-                                                self.encode(dict(obj)))
+            convert_repr = {
+                "type": self.encode(type(obj)),
+                "repr": self.encode(dict(obj)),
+            }
+            return "__convert__({})".format(self.encode(convert_repr))
+
         # encode via converting the type and the mapping converted to list
         # separately and add conversion specifier
         elif isinstance(obj, collections.Iterable):
-            return "__convert__({}{}{})".format(self.encode(type(obj)),
-                                                self._sep,
-                                                self.encode(list(obj)))
+            convert_repr = {
+                "type": self.encode(type(obj)),
+                "repr": self.encode(list(obj)),
+            }
+            return "__convert__({})".format(self.encode(convert_repr))
 
         # encode via name and module specifier
         elif isinstance(obj, types.ModuleType):
-            return "__module__({})".format(obj.__module__)
+            return "__module__({})".format(self.encode(obj.__module__))
 
         # use both ways to determine functions here
         # (the second uglier one serves as fallback here in case inspect
         # does not cover all cases)
         elif inspect.isclass(obj) or type(obj) == type:
-            return "__type__({}{}{})".format(obj.__module__,
-                                             self._sep,
-                                             obj.__name__)
+            type_repr = {
+                "module": self.encode(obj.__module__),
+                "name": self.encode(obj.__name__),
+            }
+            return "__type__({})".format(self.encode(type_repr))
+
         elif isinstance(obj, (types.BuiltinFunctionType, types.FunctionType)):
-            return "__function__({}{}{})".format(obj.__module__,
-                                                 self._sep,
-                                                 obj.__name__)
+            function_repr = {
+                "module": self.encode(obj.__module__),
+                "name": self.encode(obj.__name__),
+            }
+            return "__function__({})".format(self.encode(function_repr))
 
         else:
             try:
-                return "__class__({}{}{})".format(self.encode(type(obj)),
-                                                  self._sep,
-                                                  self.encode(obj.__dict__))
+                class_repr = {
+                    "type": self.encode(type(obj)),
+                    "dict": self.encode(obj.__dict__)
+                }
+                return "__class__({})".format(self.encode(class_repr))
             except Exception as e:
                 logging.error(e)
 
@@ -101,35 +106,37 @@ class Decoder:
         # if object isn't a string: return the object as is
         if not isinstance(obj, str):
             return obj
-
-        if obj.startswith("__tuple__"):
-            return self.convert(self.decode(obj[10:-1]), tuple)
+        if obj == "__none__":
+            return None
+        elif obj.startswith("__tuple__"):
+            return tuple(self.decode(obj[10:-1]))
         elif obj.startswith("__list__"):
-            return self.convert(self.decode(obj[9:-1]), list)
+            list_repr = json.loads(obj[9:-1])
+            return [self.decode(_i) for _i in list_repr]
         elif obj.startswith("__array__"):
-            return self.convert(self.decode(obj[10: -1]), np.array)
+            return np.array(self.decode(obj[10: -1]))
         elif obj.startswith("__dict__"):
-            obj = json.loads(obj[9:-1].replace("\'", "\""))
+            obj = json.loads(obj[9:-1])
             for k, v in obj.items():
                 obj[self.decode(k)] = self.decode(v)
-            return self.convert(obj, dict)
-
+            return dict(obj)
         elif obj.startswith("__convert__"):
-            dtype, items = obj[12:-1].split(self._sep, 1)
-            return self.convert(self.decode(items), self.decode(dtype))
+            convert_repr = self.decode(obj[12:-1])
+            return convert_repr["type"](convert_repr["repr"])
         elif obj.startswith("__module__"):
-            return importlib.import_module(obj[11:-1])
+            return importlib.import_module(self.decode(obj[11:-1]))
         elif obj.startswith("__type__"):
-            module, name = obj[9:-1].split(self._sep, 1)
-            return getattr(importlib.import_module(module), name)
+            type_repr = self.decode(obj[9:-1])
+            return getattr(importlib.import_module(type_repr["module"]),
+                           type_repr["name"])
         elif obj.startswith("__function__"):
-            module, name = obj[13:-1].split(self._sep, 1)
-            return getattr(importlib.import_module(module), name)
+            function_repr = self.decode(obj[13:-1])
+            return getattr(importlib.import_module(function_repr["module"]),
+                           function_repr["name"])
         elif obj.startswith("__class__"):
-
-            cls_type, cls_dict = obj[10:-1].split("__dict__")
-            cls_type = cls_type[:-1]
-            cls_dict = "__dict__" + cls_dict
+            class_repr = self.decode(obj[10:-1])
+            cls_type = class_repr["type"]
+            cls_dict = class_repr["dict"]
 
             # need to create a temporary type here (which is basically a raw
             # object, since using object directly raises
@@ -150,10 +157,6 @@ class Decoder:
 
         else:
             return obj
-
-    @staticmethod
-    def convert(obj, dtype):
-        return dtype(obj)
 
     def __call__(self, obj):
         return self.decode(obj)
