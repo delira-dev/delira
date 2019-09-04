@@ -9,6 +9,9 @@ import typing
 
 
 class Encoder:
+    def __init__(self, encoding_fn=json.dumps):
+        self._encoding_fn = encoding_fn
+
     def __call__(self, obj) -> str:
         return self.encode(obj)
 
@@ -52,7 +55,7 @@ class Encoder:
 
     def _encode_list(self, obj) -> str:
         # if list: add explicit list specifier
-        list_repr = json.dumps([self.encode(i) for i in obj])
+        list_repr = self._encoding_fn([self.encode(i) for i in obj])
         return "__list__({})".format(list_repr)
 
     def _encode_array(self, obj) -> str:
@@ -66,7 +69,7 @@ class Encoder:
         # if dict: add specific dict specifier
         encoded_dict = {
             _key: self.encode(_item) for _key, _item in obj.items()}
-        return "__dict__({})".format(json.dumps(encoded_dict))
+        return "__dict__({})".format(self._encoding_fn(encoded_dict))
 
     def _encode_mapping(self, obj) -> str:
         # encode via encoding the type and the mapping converted to dict
@@ -116,6 +119,9 @@ class Encoder:
 
 
 class Decoder:
+    def __init__(self, decoding_fn=json.loads):
+        self._decoding_fn = decoding_fn
+
     def __call__(self, obj) -> typing.Any:
         return self.decode(obj)
 
@@ -154,19 +160,20 @@ class Decoder:
         return self.decode(obj[10:-1])
 
     def _decode_list(self, obj) -> list:
-        list_repr = json.loads(obj[9:-1])
+        list_repr = self._decoding_fn(obj[9:-1])
         return [self.decode(_i) for _i in list_repr]
 
     def _decode_array(self, obj) -> np.ndarray:
         return np.array(self.decode(obj[10: -1]))
 
     def _decode_dict(self, obj) -> dict:
-        obj = json.loads(obj[9:-1])
+        obj = self._decoding_fn(obj[9:-1])
         for k, v in obj.items():
             obj[self.decode(k)] = self.decode(v)
         return dict(obj)
 
-    def _decode_convert(self, obj) -> typing.Union[typing.Iterable, typing.Mapping]:
+    def _decode_convert(self, obj) -> typing.Union[typing.Iterable,
+                                                   typing.Mapping]:
         convert_repr = self.decode(obj[12:-1])
         return convert_repr["type"](convert_repr["repr"])
 

@@ -4,15 +4,20 @@ from delira._version import get_versions
 from nested_lookup import nested_lookup
 from delira.utils._external import Config
 import warnings
+from .codecs import Encoder, Decoder
+
+import json
+import yaml
+import pickle
 
 
 def non_string_warning(func):
     def warning_wrapper(key, *args, **kwargs):
-        if not isinstance(key, str):
-            warnings.warn("The key {} is not a string, but a {}. "
-                          "This may lead to unwanted behavior upon encoding "
-                          "and decoding!".format(key, type(key)),
-                          RuntimeWarning)
+        # if not isinstance(key, str):
+        #     warnings.warn("The key {} is not a string, but a {}. "
+        #                   "This may lead to unwanted behavior upon encoding "
+        #                   "and decoding!".format(key, type(key)),
+        #                   RuntimeWarning)
 
         return func(key, *args, **kwargs)
 
@@ -125,13 +130,25 @@ class BaseConfig(dict):
                     else:
                         self[key] = item
 
-    # TODO: support for json, yaml and pickle
-    # TODO: support for saving complex objects
-    def dump():
-        raise NotImplementedError
+    def dump(self, path, ftype, *args, **kwargs):
+        if ftype in ["json"]:
+            encoder = Encoder(encoding_fn=json.dumps)
+            encoding = encoder(self)
+            with open(path + "." + ftype, 'w') as f:
+                json.dump(encoding, f, *args, **kwargs)
+        elif ftype in ["yml", "yaml"]:
+            encoder = Encoder(encoding_fn=yaml.dump)
+            encoding = encoder(self)
+            with open(path + "." + ftype, 'w') as f:
+                yaml.dump(encoding, f, *args, **kwargs)
+        elif ftype in ["pkl", "pickle"]:
+            encoder = Encoder(encoding_fn=json.dumps)
+            encoding = encoder(self)
+            with open(path + "." + ftype, 'wb') as f:
+                pickle.dump(encoding, f, *args, **kwargs)
 
-    def dumps():
-        raise NotImplementedError
+    def dumps(self, encoding_fn=json.dumps):
+        return Encoder(encoding_fn=encoding_fn)(self)
 
     # TODO: support for json, yaml, pickle and argparse
     # TODO: support for loading complex objects
