@@ -24,7 +24,7 @@ def non_string_warning(func):
     return warning_wrapper
 
 
-class BaseConfig(dict):
+class Config(dict):
     def __init__(self, dict_like, deep=False, overwrite=False, save_get=None,
                  **kwargs):
         super().__init__()
@@ -35,9 +35,9 @@ class BaseConfig(dict):
 
     @non_string_warning
     def __setattr__(self, key, value):
-        if isinstance(value, dict) and not isinstance(value, BaseConfig):
+        if isinstance(value, dict) and not isinstance(value, Config):
             # convert dict to config for additional funtionality
-            value = BaseConfig.create_from_dict(value)
+            value = Config.create_from_dict(value)
         super().__setattr__(key, value)
 
     @non_string_warning
@@ -51,7 +51,7 @@ class BaseConfig(dict):
             for k in key_split:
                 # traverse to needed dict
                 if k not in current_level:
-                    new_config = BaseConfig()
+                    new_config = Config()
                     current_level[k] = new_config
                 current_level = current_level[k]
             current_level[final_key] = value
@@ -103,10 +103,10 @@ class BaseConfig(dict):
     @staticmethod
     def create_from_dict(value, val_copy=False):
         assert isinstance(value, dict)
-        new_config = BaseConfig()
+        new_config = Config()
         for key, item in value.items():
             if isinstance(item, dict):
-                item = BaseConfig.create_from_dict(item, val_copy=val_copy)
+                item = Config.create_from_dict(item, val_copy=val_copy)
             if val_copy:
                 new_config[key] = copy.deepcopy(item)
             else:
@@ -129,8 +129,8 @@ class BaseConfig(dict):
                         raise ValueError("{} already in config. Can "
                                          "not overwrite value.".format(key))
             else:
-                if isinstance(item, dict) and not isinstance(item, BaseConfig):
-                    self[key] = BaseConfig.create_from_dict(
+                if isinstance(item, dict) and not isinstance(item, Config):
+                    self[key] = Config.create_from_dict(
                         item, val_copy=val_copy)
                 else:
                     if val_copy:
