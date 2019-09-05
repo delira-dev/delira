@@ -25,9 +25,11 @@ def non_string_warning(func):
 
 
 class BaseConfig(dict):
-    def __init__(self, dict_like, deep=False, overwrite=False, **kwargs):
+    def __init__(self, dict_like, deep=False, overwrite=False, save_get=None,
+                 **kwargs):
         super().__init__()
         self.__dict__ = self
+        self._save_get = save_get
         self.update(dict_like, val_copy=deep, overwrite=overwrite)
         self.update(kwargs, val_copy=deep, overwrite=overwrite)
 
@@ -56,25 +58,31 @@ class BaseConfig(dict):
 
     @non_string_warning
     def __getitem__(self, key):
-        if not isinstance(key, str) or '.' not in key:
-            try:
-                return super().__getitem__(int(key))
-            except (KeyError, ValueError):
-                return super().__getitem__(key)
-        else:
-            current_level = self
-            key_split = key.split(".")
-            final_key = key_split.pop(-1)
-            for k in key_split:
-                # traverse to needed dict
+        try:
+            if not isinstance(key, str) or '.' not in key:
                 try:
-                    current_level = current_level[int(k)]
+                    return super().__getitem__(int(key))
                 except (KeyError, ValueError):
-                    current_level = current_level[k]
-            try:
-                return current_level[int(final_key)]
-            except (KeyError, ValueError):
-                return current_level[final_key]
+                    return super().__getitem__(key)
+            else:
+                current_level = self
+                key_split = key.split(".")
+                final_key = key_split.pop(-1)
+                for k in key_split:
+                    # traverse to needed dict
+                    try:
+                        current_level = current_level[int(k)]
+                    except (KeyError, ValueError):
+                        current_level = current_level[k]
+                try:
+                    return current_level[int(final_key)]
+                except (KeyError, ValueError):
+                    return current_level[final_key]
+        except (KeyError, ValueError) as e:
+            if self._save_get is not None:
+                return self._save_get
+            else:
+                raise e
 
     @non_string_warning
     def __contains__(self, key):
@@ -130,42 +138,34 @@ class BaseConfig(dict):
                     else:
                         self[key] = item
 
-    def dump(self, path, ftype, *args, **kwargs):
-        if ftype in ["json"]:
-            encoder = Encoder(encoding_fn=json.dumps)
-            encoding = encoder(self)
-            with open(path + "." + ftype, 'w') as f:
-                json.dump(encoding, f, *args, **kwargs)
-        elif ftype in ["yml", "yaml"]:
-            encoder = Encoder(encoding_fn=yaml.dump)
-            encoding = encoder(self)
-            with open(path + "." + ftype, 'w') as f:
-                yaml.dump(encoding, f, *args, **kwargs)
-        elif ftype in ["pkl", "pickle"]:
-            encoder = Encoder(encoding_fn=json.dumps)
-            encoding = encoder(self)
-            with open(path + "." + ftype, 'wb') as f:
-                pickle.dump(encoding, f, *args, **kwargs)
+    def dump(self, path, format_fn=json.dump, **kwargs):
+        encoded_self = Encoder().encode(self)
+        with open(path, "w") as f:
+            format_fn(encoded_self, f, **kwargs)
 
-    def dumps(self, encoding_fn=json.dumps):
-        return Encoder(encoding_fn=encoding_fn)(self)
+    def dumps(self, format_fn=json.dumps, **kwargs):
+        encoded_self = Encoder().encode(self)
+        return format_fn(encoded_self, **kwargs)
 
-    # TODO: support for json, yaml, pickle and argparse
-    # TODO: support for loading complex objects
-    # TODO: make this a class function
-    def load(self):
-        raise NotImplementedError
+    # TODO: loading from argparse
+    @classmethod
+    def load(cls, path, format_fn=json.load, **kwargs):
+        with open(path, "r") as f:
+            decoded_format = format_fn(f, **kwargs)
+        return Decoder().decode(decoded_format)
 
-    def loads(self):
-        raise NotImplementedError
+    @classmethod
+    def loads(cls, data, format_fn=json.loads, **kwargs):
+        decoded_format = format_fn(data, **kwargs)
+        return Decoder().decode(decoded_format)
 
     # TODO: check if copy and deepcopy works out of the box
     #  (If it does, we don't need these methods at all)
-    def __copy__(self, *args, **kwargs):
-        super().__copy__(*args, **kwargs)
+    # def __copy__(self, *args, **kwargs):
+    #     super().__copy__(*args, **kwargs)
 
-    def __deepcopy__(self, *args, **kwargs):
-        super().__deepcopy__(*args, **kwargs)
+    # def __deepcopy__(self, *args, **kwargs):
+    #     super().__deepcopy__(*args, **kwargs)
 
     # TODO: logging as string
     def log_as_string(self):

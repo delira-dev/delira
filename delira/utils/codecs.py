@@ -15,6 +15,8 @@ class Encoder:
         if isinstance(obj, (str, int, float)):
             # end recursion
             return obj
+        elif obj is None:
+            return obj
         elif isinstance(obj, dict):
             # end recursion
             return self._encode_dict(obj)
