@@ -1,6 +1,6 @@
 import collections
 import numpy as np
-
+import os
 
 def recursively_convert_elements(element, check_type, conversion_fn):
     """
@@ -98,3 +98,13 @@ def convert_to_numpy_identity(*args, **kwargs):
                                           _correct_zero_shape)
 
     return args, kwargs
+
+def check_save_path(save_path):
+    i = 0
+    new_path = save_path
+    run_name = os.path.basename(save_path)
+    dir_name = os.path.dirname(save_path)
+    while os.path.isdir(new_path):
+        i +=1
+        new_path = os.path.join(dir_name,run_name + '_{:02d}'.format(i))
+    return i , new_path

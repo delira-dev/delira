@@ -3,7 +3,6 @@ import typing
 import logging
 import pickle
 import os
-from datetime import datetime
 
 import copy
 
@@ -13,7 +12,7 @@ from sklearn.model_selection import KFold, StratifiedKFold, \
 
 from delira.data_loading import BaseDataManager
 from delira.models import AbstractNetwork
-
+from delira.training.utils import check_save_path
 from delira.training.parameters import Parameters
 from delira.training.base_trainer import BaseNetworkTrainer
 from delira.training.predictor import Predictor
@@ -109,12 +108,10 @@ class BaseExperiment(object):
         if save_path is None:
             save_path = os.path.abspath(".")
 
-        self.save_path = os.path.join(save_path, name,
-                                      str(datetime.now().strftime(
-                                          "%y-%m-%d_%H-%M-%S")))
+        duplicate_number, self.save_path = check_save_path(os.path.join(save_path, name))
 
-        if os.path.isdir(self.save_path):
-            logger.warning("Save Path %s already exists")
+        if duplicate_number:
+            print('Save path is a duplicate and got changed to {}'.format(save_path))
 
         os.makedirs(self.save_path, exist_ok=True)
 
