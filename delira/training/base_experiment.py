@@ -108,10 +108,7 @@ class BaseExperiment(object):
         if save_path is None:
             save_path = os.path.abspath(".")
 
-        duplicate_number, self.save_path = check_save_path(os.path.join(save_path, name))
-
-        if duplicate_number:
-            print('Save path is a duplicate and got changed to {}'.format(save_path))
+        self.save_path = check_save_path(os.path.join(save_path, name))
 
         os.makedirs(self.save_path, exist_ok=True)
 

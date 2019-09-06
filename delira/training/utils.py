@@ -99,7 +99,7 @@ def convert_to_numpy_identity(*args, **kwargs):
 
     return args, kwargs
 
-def check_save_path(save_path):
+def generate_save_path(save_path):
     i = 0
     new_path = save_path
     run_name = os.path.basename(save_path)
@@ -107,4 +107,6 @@ def check_save_path(save_path):
     while os.path.isdir(new_path):
         i +=1
         new_path = os.path.join(dir_name,run_name + '_{:02d}'.format(i))
-    return i , new_path
+    if i:
+        print('Save path is a duplicate and got changed to {}'.format(new_path))
+    return new_path
