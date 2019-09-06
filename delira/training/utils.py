@@ -2,6 +2,7 @@ import collections
 import numpy as np
 import os
 
+
 def recursively_convert_elements(element, check_type, conversion_fn):
     """
     Function to recursively convert all elements
@@ -99,14 +100,15 @@ def convert_to_numpy_identity(*args, **kwargs):
 
     return args, kwargs
 
-def generate_save_path(save_path):
+
+def check_save_path(save_path):
     i = 0
     new_path = save_path
     run_name = os.path.basename(save_path)
     dir_name = os.path.dirname(save_path)
     while os.path.isdir(new_path):
-        i +=1
-        new_path = os.path.join(dir_name,run_name + '_{:02d}'.format(i))
+        i += 1
+        new_path = os.path.join(dir_name, run_name + '_{:02d}'.format(i))
     if i:
         print('Save path is a duplicate and got changed to {}'.format(new_path))
     return new_path
