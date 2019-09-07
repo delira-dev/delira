@@ -11,10 +11,10 @@ The Dataloader wraps the dataset and combines them with a sampler
 
 ToDo: add flow chart diagramm
 
-:hidden:`BaseDataLoader`
+:hidden:`DataLoader`
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: BaseDataLoader
+.. autoclass:: DataLoader
     :members:
     :undoc-members:
     :show-inheritance:

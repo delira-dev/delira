@@ -125,17 +125,17 @@ This would create a dataloader for your ``dataset_train``:
 
 .. code:: ipython3
 
-    from delira.data_loading import BaseDataLoader
+    from delira.data_loading import DataLoader
     
     batch_size = 32
     
-    loader_train = BaseDataLoader(dataset_train, batch_size)
+    loader_train = DataLoader(dataset_train, batch_size)
 
 Since the batch\_size has been set to 32, the loader will load 32
 samples as one batch.
 
 Even though it would be possible to train your network with an instance
-of ``BaseDataLoader``, ``malira`` also offers a different approach that
+of ``DataLoader``, ``malira`` also offers a different approach that
 covers multithreaded data loading and augmentation:
 
 The Datamanager

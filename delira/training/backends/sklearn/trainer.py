@@ -186,7 +186,7 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
 
         Parameters
         ----------
-        dmgr : :class:`BaseDataManager`
+        dmgr : :class:`DataManager`
             the datamanager to collect the classes from
         verbose : bool
             verbosity

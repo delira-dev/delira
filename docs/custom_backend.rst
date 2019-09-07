@@ -1041,12 +1041,12 @@ very simple network and test it with dummy data. We also only test the
 else is just used for setting up the internal state or a composition of
 these two methods and already tested: Now, let's just define our
 dataset, instantiate it three times (for training, validation and
-testing) and wrap each of them into a ``BaseDataManager``:
+testing) and wrap each of them into a ``DataManager``:
 
 .. code:: ipython3
 
     from delira.data_loading import AbstractDataset
-    from delira.data_loading import BaseDataManager
+    from delira.data_loading import DataManager
     
     
     class DummyDataset(AbstractDataset):
@@ -1070,9 +1070,9 @@ testing) and wrap each of them into a ``BaseDataManager``:
     
     # training, validation and testing with 
     #a batchsize of 16, 1 loading thread and no transformations.
-    dmgr_train = BaseDataManager(dset_train, 16, 1, None)
-    dmgr_val = BaseDataManager(dset_val, 16, 1, None)
-    dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+    dmgr_train = DataManager(dset_train, 16, 1, None)
+    dmgr_val = DataManager(dset_val, 16, 1, None)
+    dmgr_test = DataManager(dset_test, 16, 1, None)
 
 Now, that we have created three datasets, we need to define our small
 dummy network. We do this by subclassing

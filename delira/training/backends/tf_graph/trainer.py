@@ -277,7 +277,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
 
         Parameters
         ----------
-        datamgr : :class:`BaseDataManager`
+        datamgr : :class:`DataManager`
             Manager producing a generator holding the batches
         batch_size : int
             Artificial batchsize (sampling will be done with batchsize
