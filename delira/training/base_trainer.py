@@ -859,6 +859,16 @@ class BaseNetworkTrainer(Predictor):
         return None, 1
 
     def register_callback(self, callback: AbstractCallback):
+        """
+        Registers the passed callback to the trainer,
+        after checking it is really a valid callback
+
+        Parameters
+        ----------
+        callback : AbstractCallback
+            the potential callback to register
+
+        """
         has_all_attrs = True
         for attr in ("iter", "epoch",):
             has_all_attrs = has_all_attrs and hasattr(callback,
