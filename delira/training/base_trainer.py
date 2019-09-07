@@ -868,13 +868,22 @@ class BaseNetworkTrainer(Predictor):
         callback : AbstractCallback
             the potential callback to register
 
+        Raises
+        ------
+        AssertionError
+            :param:`callback` is not an instance of :class:`AbstractCallback`
+            and does not provide the methods `at_iter_begin`, `at_iter_end`,
+            `at_epoch_begin` and `at_epoch_end`
+
         """
         has_all_attrs = True
-        for attr in ("iter", "epoch",):
+        for attr in ("epoch",):
             has_all_attrs = has_all_attrs and hasattr(callback,
                                                       "at_%s_begin" % attr)
             has_all_attrs = has_all_attrs and hasattr(callback,
                                                       "at_%s_end" % attr)
 
-        assert has_all_attrs
+        assert has_all_attrs, "Given callback is not valid; Must be " \
+                              "instance of AbstractCallback or provide " \
+                              "functions 'at_epoch_begin' and 'at_epoch_end'"
         super().register_callback(callback)

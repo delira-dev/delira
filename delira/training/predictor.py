@@ -646,12 +646,12 @@ class Predictor(object):
         ------
         AssertionError
             `callback` is not an instance of :class:`AbstractCallback` and has
-            not both methods ['at_epoch_begin', 'at_epoch_end']
+            not both methods ['at_iter_begin', 'at_iter_end']
 
         """
         assertion_str = "Given callback is not valid; Must be instance of " \
                         "AbstractCallback or provide functions " \
-                        "'at_epoch_begin' and 'at_epoch_end'"
+                        "'at_iter_begin' and 'at_iter_end'"
         instance_check = isinstance(callback, AbstractCallback)
         attr_check_begin = hasattr(callback, "at_iter_begin")
         attr_check_end = hasattr(callback, "at_iter_end")
