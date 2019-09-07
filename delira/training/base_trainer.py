@@ -150,13 +150,14 @@ class BaseNetworkTrainer(Predictor):
             callbacks = []
 
         # check argument types
-        assert isinstance(network, AbstractNetwork)
-        assert isinstance(save_path, str)
-        assert isinstance(losses, dict)
-        assert isinstance(optimizer_params, dict)
-        assert isinstance(metrics, dict)
-        assert isinstance(lr_scheduler_params, dict)
-        assert isinstance(gpu_ids, list)
+        for instance, cls_type in zip([
+            network, save_path, losses, optimizer_params, metrics,
+            lr_scheduler_params, gpu_ids], [AbstractNetwork, str, dict, dict,
+                                            dict, dict, list]):
+            if not isinstance(instance, cls_type):
+                raise TypeError("%s should be of type %s, but is of type %s"
+                                % (instance.__name__, cls_type.__name__,
+                                   type(instance).__name__))
 
         if os.path.isdir(save_path):
             logger.warning(
@@ -511,7 +512,7 @@ class BaseNetworkTrainer(Predictor):
                     if "val_" + val_score_key not in total_metrics:
                         warnings.warn("val_score_key '%s' not a valid key "
                                       "for validation metrics" %
-                            str(val_score_key), UserWarning)
+                                      str(val_score_key), UserWarning)
 
                         new_val_score = best_val_score
 
@@ -782,7 +783,7 @@ class BaseNetworkTrainer(Predictor):
 
         if "exp_name" in _logging_kwargs.keys():
             _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
-                "_%02d" % self.fold
+                                          "_%02d" % self.fold
 
         # remove prior Trixihandlers and reinitialize it with given logging
         # type
