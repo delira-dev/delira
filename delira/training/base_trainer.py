@@ -722,8 +722,6 @@ class BaseNetworkTrainer(Predictor):
             dictionary containing all logging keyword arguments
         logging_callback_cls : class
             the callback class to create and register for logging
-        logging_callback_cls : class
-            the callback class to create and register for logging
         logging_frequencies : int or dict
                 specifies how often to log for each key.
                 If int: integer will be applied to all valid keys
