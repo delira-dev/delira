@@ -199,11 +199,11 @@ class BaseNetworkTrainer(Predictor):
             keyword arguments
 
         """
-
-        self.save_state(os.path.join(self.save_path, "checkpoint_epoch_%d"
-                                     % self.start_epoch), self.start_epoch)
         for cbck in self._callbacks:
             self._update_state(cbck.at_training_begin(self, *args, **kwargs))
+
+        self.save_state(os.path.join(self.save_path, "checkpoint_epoch_%d"
+                                     % self.start_epoch))
 
     def _at_training_end(self, *args, **kwargs):
         """

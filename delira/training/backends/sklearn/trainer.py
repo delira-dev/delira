@@ -173,9 +173,72 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             keyword arguments
 
         """
+        for cbck in self._callbacks:
+            self._update_state(cbck.at_training_begin(self, *args, **kwargs))
+
         self.save_state(os.path.join(
             self.save_path, "checkpoint_epoch_%d" % self.start_epoch),
             self.start_epoch)
+
+    def _at_training_end(self, *args, **kwargs):
+        """
+        Defines Behaviour at end of training: Loads best model if
+        available
+
+        Returns
+        -------
+        :class:`SkLearnEstimator`
+            best network
+
+        """
+        if os.path.isfile(os.path.join(self.save_path,
+                                       'checkpoint_best.pkl')):
+
+            # load best model and return it
+            self.update_state(os.path.join(self.save_path,
+                                           'checkpoint_best.pkl'))
+
+        return super()._at_training_end(*args, **kwargs)
+
+    def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
+                      **kwargs):
+        """
+        Defines behaviour at beginning of each epoch: Executes all callbacks's
+        `at_epoch_end` method and saves current state if necessary
+
+        Parameters
+        ----------
+        metrics_val : dict
+            validation metrics
+        val_score_key : str
+            validation score key
+        epoch : int
+            current epoch
+        num_epochs : int
+            total number of epochs
+        is_best : bool
+            whether current model is best one so far
+        **kwargs :
+            keyword arguments
+
+        """
+
+        for cb in self._callbacks:
+            self._update_state(cb.at_epoch_end(self,
+                                               val_metrics=metrics_val,
+                                               val_score_key=val_score_key,
+                                               curr_epoch=epoch))
+
+        if epoch % self.save_freq == 0:
+            self.save_state(os.path.join(self.save_path,
+                                         "checkpoint_epoch_%d.pkl"
+                                         % epoch),
+                            epoch)
+
+        if is_best:
+            self.save_state(os.path.join(self.save_path,
+                                         "checkpoint_best.pkl"),
+                            epoch)
 
     def _get_classes_if_necessary(self, dmgr: BaseDataManager, verbose,
                                   label_key=None):
@@ -291,66 +354,6 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
                              val_score_key, val_score_mode, reduce_mode,
                              verbose)
 
-    def _at_training_end(self):
-        """
-        Defines Behaviour at end of training: Loads best model if
-        available
-
-        Returns
-        -------
-        :class:`SkLearnEstimator`
-            best network
-
-        """
-        if os.path.isfile(os.path.join(self.save_path,
-                                       'checkpoint_best.pkl')):
-
-            # load best model and return it
-            self.update_state(os.path.join(self.save_path,
-                                           'checkpoint_best.pkl'))
-
-        return self.module
-
-    def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
-                      **kwargs):
-        """
-        Defines behaviour at beginning of each epoch: Executes all callbacks's
-        `at_epoch_end` method and saves current state if necessary
-
-        Parameters
-        ----------
-        metrics_val : dict
-            validation metrics
-        val_score_key : str
-            validation score key
-        epoch : int
-            current epoch
-        num_epochs : int
-            total number of epochs
-        is_best : bool
-            whether current model is best one so far
-        **kwargs :
-            keyword arguments
-
-        """
-
-        for cb in self._callbacks:
-            self._update_state(cb.at_epoch_end(self,
-                                               val_metrics=metrics_val,
-                                               val_score_key=val_score_key,
-                                               curr_epoch=epoch))
-
-        if epoch % self.save_freq == 0:
-            self.save_state(os.path.join(self.save_path,
-                                         "checkpoint_epoch_%d.pkl"
-                                         % epoch),
-                            epoch)
-
-        if is_best:
-            self.save_state(os.path.join(self.save_path,
-                                         "checkpoint_best.pkl"),
-                            epoch)
-
     def save_state(self, file_name, epoch, **kwargs):
         """
         saves the current state via
@@ -395,27 +398,6 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             file_name = file_name + ".pkl"
 
         return load_checkpoint(file_name, **kwargs)
-
-    def update_state(self, file_name, *args, **kwargs):
-        """
-        Update internal state from a loaded state
-
-        Parameters
-        ----------
-        file_name : str
-            file containing the new state to load
-        *args :
-            positional arguments
-        **kwargs :
-            keyword arguments
-
-        Returns
-        -------
-        :class:`SkLearnEstimatorTrainer`
-            the trainer with a modified state
-
-        """
-        self._update_state(self.load_state(file_name, *args, **kwargs))
 
     def _update_state(self, new_state):
         """
