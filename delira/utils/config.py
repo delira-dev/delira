@@ -23,17 +23,18 @@ def non_string_warning(func):
 
 
 class Config(dict):
-    def __init__(self, dict_like=None):
+    def __init__(self, dict_like=None, **kwargs):
         super().__init__()
         self.__dict__ = self
         if dict_like is not None:
             self.update(dict_like)
+        self.update(kwargs)
 
     @non_string_warning
     def __setattr__(self, key, value):
         if isinstance(value, dict) and not isinstance(value, type(self)):
-            # convert dict to config for additional funtionality
-            value = Config.create_from_dict(value)
+            # convert dict to config for additional functionality
+            value = Config(value)
         super().__setattr__(key, value)
 
     @non_string_warning
@@ -107,9 +108,8 @@ class Config(dict):
                         raise ValueError("{} already in config. Can "
                                          "not overwrite value.".format(key))
             else:
-                if isinstance(item, dict) and not isinstance(item, Config):
-                    self[key] = Config.create_from_dict(
-                        item, deepcopy=deepcopy)
+                if isinstance(item, dict) and not isinstance(item, type(self)):
+                    self[key] = Config(item)
                 else:
                     if deepcopy:
                         self[key] = copy.deepcopy(item)
@@ -142,7 +142,7 @@ class Config(dict):
         new_config = cls()
         for key, item in value.items():
             if isinstance(item, dict):
-                item = Config.create_from_dict(item, deepcopy=deepcopy)
+                item = cls(item)
             if deepcopy:
                 new_config[key] = copy.deepcopy(item)
             else:
@@ -150,22 +150,14 @@ class Config(dict):
         return new_config
 
     @classmethod
-    def create_from_argparse(cls, args, deepcopy=False):
-        if isinstance(args, argparse.ArgumentParser):
-            args_parsed = args.parse_args()
-            return cls.create_from_dict(vars(args_parsed))
-        elif isinstance(args, argparse.Namespace):
-            return cls.create_from_dict(vars(args))
+    def create_from_argparse(cls, value, deepcopy=False, **kwargs):
+        if isinstance(value, argparse.ArgumentParser):
+            args_parsed = value.parse_args(**kwargs)
+            return cls.create_from_dict(vars(args_parsed), deepcopy=deepcopy)
+        elif isinstance(value, argparse.Namespace):
+            return cls.create_from_dict(vars(value), deepcopy=deepcopy)
         else:
             raise TypeError("Type of args not supported.")
-
-    # TODO: logging as string
-    def log_as_string(self):
-        raise NotImplementedError
-
-    # TODO: logging as hyperparameters
-    def log_as_hyperparameter(self):
-        raise NotImplementedError
 
 
 class LookupConfig(Config):
@@ -219,15 +211,14 @@ class LookupConfig(Config):
 
 
 class DeliraConfig(LookupConfig):
-    # ToDo: Init with proper arguments
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fixed_model = LookupConfig()
         self.fixed_training = LookupConfig()
         self.variable_model = LookupConfig()
         self.variable_training = LookupConfig()
-        self.timestamp = now()
-        self.delira_version = get_versions()["version"]
+        self._timestamp = now()
+        self._version = get_versions()["version"]
 
     @property
     def variable_params(self):
@@ -235,29 +226,15 @@ class DeliraConfig(LookupConfig):
                             training=self.variable_training)
 
     @variable_params.setter
-    def variable_params(self, new_params: dict = None,
-                        model_params: dict = None,
-                        training_params: dict = None):
+    def variable_params(self, new_params: dict):
 
         # create empty dict
-        if new_params is None:
-            new_params = {}
-
-        # create empty default dict if necessary
         if "model" not in new_params:
             new_params["model"] = {}
 
-        # priorize explicit model params higher than general new_params
-        if model_params is not None:
-            new_params["model"].update(model_params)
-
-        # create empty default dict
+        # create empty dict
         if "training" not in new_params:
             new_params["training"] = {}
-
-        # priorize explicit training params higher than general new_params
-        if training_params is not None:
-            new_params["training"].update(training_params)
 
         self.variable_model.update(new_params["model"])
         self.variable_training.update(new_params["training"])
@@ -268,29 +245,14 @@ class DeliraConfig(LookupConfig):
                             training=self.fixed_training)
 
     @fixed_params.setter
-    def fixed_params(self, new_params: dict = None,
-                     model_params: dict = None,
-                     training_params: dict = None):
-
+    def fixed_params(self, new_params: dict):
         # create empty dict
-        if new_params is None:
-            new_params = {}
-
-        # create empty default dict if necessary
         if "model" not in new_params:
             new_params["model"] = {}
 
-        # priorize explicit model params higher than general new_params
-        if model_params is not None:
-            new_params["model"].update(model_params)
-
-        # create empty default dict
+        # create empty dict
         if "training" not in new_params:
             new_params["training"] = {}
-
-        # priorize explicit training params higher than general new_params
-        if training_params is not None:
-            new_params["training"].update(training_params)
 
         self.fixed_model.update(new_params["model"])
         self.fixed_training.update(new_params["training"])
@@ -301,29 +263,14 @@ class DeliraConfig(LookupConfig):
                             fixed=self.fixed_model)
 
     @model_params.setter
-    def model_params(self, new_params: dict = None,
-                     fixed_params: dict = None,
-                     variable_params: dict = None):
-
+    def model_params(self, new_params: dict):
         # create empty dict
-        if new_params is None:
-            new_params = {}
-
-        # create empty default dict if necessary
         if "fixed" not in new_params:
             new_params["fixed"] = {}
 
-        # priorize explicit fixed params higher than general new_params
-        if fixed_params is not None:
-            new_params["fixed"].update(fixed_params)
-
-        # create empty default dict
+        # create empty dict
         if "variable" not in new_params:
             new_params["variable"] = {}
-
-        # priorize explicit variable params higher than general new_params
-        if variable_params is not None:
-            new_params["variable"].update(variable_params)
 
         self.fixed_model.update(new_params["fixed"])
         self.variable_model.update(new_params["variable"])
@@ -334,29 +281,25 @@ class DeliraConfig(LookupConfig):
                             fixed=self.fixed_training)
 
     @training_params.setter
-    def training_params(self, new_params: dict = None,
-                        fixed_params: dict = None,
-                        variable_params: dict = None):
+    def training_params(self, new_params: dict):
 
         # create empty dict
-        if new_params is None:
-            new_params = {}
-
-        # create empty default dict if necessary
         if "fixed" not in new_params:
             new_params["fixed"] = {}
 
-        # priorize explicit fixed params higher than general new_params
-        if fixed_params is not None:
-            new_params["fixed"].update(fixed_params)
-
-        # create empty default dict
+        # create empty dict
         if "variable" not in new_params:
             new_params["variable"] = {}
 
-        # priorize explicit variable params higher than general new_params
-        if variable_params is not None:
-            new_params["variable"].update(variable_params)
-
         self.fixed_training.update(new_params["fixed"])
         self.variable_training.update(new_params["variable"])
+
+    # TODO: logging as string
+    def log_as_string(self):
+        raise NotImplementedError
+
+    # TODO: logging as hyperparameters
+    def log_as_hyperparameter(self):
+        raise NotImplementedError
+
+    # TODO: overwrite class in LookupConfig for creation
