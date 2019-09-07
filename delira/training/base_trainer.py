@@ -729,6 +729,10 @@ class BaseNetworkTrainer(Predictor):
                 will be filled with a frequency of 1 (log every time)
                 None is equal to empty dict here.
         reduce_types : str of FunctionType or dict
+            Values are logged in each iteration. This argument specifies,
+            how to reduce them to a single value if a logging_frequency
+            besides 1 is passed
+
             if str:
                 specifies the reduction type to use. Valid types are
                 'last' | 'first' | 'mean' | 'max' | 'min'.
