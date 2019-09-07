@@ -90,8 +90,7 @@ class Logger(object):
 
         # assign frequencies and create empty queues
         self._logging_frequencies = logging_frequencies
-        self._logging_queues = {
-            k: [] for k in backend.KEYWORD_FN_MAPPING.keys()}
+        self._logging_queues = {}
 
         default_reduce_type = "last"
         if reduce_types is None:
@@ -170,18 +169,31 @@ class Logger(object):
                     # multiple logging instances at once possible with
                     # different keys
                     for k, v in log_message.items():
+                        # append tag if tag is given, because otherwise we
+                        # would enqueue same types but different tags in same
+                        # queue
+                        if "tag" in v:
+                            queue_key = k + "." + v["tag"]
+                        else:
+                            queue_key = k
+
+                        # create queue if necessary
+                        if queue_key not in self._logging_queues:
+                            self._logging_queues[queue_key] = []
+
                         # append current message to queue
-                        self._logging_queues[k].append({k: v})
+                        self._logging_queues[queue_key].append({k: v})
                         # check if logging should be executed
-                        if (len(self._logging_queues[k])
+                        if (len(self._logging_queues[queue_key])
                                 % self._logging_frequencies[k] == 0):
                             # reduce elements inside queue
                             reduce_message = reduce_dict(
-                                self._logging_queues[k], self._reduce_types[k])
+                                self._logging_queues[queue_key],
+                                self._reduce_types[k])
                             # flush reduced elements
                             self._flush_queue.put_nowait(reduce_message)
                             # empty queue
-                            self._logging_queues[k] = []
+                            self._logging_queues[queue_key] = []
                 else:
                     # logging inappropriate message with python's logging
                     logging.log(self._level, log_message)
