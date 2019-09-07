@@ -109,11 +109,11 @@ class Logger(object):
                 # check it is either valid string or already function type
                 else:
                     if not isinstance(reduce_types, FunctionType):
-                        assert reduce_types[k] in possible_reductions
+                        assert reduce_types[k] in possible_reductions()
                         reduce_types[k] = str(reduce_types[k])
                 # map all strings to actual functions
                 if isinstance(reduce_types[k], str):
-                    reduce_types[k] = get_reduction[reduce_types[k]]
+                    reduce_types[k] = get_reduction(reduce_types[k])
 
         else:
             raise TypeError("Invalid Type for logging reductions: %s"
@@ -214,10 +214,12 @@ class Logger(object):
         the abortion event
 
         """
-        self._flush_queue.close()
-        self._flush_queue.join_thread()
+        if hasattr(self, "_flush_queue"):
+            self._flush_queue.close()
+            self._flush_queue.join_thread()
 
-        self._abort_event.set()
+        if hasattr(self, "abort_event"):
+            self._abort_event.set()
 
     def __del__(self):
         """

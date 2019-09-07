@@ -104,7 +104,7 @@ class SklearnEstimator(AbstractNetwork):
 
     @staticmethod
     def closure(model, data_dict: dict, optimizers: dict, losses: dict,
-                fold=0, **kwargs):
+                iter_num: int, fold=0, **kwargs):
         """
         default closure method to do a single training step;
         Could be overwritten for more advanced models
@@ -121,6 +121,9 @@ class SklearnEstimator(AbstractNetwork):
         losses : dict
             dict holding the losses to calculate errors;
             ignored here, just passed for compatibility reasons
+        iter_num: int
+            the number of of the current iteration in the current epoch;
+            Will be restarted at zero at the beginning of every epoch
         fold : int
             Current Fold in Crossvalidation (default: 0)
         **kwargs:

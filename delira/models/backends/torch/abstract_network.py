@@ -100,7 +100,7 @@ class AbstractPyTorchNetwork(AbstractNetwork, torch.nn.Module):
 
     @staticmethod
     def closure(model, data_dict: dict, optimizers: dict, losses: dict,
-                fold=0, **kwargs):
+                iter_num: int, fold=0, **kwargs):
         """
         closure method to do a single backpropagation step
 
@@ -115,6 +115,9 @@ class AbstractPyTorchNetwork(AbstractNetwork, torch.nn.Module):
         losses : dict
             dict holding the losses to calculate errors
             (gradients from different losses will be accumulated)
+        iter_num: int
+            the number of of the current iteration in the current epoch;
+            Will be restarted at zero at the beginning of every epoch
         fold : int
             Current Fold in Crossvalidation (default: 0)
         **kwargs:

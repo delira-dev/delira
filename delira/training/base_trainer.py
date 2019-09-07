@@ -368,8 +368,8 @@ class BaseNetworkTrainer(Predictor):
         else:
             iterable = enumerate(batchgen)
 
-        for batch_nr, batch in iterable:
-            self._at_iter_begin(epoch=epoch, iter_num=batch_nr)
+        for iter_num, batch in iterable:
+            self._at_iter_begin(epoch=epoch, iter_num=iter_num)
 
             data_dict = self._prepare_batch(batch)
 
@@ -377,7 +377,7 @@ class BaseNetworkTrainer(Predictor):
                                               optimizers=self.optimizers,
                                               losses=self.losses,
                                               fold=self.fold,
-                                              batch_nr=batch_nr)
+                                              iter_num=iter_num)
 
             data_dict = self._convert_to_npy_fn(**data_dict)[1]
             _preds = self._convert_to_npy_fn(**_preds)[1]
@@ -390,7 +390,7 @@ class BaseNetworkTrainer(Predictor):
             metrics.append(_metrics)
             losses.append(_losses)
 
-            self._at_iter_end(epoch=epoch, iter_num=batch_nr,
+            self._at_iter_end(epoch=epoch, iter_num=iter_num,
                               data_dict={**batch, **_preds},
                               metrics={**_metrics, **_losses})
 

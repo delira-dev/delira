@@ -52,7 +52,7 @@ class AbstractNetwork(object):
     @staticmethod
     @abc.abstractmethod
     def closure(model, data_dict: dict, optimizers: dict, losses: dict,
-                fold=0, **kwargs):
+                iter_num: int, fold=0, **kwargs):
         """
         Function which handles prediction from batch, logging, loss calculation
         and optimizer step
@@ -67,6 +67,9 @@ class AbstractNetwork(object):
             dictionary containing all optimizers to perform parameter update
         losses : dict
             Functions or classes to calculate losses
+        iter_num: int
+            the number of of the current iteration in the current epoch;
+            Will be restarted at zero at the beginning of every epoch
         fold : int
             Current Fold in Crossvalidation (default: 0)
         kwargs : dict
