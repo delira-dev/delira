@@ -2,6 +2,7 @@ import logging
 import os
 import pickle
 import typing
+import warnings
 
 from delira.utils.config import LookupConfig
 
@@ -47,15 +48,15 @@ class BaseNetworkTrainer(Predictor):
                  key_mapping: dict,
                  logging_type: str,
                  logging_kwargs: dict,
-                 fold: int,
-                 callbacks: typing.List[AbstractCallback],
+                 logging_callback_cls=DefaultLoggingCallback,
+                 logging_frequencies=None,
+                 logging_reduce_types=None,
+                 fold: int = 0,
+                 callbacks: typing.List[AbstractCallback] = None,
                  start_epoch=1,
                  metric_keys=None,
                  convert_batch_to_npy_fn=lambda x: x,
                  val_freq=1,
-                 logging_callback_cls=DefaultLoggingCallback,
-                 logging_frequencies=None,
-                 logging_reduce_types=None,
                  **kwargs
                  ):
         """
@@ -98,6 +99,27 @@ class BaseNetworkTrainer(Predictor):
             If callable: it must be a logging handler backend class
         logging_kwargs : dict
             dictionary containing all logging keyword arguments
+        logging_callback_cls : class
+            the callback class to create and register for logging
+        logging_frequencies : int or dict
+                specifies how often to log for each key.
+                If int: integer will be applied to all valid keys
+                if dict: should contain a frequency per valid key. Missing keys
+                will be filled with a frequency of 1 (log every time)
+                None is equal to empty dict here.
+        logging_reduce_types : str of FunctionType or dict
+            if str:
+                specifies the reduction type to use. Valid types are
+                'last' | 'first' | 'mean' | 'median' | 'max' | 'min'.
+                The given type will be mapped to all valid keys.
+            if FunctionType:
+                specifies the actual reduction function. Will be applied
+                for all keys.
+            if dict: should contain pairs of valid logging keys and either
+                str or FunctionType. Specifies the logging value per key.
+                Missing keys will be filles with a default value of 'last'.
+                Valid types for strings are
+                'last' | 'first' | 'mean' | 'median' | 'max' | 'min'.
         fold : int
             current cross validation fold (0 per default)
         callbacks : list
@@ -117,27 +139,6 @@ class BaseNetworkTrainer(Predictor):
             model (a value of 1 denotes validating every epoch,
             a value of 2 denotes validating every second epoch etc.);
             defaults to 1
-        logging_callback_cls : class
-            the callback class to create and register for logging
-        logging_frequencies : int or dict
-                specifies how often to log for each key.
-                If int: integer will be applied to all valid keys
-                if dict: should contain a frequency per valid key. Missing keys
-                will be filled with a frequency of 1 (log every time)
-                None is equal to empty dict here.
-        logging_reduce_types : str of FunctionType or dict
-            if str:
-                specifies the reduction type to use. Valid types are
-                'last' | 'first' | 'mean' | 'max' | 'min'.
-                The given type will be mapped to all valid keys.
-            if FunctionType:
-                specifies the actual reduction function. Will be applied
-                for all keys.
-            if dict: should contain pairs of valid logging keys and either
-                str or FunctionType. Specifies the logging value per key.
-                Missing keys will be filles with a default value of 'last'.
-                Valid types for strings are
-                'last' | 'first' | 'mean' | 'max' | 'min'.
         **kwargs :
             Additional keyword arguments
 
@@ -145,6 +146,8 @@ class BaseNetworkTrainer(Predictor):
 
         # explicity not call self._setup here to reuse the __init__ of
         # abstract class. self._setup has to be called in subclass
+        if callbacks is None:
+            callbacks = []
 
         # check argument types
         assert isinstance(network, AbstractNetwork)
@@ -506,10 +509,9 @@ class BaseNetworkTrainer(Predictor):
             if val_score_key is not None:
                 if val_score_key not in total_metrics:
                     if "val_" + val_score_key not in total_metrics:
-                        logger.warning(
-                            "val_score_key '%s' not a valid key for \
-                                    validation metrics" %
-                            str(val_score_key))
+                        warnings.warn("val_score_key '%s' not a valid key "
+                                      "for validation metrics" %
+                            str(val_score_key), UserWarning)
 
                         new_val_score = best_val_score
 

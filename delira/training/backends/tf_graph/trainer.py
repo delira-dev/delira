@@ -42,15 +42,15 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
                  optim_fn=create_optims_default,
                  logging_type="tensorboardx",
                  logging_kwargs=None,
+                 logging_callback_cls=DefaultLoggingCallback,
+                 logging_frequencies=None,
+                 logging_reduce_types=None,
                  fold=0,
                  callbacks=None,
                  start_epoch=1,
                  metric_keys=None,
                  convert_batch_to_npy_fn=convert_to_numpy,
                  val_freq=1,
-                 logging_callback_cls=DefaultLoggingCallback,
-                 logging_frequencies=None,
-                 logging_reduce_types=None,
                  **kwargs
                  ):
         """
@@ -93,6 +93,27 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
             If callable: it must be a logging handler class
         logging_kwargs : dict
             dictionary containing all logging keyword arguments
+        logging_callback_cls : class
+            the callback class to create and register for logging
+        logging_frequencies : int or dict
+            specifies how often to log for each key.
+            If int: integer will be applied to all valid keys
+            if dict: should contain a frequency per valid key. Missing keys
+                will be filled with a frequency of 1 (log every time)
+            None is equal to empty dict here.
+        logging_reduce_types : str of FunctionType or dict
+            if str:
+                specifies the reduction type to use. Valid types are
+                'last' | 'first' | 'mean' | 'median' | 'max' | 'min'.
+                The given type will be mapped to all valid keys.
+            if FunctionType:
+                specifies the actual reduction function. Will be applied
+                for all keys.
+            if dict: should contain pairs of valid logging keys and either
+                str or FunctionType. Specifies the logging value per key.
+                Missing keys will be filles with a default value of 'last'.
+                Valid types for strings are
+                'last' | 'first' | 'mean' 'median' | 'max' | 'min'.
         fold : int
             current cross validation fold (0 per default)
         callbacks : list
@@ -111,27 +132,6 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
             model (a value of 1 denotes validating every epoch,
             a value of 2 denotes validating every second epoch etc.);
             defaults to 1
-        logging_callback_cls : class
-            the callback class to create and register for logging
-        logging_frequencies : int or dict
-            specifies how often to log for each key.
-            If int: integer will be applied to all valid keys
-            if dict: should contain a frequency per valid key. Missing keys
-                will be filled with a frequency of 1 (log every time)
-            None is equal to empty dict here.
-        logging_reduce_types : str of FunctionType or dict
-            if str:
-                specifies the reduction type to use. Valid types are
-                'last' | 'first' | 'mean' | 'max' | 'min'.
-                The given type will be mapped to all valid keys.
-            if FunctionType:
-                specifies the actual reduction function. Will be applied
-                for all keys.
-            if dict: should contain pairs of valid logging keys and either
-                str or FunctionType. Specifies the logging value per key.
-                Missing keys will be filles with a default value of 'last'.
-                Valid types for strings are
-                'last' | 'first' | 'mean' | 'max' | 'min'.
         **kwargs :
             Additional keyword arguments
 
@@ -165,15 +165,15 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
                          key_mapping=key_mapping,
                          logging_type=logging_type,
                          logging_kwargs=logging_kwargs,
+                         logging_callback_cls=logging_callback_cls,
+                         logging_frequencies=logging_frequencies,
+                         logging_reduce_types=logging_reduce_types,
                          fold=fold,
                          callbacks=callbacks,
                          start_epoch=start_epoch,
                          metric_keys=metric_keys,
                          convert_batch_to_npy_fn=convert_batch_to_npy_fn,
                          val_freq=val_freq,
-                         logging_callback_cls=logging_callback_cls,
-                         logging_frequencies=logging_frequencies,
-                         logging_reduce_types=logging_reduce_types,
                          **kwargs
                          )
 
