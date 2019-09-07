@@ -6,8 +6,7 @@ import warnings
 from .codecs import Encoder, Decoder
 
 import json
-import yaml
-import pickle
+import argparse
 
 
 def non_string_warning(func):
@@ -89,28 +88,16 @@ class Config(dict):
                     return False
             return (final_key in current_level)
 
-    @staticmethod
-    def create_from_dict(value, val_copy=False):
-        assert isinstance(value, dict)
-        new_config = Config()
-        for key, item in value.items():
-            if isinstance(item, dict):
-                item = Config.create_from_dict(item, val_copy=val_copy)
-            if val_copy:
-                new_config[key] = copy.deepcopy(item)
-            else:
-                new_config[key] = item
-        return new_config
-
-    def update(self, update_dict, val_copy=False, overwrite=False):
+    def update(self, update_dict, deepcopy=False, overwrite=False):
         for key, item in update_dict.items():
             if key in self:
                 if isinstance(item, dict):
-                    self[key].update(update_dict[key], val_copy=val_copy,
+                    self[key].update(update_dict[key],
+                                     deepcopy=deepcopy,
                                      overwrite=overwrite)
                 else:
                     if overwrite:
-                        if val_copy:
+                        if deepcopy:
                             self[key] = copy.deepcopy(item)
                         else:
                             self[key] = item
@@ -120,41 +107,55 @@ class Config(dict):
             else:
                 if isinstance(item, dict) and not isinstance(item, Config):
                     self[key] = Config.create_from_dict(
-                        item, val_copy=val_copy)
+                        item, deepcopy=deepcopy)
                 else:
-                    if val_copy:
+                    if deepcopy:
                         self[key] = copy.deepcopy(item)
                     else:
                         self[key] = item
 
-    def dump(self, path, format_fn=json.dump, **kwargs):
-        encoded_self = Encoder().encode(self)
+    def dump(self, path, format_fn=json.dump, encoder_cls=Encoder, **kwargs):
+        encoded_self = encoder_cls().encode(self)
         with open(path, "w") as f:
             format_fn(encoded_self, f, **kwargs)
 
-    def dumps(self, format_fn=json.dumps, **kwargs):
-        encoded_self = Encoder().encode(self)
+    def dumps(self, format_fn=json.dumps, encoder_cls=Encoder, **kwargs):
+        encoded_self = encoder_cls().encode(self)
         return format_fn(encoded_self, **kwargs)
 
-    # TODO: loading from argparse
     @classmethod
-    def load(cls, path, format_fn=json.load, **kwargs):
+    def load(cls, path, format_fn=json.load, decoder_cls=Decoder, **kwargs):
         with open(path, "r") as f:
             decoded_format = format_fn(f, **kwargs)
-        return Decoder().decode(decoded_format)
+        return decoder_cls().decode(decoded_format)
 
     @classmethod
-    def loads(cls, data, format_fn=json.loads, **kwargs):
+    def loads(cls, data, format_fn=json.loads, decoder_cls=Decoder, **kwargs):
         decoded_format = format_fn(data, **kwargs)
-        return Decoder().decode(decoded_format)
+        return decoder_cls().decode(decoded_format)
 
-    # TODO: check if copy and deepcopy works out of the box
-    #  (If it does, we don't need these methods at all)
-    # def __copy__(self, *args, **kwargs):
-    #     super().__copy__(*args, **kwargs)
+    @classmethod
+    def create_from_dict(cls, value, deepcopy=False):
+        assert isinstance(value, dict)
+        new_config = cls()
+        for key, item in value.items():
+            if isinstance(item, dict):
+                item = Config.create_from_dict(item, deepcopy=deepcopy)
+            if deepcopy:
+                new_config[key] = copy.deepcopy(item)
+            else:
+                new_config[key] = item
+        return new_config
 
-    # def __deepcopy__(self, *args, **kwargs):
-    #     super().__deepcopy__(*args, **kwargs)
+    @classmethod
+    def create_from_argparse(cls, args, deepcopy=False):
+        if isinstance(args, argparse.ArgumentParser):
+            args_parsed = args.parse_args()
+            return cls.create_from_dict(vars(args_parsed))
+        elif isinstance(args, argparse.Namespace):
+            return cls.create_from_dict(vars(args))
+        else:
+            raise TypeError("Type of args not supported.")
 
     # TODO: logging as string
     def log_as_string(self):
@@ -163,8 +164,6 @@ class Config(dict):
     # TODO: logging as hyperparameters
     def log_as_hyperparameter(self):
         raise NotImplementedError
-
-    # TODO: save_get: like default dict
 
 
 class LookupConfig(Config):

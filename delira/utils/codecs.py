@@ -6,6 +6,8 @@ import numpy as np
 import logging
 import typing
 
+# TODO: dict cls, list cls check
+
 
 class Encoder:
     def __call__(self, obj) -> str:
