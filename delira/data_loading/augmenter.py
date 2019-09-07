@@ -238,6 +238,9 @@ class _ParallelAugmenter(AbstractAugmenter):
             # make the process daemonic and start it
             process.daemon = True
             process.start()
+            # wait until process was created and started
+            while not process.is_alive():
+                pass
 
             # append process and pipes to list
             self._processes.append(process)
@@ -325,10 +328,6 @@ class _ParallelAugmenter(AbstractAugmenter):
         """
         # switching to next worker
         _data_pipe = self._next_data_pipe
-
-        # switch to next worker while worker does not have any data enqueued
-        while not self._data_queued[_data_pipe]:
-            _data_pipe = self._next_data_pipe
 
         # receive data from worker
         data = self._data_pipes[_data_pipe].recv()
