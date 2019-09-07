@@ -2,7 +2,6 @@ import copy
 from delira.utils.time import now
 from delira._version import get_versions
 from nested_lookup import nested_lookup
-from delira.utils._external import Config
 import warnings
 from .codecs import Encoder, Decoder
 
@@ -25,13 +24,9 @@ def non_string_warning(func):
 
 
 class Config(dict):
-    def __init__(self, dict_like, deep=False, overwrite=False, save_get=None,
-                 **kwargs):
+    def __init__(self):
         super().__init__()
         self.__dict__ = self
-        self._save_get = save_get
-        self.update(dict_like, val_copy=deep, overwrite=overwrite)
-        self.update(kwargs, val_copy=deep, overwrite=overwrite)
 
     @non_string_warning
     def __setattr__(self, key, value):
@@ -58,31 +53,25 @@ class Config(dict):
 
     @non_string_warning
     def __getitem__(self, key):
-        try:
-            if not isinstance(key, str) or '.' not in key:
+        if not isinstance(key, str) or '.' not in key:
+            try:
+                return super().__getitem__(int(key))
+            except (KeyError, ValueError):
+                return super().__getitem__(key)
+        else:
+            current_level = self
+            key_split = key.split(".")
+            final_key = key_split.pop(-1)
+            for k in key_split:
+                # traverse to needed dict
                 try:
-                    return super().__getitem__(int(key))
+                    current_level = current_level[int(k)]
                 except (KeyError, ValueError):
-                    return super().__getitem__(key)
-            else:
-                current_level = self
-                key_split = key.split(".")
-                final_key = key_split.pop(-1)
-                for k in key_split:
-                    # traverse to needed dict
-                    try:
-                        current_level = current_level[int(k)]
-                    except (KeyError, ValueError):
-                        current_level = current_level[k]
-                try:
-                    return current_level[int(final_key)]
-                except (KeyError, ValueError):
-                    return current_level[final_key]
-        except (KeyError, ValueError) as e:
-            if self._save_get is not None:
-                return self._save_get
-            else:
-                raise e
+                    current_level = current_level[k]
+            try:
+                return current_level[int(final_key)]
+            except (KeyError, ValueError):
+                return current_level[final_key]
 
     @non_string_warning
     def __contains__(self, key):
@@ -94,10 +83,10 @@ class Config(dict):
             final_key = key_split.pop(-1)
             for k in key_split:
                 # traverse to needed dict
-                if isinstance(current_level, dict) or k not in current_level:
-                    return False
-                else:
+                if isinstance(current_level, dict) and (k in current_level):
                     current_level = current_level[k]
+                else:
+                    return False
             return (final_key in current_level)
 
     @staticmethod
