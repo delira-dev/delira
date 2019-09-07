@@ -260,6 +260,12 @@ class BaseNetworkTrainer(Predictor):
         **kwargs :
             keyword arguments
 
+        Notes
+        -----
+        All callbacks receive a `val_score_key`, an `epoch` and a
+        `num_epochs` argument as well as all keyword arguments, which might
+        be passed from subclasses
+
         """
 
         # execute all callbacks
@@ -286,6 +292,12 @@ class BaseNetworkTrainer(Predictor):
             total number of epochs
         **kwargs :
             keyword arguments
+
+        Notes
+        -----
+        All callbacks receive a `metrics_val`, a `val_score_key`, an_epoch
+        and a `is_best` argument as well as all keyword arguments, which
+        might be passed from subclasses
 
         """
 
@@ -315,6 +327,11 @@ class BaseNetworkTrainer(Predictor):
         **kwargs :
             additional keyword arguments (forwarded to callback calls)
 
+        Notes
+        -----
+        All callbacks receive a `data_dict`, an `iter_num` and an epoch as
+        well as all keyword arguments, which might be passed from subclasses
+
         """
         for cb in self._callbacks:
             self._update_state(cb.at_iter_begin(
@@ -335,6 +352,12 @@ class BaseNetworkTrainer(Predictor):
             number of current epoch
         **kwargs :
             additional keyword arguments (forwarded to callback calls)
+
+        Notes
+        -----
+        All callbacks receive a `data_dict`, an `iter_num` and a
+        `global_iter_num` as well as all keyword arguments, which might be
+        passed from subclasses
 
         """
 

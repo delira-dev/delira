@@ -172,6 +172,11 @@ class Predictor(object):
         dict
             combined dicts returned by the callbacks
 
+        Notes
+        -----
+        All callbacks receive a `data_dict` and an `iter_num` as well as all
+        keyword arguments, which might be passed from subclasses
+
         """
         return_dict = {}
         for cb in self._callbacks:
@@ -197,12 +202,20 @@ class Predictor(object):
         dict
             combined dicts returned by the callbacks
 
+        Notes
+        -----
+        All callbacks receive a `data_dict`, an `iter_num` and a
+        `global_iter_num` as well as all keyword arguments, which might be
+        passed from subclasses
+
         """
+
+        global_iter_num = kwargs.pop("global_iter_num", iter_num)
         return_dict = {}
         for cb in self._callbacks:
             return_dict.update(cb.at_iter_end(data_dict=data_dict,
                                               iter_num=iter_num,
-                                              global_iter_num=iter_num,
+                                              global_iter_num=global_iter_num,
                                               **kwargs))
 
         return return_dict
