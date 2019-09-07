@@ -40,7 +40,7 @@ class AbstractCallback(object):
 
         Notes
         -----
-        The basetrainer calls the callbacks with the following additional 
+        The basetrainer calls the callbacks with the following additional
         arguments: `val_metrics`(dict), `val_score_key`(str), `curr_epoch`(int)
         """
         return {}
@@ -63,7 +63,7 @@ class AbstractCallback(object):
 
         Notes
         -----
-        The basetrainer calls the callbacks with the following additional 
+        The basetrainer calls the callbacks with the following additional
         arguments: `val_metrics`(dict), `val_score_key`(str), `curr_epoch`(int)
         """
         return {}
