@@ -32,7 +32,6 @@ class BaseNetworkTrainer(Predictor):
                        "output_device",
                        "_callbacks"]
 
-    # TODO: Add new logging arguments to other trainers!
     def __init__(self,
                  network: AbstractNetwork,
                  save_path: str,

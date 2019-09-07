@@ -1,180 +1,10 @@
 from multiprocessing import Queue, Event
 from queue import Full
 from delira.logging.base_backend import BaseBackend
+from delira.utils.dict_reductions import get_reduction, possible_reductions, \
+    reduce_dict
 import logging
-import numpy as np
 from types import FunctionType
-from collections import Iterable, MutableMapping
-
-
-# Reduction Functions
-def _reduce_last(items: list):
-    """
-    Reduction Function returning the last element
-
-    Parameters
-    ----------
-    items : list
-        the items to reduce
-
-    Returns
-    -------
-    dict
-        reduced items
-
-    """
-    return items[-1]
-
-
-def _reduce_first(items: list):
-    """
-    Reduction Function returning the first element
-
-    Parameters
-    ----------
-    items : list
-        the items to reduce
-
-    Returns
-    -------
-    dict
-        reduced items
-
-    """
-    return items[0]
-
-
-def _reduce_mean(items: list):
-    """
-    Reduction Function returning the mean element
-
-    Parameters
-    ----------
-    items : list
-        the items to reduce
-
-    Returns
-    -------
-    dict
-        reduced items
-
-    """
-    return np.mean(items)
-
-
-def _reduce_max(items: list):
-    """
-    Reduction Function returning the max element
-
-    Parameters
-    ----------
-    items : list
-        the items to reduce
-
-    Returns
-    -------
-    dict
-        reduced items
-
-    """
-    return np.max(items)
-
-
-def _reduce_min(items: list):
-    """
-    Reduction Function returning the min element
-
-    Parameters
-    ----------
-    items : list
-        the items to reduce
-
-    Returns
-    -------
-    dict
-        reduced items
-
-    """
-    return np.min(items)
-
-
-def _flatten_dict(d, parent_key='', sep='.'):
-    items = []
-    for k, v in d.items():
-        new_key = parent_key + sep + k if parent_key else k
-        if isinstance(v, MutableMapping):
-            items.extend(_flatten_dict(v, new_key, sep=sep).items())
-        else:
-            items.append((new_key, v))
-    return type(d)(items)
-
-
-def _unflatten_dict(dictionary, sep="."):
-    return_dict = {}
-    for key, value in dictionary.items():
-        parts = key.split(sep)
-        d = return_dict
-        for part in parts[:-1]:
-            if part not in d:
-                d[part] = dict()
-            d = d[part]
-        d[parts[-1]] = value
-    return return_dict
-
-
-def _reduce_dict(items: list, reduce_fn):
-    """
-    A function to reduce all entries inside a dict
-
-    Parameters
-    ----------
-    items : list
-        a list of dicts to reduce
-    reduce_fn : FunctionType
-        a function to apply to all non-equal iterables
-
-    Returns
-    -------
-    dict
-        the reduced dict
-
-    """
-
-    result_dict = {}
-    # assuming the type of all items is same for all queued logging dicts and
-    # all dicts have the same keys
-
-    flattened_dicts = [_flatten_dict(_tmp, sep=".") for _tmp in items]
-
-    # from list of dicts to dict of lists:
-    for d in flattened_dicts:
-        for k, v in d.items():
-            try:
-                result_dict[k].append(v)
-            except KeyError:
-                result_dict[k] = [v]
-
-    for k, v in result_dict.items():
-        # check if all items are equal
-        if all([_v == v[0] for _v in v[1:]]):
-            # use first item since they are equal
-            result_dict[k] = v[0]
-        else:
-            # apply reduce function
-            result_dict[k] = reduce_fn(v)
-
-    # unflatten reduced dict
-    return _unflatten_dict(result_dict, sep=".")
-
-
-# string mapping for reduction functions
-_REDUCTION_FUNCTIONS = {
-    "last": _reduce_last,
-    "first": _reduce_first,
-    "mean": _reduce_mean,
-    "max": _reduce_max,
-    "min": _reduce_min
-}
 
 
 class Logger(object):
@@ -205,7 +35,7 @@ class Logger(object):
         reduce_types : str of FunctionType or dict
             if str:
                 specifies the reduction type to use. Valid types are
-                'last' | 'first' | 'mean' | 'max' | 'min'.
+                'last' | 'first' | 'mean' | 'median' | 'max' | 'min'.
                 The given type will be mapped to all valid keys.
             if FunctionType:
                 specifies the actual reduction function. Will be applied for
@@ -218,7 +48,7 @@ class Logger(object):
         level : int
             the logging value to use if passing the logging message to
             python's logging module because it is not appropriate for logging
-            with the assigned logging backend
+            with the assigned logging backendDict[str, Callable]
 
         Warnings
         --------
@@ -279,11 +109,11 @@ class Logger(object):
                 # check it is either valid string or already function type
                 else:
                     if not isinstance(reduce_types, FunctionType):
-                        assert reduce_types[k] in _REDUCTION_FUNCTIONS.keys()
+                        assert reduce_types[k] in possible_reductions
                         reduce_types[k] = str(reduce_types[k])
                 # map all strings to actual functions
                 if isinstance(reduce_types[k], str):
-                    reduce_types[k] = _REDUCTION_FUNCTIONS[reduce_types[k]]
+                    reduce_types[k] = get_reduction[reduce_types[k]]
 
         else:
             raise TypeError("Invalid Type for logging reductions: %s"
@@ -342,7 +172,7 @@ class Logger(object):
                         if (len(self._logging_queues[k])
                                 % self._logging_frequencies[k] == 0):
                             # reduce elements inside queue
-                            reduce_message = _reduce_dict(
+                            reduce_message = reduce_dict(
                                 self._logging_queues[k], self._reduce_types[k])
                             # flush reduced elements
                             self._flush_queue.put_nowait(reduce_message)
