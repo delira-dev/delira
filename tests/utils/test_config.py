@@ -23,7 +23,7 @@ class ConfigTest(unittest.TestCase):
 
     def test_config_access(self):
         # initialization from dict
-        cf = self.config_cls.create_from_dict(self.example_dict)
+        cf = self.config_cls(self.example_dict)
         self.assertEqual(cf["shallowStr"], self.example_dict["shallowStr"])
         self.assertEqual(cf["shallowNum"], self.example_dict["shallowNum"])
 

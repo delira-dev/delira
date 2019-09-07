@@ -6,23 +6,23 @@ import numpy as np
 import logging
 import typing
 
-# TODO: dict cls, list cls check
-
 
 class Encoder:
     def __call__(self, obj) -> str:
         return self.encode(obj)
 
     def encode(self, obj) -> str:
+        # use type() to check for dict and list because type() does not
+        # consider subtypes which is the desired behaviour in this case
         if isinstance(obj, (str, int, float)):
             # end recursion
             return obj
         elif obj is None:
             return obj
-        elif isinstance(obj, dict):
+        elif type(obj) == dict:
             # end recursion
             return self._encode_dict(obj)
-        elif isinstance(obj, list):
+        elif type(obj) == list:
             # end recursion
             return self._encode_list(obj)
         elif isinstance(obj, np.ndarray):

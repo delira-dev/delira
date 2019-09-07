@@ -23,13 +23,15 @@ def non_string_warning(func):
 
 
 class Config(dict):
-    def __init__(self):
+    def __init__(self, dict_like=None):
         super().__init__()
         self.__dict__ = self
+        if dict_like is not None:
+            self.update(dict_like)
 
     @non_string_warning
     def __setattr__(self, key, value):
-        if isinstance(value, dict) and not isinstance(value, Config):
+        if isinstance(value, dict) and not isinstance(value, type(self)):
             # convert dict to config for additional funtionality
             value = Config.create_from_dict(value)
         super().__setattr__(key, value)
@@ -214,24 +216,6 @@ class LookupConfig(Config):
                 raise KeyError("No Value found for key %s" % key)
         else:
             return results[0]
-
-    def __setattr__(self, key, value):
-        """
-        Modified to automatically convert `dict` to LookupConfig.
-
-        Parameters
-        ----------
-        key : str
-            the key which should be set
-        value : Any
-            the corresponding value to set the key to.
-
-        """
-
-        if isinstance(value, dict) and not isinstance(value, LookupConfig):
-            value = LookupConfig(config=value)
-
-        return super().__setattr__(key, value)
 
 
 class DeliraConfig(LookupConfig):
