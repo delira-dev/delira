@@ -69,7 +69,7 @@ class LoggingFrequencyTestCase(unittest.TestCase):
             for idx in range(num_runs):
                 logger.log({"text": {"logging_no": idx, "tag": "dummy"}})
 
-                target_messages += int((idx+1) % check_freq == 0)
+                target_messages += int((idx + 1) % check_freq == 0)
 
         self.assertIsNotNone(cm.output)
         self.assertEqual(target_messages, len(cm.output))
@@ -79,6 +79,7 @@ class LoggingFrequencyTestCase(unittest.TestCase):
                                            [None, None, None, 15]):
             with self.subTest(frequencies=frequencies):
                 self._logging_freq_test(frequencies, 50, check_freq)
+
 
 if __name__ == '__main__':
     unittest.main()
