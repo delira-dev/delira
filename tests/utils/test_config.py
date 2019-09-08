@@ -2,8 +2,11 @@ import unittest
 import os
 import copy
 import argparse
+from delira._version import get_versions
 
 from delira.utils.config import Config, LookupConfig, DeliraConfig
+from delira.logging import Logger, TensorboardBackend, make_logger, \
+    register_logger
 # TODO: skips
 
 
@@ -21,6 +24,14 @@ class ConfigTest(unittest.TestCase):
             "nestedList": [{"dictList": [1, 2, 3]}],
             "nestedList2": [{"dictList": [1, 2, 3]}],
         }
+
+        self._logger = self._setup_logger()
+        register_logger(self._logger, __file__)
+
+    def _setup_logger(self):
+        return make_logger(TensorboardBackend(
+            {"logdir": os.path.join(".", "runs", self._testMethodName)}
+        ))
 
     def test_config_access(self):
         # initialization from dict
@@ -103,10 +114,10 @@ class ConfigTest(unittest.TestCase):
         cf = self.config_cls.create_from_dict(self.example_dict)
 
         # check dump
-        cf.dump(os.path.join(".", "test_config.json"))
+        cf.dump(os.path.join(".", "test_config.yaml"))
 
         # check load
-        cf_loaded = self.config_cls.load(os.path.join(".", "test_config.json"))
+        cf_loaded = self.config_cls.load(os.path.join(".", "test_config.yaml"))
         self.assertDictEqual(cf, cf_loaded)
 
         # check dump
@@ -145,6 +156,10 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(cf1['p1'], 'parameter1')
         self.assertEqual(cf1['param2'], 'parameter2')
 
+    def test_internal_type(self):
+        cf = self.config_cls.create_from_dict(self.example_dict)
+        self.assertTrue(type(cf["deep"]) == self.config_cls)
+
 
 class LookupConfigTest(ConfigTest):
     def setUp(self):
@@ -173,7 +188,7 @@ class DeliraConfigTest(LookupConfigTest):
         super().setUp()
         self.config_cls = DeliraConfig
 
-    def test_setter_and_getter(self):
+    def test_property_params(self):
         for mode in ["fixed", "variable"]:
             cf = self.config_cls.create_from_dict({})
             setattr(cf, "{}_params".format(mode),
@@ -203,10 +218,41 @@ class DeliraConfigTest(LookupConfigTest):
             self.assertEqual(params["variable.epochs"], 2)
 
     def test_logging_as_string(self):
-        pass
+        cf = self.config_cls()
+        cf.update({"augment": True})
+        cf.update({"fixed_model": "fm", "fixed_training": "ft",
+                   "variable_model": "vm", "variable_training": "vt"},
+                  overwrite=True)
 
-    def test_logging_as_hyperparameter(self):
-        pass
+        cf_str = cf.log_as_string()
+        cf_str_full = cf.log_as_string(full_config=True)
+
+        self.assertEqual(cf_str,
+                         ("__convert__:\n"
+                          "  repr:\n"
+                          "    fixed_model: fm\n"
+                          "    fixed_training: ft\n"
+                          "    variable_model: vm\n"
+                          "    variable_training: vt\n"
+                          "  type:\n"
+                          "    __type__:\n"
+                          "      module: delira.utils.config\n"
+                          "      name: LookupConfig\n"))
+
+        self.assertEqual(cf_str_full,
+                         ("__convert__:\n"
+                          "  repr:\n"
+                          "    _version: {}\n"
+                          "    augment: true\n"
+                          "    fixed_model: fm\n"
+                          "    fixed_training: ft\n"
+                          "    variable_model: vm\n"
+                          "    variable_training: vt\n"
+                          "  type:\n"
+                          "    __type__:\n"
+                          "      module: delira.utils.config\n"
+                          "      name: DeliraConfig\n".format(
+                             get_versions()["version"])))
 
 
 if __name__ == '__main__':

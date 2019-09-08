@@ -1,11 +1,10 @@
 import copy
-from delira.utils.time import now
 from delira._version import get_versions
 from nested_lookup import nested_lookup
 import warnings
 from .codecs import Encoder, Decoder
 
-import json
+import yaml
 import argparse
 
 
@@ -32,10 +31,7 @@ class Config(dict):
 
     @non_string_warning
     def __setattr__(self, key, value):
-        if isinstance(value, dict) and not isinstance(value, type(self)):
-            # convert dict to config for additional functionality
-            value = Config(value)
-        super().__setattr__(key, value)
+        super().__setattr__(key, self._to_config(value))
 
     @non_string_warning
     def __setitem__(self, key, value):
@@ -43,15 +39,10 @@ class Config(dict):
             super().__setitem__(key, value)
         else:
             current_level = self
-            key_split = key.split(".")
-            final_key = key_split.pop(-1)
-            for k in key_split:
-                # traverse to needed dict
-                if k not in current_level:
-                    new_config = Config()
-                    current_level[k] = new_config
-                current_level = current_level[k]
-            current_level[final_key] = value
+            keys = key.split(".")
+            final_key = keys.pop(-1)
+            final_dict = self._traverse_keys(keys, create=True)
+            final_dict._set_internal_item(final_key, value)
 
     @non_string_warning
     def __getitem__(self, key):
@@ -61,79 +52,94 @@ class Config(dict):
             except (KeyError, ValueError):
                 return super().__getitem__(key)
         else:
-            current_level = self
-            key_split = key.split(".")
-            final_key = key_split.pop(-1)
-            for k in key_split:
-                # traverse to needed dict
-                try:
-                    current_level = current_level[int(k)]
-                except (KeyError, ValueError):
-                    current_level = current_level[k]
-            try:
-                return current_level[int(final_key)]
-            except (KeyError, ValueError):
-                return current_level[final_key]
+            return self._traverse_keys(key.split("."), create=False)
 
     @non_string_warning
     def __contains__(self, key):
-        if not isinstance(key, str) or '.' not in key:
-            return super().__contains__(key)
-        else:
-            current_level = self
-            key_split = key.split(".")
-            final_key = key_split.pop(-1)
-            for k in key_split:
-                # traverse to needed dict
-                if isinstance(current_level, dict) and (k in current_level):
-                    current_level = current_level[k]
-                else:
-                    return False
-            return (final_key in current_level)
+        contain = True
+        try:
+            self[key]
+        except KeyError:
+            contain = False
+        return contain
+
+    def __str__(self):
+        return self.dumps()
+
+    def _traverse_keys(self, keys, create=False):
+        current_level = self
+        for k in keys:
+            if k not in current_level:
+                current_level[k] = self._create_internal_dict()
+            # traverse to needed dict
+            current_level = current_level._try_key(k)
+        return current_level
+
+    def _try_key(self, key):
+        try:
+            return self[int(key)]
+        except (KeyError, ValueError):
+            return self[key]
 
     def update(self, update_dict, deepcopy=False, overwrite=False):
         for key, item in update_dict.items():
-            if key in self:
-                if isinstance(item, dict):
-                    self[key].update(update_dict[key],
-                                     deepcopy=deepcopy,
-                                     overwrite=overwrite)
-                else:
-                    if overwrite:
-                        if deepcopy:
-                            self[key] = copy.deepcopy(item)
-                        else:
-                            self[key] = item
-                    else:
-                        raise ValueError("{} already in config. Can "
-                                         "not overwrite value.".format(key))
-            else:
-                if isinstance(item, dict) and not isinstance(item, type(self)):
-                    self[key] = Config(item)
-                else:
-                    if deepcopy:
-                        self[key] = copy.deepcopy(item)
-                    else:
-                        self[key] = item
+            # check for overwrite
+            self._raise_overwrite(key, overwrite=overwrite)
+            # update items individually
+            self._update(key, item, deepcopy=deepcopy, overwrite=overwrite)
 
-    def dump(self, path, format_fn=json.dump, encoder_cls=Encoder, **kwargs):
-        encoded_self = encoder_cls().encode(self)
-        with open(path, "w") as f:
-            format_fn(encoded_self, f, **kwargs)
+    def _update(self, key, item, deepcopy=False, overwrite=False):
+        if isinstance(item, dict):
+            # update nested dicts
+            if key not in self:
+                self[key] = self._create_internal_dict({})
+            self[key].update(item, deepcopy=deepcopy, overwrite=overwrite)
+        else:
+            # set item
+            self._set_internal_item(key, item, deepcopy=deepcopy)
 
-    def dumps(self, format_fn=json.dumps, encoder_cls=Encoder, **kwargs):
-        encoded_self = encoder_cls().encode(self)
-        return format_fn(encoded_self, **kwargs)
+    def _raise_overwrite(self, key, overwrite):
+        if key in self and not overwrite:
+            raise ValueError("{} already in config. Can "
+                             "not overwrite value.".format(key))
+
+    def _set_internal_item(self, key, item, deepcopy=False):
+        config_item = self._to_config(item)
+        if deepcopy:
+            self[key] = copy.deepcopy(config_item)
+        else:
+            self[key] = config_item
+
+    @staticmethod
+    def _create_internal_dict(*args, **kwargs):
+        return Config(*args, **kwargs)
 
     @classmethod
-    def load(cls, path, format_fn=json.load, decoder_cls=Decoder, **kwargs):
+    def _to_config(cls, item):
+        if isinstance(item, dict) and not isinstance(item, cls):
+            # convert dict to config for additional functionality
+            return cls._create_internal_dict(item)
+        else:
+            return item
+
+    def dump(self, path, formatter=yaml.dump, encoder_cls=Encoder, **kwargs):
+        encoded_self = encoder_cls().encode(self)
+        with open(path, "w") as f:
+            formatter(encoded_self, f, **kwargs)
+
+    def dumps(self, formatter=yaml.dump, encoder_cls=Encoder, **kwargs):
+        encoded_self = encoder_cls().encode(self)
+        return formatter(encoded_self, **kwargs)
+
+    @classmethod
+    def load(cls, path, formatter=yaml.load, decoder_cls=Decoder, **kwargs):
         with open(path, "r") as f:
-            decoded_format = format_fn(f, **kwargs)
+            decoded_format = formatter(f, **kwargs)
         return decoder_cls().decode(decoded_format)
 
     @classmethod
-    def loads(cls, data, format_fn=json.loads, decoder_cls=Decoder, **kwargs):
-        decoded_format = format_fn(data, **kwargs)
+    def loads(cls, data, formatter=yaml.load, decoder_cls=Decoder, **kwargs):
+        decoded_format = formatter(data, **kwargs)
         return decoder_cls().decode(decoded_format)
 
     @classmethod
@@ -165,6 +171,10 @@ class LookupConfig(Config):
     Helper class to have nested lookups in all subdicts of Config
 
     """
+
+    @staticmethod
+    def _create_internal_dict(*args, **kwargs):
+        return LookupConfig(*args, **kwargs)
 
     def nested_get(self, key, *args, **kwargs):
         """
@@ -217,8 +227,14 @@ class DeliraConfig(LookupConfig):
         self.fixed_training = LookupConfig()
         self.variable_model = LookupConfig()
         self.variable_training = LookupConfig()
-        self._timestamp = now()
         self._version = get_versions()["version"]
+
+    @property
+    def params(self):
+        return LookupConfig(fixed_model=self.fixed_model,
+                            fixed_training=self.fixed_training,
+                            variable_model=self.variable_model,
+                            variable_training=self.variable_training)
 
     @property
     def variable_params(self):
@@ -294,12 +310,12 @@ class DeliraConfig(LookupConfig):
         self.fixed_training.update(new_params["fixed"])
         self.variable_training.update(new_params["variable"])
 
-    # TODO: logging as string
-    def log_as_string(self):
-        raise NotImplementedError
+    def log_as_string(self, full_config=False, **kwargs):
+        from delira.logging import log
 
-    # TODO: logging as hyperparameters
-    def log_as_hyperparameter(self):
-        raise NotImplementedError
-
-    # TODO: overwrite class in LookupConfig for creation
+        if full_config:
+            str_repr = self.dumps(**kwargs)
+        else:
+            str_repr = self.params.dumps(**kwargs)
+        log({'text': {"text_string": str_repr, "tag": "DeliraConfig"}})
+        return str_repr
