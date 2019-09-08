@@ -230,6 +230,7 @@ class DeliraConfigTest(LookupConfigTest):
         self.assertEqual(cf_str,
                          ("__convert__:\n"
                           "  repr:\n"
+                          "    _timestamp: {}\n"
                           "    fixed_model: fm\n"
                           "    fixed_training: ft\n"
                           "    variable_model: vm\n"
@@ -237,11 +238,13 @@ class DeliraConfigTest(LookupConfigTest):
                           "  type:\n"
                           "    __type__:\n"
                           "      module: delira.utils.config\n"
-                          "      name: LookupConfig\n"))
+                          "      name: LookupConfig\n".format(
+                              cf["_timestamp"])))
 
         self.assertEqual(cf_str_full,
                          ("__convert__:\n"
                           "  repr:\n"
+                          "    _timestamp: {}\n"
                           "    _version: {}\n"
                           "    augment: true\n"
                           "    fixed_model: fm\n"
@@ -252,7 +255,7 @@ class DeliraConfigTest(LookupConfigTest):
                           "    __type__:\n"
                           "      module: delira.utils.config\n"
                           "      name: DeliraConfig\n".format(
-                             get_versions()["version"])))
+                              cf["_timestamp"], cf["_version"])))
 
 
 if __name__ == '__main__':
