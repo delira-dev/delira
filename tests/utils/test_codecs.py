@@ -56,15 +56,15 @@ class CodecsTest(unittest.TestCase):
         test_dict['class'] = {"__type__": {
             "module": "numpy", "name": "ndarray"}}
         test_dict["classargs"] = {"__classargs__":
-                                      {"module": "numpy",
-                                       "name": "ndarray",
-                                       "args": [[1, 2, 3]]
-                                       }
+                                  {"module": "numpy",
+                                   "name": "ndarray",
+                                   "args": [[1, 2, 3]]
+                                   }
                                   }
-        test_dict["funcargs"] = {"__functionargs__" :
-                                     {"module": "numpy",
-                                      "name": "min",
-                                      "kwargs": {"axis": (1, 2)}}
+        test_dict["funcargs"] = {"__functionargs__":
+                                 {"module": "numpy",
+                                  "name": "min",
+                                  "kwargs": {"axis": (1, 2)}}
                                  }
 
         decoded_dict = Decoder().decode(test_dict)

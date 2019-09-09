@@ -513,7 +513,7 @@ class Decoder:
         Parameters
         ----------
         obj : dict
-            dictionary which representes the function. Must include `module` 
+            dictionary which representes the function. Must include `module`
             and `name`. Can optionally include `args` and `kwargs` which are
             passed via `functool.partial`.
 
