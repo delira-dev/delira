@@ -11,7 +11,7 @@ tqdm
 visdom>=0.1.8.5
 pyyaml
 trixi-slim>0.1.2.1
-batchgenerators>=0.18.2,!=0.19.2,<19.4
+batchgenerators>=0.18.2,!=0.19.2,<0.19.4
 tensorboardX
 psutil
 nested_lookup
