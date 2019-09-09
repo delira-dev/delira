@@ -349,7 +349,7 @@ class Config(dict):
 
     def dumps(self, formatter=yaml.dump, encoder_cls=Encoder, **kwargs):
         """
-        Create a loadable string representation from the config and 
+        Create a loadable string representation from the config and
         add time stamp to config
 
         Parameters
@@ -386,7 +386,7 @@ class Config(dict):
         with open(path, "r") as f:
             decoded_format = formatter(f, **kwargs)
         decoded_format = decoder_cls().decode(decoded_format)
-        if type(decoded_format) != cls:
+        if not isinstance(decoded_format, cls):
             decoded_format = cls(decoded_format)
         return decoded_format
 
@@ -407,7 +407,7 @@ class Config(dict):
         """
         decoded_format = formatter(data, **kwargs)
         decoded_format = decoder_cls().decode(decoded_format)
-        if type(decoded_format) != cls:
+        if not isinstance(decoded_format, cls):
             decoded_format = cls(decoded_format)
         return decoded_format
 
@@ -567,8 +567,10 @@ class DeliraConfig(LookupConfig):
                      overwrite=True)
         self._update("variable_model", self.generate_dict(variable_model),
                      overwrite=True)
-        self._update("variable_training", self.generate_dict(variable_training),
-                     overwrite=True)
+        self._update(
+            "variable_training",
+            self.generate_dict(variable_training),
+            overwrite=True)
         self._version = get_versions()["version"]
 
     @staticmethod
@@ -732,7 +734,7 @@ class DeliraConfig(LookupConfig):
             if enabled the complete Config is logged, by default False.
             Otherwise only model and training parameters will be logged.
         kwargs:
-            keyword arguments passed to `self.dumps` method to create string 
+            keyword arguments passed to `self.dumps` method to create string
             representation
 
         Returns

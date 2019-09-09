@@ -158,7 +158,7 @@ class ConfigTest(unittest.TestCase):
 
     def test_internal_type(self):
         cf = self.config_cls.create_from_dict(self.example_dict)
-        self.assertTrue(type(cf["deep"]) == self.config_cls)
+        self.assertTrue(isinstance(cf["deep"], self.config_cls))
 
 
 class LookupConfigTest(ConfigTest):

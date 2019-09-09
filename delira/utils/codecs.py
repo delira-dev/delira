@@ -19,10 +19,10 @@ class Encoder:
             return obj
         elif obj is None:
             return obj
-        elif type(obj) == dict:
+        elif isinstance(obj, dict):
             # end recursion
             return self._encode_dict(obj)
-        elif type(obj) == list:
+        elif isinstance(obj, list):
             # end recursion
             return self._encode_list(obj)
         elif isinstance(obj, np.ndarray):
@@ -33,7 +33,7 @@ class Encoder:
             return self._encode_iterable(obj)
         elif isinstance(obj, types.ModuleType):
             return self._encode_module(obj)
-        elif inspect.isclass(obj) or type(obj) == type:
+        elif inspect.isclass(obj) or isinstance(obj, type):
             # use both ways to determine functions here
             # (the second uglier one serves as fallback here in case inspect
             # does not cover all cases)
