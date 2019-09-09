@@ -55,6 +55,17 @@ class CodecsTest(unittest.TestCase):
             "module": "numpy", "name": "amin"}}
         test_dict['class'] = {"__type__": {
             "module": "numpy", "name": "ndarray"}}
+        test_dict["classargs"] = {"__classargs__":
+                                      {"module": "numpy",
+                                       "name": "ndarray",
+                                       "args": [[1, 2, 3]]
+                                       }
+                                  }
+        test_dict["funcargs"] = {"__functionargs__" :
+                                     {"module": "numpy",
+                                      "name": "min",
+                                      "kwargs": {"axis": (1, 2)}}
+                                 }
 
         decoded_dict = Decoder().decode(test_dict)
 
@@ -74,6 +85,9 @@ class CodecsTest(unittest.TestCase):
             decoded_dict["class"].__module__ == np.ndarray.__module__)
         self.assertTrue(
             decoded_dict["class"].__name__ == np.ndarray.__name__)
+        self.assertTrue(test_dict["classargs"].shape == (1, 2, 3))
+        self.assertTrue(test_dict["funcargs"].args[0] == [])
+        self.assertTrue(test_dict["funcargs"].args[1]["axis"] == (1, 2))
 
 
 if __name__ == '__main__':
