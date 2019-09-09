@@ -10,7 +10,7 @@ pylint
 tqdm
 visdom>=0.1.8.5
 pyyaml
-batchgenerators>=0.18.2,!=0.19.2
+batchgenerators>=0.18.2,!=0.19.2,<0.19.4
 tensorboardX
 psutil
 nested_lookup
