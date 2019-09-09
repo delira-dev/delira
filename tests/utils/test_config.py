@@ -83,6 +83,11 @@ class ConfigTest(unittest.TestCase):
         self.assertTrue("deep.string" in cf)
         self.assertTrue("deep.string2" in cf)
 
+        warning_msg = ("The key 5 is not a string, but a <class 'int'>. "
+                       "This may lead to unwanted behavior!")
+        with self.assertWarns(RuntimeWarning, msg=warning_msg):
+            cf[5] = 10
+
     def test_update(self):
         cf = self.config_cls.create_from_dict(self.example_dict)
         with self.assertRaises(ValueError):

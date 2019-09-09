@@ -10,15 +10,28 @@ import argparse
 
 
 def non_string_warning(func):
-    def warning_wrapper(key, *args, **kwargs):
-        # if not isinstance(key, str):
-        #     warnings.warn("The key {} is not a string, but a {}. "
-        #                   "This may lead to unwanted behavior upon encoding "
-        #                   "and decoding!".format(key, type(key)),
-        #                   RuntimeWarning)
+    def warning_wrapper(config, key, *args, **kwargs):
+        """
+        Emit warning if non string keys are used
 
-        return func(key, *args, **kwargs)
+        Parameters
+        ----------
+        config: :class:`Config`
+            decorated function receive `self` as first argument
+        key : immutable type
+            key which is checked
 
+        Returns
+        -------
+        callable
+            original function with arguments
+        """
+        if not isinstance(key, str):
+            warnings.warn("The key {} is not a string, but a {}. "
+                          "This may lead to unwanted behavior!".format(
+                              key, type(key)), RuntimeWarning)
+
+        return func(config, key, *args, **kwargs)
     return warning_wrapper
 
 
@@ -37,8 +50,8 @@ class Config(dict):
         kwargs:
             additional arguments added to the config
 
-        Notes
-        -----
+        Warnings
+        --------
         If the short form of the nested settings is used integers and str
         can not be differentiated. Therefore, integers should be avoided.
 
