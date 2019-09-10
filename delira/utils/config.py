@@ -52,7 +52,7 @@ class Config(dict):
 
         Warnings
         --------
-        It is recommended to only use strings as keys inside the config. 
+        It is recommended to only use strings as keys inside the config.
         Because of the shortened access to nested keys the types of the
         keys are lost.
 
@@ -311,7 +311,7 @@ class Config(dict):
         key : str
             key which needs to be checked
         overwrite : bool
-            if overwrite is enabled no ValueError is raised even if the key 
+            if overwrite is enabled no ValueError is raised even if the key
             already exists
 
         Raises
