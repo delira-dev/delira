@@ -2,10 +2,14 @@ import unittest
 import numpy as np
 
 from delira.utils.codecs import Encoder, Decoder
-#TODO: skips
+
+from . import check_for_no_backend
 
 
 class CodecsTest(unittest.TestCase):
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
     def test_encoder(self):
         test_dict = {}
         test_dict['number'] = 1
@@ -39,6 +43,9 @@ class CodecsTest(unittest.TestCase):
         self.assertDictEqual(encoded_test_dict["class"], {
             "__type__": {"module": "numpy", "name": "ndarray"}})
 
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
     def test_decoder(self):
         test_dict = {}
         test_dict['number'] = 1

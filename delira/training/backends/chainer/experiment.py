@@ -4,7 +4,7 @@ from functools import partial
 from delira.models.backends.chainer import AbstractChainerNetwork
 from delira.data_loading import BaseDataManager
 from delira.training.base_experiment import BaseExperiment
-from delira.training.parameters import Parameters
+from delira.utils import DeliraConfig
 
 from delira.training.backends.chainer.utils import create_optims_default
 from delira.training.backends.chainer.utils import convert_to_numpy
@@ -13,7 +13,7 @@ from delira.training.backends.chainer.trainer import ChainerNetworkTrainer
 
 class ChainerExperiment(BaseExperiment):
     def __init__(self,
-                 params: typing.Union[str, Parameters],
+                 config: typing.Union[str, DeliraConfig],
                  model_cls: AbstractChainerNetwork,
                  n_epochs=None,
                  name=None,
@@ -28,10 +28,10 @@ class ChainerExperiment(BaseExperiment):
 
         Parameters
         ----------
-        params : :class:`Parameters` or str
-            the training parameters, if string is passed,
-            it is treated as a path to a pickle file, where the
-            parameters are loaded from
+        config : :class:`DeliraConfig` or str
+            the training config, if string is passed,
+            it is treated as a path to a file, where the
+            config is loaded from
         model_cls : Subclass of :class:`AbstractChainerNetwork`
             the class implementing the model to train
         n_epochs : int or None
@@ -67,7 +67,7 @@ class ChainerExperiment(BaseExperiment):
 
         if key_mapping is None:
             key_mapping = {"x": "data"}
-        super().__init__(params=params, model_cls=model_cls,
+        super().__init__(config=config, model_cls=model_cls,
                          n_epochs=n_epochs, name=name, save_path=save_path,
                          key_mapping=key_mapping,
                          val_score_key=val_score_key,

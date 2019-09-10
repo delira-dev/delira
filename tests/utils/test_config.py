@@ -7,8 +7,8 @@ from delira._version import get_versions
 from delira.utils.config import Config, LookupConfig, DeliraConfig
 from delira.logging import Logger, TensorboardBackend, make_logger, \
     register_logger
-# TODO: skips
 
+from . import check_for_no_backend
 
 class ConfigTest(unittest.TestCase):
     def setUp(self):
@@ -33,6 +33,9 @@ class ConfigTest(unittest.TestCase):
             {"logdir": os.path.join(".", "runs", self._testMethodName)}
         ))
 
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
     def test_config_access(self):
         # initialization from dict
         cf = self.config_cls(self.example_dict)
@@ -88,6 +91,9 @@ class ConfigTest(unittest.TestCase):
         with self.assertWarns(RuntimeWarning, msg=warning_msg):
             cf[5] = 10
 
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
     def test_update(self):
         cf = self.config_cls.create_from_dict(self.example_dict)
         with self.assertRaises(ValueError):
@@ -115,6 +121,9 @@ class ConfigTest(unittest.TestCase):
         self.assertNotEqual(self.update_dict["nestedList2"][0]["dictList"][0],
                             cf["nestedList2"][0]["dictList"][0])
 
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
     def test_dump_and_load(self):
         cf = self.config_cls.create_from_dict(self.example_dict)
         path = os.path.join(".", "test_config.yaml")
@@ -140,6 +149,9 @@ class ConfigTest(unittest.TestCase):
         cf_loaded_str = self.config_cls.create_from_str(cf_string)
         self.assertDictEqual(cf, cf_loaded_str)
 
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
     def test_copy(self):
         cf = self.config_cls.create_from_dict(self.example_dict)
 
@@ -155,6 +167,9 @@ class ConfigTest(unittest.TestCase):
         self.assertNotEqual(cf["nestedListOrig"][0]["dictList"][0],
                             cf_deep["nestedListOrig"][0]["dictList"][0])
 
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
     def test_create_from_argparse(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('-p1')
@@ -169,6 +184,9 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(cf1['p1'], 'parameter1')
         self.assertEqual(cf1['param2'], 'parameter2')
 
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
     def test_internal_type(self):
         cf = self.config_cls.create_from_dict(self.example_dict)
         self.assertTrue(isinstance(cf["deep"], self.config_cls))
@@ -179,6 +197,9 @@ class LookupConfigTest(ConfigTest):
         super().setUp()
         self.config_cls = LookupConfig
 
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
     def test_nested_lookpup(self):
         cf = self.config_cls.create_from_dict(self.example_dict)
         self.assertEqual(cf["deep.deepStr"],
@@ -201,6 +222,9 @@ class DeliraConfigTest(LookupConfigTest):
         super().setUp()
         self.config_cls = DeliraConfig
 
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
     def test_property_params(self):
         for mode in ["fixed", "variable"]:
             cf = self.config_cls.create_from_dict({})
@@ -230,6 +254,9 @@ class DeliraConfigTest(LookupConfigTest):
             self.assertEqual(params["fixed.num_classes"], 3)
             self.assertEqual(params["variable.epochs"], 2)
 
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
     def test_logging_as_string(self):
         cf = self.config_cls()
         cf.update({"augment": True})
@@ -270,6 +297,9 @@ class DeliraConfigTest(LookupConfigTest):
                           "      name: DeliraConfig\n".format(
                               cf["_timestamp"], cf["_version"])))
 
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
     def test_internal_type(self):
         cf = self.config_cls.create_from_dict(self.example_dict)
         self.assertTrue(isinstance(cf["deep"], LookupConfig))

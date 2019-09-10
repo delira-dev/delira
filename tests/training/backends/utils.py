@@ -33,11 +33,11 @@ class DummyDataset(AbstractDataset):
         return self.__getitem__(index)
 
 
-def run_experiment(experiment_cls, params, network_cls, len_train, len_test,
+def run_experiment(experiment_cls, config, network_cls, len_train, len_test,
                    **kwargs):
 
     assert issubclass(experiment_cls, BaseExperiment)
-    exp = experiment_cls(params, network_cls, **kwargs)
+    exp = experiment_cls(config, network_cls, **kwargs)
 
     dset_train = DummyDataset(len_train)
     dset_test = DummyDataset(len_test)
@@ -48,30 +48,30 @@ def run_experiment(experiment_cls, params, network_cls, len_train, len_test,
     return exp.run(dmgr_train, dmgr_test)
 
 
-def test_experiment(experiment_cls, params, network_cls, len_test, **kwargs):
+def test_experiment(experiment_cls, config, network_cls, len_test, **kwargs):
     assert issubclass(experiment_cls, BaseExperiment)
 
-    exp = experiment_cls(params, network_cls, **kwargs)
+    exp = experiment_cls(config, network_cls, **kwargs)
 
     dset_test = DummyDataset(len_test)
     dmgr_test = BaseDataManager(dset_test, 16, 1, None)
 
     model = network_cls()
 
-    return exp.test(model, dmgr_test, params.nested_get("val_metrics", {}))
+    return exp.test(model, dmgr_test, config.nested_get("val_metrics", {}))
 
 
-def kfold_experiment(experiment_cls, params, network_cls, len_data,
+def kfold_experiment(experiment_cls, config, network_cls, len_data,
                      shuffle=True, split_type="random",
                      num_splits=2, val_split=None, **kwargs):
     assert issubclass(experiment_cls, BaseExperiment)
 
-    exp = experiment_cls(params, network_cls, **kwargs)
+    exp = experiment_cls(config, network_cls, **kwargs)
 
     dset = DummyDataset(len_data)
     dmgr = BaseDataManager(dset, 16, 1, None)
 
-    return exp.kfold(data=dmgr, metrics=params.nested_get("val_metrics"),
+    return exp.kfold(data=dmgr, metrics=config.nested_get("val_metrics"),
                      shuffle=shuffle, split_type=split_type,
                      num_splits=num_splits, val_split=val_split)
 

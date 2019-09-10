@@ -2,7 +2,7 @@ import typing
 
 from delira.models.backends.torchscript import AbstractTorchScriptNetwork
 
-from delira.training.parameters import Parameters
+from delira.utils import DeliraConfig
 from delira.training.backends.torch.experiment import PyTorchExperiment
 from delira.training.backends.torch.utils import create_optims_default
 
@@ -12,7 +12,7 @@ from delira.training.backends.torchscript.trainer import \
 
 class TorchScriptExperiment(PyTorchExperiment):
     def __init__(self,
-                 params: typing.Union[str, Parameters],
+                 config: typing.Union[str, DeliraConfig],
                  model_cls: AbstractTorchScriptNetwork,
                  n_epochs=None,
                  name=None,
@@ -27,10 +27,10 @@ class TorchScriptExperiment(PyTorchExperiment):
 
         Parameters
         ----------
-        params : :class:`Parameters` or str
-            the training parameters, if string is passed,
-            it is treated as a path to a pickle file, where the
-            parameters are loaded from
+        config : :class:`DeliraConfig` or str
+            the training config, if string is passed,
+            it is treated as a path to a file, where the
+            config is loaded from
         model_cls : Subclass of :class:`AbstractTorchScriptNetwork`
             the class implementing the model to train
         n_epochs : int or None
@@ -63,7 +63,7 @@ class TorchScriptExperiment(PyTorchExperiment):
             additional keyword arguments
 
         """
-        super().__init__(params=params, model_cls=model_cls,
+        super().__init__(config=config, model_cls=model_cls,
                          n_epochs=n_epochs, name=name, save_path=save_path,
                          key_mapping=key_mapping,
                          val_score_key=val_score_key,
