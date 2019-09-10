@@ -172,15 +172,12 @@ script:
     # run tests or stylechecks
     - if [[ "$TEST_TYPE" == "unittests" ]]; then
           bash scripts/ci/run_tests.sh;
+          codecov;
       elif [[ "$TEST_TYPE" == "docs" ]]; then
           bash scripts/ci/build_docs.sh;
       else
           bash scripts/ci/run_style_checks.sh;
       fi
-
-after_success:
-    - if [[ "$TEST_TYPE" == "unittests" ]]; then
-          codecov;
 
 before_deploy:
     - cd $TRAVIS_BUILD_DIR
