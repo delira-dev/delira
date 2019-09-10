@@ -17,7 +17,7 @@ def non_string_warning(func):
         Parameters
         ----------
         config: :class:`Config`
-            decorated function receive `self` as first argument
+            decorated function receive :param`self` as first argument
         key : immutable type
             key which is checked
 
@@ -52,8 +52,9 @@ class Config(dict):
 
         Warnings
         --------
-        If the short form of the nested settings is used integers and str
-        can not be differentiated. Therefore, integers should be avoided.
+        It is recommended to only use strings as keys inside the config. 
+        Because of the shortened access to nested keys the types of the
+        keys are lost.
 
         Examples
         --------
@@ -113,6 +114,86 @@ class Config(dict):
             final_dict = self._traverse_keys(keys, create=True)
             final_dict._set_internal_item(final_key, value)
 
+    def _traverse_keys(self, keys, create=False):
+        """
+        Internal helper to traverse through nested dicts
+        (iterative implementation to avoid problems with python stack)
+
+        Parameters
+        ----------
+        keys : iterable of list
+            iterable with keys which should be traversed
+        create : bool, optional
+            creates new empty configs for non existant keys, by default False
+
+        Returns
+        -------
+        Any
+            value defined by the traversed keys
+        """
+        current_level = self
+        for k in keys:
+            if k not in current_level:
+                current_level[k] = self._create_internal_dict()
+            # traverse to needed dict
+            current_level = current_level[k]
+        return current_level
+
+    def _set_internal_item(self, key, item, deepcopy=False):
+        """
+        Set internal item
+
+        Parameters
+        ----------
+        key : str
+            key where new item should be assigned
+        item : Any
+            item which should be assigned
+        deepcopy : bool, optional
+            if enabled the item is copied to the config, by default False
+        """
+        config_item = self._to_config(item)
+        if deepcopy:
+            self[key] = copy.deepcopy(config_item)
+        else:
+            self[key] = config_item
+
+    @classmethod
+    def _to_config(cls, item):
+        """
+        Convert items to config if they are a dict like object
+        but not already a config
+
+        Parameters
+        ----------
+        item : Any
+            item which is converted
+
+        Returns
+        -------
+        Any
+            return a config is item is dict like, otherwise the item is
+            returned
+        """
+        if isinstance(item, dict) and not isinstance(item, cls):
+            # convert dict to config for additional functionality
+            return cls._create_internal_dict(item)
+        else:
+            return item
+
+    @staticmethod
+    def _create_internal_dict(*args, **kwargs):
+        """
+        Defines how internal dicts should be created. Can be used to easily
+        overwrite subclasses
+
+        Returns
+        -------
+        :class:`Config`
+            new config
+        """
+        return Config(*args, **kwargs)
+
     @non_string_warning
     def __getitem__(self, key):
         """
@@ -168,51 +249,8 @@ class Config(dict):
         str
             representation of config
         """
-        return self.dumps()
-
-    def _traverse_keys(self, keys, create=False):
-        """
-        Internal helper to traverse through nested dicts
-        (iterative implementation to avoid problems with python stack)
-
-        Parameters
-        ----------
-        keys : iterable of list
-            iterable with keys which should be traversed
-        create : bool, optional
-            creates new empty configs for non existant keys, by default False
-
-        Returns
-        -------
-        Any
-            value defined by the traversed keys
-        """
-        current_level = self
-        for k in keys:
-            if k not in current_level:
-                current_level[k] = self._create_internal_dict()
-            # traverse to needed dict
-            current_level = current_level._try_key(k)
-        return current_level
-
-    def _try_key(self, key):
-        """
-        Try access with integer key first and than with a string key
-
-        Parameters
-        ----------
-        key : str or int
-            key which should be tried
-
-        Returns
-        -------
-        Any
-            value inside config
-        """
-        try:
-            return self[int(key)]
-        except (KeyError, ValueError):
-            return self[key]
+        encoded_self = Encoder().encode(self)
+        return encoded_self.__str__()
 
     def update(self, update_dict, deepcopy=False, overwrite=False):
         """
@@ -223,7 +261,7 @@ class Config(dict):
         update_dict : dictlike
             values which should be added to config
         deepcopy : bool, optional
-            copies values from `update_dict`, by default False
+            copies values from :param`update_dict`, by default False
         overwrite : bool, optional
             overwrite existing values inside config, by default False
 
@@ -234,8 +272,6 @@ class Config(dict):
             as config
         """
         for key, item in update_dict.items():
-            # check for overwrite
-            self._raise_overwrite(key, overwrite=overwrite)
             # update items individually
             self._update(key, item, deepcopy=deepcopy, overwrite=overwrite)
 
@@ -250,10 +286,13 @@ class Config(dict):
         item : Any
             item which should be assigned
         deepcopy : bool, optional
-            copies values from `update_dict`, by default False
+            copies :param`item`, by default False
         overwrite : bool, optional
             overwrite existing values inside config, by default False
         """
+        # check for overwrite
+        self._raise_overwrite(key, overwrite=overwrite)
+
         if isinstance(item, dict):
             # update nested dicts
             if key not in self:
@@ -272,72 +311,17 @@ class Config(dict):
         key : str
             key which needs to be checked
         overwrite : bool
-            if overwrite ir enables no error is raised even if key already
-            exists
+            if overwrite is enabled no ValueError is raised even if the key 
+            already exists
 
         Raises
         ------
         ValueError
-            if overwrite is not enabled and key already exists
+            raised if overwrite is not enabled and key already exists
         """
         if key in self and not overwrite:
             raise ValueError("{} already in config. Can "
                              "not overwrite value.".format(key))
-
-    def _set_internal_item(self, key, item, deepcopy=False):
-        """
-        Set internal item
-
-        Parameters
-        ----------
-        key : str
-            key where new item should be assigned
-        item : Any
-            item which should be assigned
-        deepcopy : bool, optional
-            if enabled the item is copied to the config, by default False
-        """
-        config_item = self._to_config(item)
-        if deepcopy:
-            self[key] = copy.deepcopy(config_item)
-        else:
-            self[key] = config_item
-
-    @staticmethod
-    def _create_internal_dict(*args, **kwargs):
-        """
-        Defines how internal dicts should be created. Can be used to easily
-        overwrite subclasses
-
-        Returns
-        -------
-        :class:`Config`
-            new config
-        """
-        return Config(*args, **kwargs)
-
-    @classmethod
-    def _to_config(cls, item):
-        """
-        Convert items to config if they are a dict like object
-        but not already a config
-
-        Parameters
-        ----------
-        item : Any
-            item which is converted
-
-        Returns
-        -------
-        Any
-            return a config is item is dict like, otherwise the item is
-            returned
-        """
-        if isinstance(item, dict) and not isinstance(item, cls):
-            # convert dict to config for additional functionality
-            return cls._create_internal_dict(item)
-        else:
-            return item
 
     def dump(self, path, formatter=yaml.dump, encoder_cls=Encoder, **kwargs):
         """
@@ -350,10 +334,10 @@ class Config(dict):
         formatter : callable, optional
             defines the format how the config is saved, by default yaml.dump
         encoder_cls : :class:`Encoder`, optional
-            trasforms config to a format which can be formatted by the
-            `formatter`, by default Encoder
+            transforms config to a format which can be formatted by the
+            :param`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to `formatter`
+            additional keyword arguments passed to :param`formatter`
         """
         self._timestamp = now()
         encoded_self = encoder_cls().encode(self)
@@ -370,19 +354,18 @@ class Config(dict):
         formatter : callable, optional
             defines the format how the config is saved, by default yaml.dump
         encoder_cls : :class:`Encoder`, optional
-            trasforms config to a format which can be formatted by the
-            `formatter`, by default Encoder
+            transforms config to a format which can be formatted by the
+            :param`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to `formatter`
+            additional keyword arguments passed to :param`formatter`
         """
         self._timestamp = now()
         encoded_self = encoder_cls().encode(self)
         return formatter(encoded_self, **kwargs)
 
-    @classmethod
-    def load(cls, path, formatter=yaml.load, decoder_cls=Decoder, **kwargs):
+    def load(self, path, formatter=yaml.load, decoder_cls=Decoder, **kwargs):
         """
-        Load config from a file
+        Update config from a file
 
         Parameters
         ----------
@@ -390,39 +373,36 @@ class Config(dict):
             path to file
         formatter : callable, optional
             defines the format how the config is saved, by default yaml.dump
-        encoder_cls : :class:`Encoder`, optional
-            trasforms config to a format which can be formatted by the
-            `formatter`, by default Encoder
+        decoder_cls : :class:`Encoder`, optional
+            transforms config to a format which can be formatted by the
+            :param`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to `formatter`
+            additional keyword arguments passed to :param`formatter`
         """
         with open(path, "r") as f:
             decoded_format = formatter(f, **kwargs)
         decoded_format = decoder_cls().decode(decoded_format)
-        if not isinstance(decoded_format, cls):
-            decoded_format = cls(decoded_format)
-        return decoded_format
+        self.update(decoded_format, overwrite=True)
 
-    @classmethod
-    def loads(cls, data, formatter=yaml.load, decoder_cls=Decoder, **kwargs):
+    def loads(self, data, formatter=yaml.load, decoder_cls=Decoder, **kwargs):
         """
-        Load config from a string
+        Update config from a string
 
         Parameters
         ----------
+        data: str
+            string representation of config
         formatter : callable, optional
             defines the format how the config is saved, by default yaml.dump
-        encoder_cls : :class:`Encoder`, optional
-            trasforms config to a format which can be formatted by the
-            `formatter`, by default Encoder
+        decoder_cls : :class:`Encoder`, optional
+            transforms config to a format which can be formatted by the
+            :param`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to `formatter`
+            additional keyword arguments passed to :param`formatter`
         """
         decoded_format = formatter(data, **kwargs)
         decoded_format = decoder_cls().decode(decoded_format)
-        if not isinstance(decoded_format, cls):
-            decoded_format = cls(decoded_format)
-        return decoded_format
+        self.update(decoded_format, overwrite=True)
 
     @classmethod
     def create_from_dict(cls, value, deepcopy=False):
@@ -440,17 +420,18 @@ class Config(dict):
         -------
         :class:`Config`
             new config
+
+        Raises
+        ------
+        TypeError
+            raised if :param`value` is not a dict (or a subclass of dict)
         """
-        assert isinstance(value, dict)
-        new_config = cls()
-        for key, item in value.items():
-            if isinstance(item, dict):
-                item = cls(item)
-            if deepcopy:
-                new_config[key] = copy.deepcopy(item)
-            else:
-                new_config[key] = item
-        return new_config
+        if not isinstance(value, dict):
+            raise TypeError("Value must be an instance of dict but type {} "
+                            "was found.".format(type(value)))
+        config = cls()
+        config.update(value, deepcopy=deepcopy)
+        return config
 
     @classmethod
     def create_from_argparse(cls, value, deepcopy=False, **kwargs):
@@ -479,11 +460,67 @@ class Config(dict):
         """
         if isinstance(value, argparse.ArgumentParser):
             args_parsed = value.parse_args(**kwargs)
-            return cls.create_from_dict(vars(args_parsed), deepcopy=deepcopy)
+            return cls.create_from_argparse(args_parsed, deepcopy=deepcopy)
         elif isinstance(value, argparse.Namespace):
             return cls.create_from_dict(vars(value), deepcopy=deepcopy)
         else:
             raise TypeError("Type of args not supported.")
+
+    @classmethod
+    def create_from_file(cls, path, formatter=yaml.load, decoder_cls=Decoder,
+                         **kwargs):
+        """
+        Create config from a file
+
+        Parameters
+        ----------
+        path : str
+            path to file
+        formatter : callable, optional
+            defines the format how the config is saved, by default yaml.dump
+        decoder_cls : :class:`Encoder`, optional
+            trasforms config to a format which can be formatted by the
+            :param`formatter`, by default Encoder
+        kwargs:
+            additional keyword arguments passed to :param`formatter`
+
+        Returns
+        -------
+        :class:`Config`
+            new config
+        """
+        config = cls()
+        config.load(path, formatter=formatter, decoder_cls=decoder_cls,
+                    **kwargs)
+        return config
+
+    @classmethod
+    def create_from_str(cls, data, formatter=yaml.load, decoder_cls=Decoder,
+                        **kwargs):
+        """
+        Create config from a string
+
+        Parameters
+        ----------
+        data: str
+            string representation of config
+        formatter : callable, optional
+            defines the format how the config is saved, by default yaml.dump
+        decoder_cls : :class:`Encoder`, optional
+            trasforms config to a format which can be formatted by the
+            :param`formatter`, by default Encoder
+        kwargs:
+            additional keyword arguments passed to :param`formatter`
+
+        Returns
+        -------
+        :class:`Config`
+            new config
+        """
+        config = cls()
+        config.loads(data, formatter=formatter, decoder_cls=decoder_cls,
+                     **kwargs)
+        return config
 
 
 class LookupConfig(Config):
@@ -504,9 +541,32 @@ class LookupConfig(Config):
         """
         return LookupConfig(*args, **kwargs)
 
+    @non_string_warning
+    def __contains__(self, key):
+        """
+        Check if key is in config
+        (also works for nested dicts with short form)
+
+        Parameters
+        ----------
+        key : str
+            key for desired value
+
+        Returns
+        -------
+        bool
+            true if key is in config
+        """
+        contain = True
+        try:
+            self.nested_get(key)
+        except KeyError:
+            contain = False
+        return contain
+
     def nested_get(self, key, *args, **kwargs):
         """
-        Returns all occurances of ``key`` in ``self`` and subdicts
+        Returns all occurances of :param`key` in :param`self` and subdicts
 
         Parameters
         ----------
@@ -604,7 +664,7 @@ class DeliraConfig(LookupConfig):
         if value is None:
             return {}
         else:
-            return value
+            return dict(value)
 
     @property
     def params(self):
@@ -638,7 +698,16 @@ class DeliraConfig(LookupConfig):
     def variable_params(self, new_params: dict):
         """
         Update variable parameters from dict like object
+
+        Raises
+        ------
+        TypeError
+            raised if :param`new_params` is not a dict (or a subclass of dict)
         """
+        if not isinstance(new_params, dict):
+            raise TypeError("new_params must be an instance of dict but "
+                            "type {} was found.".format(type(new_params)))
+
         # create empty dict
         if "model" not in new_params:
             new_params["model"] = {}
@@ -647,8 +716,8 @@ class DeliraConfig(LookupConfig):
         if "training" not in new_params:
             new_params["training"] = {}
 
-        self.variable_model.update(new_params["model"], overwrite=True)
-        self.variable_training.update(new_params["training"], overwrite=True)
+        self.variable_model = new_params["model"]
+        self.variable_training = new_params["training"]
 
     @property
     def fixed_params(self):
@@ -667,7 +736,15 @@ class DeliraConfig(LookupConfig):
     def fixed_params(self, new_params: dict):
         """
         Update fixed parameters from dict like object
+
+        Raises
+        ------
+        TypeError
+            raised if :param`new_params` is not a dict (or a subclass of dict)
         """
+        if not isinstance(new_params, dict):
+            raise TypeError("new_params must be an instance of dict but "
+                            "type {} was found.".format(type(new_params)))
         # create empty dict
         if "model" not in new_params:
             new_params["model"] = {}
@@ -676,8 +753,8 @@ class DeliraConfig(LookupConfig):
         if "training" not in new_params:
             new_params["training"] = {}
 
-        self.fixed_model.update(new_params["model"], overwrite=True)
-        self.fixed_training.update(new_params["training"], overwrite=True)
+        self.fixed_model = new_params["model"]
+        self.fixed_training = new_params["training"]
 
     @property
     def model_params(self):
@@ -696,7 +773,15 @@ class DeliraConfig(LookupConfig):
     def model_params(self, new_params: dict):
         """
         Update model parameters from dict like object
+
+        Raises
+        ------
+        TypeError
+            raised if :param`new_params` is not a dict (or a subclass of dict)
         """
+        if not isinstance(new_params, dict):
+            raise TypeError("new_params must be an instance of dict but "
+                            "type {} was found.".format(type(new_params)))
         # create empty dict
         if "fixed" not in new_params:
             new_params["fixed"] = {}
@@ -705,8 +790,8 @@ class DeliraConfig(LookupConfig):
         if "variable" not in new_params:
             new_params["variable"] = {}
 
-        self.fixed_model.update(new_params["fixed"], overwrite=True)
-        self.variable_model.update(new_params["variable"], overwrite=True)
+        self.fixed_model = new_params["fixed"]
+        self.variable_model = new_params["variable"]
 
     @property
     def training_params(self):
@@ -725,7 +810,15 @@ class DeliraConfig(LookupConfig):
     def training_params(self, new_params: dict):
         """
         Update training parameters from dict like object
+
+        Raises
+        ------
+        TypeError
+            raised if :param`new_params` is not a dict (or a subclass of dict)
         """
+        if not isinstance(new_params, dict):
+            raise TypeError("new_params must be an instance of dict but "
+                            "type {} was found.".format(type(new_params)))
         # create empty dict
         if "fixed" not in new_params:
             new_params["fixed"] = {}
@@ -734,8 +827,8 @@ class DeliraConfig(LookupConfig):
         if "variable" not in new_params:
             new_params["variable"] = {}
 
-        self.fixed_training.update(new_params["fixed"], overwrite=True)
-        self.variable_training.update(new_params["variable"], overwrite=True)
+        self.fixed_training = new_params["fixed"]
+        self.variable_training = new_params["variable"]
 
     def log_as_string(self, full_config=False, **kwargs):
         """

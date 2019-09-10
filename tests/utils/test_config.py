@@ -117,20 +117,28 @@ class ConfigTest(unittest.TestCase):
 
     def test_dump_and_load(self):
         cf = self.config_cls.create_from_dict(self.example_dict)
-
+        path = os.path.join(".", "test_config.yaml")
         # check dump
-        cf.dump(os.path.join(".", "test_config.yaml"))
+        cf.dump(path)
 
         # check load
-        cf_loaded = self.config_cls.load(os.path.join(".", "test_config.yaml"))
+        cf_loaded = self.config_cls()
+        cf_loaded.load(path)
         self.assertDictEqual(cf, cf_loaded)
+
+        cf_loaded_file = self.config_cls.create_from_file(path)
+        self.assertDictEqual(cf, cf_loaded_file)
 
         # check dump
         cf_string = cf.dumps()
 
         # check load
-        cf_loaded = self.config_cls.loads(cf_string)
+        cf_loaded = self.config_cls()
+        cf_loaded.loads(cf_string)
         self.assertDictEqual(cf, cf_loaded)
+
+        cf_loaded_str = self.config_cls.create_from_str(cf_string)
+        self.assertDictEqual(cf, cf_loaded_str)
 
     def test_copy(self):
         cf = self.config_cls.create_from_dict(self.example_dict)
@@ -261,6 +269,10 @@ class DeliraConfigTest(LookupConfigTest):
                           "      module: delira.utils.config\n"
                           "      name: DeliraConfig\n".format(
                               cf["_timestamp"], cf["_version"])))
+
+    def test_internal_type(self):
+        cf = self.config_cls.create_from_dict(self.example_dict)
+        self.assertTrue(isinstance(cf["deep"], LookupConfig))
 
 
 if __name__ == '__main__':

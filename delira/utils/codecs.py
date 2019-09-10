@@ -11,7 +11,8 @@ import typing
 
 class Encoder:
     """
-    Encode arbitrary objects as dicts, str, int, float, list
+    Encode arbitrary objects. The encoded object consists of dicts,
+    lists, ints, floats and strings.
     """
 
     def __call__(self, obj) -> typing.Any:
@@ -25,7 +26,7 @@ class Encoder:
 
         Returns
         -------
-        typing.Any
+        Any
             encoded object
         """
         return self.encode(obj)
@@ -41,7 +42,7 @@ class Encoder:
 
         Returns
         -------
-        typing.Any
+        Any
             encoded object
         """
         # use type() to check for dict and list because type() does not
@@ -51,10 +52,10 @@ class Encoder:
             return obj
         elif obj is None:
             return obj
-        elif isinstance(obj, dict):
+        elif type(obj) == dict:
             # end recursion
             return self._encode_dict(obj)
-        elif isinstance(obj, list):
+        elif type(obj) == list:
             # end recursion
             return self._encode_list(obj)
         elif isinstance(obj, np.ndarray):
@@ -89,7 +90,6 @@ class Encoder:
         list
             list with encoded internal items
         """
-        # if list: add explicit list specifier
         return [self.encode(i) for i in obj]
 
     def _encode_dict(self, obj) -> dict:
@@ -106,7 +106,6 @@ class Encoder:
         dict
             dict with encoded internal items
         """
-        # if dict: add specific dict specifier
         return {self.encode(_key):
                 self.encode(_item) for _key, _item in obj.items()}
 
@@ -279,12 +278,12 @@ class Decoder:
 
         Parameters
         ----------
-        obj : typing.Any
+        obj : Any
             object to be decoded
 
         Returns
         -------
-        typing.Any
+        Any
             decoded object
         """
         return self.decode(obj)
@@ -295,12 +294,12 @@ class Decoder:
 
         Parameters
         ----------
-        obj : typing.Any
+        obj : Any
             object to be decoded
 
         Returns
         -------
-        typing.Any
+        Any
             decoded object
         """
         if isinstance(obj, (str, int, float)):
@@ -344,7 +343,7 @@ class Decoder:
 
         Returns
         -------
-        typing.Any
+        Any
             decoded list
         """
         return [self.decode(_i) for _i in obj]
@@ -396,7 +395,7 @@ class Decoder:
 
         Returns
         -------
-        types.ModuleType
+        ModuleType
             decoded module
         """
         return importlib.import_module(self.decode(obj))
@@ -412,7 +411,7 @@ class Decoder:
 
         Returns
         -------
-        typing.Any
+        Any
             decoded type
         """
         # decode items in dict representation
@@ -451,7 +450,7 @@ class Decoder:
 
         Returns
         -------
-        typing.Any
+        Any
             decoded object
         """
         class_repr = self.decode(obj)
@@ -487,7 +486,7 @@ class Decoder:
 
         Returns
         -------
-        typing.Any
+        Any
             decoded object
 
         Raises
@@ -519,7 +518,7 @@ class Decoder:
 
         Returns
         -------
-        typing.Any
+        Any
             decoded function
 
         Raises
