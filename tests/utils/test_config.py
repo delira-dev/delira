@@ -10,6 +10,7 @@ from delira.logging import Logger, TensorboardBackend, make_logger, \
 
 from . import check_for_no_backend
 
+
 class ConfigTest(unittest.TestCase):
     def setUp(self):
         self.config_cls = Config

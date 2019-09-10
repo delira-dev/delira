@@ -190,7 +190,7 @@ class BaseExperiment(object):
         """
         model_kwargs = config.model_params
         model_kwargs = {**model_kwargs["variable"], **model_kwargs["fixed"]}
-        
+
         model = self.model_cls(**model_kwargs)
 
         training_params = config.training_params
