@@ -269,7 +269,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
                                            'checkpoint_best')
                               )
 
-        return super()._at_training_end(self, *args, **kwargs)
+        return super()._at_training_end(*args, **kwargs)
 
     def _train_single_epoch(self, batchgen, epoch, verbose=False):
         """

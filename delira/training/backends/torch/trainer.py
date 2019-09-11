@@ -379,7 +379,7 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
         self.save_state(os.path.join(self.save_path, "checkpoint_epoch_%d"
                                      % self.start_epoch), self.start_epoch)
 
-    def _at_training_end(self):
+    def _at_training_end(self, *args, **kwargs):
         """
         Defines Behaviour at end of training: Loads best model if
         available

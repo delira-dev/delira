@@ -22,7 +22,7 @@ class AbstractCallback(object):
         """
         pass
 
-    def at_epoch_begin(self, trainer, **kwargs):
+    def at_epoch_begin(self, trainer, *args, **kwargs):
         """
         Function which will be executed at begin of each epoch
 
@@ -45,7 +45,7 @@ class AbstractCallback(object):
         """
         return {}
 
-    def at_epoch_end(self, trainer, **kwargs):
+    def at_epoch_end(self, trainer, *args, **kwargs):
         """
         Function which will be executed at end of each epoch
 
@@ -68,7 +68,7 @@ class AbstractCallback(object):
         """
         return {}
 
-    def at_training_begin(self, trainer, **kwargs):
+    def at_training_begin(self, trainer, *args, **kwargs):
         """
         Function which will be executed at begin of training
 
@@ -86,7 +86,7 @@ class AbstractCallback(object):
         """
         return {}
 
-    def at_training_end(self, trainer, **kwargs):
+    def at_training_end(self, trainer, *args, **kwargs):
         """
         Function which will be executed at end of training
 
@@ -105,7 +105,7 @@ class AbstractCallback(object):
         """
         return {}
 
-    def at_iter_begin(self, trainer, **kwargs):
+    def at_iter_begin(self, trainer, *args, **kwargs):
         """
         Function which will be executed at begin of each iteration
 
@@ -132,7 +132,7 @@ class AbstractCallback(object):
         """
         return {}
 
-    def at_iter_end(self, trainer, **kwargs):
+    def at_iter_end(self, trainer, *args, **kwargs):
         """
         Function which will be executed at end of each iteration
 
