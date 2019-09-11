@@ -282,7 +282,7 @@ class MessengerFoldCallback(AbstractCallback):
         super().__init__()
         self._messenger = messenger
 
-    def at_training_start(self, trainer, **kwargs) -> dict:
+    def at_training_begin(self, trainer, **kwargs) -> dict:
         """
         End of training callback
 

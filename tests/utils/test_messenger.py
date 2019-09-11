@@ -1,5 +1,5 @@
-from delira.training import BaseExperiment, BaseNetworkTrainer, Predictor, \
-    Parameters
+from delira.training import BaseExperiment, BaseNetworkTrainer, Predictor
+from delira.utils import DeliraConfig
 from delira.models import AbstractNetwork
 from delira.data_loading import BaseDataManager
 from delira.training.utils import convert_to_numpy_identity
@@ -84,7 +84,8 @@ class DummyPredictor(Predictor):
 
 class DummyExperiment(BaseExperiment):
     def __init__(self):
-        dummy_params = Parameters(fixed_params={
+        dummy_config = DeliraConfig()
+        dummy_config.fixed_params = {
             "model": {},
             "training": {
                 "losses": {},
@@ -93,8 +94,8 @@ class DummyExperiment(BaseExperiment):
                 "num_epochs": 2,
                 "lr_sched_cls": None,
                 "lr_sched_params": {}}
-        })
-        super().__init__(dummy_params,
+        }
+        super().__init__(dummy_config,
                          DummyNetwork,
                          key_mapping={},
                          name="TestExperiment",
@@ -166,10 +167,14 @@ class TestBaseMessenger(unittest.TestCase):
         ]
         self.msg_kfold_successful = [
             "INFO:UnitTestMessenger:TestExperiment : Kfold started.",
+            "INFO:UnitTestMessenger:Fold 0 started.",
             "INFO:UnitTestMessenger:Epoch 1 trained.",
             "INFO:UnitTestMessenger:Epoch 2 trained.",
+            "INFO:UnitTestMessenger:Fold 0 completed.",
+            "INFO:UnitTestMessenger:Fold 1 started.",
             "INFO:UnitTestMessenger:Epoch 1 trained.",
             "INFO:UnitTestMessenger:Epoch 2 trained.",
+            "INFO:UnitTestMessenger:Fold 1 completed.",
             "INFO:UnitTestMessenger:TestExperiment : Kfold completed.",
         ]
         self.msg_kfold_failed = [

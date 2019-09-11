@@ -220,9 +220,11 @@ class BaseNetworkTrainer(Predictor):
             keyword arguments
 
         """
+        for cbck in self._callbacks:
+            self._update_state(cbck.at_training_begin(self, *args, **kwargs))
 
         self.save_state(os.path.join(self.save_path, "checkpoint_epoch_%d"
-                                     % self.start_epoch), self.start_epoch)
+                                     % self.start_epoch))
 
     def _at_training_end(self, *args, **kwargs):
         """
@@ -241,6 +243,9 @@ class BaseNetworkTrainer(Predictor):
             the network with the loaded state
 
         """
+        for cbck in self._callbacks:
+            self._update_state(cbck.at_training_end(self, *args, **kwargs))
+
         return self.module
 
     def _at_epoch_begin(self, val_score_key, epoch, num_epochs,
@@ -604,6 +609,35 @@ class BaseNetworkTrainer(Predictor):
         except ValueError as e:
             logger.error(e)
             raise e
+
+    def register_callback(self, callback: AbstractCallback):
+        """
+        Register Callback to Trainer
+
+        Parameters
+        ----------
+        callback : :class:`AbstractCallback`
+            the callback to register
+
+        Raises
+        ------
+        AssertionError
+            `callback` is not an instance of :class:`AbstractCallback` and has
+            not both methods ['at_epoch_begin', 'at_epoch_end']
+
+        """
+        assertion_str = "Given callback is not valid; Must be instance of " \
+                        "AbstractCallback or provide functions " \
+                        "'at_training_begin' and 'at_training_end'"
+        
+        instance_check = isinstance(callback, AbstractCallback)
+        attr_check_begin_train = hasattr(callback, "at_training_begin")
+        attr_check_end_train = hasattr(callback, "at_training_end")
+        attr_check_both_train = attr_check_begin_train and attr_check_end_train
+        
+        assert instance_check or attr_check_both_train, assertion_str
+        
+        super().register_callback(callback)
 
     def save_state(self, file_name, *args, **kwargs):
         """

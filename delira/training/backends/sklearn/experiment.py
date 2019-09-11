@@ -7,14 +7,14 @@ from sklearn.base import BaseEstimator
 from delira.models.backends.sklearn import SklearnEstimator
 
 from delira.training.base_experiment import BaseExperiment
-from delira.training.parameters import Parameters
+from delira.utils import DeliraConfig
 
 from delira.training.backends.sklearn.trainer import SklearnEstimatorTrainer
 
 
 class SklearnExperiment(BaseExperiment):
     def __init__(self,
-                 params: typing.Union[str, Parameters],
+                 config: typing.Union[str, DeliraConfig],
                  model_cls: BaseEstimator,
                  n_epochs=None,
                  name=None,
@@ -29,10 +29,10 @@ class SklearnExperiment(BaseExperiment):
 
         Parameters
         ----------
-        params : :class:`Parameters` or str
-            the training parameters, if string is passed,
-            it is treated as a path to a pickle file, where the
-            parameters are loaded from
+        config : :class:`DeliraConfig` or str
+            the training config, if string is passed,
+            it is treated as a path to a file, where the
+            config is loaded from
         model_cls : Subclass of :class:`sklearn.base.BaseEstimator`
             the class implementing the model to train (will be wrapped by
             :class:`SkLearnEstimator`)
@@ -65,7 +65,7 @@ class SklearnExperiment(BaseExperiment):
         if key_mapping is None:
             key_mapping = {"X": "X"}
 
-        super().__init__(params=params,
+        super().__init__(config=config,
                          model_cls=model_cls,
                          n_epochs=n_epochs,
                          name=name,
@@ -77,14 +77,14 @@ class SklearnExperiment(BaseExperiment):
                          **kwargs)
         self._model_wrapper_cls = model_wrapper_cls
 
-    def _setup_training(self, params, **kwargs):
+    def _setup_training(self, config, **kwargs):
         """
             Handles the setup for training case
 
             Parameters
             ----------
-            params : :class:`Parameters`
-                the parameters containing the model and training kwargs
+            config : :class:`DeliraConfig`
+                the config containing the model and training kwargs
             **kwargs :
                 additional keyword arguments
 
@@ -93,9 +93,8 @@ class SklearnExperiment(BaseExperiment):
             :class:`BaseNetworkTrainer`
                 the created trainer
         """
-        model_params = params.permute_training_on_top().model
-
-        model_kwargs = {**model_params.fixed, **model_params.variable}
+        model_kwargs = config.model_params
+        model_kwargs = {**model_kwargs["variable"], **model_kwargs["fixed"]}
 
         _model = self.model_cls(**model_kwargs)
         model = self._model_wrapper_cls(_model)
@@ -118,14 +117,14 @@ class SklearnExperiment(BaseExperiment):
             **kwargs
         )
 
-    def _setup_test(self, params, model, convert_batch_to_npy_fn,
+    def _setup_test(self, config, model, convert_batch_to_npy_fn,
                     prepare_batch_fn, **kwargs):
         """
 
         Parameters
         ----------
-        params : :class:`Parameters`
-            the parameters containing the model and training kwargs
+        config : :class:`DeliraConfig`
+            the config containing the model and training kwargs
             (ignored here, just passed for subclassing and unified API)
         model : :class:`sklearn.base.BaseEstimator`
             the model to test
@@ -153,5 +152,5 @@ class SklearnExperiment(BaseExperiment):
                                        input_device="cpu",
                                        output_device="cpu")
 
-        return super()._setup_test(params, model, convert_batch_to_npy_fn,
+        return super()._setup_test(config, model, convert_batch_to_npy_fn,
                                    prepare_batch_fn, **kwargs)

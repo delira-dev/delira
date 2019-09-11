@@ -1,4 +1,3 @@
-
 import typing
 import logging
 import pickle
@@ -15,7 +14,7 @@ from sklearn.model_selection import KFold, StratifiedKFold, \
 from delira.data_loading import BaseDataManager
 from delira.models import AbstractNetwork
 
-from delira.training.parameters import Parameters
+from delira.utils import DeliraConfig
 from delira.training.base_trainer import BaseNetworkTrainer
 from delira.training.predictor import Predictor
 
@@ -38,7 +37,7 @@ class BaseExperiment(object):
     """
 
     def __init__(self,
-                 params: typing.Union[str, Parameters],
+                 config: typing.Union[str, DeliraConfig],
                  model_cls: AbstractNetwork,
                  n_epochs=None,
                  name=None,
@@ -54,10 +53,10 @@ class BaseExperiment(object):
 
         Parameters
         ----------
-        params : :class:`Parameters` or str
+        config : :class:`DeliraConfig` or str
             the training parameters, if string is passed,
-            it is treated as a path to a pickle file, where the
-            parameters are loaded from
+            it is treated as a path to a file, where the
+            config is loaded from
         model_cls : Subclass of :class:`AbstractNetwork`
             the class implementing the model to train
         n_epochs : int or None
@@ -91,15 +90,13 @@ class BaseExperiment(object):
 
         """
 
-        # params could also be a file containing a pickled instance of
-        # parameters
-        if isinstance(params, str):
-            with open(params, "rb") as f:
-                params = pickle.load(f)
+        # config could also be a file containing config information
+        if isinstance(config, str):
+            config = config.create_from_file(config)
 
         if n_epochs is None:
-            n_epochs = params.nested_get("n_epochs",
-                                         params.nested_get("num_epochs"))
+            n_epochs = config.nested_get("n_epochs",
+                                         config.nested_get("num_epochs"))
 
         self.n_epochs = n_epochs
 
@@ -132,7 +129,7 @@ class BaseExperiment(object):
         assert key_mapping is not None
         self.key_mapping = key_mapping
 
-        self.params = params
+        self.config = config
         self.model_cls = model_cls
 
         self._optim_builder = optim_builder
@@ -142,15 +139,15 @@ class BaseExperiment(object):
 
         self.kwargs = kwargs
 
-    def setup(self, params, training=True, **kwargs):
+    def setup(self, config, training=True, **kwargs):
         """
         Defines the setup behavior (model, trainer etc.) for training and
         testing case
 
         Parameters
         ----------
-        params : :class:`Parameters`
-            the parameters to use for setup
+        config : :class:`DeliraConfig`
+            the config to use for setup
         training : bool
             whether to setup for training case or for testing case
         **kwargs :
@@ -172,18 +169,18 @@ class BaseExperiment(object):
 
         """
         if training:
-            return self._setup_training(params, **kwargs)
+            return self._setup_training(config, **kwargs)
 
-        return self._setup_test(params, **kwargs)
+        return self._setup_test(config, **kwargs)
 
-    def _setup_training(self, params, **kwargs):
+    def _setup_training(self, config, **kwargs):
         """
         Handles the setup for training case
 
         Parameters
         ----------
-        params : :class:`Parameters`
-            the parameters containing the model and training kwargs
+        config : :class:`DeliraConfig`
+            the config containing the model and training kwargs
         **kwargs :
             additional keyword arguments
 
@@ -193,13 +190,13 @@ class BaseExperiment(object):
             the created trainer
 
         """
-        model_params = params.permute_training_on_top().model
-
-        model_kwargs = {**model_params.fixed, **model_params.variable}
+        model_kwargs = config.model_params
+        model_kwargs = {**model_kwargs["variable"], **model_kwargs["fixed"]}
 
         model = self.model_cls(**model_kwargs)
 
-        training_params = params.permute_training_on_top().training
+        training_params = config.training_params
+
         losses = training_params.nested_get("losses")
         optimizer_cls = training_params.nested_get("optimizer_cls")
         optimizer_params = training_params.nested_get("optimizer_params")
@@ -243,13 +240,13 @@ class BaseExperiment(object):
             **kwargs
         )
 
-    def _setup_test(self, params, model, convert_batch_to_npy_fn,
+    def _setup_test(self, config, model, convert_batch_to_npy_fn,
                     prepare_batch_fn, **kwargs):
         """
 
         Parameters
         ----------
-        params : :class:`Parameters`
+        config : :class:`DeliraConfig`
             the parameters containing the model and training kwargs
             (ignored here, just passed for subclassing and unified API)
         model : :class:`AbstractNetwork`
@@ -277,7 +274,7 @@ class BaseExperiment(object):
 
     def run(self, train_data: BaseDataManager,
             val_data: BaseDataManager = None,
-            params: Parameters = None, **kwargs):
+            config: DeliraConfig = None, **kwargs):
         """
         Setup and run training
 
@@ -288,9 +285,9 @@ class BaseExperiment(object):
         val_data : :class:`BaseDataManager` or None
             the data to use for validation (no validation is done
             if passing None); default: None
-        params : :class:`Parameters` or None
-            the parameters to use for training and model instantiation
-            (will be merged with ``self.params``)
+        config : :class:`DeliraConfig` or None
+            the config to use for training and model instantiation
+            (will be merged with ``self.config``)
         **kwargs :
             additional keyword arguments
 
@@ -305,13 +302,12 @@ class BaseExperiment(object):
 
         """
 
-        params = self._resolve_params(params)
+        config = self._resolve_params(config)
         kwargs = self._resolve_kwargs(kwargs)
 
-        params.permute_training_on_top()
-        training_params = params.training
+        training_params = config.training_params
 
-        trainer = self.setup(params, training=True, **kwargs)
+        trainer = self.setup(config, training=True, **kwargs)
 
         self._run += 1
 
@@ -327,7 +323,7 @@ class BaseExperiment(object):
 
     def resume(self, save_path: str, train_data: BaseDataManager,
                val_data: BaseDataManager = None,
-               params: Parameters = None, **kwargs):
+               config: DeliraConfig = None, **kwargs):
         """
         Resumes a previous training by passing an explicit ``save_path``
         instead of generating a new one
@@ -341,9 +337,9 @@ class BaseExperiment(object):
         val_data : :class:`BaseDataManager` or None
             the data to use for validation (no validation is done
             if passing None); default: None
-        params : :class:`Parameters` or None
-            the parameters to use for training and model instantiation
-            (will be merged with ``self.params``)
+        config : :class:`DeliraConfig` or None
+            the config to use for training and model instantiation
+            (will be merged with ``self.config``)
         **kwargs :
             additional keyword arguments
 
@@ -360,7 +356,7 @@ class BaseExperiment(object):
         return self.run(
             train_data=train_data,
             val_data=val_data,
-            params=params,
+            config=config,
             save_path=save_path,
             **kwargs)
 
@@ -420,7 +416,7 @@ class BaseExperiment(object):
               num_splits=None, shuffle=False, random_seed=None,
               split_type="random", val_split=0.2, label_key="label",
               train_kwargs: dict = None, metric_keys: dict = None,
-              test_kwargs: dict = None, params=None, verbose=False, **kwargs):
+              test_kwargs: dict = None, config=None, verbose=False, **kwargs):
         """
         Performs a k-Fold cross-validation
 
@@ -433,7 +429,7 @@ class BaseExperiment(object):
             dictionary containing the metrics to evaluate during k-fold
         num_epochs : int or None
             number of epochs to train (if not given, will either be extracted
-            from ``params``, ``self.parms`` or ``self.n_epochs``)
+            from ``config``, ``self.config`` or ``self.n_epochs``)
         num_splits : int or None
             the number of splits to extract from ``data``.
             If None: uses a default of 10
@@ -468,9 +464,9 @@ class BaseExperiment(object):
             kwargs to update the behavior of the :class:`BaseDataManager`
             containing the test and validation data.
             If None: empty dict will be passed
-        params : :class:`Parameters`or None
+        config : :class:`DeliraConfig`or None
             the training and model parameters
-            (will be merged with ``self.params``)
+            (will be merged with ``self.config``)
         verbose : bool
             verbosity
         **kwargs :
@@ -590,7 +586,7 @@ class BaseExperiment(object):
                     train_data = train_data.get_subset(_train_idxs)
 
             model = self.run(train_data=train_data, val_data=val_data,
-                             params=params, num_epochs=num_epochs, fold=idx,
+                             config=config, num_epochs=num_epochs, fold=idx,
                              **kwargs)
 
             _outputs, _metrics_test = self.test(model, test_data,
@@ -646,7 +642,7 @@ class BaseExperiment(object):
                   "wb") as f:
             pickle.dump(self, f)
 
-        self.params.save(os.path.join(self.save_path, "parameters"))
+        self.config.dump(os.path.join(self.save_path, "parameters"))
 
     @staticmethod
     def load(file_name):
@@ -662,16 +658,16 @@ class BaseExperiment(object):
         with open(file_name, "rb") as f:
             return pickle.load(f)
 
-    def _resolve_params(self, params: typing.Union[Parameters, None]):
+    def _resolve_params(self, config: typing.Union[DeliraConfig, None]):
         """
-        Merges the given params with ``self.params``.
-        If the same argument is given in both params,
-        the one from the currently given parameters is used here
+        Merges the given config with ``self.config``.
+        If the same argument is given in both configs,
+        the one from the currently given config is used here
 
         Parameters
         ----------
-        params : :class:`Parameters` or None
-            the parameters to merge with ``self.params``
+        config : :class:`DeliraConfig` or None
+            the parameters to merge with ``self.config``
 
 
         Returns
@@ -680,15 +676,15 @@ class BaseExperiment(object):
             the merged parameter instance
 
         """
-        if params is None:
-            params = Parameters()
+        if config is None:
+            config = DeliraConfig()
 
-        if hasattr(self, "params") and isinstance(self.params, Parameters):
-            _params = params
-            params = self.params
-            params.update(_params)
+        if hasattr(self, "config") and isinstance(self.config, DeliraConfig):
+            _config = copy.deepcopy(config)
+            config = self.config
+            config.update(_config, overwrite=True)
 
-        return params
+        return config
 
     def _resolve_kwargs(self, kwargs: typing.Union[dict, None]):
         """

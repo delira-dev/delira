@@ -322,7 +322,26 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             self._prepare_batch, input_device=self.input_device,
             output_device=self.output_device)
 
-    def _at_training_end(self):
+    def _at_training_begin(self, *args, **kwargs):
+        """
+        Defines behaviour at beginning of training
+
+        Parameters
+        ----------
+        *args :
+            positional arguments
+        **kwargs :
+            keyword arguments
+
+        """
+        for cbck in self._callbacks:
+            self._update_state(cbck.at_training_begin(self, *args, **kwargs))
+
+        self.save_state(os.path.join(
+            self.save_path, "checkpoint_epoch_%d" % self.start_epoch),
+            self.start_epoch)
+
+    def _at_training_end(self, *args, **kwargs):
         """
         Defines Behaviour at end of training: Loads best model if
         available
@@ -340,7 +359,7 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             self.update_state(os.path.join(self.save_path,
                                            'checkpoint_best.chain'))
 
-        return self.module
+        return super()._at_training_end(*args, **kwargs)
 
     def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
                       **kwargs):

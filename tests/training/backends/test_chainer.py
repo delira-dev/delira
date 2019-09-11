@@ -1,5 +1,5 @@
 import unittest
-from delira.training import Parameters
+from delira.utils import DeliraConfig
 from sklearn.metrics import mean_absolute_error
 from .utils import create_experiment_test_template_for_backend
 
@@ -36,7 +36,8 @@ class TestChainerBackend(
             from delira.training import ChainerExperiment
             import chainer
 
-            params = Parameters(fixed_params={
+            config = DeliraConfig()
+            config.fixed_params = {
                 "model": {},
                 "training": {
                     "losses": {
@@ -48,12 +49,12 @@ class TestChainerBackend(
                     "metrics": {"mae": mean_absolute_error},
                     "lr_sched_cls": None,
                     "lr_sched_params": {}}
-            })
+            }
             model_cls = DummyNetworkChainer
             experiment_cls = ChainerExperiment
 
         else:
-            params = None
+            config = None
             model_cls = None
             experiment_cls = None
 
@@ -62,7 +63,7 @@ class TestChainerBackend(
 
         self._test_cases = [
             {
-                "params": params,
+                "config": config,
                 "network_cls": model_cls,
                 "len_train": len_train,
                 "len_test": len_test,

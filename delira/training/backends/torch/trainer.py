@@ -381,7 +381,7 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
             self.update_state(os.path.join(self.save_path,
                                            'checkpoint_best.pt'))
 
-        return self.module
+        return super()._at_training_end(*args, **kwargs)
 
     def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
                       **kwargs):
@@ -524,27 +524,6 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
             file_name = file_name + ".pt"
 
         return load_checkpoint_torch(file_name, **kwargs)
-
-    def update_state(self, file_name, *args, **kwargs):
-        """
-        Update internal state from a loaded state
-
-        Parameters
-        ----------
-        file_name : str
-            file containing the new state to load
-        *args :
-            positional arguments
-        **kwargs :
-            keyword arguments
-
-        Returns
-        -------
-        :class:`BaseNetworkTrainer`
-            the trainer with a modified state
-
-        """
-        self._update_state(self.load_state(file_name, *args, **kwargs))
 
     def _update_state(self, new_state):
         """
