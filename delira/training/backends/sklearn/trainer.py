@@ -1,11 +1,13 @@
 from delira.training.backends.sklearn.utils import create_optims_default
-from delira.training.utils import convert_to_numpy_identity as convert_to_numpy
+from delira.training.utils import convert_to_numpy_identity as \
+    convert_to_numpy
 from delira.training.base_trainer import BaseNetworkTrainer
 from delira.io.sklearn import save_checkpoint, load_checkpoint
 from delira.models.backends.sklearn import SklearnEstimator
 from delira.data_loading import BaseDataManager
 from delira.data_loading.sampler import RandomSampler, \
     RandomSamplerNoReplacement
+from delira.training.callbacks.logging_callback import DefaultLoggingCallback
 import os
 import logging
 import numpy as np
@@ -29,11 +31,13 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
                  estimator: SklearnEstimator,
                  save_path: str,
                  key_mapping,
-                 train_metrics=None,
-                 val_metrics=None,
+                 metrics=None,
                  save_freq=1,
                  logging_type="tensorboardx",
                  logging_kwargs=None,
+                 logging_callback_cls=DefaultLoggingCallback,
+                 logging_frequencies=None,
+                 logging_reduce_types=None,
                  fold=0,
                  callbacks=None,
                  start_epoch=1,
@@ -55,11 +59,8 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             E.g. if a model accepts one input named 'x' and the data_dict
             contains one entry named 'data' this argument would have to
             be ``{'x': 'data'}``
-        train_metrics : dict, optional
-            metrics, which will be evaluated during train phase
-            (should work on framework's tensor types)
-        val_metrics : dict, optional
-            metrics, which will be evaluated during test phase
+        metrics : dict, optional
+            metrics, which will be evaluated during train and validation phase
             (should work on numpy arrays)
         save_freq : int
             integer specifying how often to save the current model's state.
@@ -70,6 +71,27 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             If callable: it must be a logging handler class
         logging_kwargs : dict
             dictionary containing all logging keyword arguments
+        logging_callback_cls : class
+            the callback class to create and register for logging
+        logging_frequencies : int or dict
+            specifies how often to log for each key.
+            If int: integer will be applied to all valid keys
+            if dict: should contain a frequency per valid key. Missing keys
+                will be filled with a frequency of 1 (log every time)
+            None is equal to empty dict here.
+        logging_reduce_types : str of FunctionType or dict
+            if str:
+                specifies the reduction type to use. Valid types are
+                'last' | 'first' | 'mean' | 'median' | 'max' | 'min'.
+                The given type will be mapped to all valid keys.
+            if FunctionType:
+                specifies the actual reduction function. Will be applied
+                for all keys.
+            if dict: should contain pairs of valid logging keys and either
+                str or FunctionType. Specifies the logging value per key.
+                Missing keys will be filles with a default value of 'last'.
+                Valid types for strings are
+                'last' | 'first' | 'mean' | 'median' | 'max' | 'min'.
         fold : int
             current cross validation fold (0 per default)
         callbacks : list
@@ -97,25 +119,43 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             callbacks = []
         if logging_kwargs is None:
             logging_kwargs = {}
-        if val_metrics is None:
-            val_metrics = {}
-        if train_metrics is None:
-            train_metrics = {}
+        if metrics is None:
+            metrics = {}
 
-        super().__init__(
-            estimator, save_path, {}, None, {},
-            train_metrics, val_metrics, None,
-            {}, [], save_freq, None, key_mapping,
-            logging_type, logging_kwargs, fold, callbacks, start_epoch,
-            metric_keys, convert_batch_to_npy_fn, val_freq)
+        super().__init__(network=estimator,
+                         save_path=save_path,
+                         losses={},
+                         optimizer_cls=None,
+                         optimizer_params={},
+                         metrics=metrics,
+                         lr_scheduler_cls=None,
+                         lr_scheduler_params={},
+                         gpu_ids=[],
+                         save_freq=save_freq,
+                         optim_fn=create_optims_default,
+                         key_mapping=key_mapping,
+                         logging_type=logging_type,
+                         logging_kwargs=logging_kwargs,
+                         logging_callback_cls=logging_callback_cls,
+                         logging_frequencies=logging_frequencies,
+                         logging_reduce_types=logging_reduce_types,
+                         fold=fold,
+                         callbacks=callbacks,
+                         start_epoch=start_epoch,
+                         metric_keys=metric_keys,
+                         convert_batch_to_npy_fn=convert_batch_to_npy_fn,
+                         val_freq=val_freq,
+                         **kwargs
+                         )
 
         self._setup(estimator,
-                    key_mapping, convert_batch_to_npy_fn)
+                    key_mapping, convert_batch_to_npy_fn, callbacks)
 
         for key, val in kwargs.items():
             setattr(self, key, val)
 
-    def _setup(self, estimator, key_mapping, convert_batch_to_npy_fn):
+    def _setup(self, estimator, key_mapping, convert_batch_to_npy_fn,
+               callbacks):
         """
         Defines the Trainers Setup
 
@@ -131,6 +171,8 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
             be ``{'x': 'data'}``
         convert_batch_to_npy_fn : type
             function converting a batch-tensor to numpy
+        callbacks : list
+            initial callbacks to register
 
         """
 
@@ -138,7 +180,7 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
 
         super()._setup(estimator, None, {},
                        [], key_mapping, convert_batch_to_npy_fn,
-                       estimator.prepare_batch)
+                       estimator.prepare_batch, callbacks)
 
         # Load latest epoch file if available
         if os.path.isdir(self.save_path):
@@ -450,3 +492,13 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
         if extensions is None:
             extensions = [".pkl"]
         return BaseNetworkTrainer._search_for_prev_state(path, extensions)
+
+    @staticmethod
+    def calc_metrics(batch, metrics: dict = None, metric_keys=None):
+        if metrics is None:
+            metrics = {}
+
+        if metric_keys is None:
+            metric_keys = {k: ("pred", "y") for k in metrics.keys()}
+
+        return BaseNetworkTrainer.calc_metrics(batch, metrics, metric_keys)
