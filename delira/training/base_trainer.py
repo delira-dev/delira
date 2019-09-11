@@ -199,8 +199,11 @@ class BaseNetworkTrainer(Predictor):
             keyword arguments
 
         """
+        for cbck in self._callbacks:
+            self._update_state(cbck.at_training_begin(self, *args, **kwargs))
+
         self.save_state(os.path.join(self.save_path, "checkpoint_epoch_%d"
-                                     % self.start_epoch), self.start_epoch)
+                                     % self.start_epoch))
 
     def _at_training_end(self, *args, **kwargs):
         """
@@ -219,6 +222,9 @@ class BaseNetworkTrainer(Predictor):
             the network with the loaded state
 
         """
+        for cbck in self._callbacks:
+            self._update_state(cbck.at_training_end(self, *args, **kwargs))
+
         return self.module
 
     def _at_epoch_begin(self, metrics_val, val_score_key, epoch, num_epochs,
@@ -552,11 +558,15 @@ class BaseNetworkTrainer(Predictor):
                         "AbstractCallback or provide functions " \
                         "'at_epoch_begin' and 'at_epoch_end'"
         instance_check = isinstance(callback, AbstractCallback)
-        attr_check_begin = hasattr(callback, "at_epoch_begin")
-        attr_check_end = hasattr(callback, "at_epoch_end")
-        attr_check_both = attr_check_begin and attr_check_end
+        attr_check_begin_epoch = hasattr(callback, "at_epoch_begin")
+        attr_check_end_epoch = hasattr(callback, "at_epoch_end")
+        attr_check_both_epoch = attr_check_begin_epoch and attr_check_end_epoch
+        attr_check_begin_train = hasattr(callback, "at_training_begin")
+        attr_check_end_train = hasattr(callback, "at_training_end")
+        attr_check_both_train = attr_check_begin_train and attr_check_end_train
+        attr_check_all = attr_check_both_epoch and attr_check_both_train
 
-        assert instance_check or attr_check_both, assertion_str
+        assert instance_check or attr_check_all, assertion_str
 
         self._callbacks.append(callback)
 

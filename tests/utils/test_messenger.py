@@ -158,10 +158,14 @@ class TestBaseMessenger(unittest.TestCase):
         ]
         self.msg_kfold_successful = [
             "INFO:UnitTestMessenger:TestExperiment : Kfold started.",
+            "INFO:UnitTestMessenger:Fold 0 started.",
             "INFO:UnitTestMessenger:Epoch 1 trained.",
             "INFO:UnitTestMessenger:Epoch 2 trained.",
+            "INFO:UnitTestMessenger:Fold 0 completed.",
+            "INFO:UnitTestMessenger:Fold 1 started.",
             "INFO:UnitTestMessenger:Epoch 1 trained.",
             "INFO:UnitTestMessenger:Epoch 2 trained.",
+            "INFO:UnitTestMessenger:Fold 1 completed.",
             "INFO:UnitTestMessenger:TestExperiment : Kfold completed.",
         ]
         self.msg_kfold_failed = [

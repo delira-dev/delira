@@ -231,7 +231,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
                 self.update_state(latest_state_path)
                 self.start_epoch = latest_epoch
 
-    def _at_training_end(self):
+    def _at_training_end(self, *args, **kwargs):
         """
         Defines Behaviour at end of training: Loads best model if available
 
@@ -251,7 +251,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
                                            'checkpoint_best')
                               )
 
-        return self.module
+        return super()._at_training_end(*args, **kwargs)
 
     def _train_single_epoch(self, batchgen, epoch, verbose=False):
         """

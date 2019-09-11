@@ -326,7 +326,7 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
 
     def _at_training_begin(self, *args, **kwargs):
         """
-        Defines behaviour at beginning of training
+        Defines the behaviour at beginnig of the training
 
         Parameters
         ----------
@@ -336,11 +336,13 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
             keyword arguments
 
         """
-        self.save_state(os.path.join(
-            self.save_path, "checkpoint_epoch_%d" % self.start_epoch),
-            self.start_epoch)
+        for cbck in self._callbacks:
+            self._update_state(cbck.at_training_begin(self, *args, **kwargs))
 
-    def _at_training_end(self):
+        self.save_state(os.path.join(self.save_path, "checkpoint_epoch_%d"
+                                     % self.start_epoch), self.start_epoch)
+
+    def _at_training_end(self, *args, **kwargs):
         """
         Defines Behaviour at end of training: Loads best model if
         available
@@ -358,7 +360,7 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
             self.update_state(os.path.join(self.save_path,
                                            'checkpoint_best.pt'))
 
-        return self.module
+        return super()._at_training_end(*args, **kwargs)
 
     def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
                       **kwargs):
@@ -501,27 +503,6 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
             file_name = file_name + ".pt"
 
         return load_checkpoint_torch(file_name, **kwargs)
-
-    def update_state(self, file_name, *args, **kwargs):
-        """
-        Update internal state from a loaded state
-
-        Parameters
-        ----------
-        file_name : str
-            file containing the new state to load
-        *args :
-            positional arguments
-        **kwargs :
-            keyword arguments
-
-        Returns
-        -------
-        :class:`BaseNetworkTrainer`
-            the trainer with a modified state
-
-        """
-        self._update_state(self.load_state(file_name, *args, **kwargs))
 
     def _update_state(self, new_state):
         """
