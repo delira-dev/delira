@@ -265,14 +265,7 @@ class BaseNetworkTrainer(Predictor):
         **kwargs :
             keyword arguments
 
-        Notes
-        -----
-        All callbacks receive a `val_score_key`, an `epoch` and a
-        `num_epochs` argument as well as all keyword arguments, which might
-        be passed from subclasses
-
         """
-
         # execute all callbacks
         for cb in self._callbacks:
             self._update_state(cb.at_epoch_begin(self, val_metrics={},
@@ -297,12 +290,6 @@ class BaseNetworkTrainer(Predictor):
             total number of epochs
         **kwargs :
             keyword arguments
-
-        Notes
-        -----
-        All callbacks receive a `metrics_val`, a `val_score_key`, an_epoch
-        and a `is_best` argument as well as all keyword arguments, which
-        might be passed from subclasses
 
         """
 
@@ -332,15 +319,10 @@ class BaseNetworkTrainer(Predictor):
         **kwargs :
             additional keyword arguments (forwarded to callback calls)
 
-        Notes
-        -----
-        All callbacks receive a `data_dict`, an `iter_num` and an epoch as
-        well as all keyword arguments, which might be passed from subclasses
-
         """
         for cb in self._callbacks:
             self._update_state(cb.at_iter_begin(
-                self, epoch=epoch, iter_num=iter_num,
+                self, curr_epoch=epoch, iter_num=iter_num,
                 global_iter_num=self._global_iter_num, **kwargs))
 
     def _at_iter_end(self, data_dict, iter_num, epoch=0, **kwargs):
@@ -358,18 +340,13 @@ class BaseNetworkTrainer(Predictor):
         **kwargs :
             additional keyword arguments (forwarded to callback calls)
 
-        Notes
-        -----
-        All callbacks receive a `data_dict`, an `iter_num` and a
-        `global_iter_num` as well as all keyword arguments, which might be
-        passed from subclasses
-
         """
 
         for cb in self._callbacks:
             self._update_state(cb.at_iter_begin(
-                self, epoch=epoch, iter_num=iter_num, data_dict=data_dict,
-                global_iter_num=self._global_iter_num, **kwargs))
+                self, curr_epoch=epoch, iter_num=iter_num,
+                data_dict=data_dict, global_iter_num=self._global_iter_num,
+                **kwargs))
 
         self._global_iter_num += 1
 
@@ -629,14 +606,14 @@ class BaseNetworkTrainer(Predictor):
         assertion_str = "Given callback is not valid; Must be instance of " \
                         "AbstractCallback or provide functions " \
                         "'at_training_begin' and 'at_training_end'"
-        
+
         instance_check = isinstance(callback, AbstractCallback)
         attr_check_begin_train = hasattr(callback, "at_training_begin")
         attr_check_end_train = hasattr(callback, "at_training_end")
         attr_check_both_train = attr_check_begin_train and attr_check_end_train
-        
+
         assert instance_check or attr_check_both_train, assertion_str
-        
+
         super().register_callback(callback)
 
     def save_state(self, file_name, *args, **kwargs):

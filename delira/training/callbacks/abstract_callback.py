@@ -83,7 +83,6 @@ class AbstractCallback(object):
         dict
             modified trainer attributes, where the name must correspond to the
             trainer's attribute name
-
         """
         return {}
 
@@ -122,6 +121,11 @@ class AbstractCallback(object):
             modified trainer attributes, where the name must correspond to the
             trainer's attribute name
 
+        Notes
+        -----
+        The basetrainer calls the callbacks with the following additional
+        arguments: `curr_epoch`(int), `iter_num`(int), `global_iter_num`(int)
+
         """
         return {}
 
@@ -140,6 +144,12 @@ class AbstractCallback(object):
         dict
             modified trainer attributes, where the name must correspond to the
             trainer's attribute name
+
+        Notes
+        -----
+        The basetrainer calls the callbacks with the following additional
+        arguments: `curr_epoch`(int), `iter_num`(int), `global_iter_num`(int),
+        `data_dict`(dict, contains prediction and input data)
 
         """
         return {}
