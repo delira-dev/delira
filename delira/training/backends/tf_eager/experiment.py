@@ -7,7 +7,7 @@ from delira.data_loading import BaseDataManager
 from delira.models.backends.tf_eager import AbstractTfEagerNetwork
 
 from delira.training.base_experiment import BaseExperiment
-from delira.training.parameters import Parameters
+from delira.utils import DeliraConfig
 
 from delira.training.backends.tf_eager.trainer import TfEagerNetworkTrainer
 from delira.training.backends.tf_eager.utils import create_optims_default
@@ -16,7 +16,7 @@ from delira.training.backends.tf_eager.utils import convert_to_numpy
 
 class TfEagerExperiment(BaseExperiment):
     def __init__(self,
-                 params: typing.Union[str, Parameters],
+                 config: typing.Union[str, DeliraConfig],
                  model_cls: AbstractTfEagerNetwork,
                  n_epochs=None,
                  name=None,
@@ -31,10 +31,10 @@ class TfEagerExperiment(BaseExperiment):
 
         Parameters
         ----------
-        params : :class:`Parameters` or str
-            the training parameters, if string is passed,
-            it is treated as a path to a pickle file, where the
-            parameters are loaded from
+        config : :class:`DeliraConfig` or str
+            the training config, if string is passed,
+            it is treated as a path to a file, where the
+            config is loaded from
         model_cls : Subclass of :class:`AbstractTfEagerNetwork`
             the class implementing the model to train
         n_epochs : int or None
@@ -71,7 +71,7 @@ class TfEagerExperiment(BaseExperiment):
 
         if key_mapping is None:
             key_mapping = {"x": "data"}
-        super().__init__(params=params, model_cls=model_cls,
+        super().__init__(config=config, model_cls=model_cls,
                          n_epochs=n_epochs, name=name, save_path=save_path,
                          key_mapping=key_mapping,
                          val_score_key=val_score_key,
@@ -84,7 +84,7 @@ class TfEagerExperiment(BaseExperiment):
               num_splits=None, shuffle=False, random_seed=None,
               split_type="random", val_split=0.2, label_key="label",
               train_kwargs: dict = None, test_kwargs: dict = None,
-              metric_keys: dict = None, params=None, verbose=False,
+              metric_keys: dict = None, config=None, verbose=False,
               **kwargs):
         """
         Performs a k-Fold cross-validation
@@ -98,7 +98,7 @@ class TfEagerExperiment(BaseExperiment):
             dictionary containing the metrics to evaluate during k-fold
         num_epochs : int or None
             number of epochs to train (if not given, will either be
-            extracted from ``params``, ``self.parms`` or ``self.n_epochs``)
+            extracted from ``config``, ``self.config`` or ``self.n_epochs``)
         num_splits : int or None
             the number of splits to extract from ``data``.
             If None: uses a default of 10
@@ -133,9 +133,9 @@ class TfEagerExperiment(BaseExperiment):
             kwargs to update the behavior of the :class:`BaseDataManager`
             containing the test and validation data.
             If None: empty dict will be passed
-        params : :class:`Parameters`or None
+        config : :class:`DeliraConfig` or None
             the training and model parameters
-            (will be merged with ``self.params``)
+            (will be merged with ``self.config``)
         verbose : bool
             verbosity
         **kwargs :
@@ -196,7 +196,7 @@ class TfEagerExperiment(BaseExperiment):
             train_kwargs=train_kwargs,
             test_kwargs=test_kwargs,
             metric_keys=metric_keys,
-            params=params,
+            config=config,
             verbose=verbose,
             **kwargs)
 
@@ -261,14 +261,14 @@ class TfEagerExperiment(BaseExperiment):
                             verbose=verbose, prepare_batch=prepare_batch,
                             convert_fn=convert_fn, **kwargs)
 
-    def setup(self, params, training=True, **kwargs):
+    def setup(self, config, training=True, **kwargs):
         """
         Defines the setup behavior (model, trainer etc.) for training and
         testing case
 
         Parameters
         ----------
-        params : :class:`Parameters`
+        config : :class:`DeliraConfig`
             the parameters to use for setup
         training : bool
             whether to setup for training case or for testing case
@@ -291,5 +291,5 @@ class TfEagerExperiment(BaseExperiment):
 
         """
         tf.reset_default_graph()
-        return super().setup(params=params, training=training,
+        return super().setup(config=config, training=training,
                              **kwargs)
