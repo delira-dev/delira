@@ -629,14 +629,14 @@ class BaseNetworkTrainer(Predictor):
         assertion_str = "Given callback is not valid; Must be instance of " \
                         "AbstractCallback or provide functions " \
                         "'at_training_begin' and 'at_training_end'"
-        
+
         instance_check = isinstance(callback, AbstractCallback)
         attr_check_begin_train = hasattr(callback, "at_training_begin")
         attr_check_end_train = hasattr(callback, "at_training_end")
         attr_check_both_train = attr_check_begin_train and attr_check_end_train
-        
+
         assert instance_check or attr_check_both_train, assertion_str
-        
+
         super().register_callback(callback)
 
     def save_state(self, file_name, *args, **kwargs):
