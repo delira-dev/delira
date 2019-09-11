@@ -1,5 +1,6 @@
 import unittest
 import numpy as np
+from functools import partial
 
 from delira.utils.codecs import Encoder, Decoder
 
@@ -19,7 +20,7 @@ class CodecsTest(unittest.TestCase):
         test_dict['tuple'] = (1, 2, 3)
         test_dict['none'] = None
         test_dict['nparray'] = np.array([0, 1, 2])
-        test_dict['function'] = np.min
+        test_dict['function'] = partial
         test_dict['class'] = np.ndarray
 
         encoded_test_dict = Encoder().encode(test_dict)
@@ -39,9 +40,8 @@ class CodecsTest(unittest.TestCase):
         self.assertDictEqual(encoded_test_dict["nparray"],
                              {"__array__": [0, 1, 2]})
         self.assertDictEqual(encoded_test_dict["function"], {
-            "__function__": {"module": "numpy", "name": "amin"}})
-        self.assertDictEqual(encoded_test_dict["class"], {
-            "__type__": {"module": "numpy", "name": "ndarray"}})
+            "__type__": {"module": "functools",
+                             "name": "partial"}})
 
     @unittest.skipUnless(
         check_for_no_backend(),
