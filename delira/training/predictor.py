@@ -180,7 +180,8 @@ class Predictor(object):
         """
         return_dict = {}
         for cb in self._callbacks:
-            return_dict.update(cb.at_iter_begin(iter_num=iter_num, **kwargs))
+            return_dict.update(cb.at_iter_begin(self, iter_num=iter_num,
+                                                **kwargs))
 
         return return_dict
 
@@ -213,7 +214,8 @@ class Predictor(object):
         global_iter_num = kwargs.pop("global_iter_num", iter_num)
         return_dict = {}
         for cb in self._callbacks:
-            return_dict.update(cb.at_iter_end(data_dict=data_dict,
+            return_dict.update(cb.at_iter_end(self,
+                                              data_dict=data_dict,
                                               iter_num=iter_num,
                                               global_iter_num=global_iter_num,
                                               **kwargs))

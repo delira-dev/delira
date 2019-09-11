@@ -126,6 +126,9 @@ class AbstractCallback(object):
         The basetrainer calls the callbacks with the following additional
         arguments: `curr_epoch`(int), `iter_num`(int), `global_iter_num`(int)
 
+        The predictor calls the callbacks with the following additional
+        arguments: `iter_num`(int)
+
         """
         return {}
 
@@ -150,6 +153,9 @@ class AbstractCallback(object):
         The basetrainer calls the callbacks with the following additional
         arguments: `curr_epoch`(int), `iter_num`(int), `global_iter_num`(int),
         `data_dict`(dict, contains prediction and input data)
+
+        The predictor calls the callbacks with the following additional
+        arguments: `iter_num`(int)
 
         """
         return {}

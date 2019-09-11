@@ -99,7 +99,7 @@ class SklearnExperiment(BaseExperiment):
         _model = self.model_cls(**model_kwargs)
         model = self._model_wrapper_cls(_model)
 
-        training_params = params.permute_training_on_top().training
+        training_params = config.training_params
         metrics = training_params.nested_get("metrics")
 
         # necessary for resuming training from a given path

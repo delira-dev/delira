@@ -208,8 +208,8 @@ class BaseExperiment(object):
         metrics = training_params.nested_get("metrics", {})
 
         # ToDo: remove after next release
-        val_metrics = params.nested_get("val_metrics", {})
-        train_metrics = params.nested_get("train_metrics", {})
+        val_metrics = config.nested_get("val_metrics", {})
+        train_metrics = config.nested_get("train_metrics", {})
 
         if val_metrics or train_metrics:
             warnings.warn("'val_metrics' and 'train_metrics' are deprecated. "

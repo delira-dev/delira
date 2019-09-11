@@ -39,12 +39,12 @@ class DummyDataset(AbstractDataset):
 
 
 class LoggingCallback():
-    def at_epoch_begin(self, trainer, **kwargs):
-        callback_logger.info("AtEpochBegin")
+    def at_epoch_begin(self, trainer, curr_epoch, **kwargs):
+        callback_logger.info("AtEpochBegin_epoch{}".format(curr_epoch))
         return {}
 
-    def at_epoch_end(self, trainer, **kwargs):
-        callback_logger.info("AtEpochEnd")
+    def at_epoch_end(self, trainer, curr_epoch, **kwargs):
+        callback_logger.info("AtEpochEnd_epoch{}".format(curr_epoch))
         return {}
 
     def at_training_begin(self, trainer, **kwargs):
@@ -53,6 +53,14 @@ class LoggingCallback():
 
     def at_training_end(self, trainer, **kwargs):
         callback_logger.info("AtTrainingEnd_fold{}".format(trainer.fold))
+        return {}
+
+    def at_iter_begin(self, trainer, iter_num, **kwargs):
+        callback_logger.info("AtIterBegin_iter{}".format(iter_num))
+        return {}
+
+    def at_iter_end(self, trainer, iter_num, **kwargs):
+        callback_logger.info("AtIterEnd_iter{}".format(iter_num))
         return {}
 
 
@@ -121,15 +129,22 @@ def create_experiment_test_template_for_backend(backend: str):
             assert hasattr(self, "_experiment_cls")
             assert hasattr(self, "_test_cases")
             self.logging_msg_run = [
-                'INFO:CallbackLogger:AtEpochBegin',
-                'INFO:CallbackLogger:AtEpochEnd',
+                'INFO:CallbackLogger:AtEpochBegin_epoch1',
+                'INFO:CallbackLogger:AtEpochEnd_epoch1',
+                'INFO:CallbackLogger:AtIterBegin_iter0',
+                'INFO:CallbackLogger:AtIterEnd_iter0',
                 'INFO:CallbackLogger:AtTrainingBegin_fold0',
                 'INFO:CallbackLogger:AtTrainingEnd_fold0',
             ]
-            self.logging_msg_test = []
+            self.logging_msg_test = [
+                'INFO:CallbackLogger:AtIterBegin_iter0',
+                'INFO:CallbackLogger:AtIterEnd_iter0',
+            ]
             self.logging_msg_kfold = [
-                'INFO:CallbackLogger:AtEpochBegin',
-                'INFO:CallbackLogger:AtEpochEnd',
+                'INFO:CallbackLogger:AtEpochBegin_epoch1',
+                'INFO:CallbackLogger:AtEpochEnd_epoch1',
+                'INFO:CallbackLogger:AtIterBegin_iter0',
+                'INFO:CallbackLogger:AtIterEnd_iter0',
                 'INFO:CallbackLogger:AtTrainingBegin_fold0',
                 'INFO:CallbackLogger:AtTrainingEnd_fold0',
                 'INFO:CallbackLogger:AtTrainingBegin_fold1',

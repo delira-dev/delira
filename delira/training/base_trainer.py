@@ -343,10 +343,12 @@ class BaseNetworkTrainer(Predictor):
         """
 
         for cb in self._callbacks:
-            self._update_state(cb.at_iter_begin(
+            self._update_state(cb.at_iter_end(
                 self, curr_epoch=epoch, iter_num=iter_num,
-                data_dict=data_dict, global_iter_num=self._global_iter_num,
-                **kwargs))
+                data_dict=data_dict,
+                global_iter_num=self._global_iter_num,
+                **kwargs
+            ))
 
         self._global_iter_num += 1
 
@@ -392,7 +394,7 @@ class BaseNetworkTrainer(Predictor):
             _preds = self._convert_to_npy_fn(**_preds)[1]
 
             _metrics = self.calc_metrics(
-                LookupConfig(config={**data_dict, **_preds}),
+                LookupConfig(**data_dict, **_preds),
                 self.metrics,
                 self.metric_keys)
 
@@ -401,7 +403,8 @@ class BaseNetworkTrainer(Predictor):
 
             self._at_iter_end(epoch=epoch, iter_num=iter_num,
                               data_dict={**batch, **_preds},
-                              metrics={**_metrics, **_losses})
+                              metrics={**_metrics, **_losses},
+                              )
 
         batchgen._finish()
 

@@ -50,8 +50,7 @@ class DefaultLoggingCallback(AbstractCallback):
                                    logging_frequencies=logging_frequencies,
                                    reduce_types=reduce_types, level=level)
 
-    def at_iter_end(self, trainer, epoch=None, iter_num=None, data_dict=None,
-                    **kwargs):
+    def at_iter_end(self, trainer, iter_num=None, data_dict=None, **kwargs):
         """
         Function logging the metrics at the end of each iteration
 
@@ -59,8 +58,6 @@ class DefaultLoggingCallback(AbstractCallback):
         ----------
         trainer : :class:`BaseNetworkTrainer`
             the current trainer object (unused in this callback)
-        epoch : int
-            the current epoch (unused in this callback)
         iter_num : int
             number of the current iteration inside the current epoch
             (unused in this callback)
@@ -78,7 +75,7 @@ class DefaultLoggingCallback(AbstractCallback):
         metrics = kwargs.get("metrics", {})
         global_step = kwargs.get("global_iter_num", None)
 
-        for k, v in metrics:
+        for k, v in metrics.items():
             self._logger.log({"scalar": {"tag": k, "scalar_value": v,
                                          "global_step": global_step}})
 
