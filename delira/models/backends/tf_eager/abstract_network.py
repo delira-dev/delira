@@ -110,10 +110,43 @@ class AbstractTfEagerNetwork(AbstractNetwork, tf.keras.layers.Layer):
 
     @staticmethod
     def closure(model, data_dict: dict,
-                optimizers: typing.Dict[str, tf.train.Optimizer], losses={},
-                metrics={}, fold=0, **kwargs):
+                optimizers: typing.Dict[str, tf.train.Optimizer], losses: dict,
+                iter_num: int, fold=0, **kwargs):
+        """
+        default closure method to do a single training step;
+        Could be overwritten for more advanced models
 
-        loss_vals, metric_vals = {}, {}
+        Parameters
+        ----------
+        model : :class:`SkLearnEstimator`
+            trainable model
+        data_dict : dict
+            dictionary containing the data
+        optimizers : dict
+            dictionary of optimizers to optimize model's parameters;
+            ignored here, just passed for compatibility reasons
+        losses : dict
+            dict holding the losses to calculate errors;
+            ignored here, just passed for compatibility reasons
+        iter_num: int
+            the number of of the current iteration in the current epoch;
+            Will be restarted at zero at the beginning of every epoch
+        fold : int
+            Current Fold in Crossvalidation (default: 0)
+        **kwargs:
+            additional keyword arguments
+
+        Returns
+        -------
+        dict
+            Loss values (with same keys as input dict losses; will always
+            be empty here)
+        dict
+            dictionary containing all predictions
+
+        """
+
+        loss_vals = {}
 
         # calculate loss with graph created by gradient taping
         with tf.GradientTape() as tape:
@@ -132,25 +165,8 @@ class AbstractTfEagerNetwork(AbstractNetwork, tf.keras.layers.Layer):
         grads = tape.gradient(total_loss,
                               model.trainable_variables)
 
-        for k, metric_fn in metrics.items():
-            metric_vals[k] = metric_fn(
-                preds["pred"],
-                data_dict["label"]).numpy()
+        # perform optimization step
+        optimizers["default"].apply_gradients(
+            zip(grads, model.trainable_variables))
 
-        if optimizers:
-            # perform optimization step
-            optimizers["default"].apply_gradients(
-                zip(grads, model.trainable_variables))
-        else:
-            # add prefix "val" in validation mode
-            eval_losses, eval_metrics = {}, {}
-            for key in loss_vals.keys():
-                eval_losses["val_" + str(key)] = loss_vals[key]
-
-            for key in metric_vals:
-                eval_metrics["val_" + str(key)] = metric_vals[key]
-
-            loss_vals = eval_losses
-            metric_vals = eval_metrics
-
-        return metric_vals, loss_vals, preds
+        return loss_vals, preds

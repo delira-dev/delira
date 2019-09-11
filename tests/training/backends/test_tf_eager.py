@@ -47,7 +47,7 @@ class TestTfEagerBackend(
                     "optimizer_cls": tf.train.AdamOptimizer,
                     "optimizer_params": {"learning_rate": 1e-3},
                     "num_epochs": 2,
-                    "val_metrics": {"mae": mean_absolute_error},
+                    "metrics": {"mae": mean_absolute_error},
                     "lr_sched_cls": None,
                     "lr_sched_params": {}}
             }

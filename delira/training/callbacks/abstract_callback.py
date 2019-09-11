@@ -22,7 +22,7 @@ class AbstractCallback(object):
         """
         pass
 
-    def at_epoch_begin(self, trainer, **kwargs):
+    def at_epoch_begin(self, trainer, *args, **kwargs):
         """
         Function which will be executed at begin of each epoch
 
@@ -45,7 +45,7 @@ class AbstractCallback(object):
         """
         return {}
 
-    def at_epoch_end(self, trainer, **kwargs):
+    def at_epoch_end(self, trainer, *args, **kwargs):
         """
         Function which will be executed at end of each epoch
 
@@ -68,9 +68,27 @@ class AbstractCallback(object):
         """
         return {}
 
-    def at_training_begin(self, trainer, **kwargs):
+    def at_training_begin(self, trainer, *args, **kwargs):
         """
         Function which will be executed at begin of training
+
+        Parameters
+        ----------
+        trainer : :class:`AbstractNetworkTrainer`
+        **kwargs :
+            additional keyword arguments
+
+        Returns
+        -------
+        dict
+            modified trainer attributes, where the name must correspond to the
+            trainer's attribute name
+        """
+        return {}
+
+    def at_training_end(self, trainer, *args, **kwargs):
+        """
+        Function which will be executed at end of training
 
         Parameters
         ----------
@@ -87,9 +105,9 @@ class AbstractCallback(object):
         """
         return {}
 
-    def at_training_end(self, trainer, **kwargs):
+    def at_iter_begin(self, trainer, *args, **kwargs):
         """
-        Function which will be executed at end of training
+        Function which will be executed at begin of each iteration
 
         Parameters
         ----------
@@ -102,6 +120,42 @@ class AbstractCallback(object):
         dict
             modified trainer attributes, where the name must correspond to the
             trainer's attribute name
+
+        Notes
+        -----
+        The predictor calls the callbacks with the following additional
+        arguments: `iter_num`(int)
+
+        The basetrainer adds following arguments (wrt the predictor):
+        `curr_epoch`(int), `global_iter_num`(int)
+
+        """
+        return {}
+
+    def at_iter_end(self, trainer, *args, **kwargs):
+        """
+        Function which will be executed at end of each iteration
+
+        Parameters
+        ----------
+        trainer : :class:`AbstractNetworkTrainer`
+        **kwargs :
+            additional keyword arguments
+
+        Returns
+        -------
+        dict
+            modified trainer attributes, where the name must correspond to the
+            trainer's attribute name
+
+        Notes
+        -----
+        The predictor calls the callbacks with the following additional
+        arguments: `iter_num`(int), `metrics`(dict),
+        `data_dict`(dict, contains prediction and input data),
+
+        The basetrainer adds following arguments (wrt the predictor):
+        `curr_epoch`(int), `global_iter_num`(int)
 
         """
         return {}

@@ -2,18 +2,14 @@ import logging
 import os
 import pickle
 import typing
+import warnings
 
-from delira.data_loading.data_manager import Augmenter
-
-from delira.training.predictor import Predictor
-from delira.training.callbacks import AbstractCallback
-from delira.models import AbstractNetwork
+from delira.utils.config import LookupConfig
 
 import numpy as np
 from tqdm import tqdm
-from delira.logging import LoggingContext, log
 
-from .callbacks import AbstractCallback
+from .callbacks import AbstractCallback, DefaultLoggingCallback
 from .predictor import Predictor
 from ..data_loading.data_manager import Augmenter
 from ..models import AbstractNetwork
@@ -43,8 +39,7 @@ class BaseNetworkTrainer(Predictor):
                  losses: dict,
                  optimizer_cls: type,
                  optimizer_params: dict,
-                 train_metrics: dict,
-                 val_metrics: dict,
+                 metrics: dict,
                  lr_scheduler_cls: type,
                  lr_scheduler_params: dict,
                  gpu_ids: typing.List[int],
@@ -53,8 +48,11 @@ class BaseNetworkTrainer(Predictor):
                  key_mapping: dict,
                  logging_type: str,
                  logging_kwargs: dict,
-                 fold: int,
-                 callbacks: typing.List[AbstractCallback],
+                 logging_callback_cls=DefaultLoggingCallback,
+                 logging_frequencies=None,
+                 logging_reduce_types=None,
+                 fold: int = 0,
+                 callbacks: typing.List[AbstractCallback] = None,
                  start_epoch=1,
                  metric_keys=None,
                  convert_batch_to_npy_fn=lambda x: x,
@@ -75,11 +73,8 @@ class BaseNetworkTrainer(Predictor):
             optimizer class implementing the optimization algorithm of choice
         optimizer_params : dict
             keyword arguments passed to optimizer during construction
-        train_metrics : dict, optional
-            metrics, which will be evaluated during train phase
-            (should work on numpy arrays)
-        val_metrics : dict, optional
-            metrics, which will be evaluated during test phase
+        metrics : dict, optional
+            metrics, which will be evaluated during train and validation phase
             (should work on numpy arrays)
         lr_scheduler_cls : Any
             learning rate schedule class: must implement step() method
@@ -101,9 +96,30 @@ class BaseNetworkTrainer(Predictor):
         logging_type : str or callable
             the type of logging. If string: it must be one of
             ["visdom", "tensorboardx"]
-            If callable: it must be a logging handler class
+            If callable: it must be a logging handler backend class
         logging_kwargs : dict
             dictionary containing all logging keyword arguments
+        logging_callback_cls : class
+            the callback class to create and register for logging
+        logging_frequencies : int or dict
+                specifies how often to log for each key.
+                If int: integer will be applied to all valid keys
+                if dict: should contain a frequency per valid key. Missing keys
+                will be filled with a frequency of 1 (log every time)
+                None is equal to empty dict here.
+        logging_reduce_types : str of FunctionType or dict
+            if str:
+                specifies the reduction type to use. Valid types are
+                'last' | 'first' | 'mean' | 'median' | 'max' | 'min'.
+                The given type will be mapped to all valid keys.
+            if FunctionType:
+                specifies the actual reduction function. Will be applied
+                for all keys.
+            if dict: should contain pairs of valid logging keys and either
+                str or FunctionType. Specifies the logging value per key.
+                Missing keys will be filles with a default value of 'last'.
+                Valid types for strings are
+                'last' | 'first' | 'mean' | 'median' | 'max' | 'min'.
         fold : int
             current cross validation fold (0 per default)
         callbacks : list
@@ -130,16 +146,18 @@ class BaseNetworkTrainer(Predictor):
 
         # explicity not call self._setup here to reuse the __init__ of
         # abstract class. self._setup has to be called in subclass
+        if callbacks is None:
+            callbacks = []
 
         # check argument types
-        assert isinstance(network, AbstractNetwork)
-        assert isinstance(save_path, str)
-        assert isinstance(losses, dict)
-        assert isinstance(optimizer_params, dict)
-        assert isinstance(train_metrics, dict)
-        assert isinstance(val_metrics, dict)
-        assert isinstance(lr_scheduler_params, dict)
-        assert isinstance(gpu_ids, list)
+        for instance, cls_type in zip([
+            network, save_path, losses, optimizer_params, metrics,
+            lr_scheduler_params, gpu_ids], [AbstractNetwork, str, dict, dict,
+                                            dict, dict, list]):
+            if not isinstance(instance, cls_type):
+                raise TypeError("%s should be of type %s, but is of type %s"
+                                % (instance.__name__, cls_type.__name__,
+                                   type(instance).__name__))
 
         if os.path.isdir(save_path):
             logger.warning(
@@ -147,30 +165,33 @@ class BaseNetworkTrainer(Predictor):
         else:
             os.makedirs(save_path)
 
-        self._callbacks = []
         self._fold = fold
         self.start_epoch = start_epoch
         self.save_path = save_path
         self.losses = losses
-        self.train_metrics = train_metrics
-        self.val_metrics = val_metrics
+        self.metrics = metrics
         self.stop_training = False
         self.save_freq = save_freq
         self.metric_keys = metric_keys
-        self._logger_name = None
 
-        for cbck in callbacks:
-            self.register_callback(cbck)
-
-        self._reinitialize_logging(logging_type, logging_kwargs)
         self._tqdm_desc = "Validate"
         self.val_freq = val_freq
+        self._global_iter_num = 1
+        self._logging_setup_kwargs = {
+            "logging_type": logging_type,
+            "logging_kwargs": logging_kwargs,
+            "logging_callback_cls": logging_callback_cls,
+            "logging_frequencies": logging_frequencies,
+            "reduce_types": logging_reduce_types}
 
     def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-               key_mapping, convert_batch_to_npy_fn, prepare_batch_fn):
+               key_mapping, convert_batch_to_npy_fn, prepare_batch_fn,
+               callbacks):
 
         super()._setup(network, key_mapping, convert_batch_to_npy_fn,
-                       prepare_batch_fn)
+                       prepare_batch_fn, callbacks)
+
+        self._reinitialize_logging(**self._logging_setup_kwargs)
 
         self.closure_fn = network.closure
 
@@ -227,7 +248,7 @@ class BaseNetworkTrainer(Predictor):
 
         return self.module
 
-    def _at_epoch_begin(self, metrics_val, val_score_key, epoch, num_epochs,
+    def _at_epoch_begin(self, val_score_key, epoch, num_epochs,
                         **kwargs):
         """
         Defines behaviour at beginning of each epoch: Executes all callbacks's
@@ -235,8 +256,6 @@ class BaseNetworkTrainer(Predictor):
 
         Parameters
         ----------
-        metrics_val : dict
-            validation metrics
         val_score_key : str
             validation score key
         epoch : int
@@ -247,10 +266,9 @@ class BaseNetworkTrainer(Predictor):
             keyword arguments
 
         """
-
         # execute all callbacks
         for cb in self._callbacks:
-            self._update_state(cb.at_epoch_begin(self, val_metrics=metrics_val,
+            self._update_state(cb.at_epoch_begin(self, val_metrics={},
                                                  val_score_key=val_score_key,
                                                  curr_epoch=epoch))
 
@@ -288,6 +306,55 @@ class BaseNetworkTrainer(Predictor):
             self.save_state(os.path.join(self.save_path,
                                          "checkpoint_best"))
 
+    def _at_iter_begin(self, iter_num, epoch=0, **kwargs):
+        """
+        Defines the behavior executed at an iteration's begin
+
+        Parameters
+        ----------
+        iter_num : int
+            number of current iter
+        epoch : int
+            number of current epoch
+        **kwargs :
+            additional keyword arguments (forwarded to callback calls)
+
+        """
+        for cb in self._callbacks:
+            self._update_state(cb.at_iter_begin(
+                self, iter_num=iter_num, curr_epoch=epoch,
+                global_iter_num=self._global_iter_num, **kwargs,
+            ))
+
+    def _at_iter_end(self, iter_num, data_dict, metrics, epoch=0, **kwargs):
+        """
+        Defines the behavior executed at an iteration's end
+
+        Parameters
+        ----------
+        iter_num : int
+            number of current iter
+        data_dict : dict
+            dictionary holding input data and predictions
+        metrics: dict
+            calculated metrics
+        epoch : int
+            number of current epoch
+        **kwargs :
+            additional keyword arguments (forwarded to callback calls)
+
+        """
+
+        for cb in self._callbacks:
+            self._update_state(cb.at_iter_end(
+                self, iter_num=iter_num, data_dict=data_dict,
+                metrics=metrics, curr_epoch=epoch,
+                global_iter_num=self._global_iter_num,
+                **kwargs,
+            ))
+
+        self._global_iter_num += 1
+
     def _train_single_epoch(self, batchgen: Augmenter, epoch,
                             verbose=False):
         """
@@ -315,18 +382,32 @@ class BaseNetworkTrainer(Predictor):
         else:
             iterable = enumerate(batchgen)
 
-        for batch_nr, batch in iterable:
+        for iter_num, batch in iterable:
+            self._at_iter_begin(epoch=epoch, iter_num=iter_num)
 
             data_dict = self._prepare_batch(batch)
 
-            _metrics, _losses, _ = self.closure_fn(self.module, data_dict,
-                                                   optimizers=self.optimizers,
-                                                   losses=self.losses,
-                                                   metrics=self.train_metrics,
-                                                   fold=self.fold,
-                                                   batch_nr=batch_nr)
+            _losses, _preds = self.closure_fn(self.module, data_dict,
+                                              optimizers=self.optimizers,
+                                              losses=self.losses,
+                                              fold=self.fold,
+                                              iter_num=iter_num)
+
+            data_dict = self._convert_to_npy_fn(**data_dict)[1]
+            _preds = self._convert_to_npy_fn(**_preds)[1]
+
+            _metrics = self.calc_metrics(
+                LookupConfig(**data_dict, **_preds),
+                self.metrics,
+                self.metric_keys)
+
             metrics.append(_metrics)
             losses.append(_losses)
+
+            self._at_iter_end(epoch=epoch, iter_num=iter_num,
+                              data_dict={**batch, **_preds},
+                              metrics={**_metrics, **_losses},
+                              )
 
         batchgen._finish()
 
@@ -400,83 +481,62 @@ class BaseNetworkTrainer(Predictor):
         else:
             raise ValueError("No valid reduce mode given")
 
-        metrics_val = {}
+        for epoch in range(self.start_epoch, num_epochs + 1):
 
-        val_metric_fns = {}
+            self._at_epoch_begin(val_score_key, epoch,
+                                 num_epochs)
 
-        for k, v in self.val_metrics.items():
-            if not k.startswith("val_"):
-                k = "val_" + k
+            batch_gen_train = datamgr_train.get_batchgen(seed=epoch)
 
-            val_metric_fns[k] = v
+            # train single network epoch
+            train_metrics, train_losses = self._train_single_epoch(
+                batch_gen_train, epoch, verbose=verbose)
 
-        if self.metric_keys is None:
-            val_metric_keys = None
+            total_metrics = {
+                **train_metrics,
+                **train_losses}
 
-        else:
-            val_metric_keys = {}
-            for k, v in self.metric_keys.items():
-                if not k.startswith("val_"):
-                    k = "val_" + k
+            # validate network
+            if datamgr_valid is not None and (epoch % self.val_freq == 0):
+                # next must be called here because self.predict_data_mgr
+                # returns a generator (of size 1) and we want to get the
+                # first (and only) item
+                val_metrics = next(
+                    self.predict_data_mgr_cache_metrics_only(
+                        datamgr_valid, datamgr_valid.batch_size,
+                        metrics=self.metrics,
+                        metric_keys=self.metric_keys,
+                        verbose=verbose))
 
-                val_metric_keys[k] = v
+                val_metrics = {"val_" + k: v
+                               for k, v in val_metrics.items()}
 
-        with LoggingContext(self._logger_name):
+                total_metrics.update(val_metrics)
+            _, total_metrics = self._convert_to_npy_fn(**total_metrics)
 
-            for epoch in range(self.start_epoch, num_epochs + 1):
+            for k, v in total_metrics.items():
+                total_metrics[k] = reduce_fn(v)
 
-                self._at_epoch_begin(metrics_val, val_score_key, epoch,
-                                     num_epochs)
+            # check if metric became better
+            if val_score_key is not None:
+                if val_score_key not in total_metrics:
+                    if "val_" + val_score_key not in total_metrics:
+                        warnings.warn("val_score_key '%s' not a valid key "
+                                      "for validation metrics" %
+                                      str(val_score_key), UserWarning)
 
-                batch_gen_train = datamgr_train.get_batchgen(seed=epoch)
+                        new_val_score = best_val_score
 
-                # train single network epoch
-                train_metrics, train_losses = self._train_single_epoch(
-                    batch_gen_train, epoch, verbose=verbose)
-
-                total_metrics = {
-                    **train_metrics,
-                    **train_losses}
-
-                # validate network
-                if datamgr_valid is not None and (epoch % self.val_freq == 0):
-                    # next must be called here because self.predict_data_mgr
-                    # returns a generator (of size 1) and we want to get the
-                    # first (and only) item
-                    val_metrics = next(
-                        self.predict_data_mgr_cache_metrics_only(
-                            datamgr_valid, datamgr_valid.batch_size,
-                            metrics=val_metric_fns,
-                            metric_keys=val_metric_keys,
-                            verbose=verbose))
-
-                    total_metrics.update(val_metrics)
-                _, total_metrics = self._convert_to_npy_fn(**total_metrics)
-
-                for k, v in total_metrics.items():
-                    total_metrics[k] = reduce_fn(v)
-
-                # check if metric became better
-                if val_score_key is not None:
-                    if val_score_key not in total_metrics:
-                        if "val_" + val_score_key not in total_metrics:
-                            logger.warning(
-                                "val_score_key '%s' not a valid key for \
-                                        validation metrics" %
-                                str(val_score_key))
-
-                            new_val_score = best_val_score
-
-                        else:
-                            new_val_score = \
-                                total_metrics["val_" + val_score_key]
-                            val_score_key = "val_" + val_score_key
                     else:
-                        new_val_score = total_metrics.get(val_score_key)
+                        new_val_score = \
+                            total_metrics["val_" + val_score_key]
+                        val_score_key = "val_" + val_score_key
+                else:
+                    new_val_score = total_metrics.get(val_score_key)
 
-                if new_val_score != best_val_score:
-                    is_best = self._is_better_val_scores(
-                        best_val_score, new_val_score, val_score_mode)
+            if new_val_score != best_val_score:
+                is_best = self._is_better_val_scores(
+                    best_val_score, new_val_score, val_score_mode)
 
                 # set best_val_score to new_val_score if is_best
                 if is_best:
@@ -486,19 +546,14 @@ class BaseNetworkTrainer(Predictor):
                     logging.info("New Best Value at Epoch %03d : %03.3f" %
                                  (epoch, best_val_score))
 
-                # log metrics and loss values
-                for key, val in total_metrics.items():
-                    log({"value": {"scalar_value": val, "tag": key
-                                   }})
+            self._at_epoch_end(total_metrics, val_score_key, epoch,
+                               is_best)
 
-                self._at_epoch_end(total_metrics, val_score_key, epoch,
-                                   is_best)
+            is_best = False
 
-                is_best = False
-
-                # stop training (might be caused by early stopping)
-                if self.stop_training:
-                    break
+            # stop training (might be caused by early stopping)
+            if self.stop_training:
+                break
 
         return self._at_training_end()
 
@@ -556,19 +611,16 @@ class BaseNetworkTrainer(Predictor):
         """
         assertion_str = "Given callback is not valid; Must be instance of " \
                         "AbstractCallback or provide functions " \
-                        "'at_epoch_begin' and 'at_epoch_end'"
+                        "'at_training_begin' and 'at_training_end'"
+
         instance_check = isinstance(callback, AbstractCallback)
-        attr_check_begin_epoch = hasattr(callback, "at_epoch_begin")
-        attr_check_end_epoch = hasattr(callback, "at_epoch_end")
-        attr_check_both_epoch = attr_check_begin_epoch and attr_check_end_epoch
         attr_check_begin_train = hasattr(callback, "at_training_begin")
         attr_check_end_train = hasattr(callback, "at_training_end")
         attr_check_both_train = attr_check_begin_train and attr_check_end_train
-        attr_check_all = attr_check_both_epoch and attr_check_both_train
 
-        assert instance_check or attr_check_all, assertion_str
+        assert instance_check or attr_check_both_train, assertion_str
 
-        self._callbacks.append(callback)
+        super().register_callback(callback)
 
     def save_state(self, file_name, *args, **kwargs):
         """
@@ -695,14 +747,49 @@ class BaseNetworkTrainer(Predictor):
         return os.path.basename(os.path.dirname(os.path.dirname(
             os.path.dirname(self.save_path))))
 
-    def _reinitialize_logging(self, logging_type, logging_kwargs: dict):
-        from delira.logging import TensorboardBackend, VisdomBackend, \
-            BaseBackend, make_logger, register_logger, unregister_logger, \
-            get_available_loggers
+    def _reinitialize_logging(self, logging_type, logging_kwargs: dict,
+                              logging_callback_cls, logging_frequencies,
+                              reduce_types):
+        """
 
-        for logger_name in get_available_loggers():
-            if logger_name.startswith(self.name):
-                unregister_logger(logger_name)
+        Parameters
+        ----------
+        logging_type : str or callable
+            the type of logging. If string: it must be one of
+            ["visdom", "tensorboardx"]
+            If callable: it must be a logging handler backend class
+        logging_kwargs : dict
+            dictionary containing all logging keyword arguments
+        logging_callback_cls : class
+            the callback class to create and register for logging
+        logging_frequencies : int or dict
+                specifies how often to log for each key.
+                If int: integer will be applied to all valid keys
+                if dict: should contain a frequency per valid key. Missing keys
+                will be filled with a frequency of 1 (log every time)
+                None is equal to empty dict here.
+        reduce_types : str of FunctionType or dict
+            Values are logged in each iteration. This argument specifies,
+            how to reduce them to a single value if a logging_frequency
+            besides 1 is passed
+
+            if str:
+                specifies the reduction type to use. Valid types are
+                'last' | 'first' | 'mean' | 'max' | 'min'.
+                The given type will be mapped to all valid keys.
+            if FunctionType:
+                specifies the actual reduction function. Will be applied
+                for all keys.
+            if dict: should contain pairs of valid logging keys and either
+                str or FunctionType. Specifies the logging value per key.
+                Missing keys will be filles with a default value of 'last'.
+                Valid types for strings are
+                'last' | 'first' | 'mean' | 'max' | 'min'.
+
+        """
+
+        from delira.logging import TensorboardBackend, VisdomBackend, \
+            BaseBackend
 
         if isinstance(logging_type, str):
             if logging_type.lower() == "visdom":
@@ -748,13 +835,11 @@ class BaseNetworkTrainer(Predictor):
 
         level = _logging_kwargs.pop("level")
 
-        logger = make_logger(backend_cls(_logging_kwargs),
-                             level=level)
-
-        logger_name = self.name + "_run_%02d" % self.fold
-        register_logger(logger, logger_name)
-
-        self._logger_name = logger_name
+        self.register_callback(
+            logging_callback_cls(
+                backend_cls(logging_kwargs), level=level,
+                logging_frequencies=logging_frequencies,
+                reduce_types=reduce_types))
 
     @staticmethod
     def _search_for_prev_state(path, extensions=None):
@@ -812,3 +897,33 @@ class BaseNetworkTrainer(Predictor):
             return latest_state_path, latest_epoch
 
         return None, 1
+
+    def register_callback(self, callback: AbstractCallback):
+        """
+        Registers the passed callback to the trainer,
+        after checking it is really a valid callback
+
+        Parameters
+        ----------
+        callback : AbstractCallback
+            the potential callback to register
+
+        Raises
+        ------
+        AssertionError
+            :param:`callback` is not an instance of :class:`AbstractCallback`
+            and does not provide the methods `at_iter_begin`, `at_iter_end`,
+            `at_epoch_begin` and `at_epoch_end`
+
+        """
+        has_all_attrs = True
+        for attr in ("epoch",):
+            has_all_attrs = has_all_attrs and hasattr(callback,
+                                                      "at_%s_begin" % attr)
+            has_all_attrs = has_all_attrs and hasattr(callback,
+                                                      "at_%s_end" % attr)
+
+        assert has_all_attrs, "Given callback is not valid; Must be " \
+                              "instance of AbstractCallback or provide " \
+                              "functions 'at_epoch_begin' and 'at_epoch_end'"
+        super().register_callback(callback)

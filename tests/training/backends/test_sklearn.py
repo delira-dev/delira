@@ -25,7 +25,7 @@ class TestSklearnBackend(
                     "optimizer_cls": None,
                     "optimizer_params": {},
                     "num_epochs": 2,
-                    "val_metrics": {"mae": mean_absolute_error},
+                    "metrics": {"mae": mean_absolute_error},
                     "lr_sched_cls": None,
                     "lr_sched_params": {}}
             }
@@ -52,7 +52,9 @@ class TestSklearnBackend(
                 "network_cls": _cls,
                 "len_train": len_train,
                 "len_test": len_test,
-                "key_mapping": {"X": "X"}
+                "key_mapping": {"X": "X"},
+                "metric_keys": {"L1": ("pred", "y"),
+                                "mae": ("pred", "y")}
             } for _cls in model_cls
         ]
         self._experiment_cls = experiment_cls
@@ -72,6 +74,7 @@ class TestSklearnBackend(
                 # pop arguments (to use remaining case as kwargs later)
                 _ = case.pop("len_train")
                 config = case.pop("config")
+                metric_keys = case.pop("metric_keys")
                 network_cls = case.pop("network_cls")
                 len_test = case.pop("len_test")
                 exp = self._experiment_cls(config, network_cls, **case)
@@ -86,7 +89,8 @@ class TestSklearnBackend(
                 model.fit(np.random.rand(2, 32), np.array([[0], [1]]))
 
                 exp.test(model, dmgr_test,
-                         config.nested_get("val_metrics", {}))
+                         config.nested_get("metrics", {}),
+                         metric_keys)
 
 
 if __name__ == "__main__":

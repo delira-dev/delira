@@ -3,6 +3,7 @@ import logging
 import pickle
 import os
 from datetime import datetime
+import warnings
 
 import copy
 
@@ -119,9 +120,10 @@ class BaseExperiment(object):
         self.predictor_cls = predictor_cls
 
         if val_score_key is None:
-            if config.nested_get("val_metrics", False):
-                val_score_key = sorted(
-                    config.nested_get("val_metrics").keys())[0]
+            warnings.warn("No 'val_score_key' is given. This disables the "
+                          "automatic selection of the best model",
+                          UserWarning)
+
         self.val_score_key = val_score_key
 
         assert key_mapping is not None
@@ -202,7 +204,19 @@ class BaseExperiment(object):
         lr_scheduler_cls = training_params.nested_get("lr_sched_cls", None)
         lr_scheduler_params = training_params.nested_get("lr_sched_params",
                                                          {})
-        val_metrics = training_params.nested_get("val_metrics", {})
+
+        metrics = training_params.nested_get("metrics", {})
+
+        # ToDo: remove after next release
+        val_metrics = config.nested_get("val_metrics", {})
+        train_metrics = config.nested_get("train_metrics", {})
+
+        if val_metrics or train_metrics:
+            warnings.warn("'val_metrics' and 'train_metrics' are deprecated. "
+                          "Please use the combined 'metrics' instead!",
+                          DeprecationWarning)
+            metrics.update(val_metrics)
+            metrics.update(train_metrics)
 
         # necessary for resuming training from a given path
         save_path = kwargs.pop("save_path", os.path.join(
@@ -218,7 +232,7 @@ class BaseExperiment(object):
             optimizer_cls=optimizer_cls,
             optimizer_params=optimizer_params,
             train_metrics=train_metrics,
-            val_metrics=val_metrics,
+            metrics=metrics,
             lr_scheduler_cls=lr_scheduler_cls,
             lr_scheduler_params=lr_scheduler_params,
             optim_fn=self._optim_builder,

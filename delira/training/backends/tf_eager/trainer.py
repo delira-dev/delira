@@ -4,6 +4,8 @@ from delira.training.base_trainer import BaseNetworkTrainer
 from delira.io.tf import save_checkpoint_eager, load_checkpoint_eager
 from delira.models.backends.tf_eager import AbstractTfEagerNetwork, \
     DataParallelTfEagerNetwork
+
+from delira.training.callbacks.logging_callback import DefaultLoggingCallback
 import logging
 import os
 from functools import partial
@@ -21,8 +23,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
                  losses: dict,
                  optimizer_cls,
                  optimizer_params=None,
-                 train_metrics=None,
-                 val_metrics=None,
+                 metrics=None,
                  lr_scheduler_cls=None,
                  lr_scheduler_params=None,
                  gpu_ids=None,
@@ -30,6 +31,9 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
                  optim_fn=create_optims_default,
                  logging_type="tensorboardx",
                  logging_kwargs=None,
+                 logging_callback_cls=DefaultLoggingCallback,
+                 logging_frequencies=None,
+                 logging_reduce_types=None,
                  fold=0,
                  callbacks=None,
                  start_epoch=1,
@@ -57,11 +61,8 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
             optimizer class implementing the optimization algorithm of choice
         optimizer_params : dict
             keyword arguments passed to optimizer during construction
-        train_metrics : dict, optional
-            metrics, which will be evaluated during train phase
-            (should work on numpy arrays)
-        val_metrics : dict, optional
-            metrics, which will be evaluated during test phase
+        metrics : dict, optional
+            metrics, which will be evaluated during train and validation phase
             (should work on numpy arrays)
         lr_scheduler_cls : Any
             learning rate schedule class: must implement step() method
@@ -80,6 +81,27 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
             If callable: it must be a logging handler class
         logging_kwargs : dict
             dictionary containing all logging keyword arguments
+        logging_callback_cls : class
+            the callback class to create and register for logging
+        logging_frequencies : int or dict
+            specifies how often to log for each key.
+            If int: integer will be applied to all valid keys
+            if dict: should contain a frequency per valid key. Missing keys
+                will be filled with a frequency of 1 (log every time)
+            None is equal to empty dict here.
+        logging_reduce_types : str of FunctionType or dict
+            if str:
+                specifies the reduction type to use. Valid types are
+                'last' | 'first' | 'mean' | 'median' | 'max' | 'min'.
+                The given type will be mapped to all valid keys.
+            if FunctionType:
+                specifies the actual reduction function. Will be applied
+                for all keys.
+            if dict: should contain pairs of valid logging keys and either
+                str or FunctionType. Specifies the logging value per key.
+                Missing keys will be filles with a default value of 'last'.
+                Valid types for strings are
+                'last' | 'first' | 'mean' | 'median' | 'max' | 'min'.
         fold : int
             current cross validation fold (0 per default)
         callbacks : list
@@ -112,10 +134,8 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
             gpu_ids = []
         if lr_scheduler_params is None:
             lr_scheduler_params = {}
-        if val_metrics is None:
-            val_metrics = {}
-        if train_metrics is None:
-            train_metrics = {}
+        if metrics is None:
+            metrics = {}
         if optimizer_params is None:
             optimizer_params = {}
 
@@ -127,8 +147,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
                          losses=losses,
                          optimizer_cls=optimizer_cls,
                          optimizer_params=optimizer_params,
-                         train_metrics=train_metrics,
-                         val_metrics=val_metrics,
+                         metrics=metrics,
                          lr_scheduler_cls=lr_scheduler_cls,
                          lr_scheduler_params=lr_scheduler_params,
                          gpu_ids=gpu_ids,
@@ -143,19 +162,22 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
                          metric_keys=metric_keys,
                          convert_batch_to_npy_fn=convert_batch_to_npy_fn,
                          val_freq=val_freq,
+                         logging_callback_cls=logging_callback_cls,
+                         logging_frequencies=logging_frequencies,
+                         logging_reduce_types=logging_reduce_types,
                          **kwargs
                          )
 
         self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                     lr_scheduler_cls, lr_scheduler_params,
-                    key_mapping, convert_batch_to_npy_fn, gpu_ids)
+                    key_mapping, convert_batch_to_npy_fn, gpu_ids, callbacks)
 
         for key, val in kwargs.items():
             setattr(self, key, val)
 
     def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
                lr_scheduler_cls, lr_scheduler_params, key_mapping,
-               convert_batch_to_npy_fn, gpu_ids):
+               convert_batch_to_npy_fn, gpu_ids, callbacks):
         """
         Defines the Trainers Setup
 
@@ -177,6 +199,8 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
             the identity function
         gpu_ids : list
             list containing ids of GPUs to use; if empty: use cpu instead
+        callbacks : list
+            initial callbacks to register
 
         Raises
         ------
@@ -207,7 +231,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
 
         super()._setup(network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                        key_mapping, convert_batch_to_npy_fn,
-                       network.prepare_batch)
+                       network.prepare_batch, callbacks)
         self._prepare_batch = partial(self._prepare_batch,
                                       input_device=self.input_device,
                                       output_device=self.output_device)
@@ -245,7 +269,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
                                            'checkpoint_best')
                               )
 
-        return super()._at_training_end(self, *args, **kwargs)
+        return super()._at_training_end(*args, **kwargs)
 
     def _train_single_epoch(self, batchgen, epoch, verbose=False):
         """
