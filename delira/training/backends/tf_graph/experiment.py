@@ -6,7 +6,7 @@ import tensorflow as tf
 from delira.models.backends.tf_graph import AbstractTfGraphNetwork
 from delira.data_loading import BaseDataManager
 
-from delira.training.parameters import Parameters
+from delira.utils import DeliraConfig
 from delira.training.backends.tf_eager.experiment import TfEagerExperiment
 from delira.training.backends.tf_eager.utils import create_optims_default
 
@@ -16,7 +16,7 @@ from delira.training.backends.tf_graph.utils import initialize_uninitialized
 
 class TfGraphExperiment(TfEagerExperiment):
     def __init__(self,
-                 params: typing.Union[str, Parameters],
+                 config: typing.Union[str, DeliraConfig],
                  model_cls: AbstractTfGraphNetwork,
                  n_epochs=None,
                  name=None,
@@ -31,10 +31,10 @@ class TfGraphExperiment(TfEagerExperiment):
 
         Parameters
         ----------
-        params : :class:`Parameters` or str
-            the training parameters, if string is passed,
-            it is treated as a path to a pickle file, where the
-            parameters are loaded from
+        config : :class:`DeliraConfig` or str
+            the training config, if string is passed,
+            it is treated as a path to a file, where the
+            config is loaded from
         model_cls : Subclass of :class:`AbstractTfEagerNetwork`
             the class implementing the model to train
         n_epochs : int or None
@@ -73,7 +73,7 @@ class TfGraphExperiment(TfEagerExperiment):
             key_mapping = {"data": "data"}
 
         super().__init__(
-            params=params,
+            config=config,
             model_cls=model_cls,
             n_epochs=n_epochs,
             name=name,
