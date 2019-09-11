@@ -322,19 +322,22 @@ class BaseNetworkTrainer(Predictor):
         """
         for cb in self._callbacks:
             self._update_state(cb.at_iter_begin(
-                self, curr_epoch=epoch, iter_num=iter_num,
-                global_iter_num=self._global_iter_num, **kwargs))
+                self, iter_num=iter_num, curr_epoch=epoch,
+                global_iter_num=self._global_iter_num, **kwargs,
+            ))
 
-    def _at_iter_end(self, data_dict, iter_num, epoch=0, **kwargs):
+    def _at_iter_end(self, iter_num, data_dict, metrics, epoch=0, **kwargs):
         """
         Defines the behavior executed at an iteration's end
 
         Parameters
         ----------
-        data_dict : dict
-            dictionary holding input data and predictions
         iter_num : int
             number of current iter
+        data_dict : dict
+            dictionary holding input data and predictions
+        metrics: dict
+            calculated metrics
         epoch : int
             number of current epoch
         **kwargs :
@@ -344,10 +347,10 @@ class BaseNetworkTrainer(Predictor):
 
         for cb in self._callbacks:
             self._update_state(cb.at_iter_end(
-                self, curr_epoch=epoch, iter_num=iter_num,
-                data_dict=data_dict,
+                self, iter_num=iter_num, data_dict=data_dict,
+                metrics=metrics, curr_epoch=epoch,
                 global_iter_num=self._global_iter_num,
-                **kwargs
+                **kwargs,
             ))
 
         self._global_iter_num += 1

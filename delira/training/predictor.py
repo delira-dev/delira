@@ -172,29 +172,27 @@ class Predictor(object):
         dict
             combined dicts returned by the callbacks
 
-        Notes
-        -----
-        All callbacks receive a `data_dict` and an `iter_num` as well as all
-        keyword arguments, which might be passed from subclasses
-
         """
         return_dict = {}
         for cb in self._callbacks:
-            return_dict.update(cb.at_iter_begin(self, iter_num=iter_num,
+            return_dict.update(cb.at_iter_begin(self,
+                                                iter_num=iter_num,
                                                 **kwargs))
 
         return return_dict
 
-    def _at_iter_end(self, data_dict, iter_num, **kwargs):
+    def _at_iter_end(self, iter_num, data_dict, metrics, **kwargs):
         """
         Function defining the behavior executed at beginning of each iteration
 
         Parameters
         ----------
-        data_dict : dict
-            dictionary holding input data and predictions
         iter_num : int
             the number of the current iteration
+        data_dict : dict
+            dictionary holding input data and predictions
+        metrics: dict
+            calculated metrics
         **kwargs :
             additional keyword arguments (forwarded to callbacks call)
 
@@ -203,21 +201,13 @@ class Predictor(object):
         dict
             combined dicts returned by the callbacks
 
-        Notes
-        -----
-        All callbacks receive a `data_dict`, an `iter_num` and a
-        `global_iter_num` as well as all keyword arguments, which might be
-        passed from subclasses
-
         """
-
-        global_iter_num = kwargs.pop("global_iter_num", iter_num)
         return_dict = {}
         for cb in self._callbacks:
             return_dict.update(cb.at_iter_end(self,
-                                              data_dict=data_dict,
                                               iter_num=iter_num,
-                                              global_iter_num=global_iter_num,
+                                              data_dict=data_dict,
+                                              metrics=metrics,
                                               **kwargs))
 
         return return_dict
