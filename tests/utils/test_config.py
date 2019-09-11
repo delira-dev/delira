@@ -15,12 +15,14 @@ class ConfigTest(unittest.TestCase):
     def setUp(self):
         self.config_cls = Config
         self.example_dict = {
-            "shallowStr": "a", "shallowNum": 1,
+            "shallowStr": "a",
+            "shallowNum": 1,
             "deep": {"deepStr": "b", "deepNum": 2},
             "nestedListOrig": [{"dictList": [1, 2, 3]}],
         }
         self.update_dict = {
-            "deep": {"deepStr": "c"}, "shallowNew": 3,
+            "deep": {"deepStr": "c"},
+            "shallowNew": 3,
             "deepNew": {"newNum": 4},
             "nestedList": [{"dictList": [1, 2, 3]}],
             "nestedList2": [{"dictList": [1, 2, 3]}],
@@ -121,6 +123,15 @@ class ConfigTest(unittest.TestCase):
         cf["nestedList2"][0]["dictList"][0] = 10
         self.assertNotEqual(self.update_dict["nestedList2"][0]["dictList"][0],
                             cf["nestedList2"][0]["dictList"][0])
+
+        # check for no error when only updating nested keys
+        cf = self.config_cls.create_from_dict(self.example_dict)
+        update_dict = copy.deepcopy(self.update_dict)
+        update_dict["deep"].pop("deepStr")
+        update_dict["deep"]["deepStr2"] = "deepStr2"
+        cf.update(update_dict)
+        self.assertEqual(cf["deep.deepStr2"],
+                         update_dict["deep"]["deepStr2"])
 
     @unittest.skipUnless(
         check_for_no_backend(),
