@@ -240,18 +240,6 @@ class Config(dict):
             contain = False
         return contain
 
-    def __str__(self):
-        """
-        String representation of config
-
-        Returns
-        -------
-        str
-            representation of config
-        """
-        encoded_self = Encoder().encode(self)
-        return encoded_self.__str__()
-
     def update(self, update_dict, deepcopy=False, overwrite=False):
         """
         Update internal dicts with dict like object
@@ -290,15 +278,14 @@ class Config(dict):
         overwrite : bool, optional
             overwrite existing values inside config, by default False
         """
-        # check for overwrite
-        self._raise_overwrite(key, overwrite=overwrite)
-
         if isinstance(item, dict):
             # update nested dicts
             if key not in self:
                 self[key] = self._create_internal_dict({})
             self[key].update(item, deepcopy=deepcopy, overwrite=overwrite)
         else:
+            # check for overwrite
+            self._raise_overwrite(key, overwrite=overwrite)
             # set item
             self._set_internal_item(key, item, deepcopy=deepcopy)
 
