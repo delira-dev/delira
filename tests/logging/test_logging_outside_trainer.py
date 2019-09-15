@@ -34,12 +34,26 @@ class LoggingOutsideTrainerTestCase(unittest.TestCase):
             "lr_scheduler_cls": None,
             "lr_scheduler_params": {}
         }
-        trainer = BaseNetworkTrainer(AbstractNetwork(), save_path, **config, gpu_ids=[], save_freq=1, optim_fn=None,
-                                     key_mapping={}, logging_type="tensorboardx", logging_kwargs={})
+        trainer = BaseNetworkTrainer(
+            AbstractNetwork(),
+            save_path,
+            **config,
+            gpu_ids=[],
+            save_freq=1,
+            optim_fn=None,
+            key_mapping={},
+            logging_type="tensorboardx",
+            logging_kwargs={})
 
-        trainer._setup(AbstractNetwork(), lr_scheduler_cls=None, lr_scheduler_params={}, gpu_ids=[], key_mapping={},
-                       convert_batch_to_npy_fn=None, prepare_batch_fn=None, callbacks=[])
-
+        trainer._setup(
+            AbstractNetwork(),
+            lr_scheduler_cls=None,
+            lr_scheduler_params={},
+            gpu_ids=[],
+            key_mapping={},
+            convert_batch_to_npy_fn=None,
+            prepare_batch_fn=None,
+            callbacks=[])
 
 
 if __name__ == '__main__':
