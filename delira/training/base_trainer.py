@@ -13,6 +13,7 @@ from .callbacks import AbstractCallback, DefaultLoggingCallback
 from .predictor import Predictor
 from ..data_loading.data_manager import Augmenter
 from ..models import AbstractNetwork
+from ..logging import register_logger, make_logger
 
 logger = logging.getLogger(__name__)
 
@@ -835,9 +836,12 @@ class BaseNetworkTrainer(Predictor):
 
         level = _logging_kwargs.pop("level")
 
+        logger = backend_cls(logging_kwargs)
+        register_logger(make_logger(logger), self.name)
+
         self.register_callback(
             logging_callback_cls(
-                backend_cls(logging_kwargs), level=level,
+                logger, level=level,
                 logging_frequencies=logging_frequencies,
                 reduce_types=reduce_types))
 
