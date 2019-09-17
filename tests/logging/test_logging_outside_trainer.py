@@ -7,6 +7,7 @@ import logging
 import os
 import logging
 
+
 class LoggingOutsideTrainerTestCase(unittest.TestCase):
 
     def test_logging_freq(self):
