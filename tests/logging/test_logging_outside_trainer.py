@@ -5,21 +5,7 @@ from delira.training.callbacks import DefaultLoggingCallback
 from delira.models import AbstractNetwork
 import logging
 import os
-
-
-class DummyNetwork(AbstractNetwork):
-    def __call__(self, *args, **kwargs):
-        return {}
-
-    @staticmethod
-    def closure(model, data_dict: dict, optimizers: dict, losses: dict,
-                iter_num: int, fold=0, **kwargs):
-        return losses, data_dict
-
-    @staticmethod
-    def prepare_batch(batch: dict, input_device, output_device):
-        return batch
-
+import logging
 
 class LoggingOutsideTrainerTestCase(unittest.TestCase):
 
@@ -43,7 +29,9 @@ class LoggingOutsideTrainerTestCase(unittest.TestCase):
             optim_fn=None,
             key_mapping={},
             logging_type="tensorboardx",
-            logging_kwargs={})
+            logging_kwargs={
+                "level": logging.INFO
+            })
 
         trainer._setup(
             AbstractNetwork(),
@@ -54,6 +42,11 @@ class LoggingOutsideTrainerTestCase(unittest.TestCase):
             convert_batch_to_npy_fn=None,
             prepare_batch_fn=None,
             callbacks=[])
+
+        with self.assertLogs() as cm:
+            log({"text": {"text_string": "Logging outside trainer", "tag": "dummy"}})
+
+        print(len(cm.output))
 
 
 if __name__ == '__main__':

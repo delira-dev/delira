@@ -826,7 +826,7 @@ class BaseNetworkTrainer(Predictor):
 
         if "exp_name" in _logging_kwargs.keys():
             _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
-                "_%02d" % self.fold
+                                          "_%02d" % self.fold
 
         # remove prior Trixihandlers and reinitialize it with given logging
         # type
@@ -836,14 +836,15 @@ class BaseNetworkTrainer(Predictor):
 
         level = _logging_kwargs.pop("level")
 
-        logger = backend_cls(logging_kwargs)
-        register_logger(make_logger(logger), self.name)
+        logger = backend_cls(_logging_kwargs)
 
         self.register_callback(
             logging_callback_cls(
                 logger, level=level,
                 logging_frequencies=logging_frequencies,
                 reduce_types=reduce_types))
+
+        register_logger(self._callbacks[-1]._logger, self.name)
 
     @staticmethod
     def _search_for_prev_state(path, extensions=None):
