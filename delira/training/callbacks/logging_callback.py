@@ -84,7 +84,7 @@ class DefaultLoggingCallback(AbstractCallback):
                                          "global_step": global_step}})
 
         return {}
-    
+
     @staticmethod
     def create_tag(tag: str, train: bool):
         if train:
