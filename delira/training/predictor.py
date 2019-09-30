@@ -177,6 +177,7 @@ class Predictor(object):
         for cb in self._callbacks:
             return_dict.update(cb.at_iter_begin(self,
                                                 iter_num=iter_num,
+                                                train=False,
                                                 **kwargs))
 
         return return_dict
@@ -208,6 +209,7 @@ class Predictor(object):
                                               iter_num=iter_num,
                                               data_dict=data_dict,
                                               metrics=metrics,
+                                              train=False,
                                               **kwargs))
 
         return return_dict

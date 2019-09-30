@@ -20,7 +20,7 @@ class AbstractCallback(object):
             keyword arguments
 
         """
-        pass
+        super().__init__(*args, **kwargs)
 
     def at_epoch_begin(self, trainer, *args, **kwargs):
         """

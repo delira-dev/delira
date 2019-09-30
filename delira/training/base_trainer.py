@@ -323,8 +323,11 @@ class BaseNetworkTrainer(Predictor):
         """
         for cb in self._callbacks:
             self._update_state(cb.at_iter_begin(
-                self, iter_num=iter_num, curr_epoch=epoch,
-                global_iter_num=self._global_iter_num, **kwargs,
+                self, iter_num=iter_num,
+                curr_epoch=epoch,
+                global_iter_num=self._global_iter_num,
+                train=True,
+                **kwargs,
             ))
 
     def _at_iter_end(self, iter_num, data_dict, metrics, epoch=0, **kwargs):
@@ -348,9 +351,12 @@ class BaseNetworkTrainer(Predictor):
 
         for cb in self._callbacks:
             self._update_state(cb.at_iter_end(
-                self, iter_num=iter_num, data_dict=data_dict,
-                metrics=metrics, curr_epoch=epoch,
+                self, iter_num=iter_num,
+                data_dict=data_dict,
+                metrics=metrics,
+                curr_epoch=epoch,
                 global_iter_num=self._global_iter_num,
+                train=True,
                 **kwargs,
             ))
 
