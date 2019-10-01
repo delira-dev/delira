@@ -1,6 +1,7 @@
 import collections
 import numpy as np
 import os
+from datetime import datetime
 
 
 def recursively_convert_elements(element, check_type, conversion_fn):
@@ -101,14 +102,14 @@ def convert_to_numpy_identity(*args, **kwargs):
     return args, kwargs
 
 
-def check_save_path(save_path):
+def generate_save_path(save_path):
     i = 0
-    new_path = save_path
-    run_name = os.path.basename(save_path)
-    dir_name = os.path.dirname(save_path)
-    while os.path.isdir(new_path):
+    now = datetime.now()
+    while True:
+        new_path = os.path.join(save_path, '{}_{:02d}_{:02d}_{:03d}'.format(now.year, now.month, now.day, i))
         i += 1
-        new_path = os.path.join(dir_name, run_name + '_{:02d}'.format(i))
+        if not os.path.isdir(new_path):
+            break
     if i:
         print('Save path is a duplicate and got changed to {}'.format(new_path))
     return new_path

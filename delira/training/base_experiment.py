@@ -12,7 +12,7 @@ from sklearn.model_selection import KFold, StratifiedKFold, \
 
 from delira.data_loading import BaseDataManager
 from delira.models import AbstractNetwork
-from delira.training.utils import check_save_path
+from delira.training.utils import generate_save_path
 from delira.training.parameters import Parameters
 from delira.training.base_trainer import BaseNetworkTrainer
 from delira.training.predictor import Predictor
@@ -108,7 +108,7 @@ class BaseExperiment(object):
         if save_path is None:
             save_path = os.path.abspath(".")
 
-        self.save_path = check_save_path(os.path.join(save_path, name))
+        self.save_path = generate_save_path(os.path.join(save_path, name))
 
         os.makedirs(self.save_path, exist_ok=True)
 
