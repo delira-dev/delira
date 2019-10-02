@@ -106,7 +106,9 @@ def generate_save_path(save_path):
     i = 0
     now = datetime.now()
     while True:
-        new_path = os.path.join(save_path, '{}_{:02d}_{:02d}_{:03d}'.format(now.year, now.month, now.day, i))
+        new_path = os.path.join(
+            save_path, '{}_{:02d}_{:02d}_{:03d}'.format(
+                now.year, now.month, now.day, i))
         i += 1
         if not os.path.isdir(new_path):
             break
