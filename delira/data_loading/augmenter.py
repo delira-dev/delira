@@ -104,8 +104,9 @@ class AbstractAugmenter(object):
         batchsize : int
             the batchsize to use for sampling
         sampler : :class:`AbstractSampler`
-            the sampler_old (may be batch sampler_old or usual sampler_old), defining the
-            actual sampling strategy; Is an iterable yielding indices
+            the sampler_old (may be batch sampler_old or usual sampler_old),
+            defining the actual sampling strategy; Is an iterable yielding
+            indices
         transforms : :class:`collections.Callable`
             the transforms to apply; defaults to None
         seed : int
@@ -155,8 +156,9 @@ class _ParallelAugmenter(AbstractAugmenter):
          batchsize : int
             the batchsize to use for sampling
         sampler : :class:`AbstractSampler`
-            the sampler_old (may be batch sampler_old or usual sampler_old), defining the
-            actual sampling strategy; Is an iterable yielding indices
+            the sampler_old (may be batch sampler_old or usual sampler_old), 
+            defining the actual sampling strategy; Is an iterable yielding
+            indices
         num_processes : int
             the number of processes to use for dataloading + augmentation;
             if None: the number of available CPUs will be used as number of
@@ -415,8 +417,9 @@ class _SequentialAugmenter(AbstractAugmenter):
         data_loader : :class:`DataLoader`
             the dataloader, loading samples for given indices
         sampler : :class:`AbstractSampler`
-            the sampler_old (may be batch sampler_old or usual sampler_old), defining the
-            actual sampling strategy; Is an iterable yielding indices
+            the sampler_old (may be batch sampler_old or usual sampler_old),
+            defining the actual sampling strategy; Is an iterable yielding
+            indices
         transforms : :class:`collections.Callable`
             the transforms to apply; defaults to None
         seed : int
@@ -460,8 +463,9 @@ class Augmenter(object):
         data_loader : :class:`DataLoader`
             the dataloader, loading samples for given indices
         sampler : :class:`AbstractSampler`
-            the sampler_old (may be batch sampler_old or usual sampler_old), defining the
-            actual sampling strategy; Is an iterable yielding indices
+            the sampler_old (may be batch sampler_old or usual sampler_old),
+            defining the actual sampling strategy; Is an iterable yielding
+            indices
         num_processes : int
             the number of processes to use for dataloading + augmentation;
             if None: the number of available CPUs will be used as number of
