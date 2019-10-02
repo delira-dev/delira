@@ -156,7 +156,7 @@ class _ParallelAugmenter(AbstractAugmenter):
          batchsize : int
             the batchsize to use for sampling
         sampler : :class:`AbstractSampler`
-            the sampler_old (may be batch sampler_old or usual sampler_old), 
+            the sampler_old (may be batch sampler_old or usual sampler_old),
             defining the actual sampling strategy; Is an iterable yielding
             indices
         num_processes : int
