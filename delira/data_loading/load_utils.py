@@ -5,8 +5,6 @@ import numpy as np
 from skimage.io import imread
 from skimage.transform import resize
 
-from delira.utils.decorators import make_deprecated
-
 
 def norm_range(mode):
     """
@@ -64,84 +62,6 @@ def norm_zero_mean_unit_std(data):
         normalized data
     """
     return (data - np.mean(data)) / np.std(data)
-
-
-@make_deprecated("LoadSample")
-def is_valid_image_file(fname, img_extensions, gt_extensions):
-    """
-    Helper Function to check wheter file is image file and has at least
-    one label file
-
-    .. deprecated-removed:: 0.3.4 0.3.5
-
-    Parameters
-    ----------
-    fname : str
-        filename of image path
-    img_extensions : list
-        list of valid image file extensions
-    gt_extensions : list
-        list of valid gt file extensions
-    Returns
-    -------
-    bool
-        is valid data sample
-     """
-    is_valid_file = False
-    for ext in img_extensions:
-        if fname.endswith(ext):
-            is_valid_file = True
-
-    has_label = not gt_extensions
-    for ext in gt_extensions:
-        label_file = fname.rsplit(".", maxsplit=1)[0] + ext
-        if os.path.isfile(label_file):
-            has_label = True
-
-    return is_valid_file and has_label
-
-
-@make_deprecated("LoadSample")
-def default_load_fn_2d(img_file, *label_files, img_shape, n_channels=1):
-    """
-    loading single 2d sample with arbitrary number of samples
-
-    .. deprecated-removed:: 0.3.4 0.3.5
-
-    Parameters
-    ----------
-    img_file : string
-        path to image file
-    label_files : list of strings
-        paths to label files
-    img_shape : iterable
-        shape of image
-    n_channels : int
-        number of image channels
-
-    Returns
-    -------
-    numpy.ndarray
-        image
-    Any:
-        labels
-
-    """
-    img = imread(img_file, n_channels == 1)
-    labels = [np.loadtxt(_file).reshape(1).astype(np.float32) for _file in
-              label_files]
-    img = resize(img, img_shape, mode='reflect', anti_aliasing=True)
-    img = np.reshape(img, (*img_shape, n_channels))
-    img = img.transpose((len(img_shape), *range(len(img_shape))))
-    img = img.astype(np.float32)
-    # return img, labels
-
-    result_dict = {"data": img}
-
-    for idx, label in enumerate(labels):
-        result_dict["label_%d" % idx] = label
-
-    return result_dict
 
 
 class LoadSample:
