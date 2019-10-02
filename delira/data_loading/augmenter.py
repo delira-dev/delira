@@ -3,6 +3,7 @@ from multiprocessing import connection as mpconnection
 from collections import Callable
 import abc
 import os
+import sys
 import numpy as np
 import random
 
@@ -132,7 +133,7 @@ class AbstractAugmenter(object):
         # seed numpy.random and random as these are the random number
         # generators, which might be used for sampling
         np.random.seed(seed)
-        random.seed = seed
+        random.seed(seed)
 
     @abc.abstractmethod
     def __iter__(self):
@@ -264,7 +265,8 @@ class _ParallelAugmenter(AbstractAugmenter):
             _index_conn.send(None)
             # Close Process and wait for its termination
             _process.join()
-            _process.close()
+            if sys.version_info >= (3, 7):
+                _process.close()
 
             # close connections
             _index_conn.close()
