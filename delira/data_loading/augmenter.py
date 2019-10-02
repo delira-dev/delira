@@ -267,6 +267,8 @@ class _ParallelAugmenter(AbstractAugmenter):
             _process.join()
             if sys.version_info >= (3, 7):
                 _process.close()
+            else:
+                _process.terminate()
 
             # close connections
             _index_conn.close()
