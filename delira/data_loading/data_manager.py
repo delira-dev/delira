@@ -81,17 +81,22 @@ class DataManager(object):
             logger.info("No dataloader Class specified. Using DataLoader")
             data_loader_cls = DataLoader
         else:
-            assert inspect.isclass(data_loader_cls), \
-                "data_loader_cls must be class not instance of class"
-            assert issubclass(data_loader_cls, DataLoader), \
-                "dater_loader_cls must be subclass of DataLoader"
+            if not inspect.isclass(data_loader_cls):
+                raise TypeError(
+                    "data_loader_cls must be class not instance of class")
+
+            if not issubclass(data_loader_cls, DataLoader):
+                raise TypeError(
+                    "data_loader_cls must be subclass of DataLoader")
 
         self.data_loader_cls = data_loader_cls
 
         self.data = data
 
-        assert inspect.isclass(sampler_cls) and issubclass(sampler_cls,
-                                                           AbstractSampler)
+        if not inspect.isclass(sampler_cls) and issubclass(sampler_cls,
+                                                           AbstractSampler):
+            raise TypeError
+
         self.sampler_cls = sampler_cls
         self.sampler_kwargs = sampler_kwargs
 
@@ -297,8 +302,9 @@ class DataManager(object):
 
         """
 
-        assert new_transforms is None or isinstance(new_transforms,
-                                                    AbstractTransform)
+        if new_transforms is not None or isinstance(new_transforms,
+                                                    AbstractTransform):
+            raise TypeError
 
         self._transforms = new_transforms
 
@@ -328,8 +334,9 @@ class DataManager(object):
 
         """
 
-        assert inspect.isclass(new_loader_cls) and issubclass(
-            new_loader_cls, DataLoader)
+        if not inspect.isclass(new_loader_cls) and issubclass(
+                new_loader_cls, DataLoader):
+            raise TypeError
 
         self._data_loader_cls = new_loader_cls
 
@@ -422,7 +429,9 @@ class DataManager(object):
 
     @dataset.setter
     def dataset(self, new_dset):
-        assert isinstance(new_dset, AbstractDataset)
+        if not isinstance(new_dset, AbstractDataset):
+            raise TypeError
+
         self.data = new_dset
 
     def __iter__(self):
