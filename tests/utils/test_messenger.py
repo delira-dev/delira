@@ -1,7 +1,11 @@
-from delira.training import BaseExperiment, BaseNetworkTrainer, Predictor, \
-    Parameters
+from delira.training import BaseExperiment, BaseNetworkTrainer, Predictor
+from delira.utils import DeliraConfig
 from delira.models import AbstractNetwork
+
 from delira.data_loading import DataManager
+
+from delira.training.utils import convert_to_numpy_identity
+
 
 from delira.utils.messenger import BaseMessenger, SlackMessenger
 
@@ -45,12 +49,17 @@ class DummyTrainer(BaseNetworkTrainer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.module = DummyNetwork()
+        callbacks = kwargs.pop("callbacks", [])
+        self._setup(network=self.module, lr_scheduler_cls=None,
+                    lr_scheduler_params={}, gpu_ids=[], key_mapping={},
+                    convert_batch_to_npy_fn=convert_to_numpy_identity,
+                    prepare_batch_fn=self.module.prepare_batch,
+                    callbacks=callbacks)
 
     def train(self, *args, num_epochs=2, **kwargs):
         self._at_training_begin()
         for epoch in range(self.start_epoch, num_epochs + 1):
-            self._at_epoch_begin({}, None, epoch,
-                                 num_epochs)
+            self._at_epoch_begin(None, epoch, num_epochs)
             is_best = True if epoch % 2 == 1 else False
             self._at_epoch_end({}, None, epoch, is_best)
         self._at_training_end()
@@ -58,6 +67,9 @@ class DummyTrainer(BaseNetworkTrainer):
 
     def test(self, *args, **kwargs):
         return [{}], [{}]
+
+    def save_state(self, file_name, *args, **kwargs):
+        pass
 
 
 class DummyPredictor(Predictor):
@@ -75,7 +87,8 @@ class DummyPredictor(Predictor):
 
 class DummyExperiment(BaseExperiment):
     def __init__(self):
-        dummy_params = Parameters(fixed_params={
+        dummy_config = DeliraConfig()
+        dummy_config.fixed_params = {
             "model": {},
             "training": {
                 "losses": {},
@@ -84,8 +97,8 @@ class DummyExperiment(BaseExperiment):
                 "num_epochs": 2,
                 "lr_sched_cls": None,
                 "lr_sched_params": {}}
-        })
-        super().__init__(dummy_params,
+        }
+        super().__init__(dummy_config,
                          DummyNetwork,
                          key_mapping={},
                          name="TestExperiment",
@@ -157,10 +170,14 @@ class TestBaseMessenger(unittest.TestCase):
         ]
         self.msg_kfold_successful = [
             "INFO:UnitTestMessenger:TestExperiment : Kfold started.",
+            "INFO:UnitTestMessenger:Fold 0 started.",
             "INFO:UnitTestMessenger:Epoch 1 trained.",
             "INFO:UnitTestMessenger:Epoch 2 trained.",
+            "INFO:UnitTestMessenger:Fold 0 completed.",
+            "INFO:UnitTestMessenger:Fold 1 started.",
             "INFO:UnitTestMessenger:Epoch 1 trained.",
             "INFO:UnitTestMessenger:Epoch 2 trained.",
+            "INFO:UnitTestMessenger:Fold 1 completed.",
             "INFO:UnitTestMessenger:TestExperiment : Kfold completed.",
         ]
         self.msg_kfold_failed = [

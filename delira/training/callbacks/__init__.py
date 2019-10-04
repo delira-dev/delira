@@ -1,4 +1,6 @@
 from delira import get_backends
+
+from delira.training.callbacks.logging_callback import DefaultLoggingCallback
 from delira.training.callbacks.abstract_callback import AbstractCallback
 from delira.training.callbacks.early_stopping import EarlyStopping
 

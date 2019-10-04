@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from tests.utils import check_for_sklearn_backend
-from delira.training import Parameters
+from delira.utils import DeliraConfig
 from sklearn.metrics import mean_absolute_error
 from .utils import create_experiment_test_template_for_backend, DummyDataset
 
@@ -15,7 +15,8 @@ class TestSklearnBackend(
             from sklearn.tree import DecisionTreeClassifier
             from sklearn.neural_network import MLPClassifier
 
-            params = Parameters(fixed_params={
+            config = DeliraConfig()
+            config.fixed_params = {
                 "model": {},
                 "training": {
                     "losses": {
@@ -24,10 +25,10 @@ class TestSklearnBackend(
                     "optimizer_cls": None,
                     "optimizer_params": {},
                     "num_epochs": 2,
-                    "val_metrics": {"mae": mean_absolute_error},
+                    "metrics": {"mae": mean_absolute_error},
                     "lr_sched_cls": None,
                     "lr_sched_params": {}}
-            })
+            }
 
             # run tests for estimator with and without partial_fit
             model_cls = [
@@ -38,7 +39,7 @@ class TestSklearnBackend(
             experiment_cls = SklearnExperiment
 
         else:
-            params = None
+            config = None
             model_cls = []
             experiment_cls = None
 
@@ -47,11 +48,13 @@ class TestSklearnBackend(
 
         self._test_cases = [
             {
-                "params": params,
+                "config": config,
                 "network_cls": _cls,
                 "len_train": len_train,
                 "len_test": len_test,
-                "key_mapping": {"X": "X"}
+                "key_mapping": {"X": "X"},
+                "metric_keys": {"L1": ("pred", "y"),
+                                "mae": ("pred", "y")}
             } for _cls in model_cls
         ]
         self._experiment_cls = experiment_cls
@@ -70,10 +73,11 @@ class TestSklearnBackend(
 
                 # pop arguments (to use remaining case as kwargs later)
                 _ = case.pop("len_train")
-                params = case.pop("params")
+                config = case.pop("config")
+                metric_keys = case.pop("metric_keys")
                 network_cls = case.pop("network_cls")
                 len_test = case.pop("len_test")
-                exp = self._experiment_cls(params, network_cls, **case)
+                exp = self._experiment_cls(config, network_cls, **case)
 
                 # create data
                 dset_test = DummyDataset(len_test)
@@ -85,7 +89,8 @@ class TestSklearnBackend(
                 model.fit(np.random.rand(2, 32), np.array([[0], [1]]))
 
                 exp.test(model, dmgr_test,
-                         params.nested_get("val_metrics", {}))
+                         config.nested_get("metrics", {}),
+                         metric_keys)
 
 
 if __name__ == "__main__":

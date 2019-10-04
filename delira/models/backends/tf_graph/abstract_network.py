@@ -167,8 +167,8 @@ class AbstractTfGraphNetwork(AbstractNetwork, metaclass=abc.ABCMeta):
         return {k: v.astype(np.float32) for k, v in batch.items()}
 
     @staticmethod
-    def closure(model, data_dict: dict, optimizers: dict, losses={},
-                metrics={}, fold=0, **kwargs):
+    def closure(model, data_dict: dict, optimizers: dict, losses: dict,
+                iter_num: int, fold=0, **kwargs):
         """
         default closure method to do a single training step;
         Could be overwritten for more advanced models
@@ -185,8 +185,9 @@ class AbstractTfGraphNetwork(AbstractNetwork, metaclass=abc.ABCMeta):
         losses : dict
             dict holding the losses to calculate errors;
             ignored here, just passed for compatibility reasons
-        metrics : dict
-            dict holding the metrics to calculate
+        iter_num: int
+            the number of of the current iteration in the current epoch;
+            Will be restarted at zero at the beginning of every epoch
         fold : int
             Current Fold in Crossvalidation (default: 0)
         **kwargs:
@@ -195,40 +196,16 @@ class AbstractTfGraphNetwork(AbstractNetwork, metaclass=abc.ABCMeta):
         Returns
         -------
         dict
-            Metric values (with same keys as input dict metrics)
-        dict
             Loss values (with same keys as input dict losses; will always
             be empty here)
         dict
             dictionary containing all predictions
 
         """
-        loss_vals = {}
-        metric_vals = {}
 
         inputs = data_dict['data']
 
         outputs = model.run(data=inputs, label=data_dict['label'])
-        preds = outputs['pred']
-        losses = outputs['losses']
+        loss_vals = outputs['losses']
 
-        for key, loss_val in losses.items():
-            loss_vals[key] = loss_val
-
-        for key, metric_fn in metrics.items():
-            metric_vals[key] = metric_fn(
-                preds, data_dict["label"])
-
-        if not model.training:
-            # add prefix "val" in validation mode
-            eval_loss_vals, eval_metrics_vals = {}, {}
-            for key in loss_vals.keys():
-                eval_loss_vals["val_" + str(key)] = loss_vals[key]
-
-            for key in metric_vals:
-                eval_metrics_vals["val_" + str(key)] = metric_vals[key]
-
-            loss_vals = eval_loss_vals
-            metric_vals = eval_metrics_vals
-
-        return metric_vals, loss_vals, outputs
+        return loss_vals, outputs
