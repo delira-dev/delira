@@ -1,6 +1,7 @@
 import unittest
 from delira.data_loading import DataLoader, SequentialSampler, BatchSampler
 from .utils import DummyDataset
+import numpy as np
 from ..utils import check_for_no_backend
 
 
@@ -9,10 +10,9 @@ class DataLoaderTest(unittest.TestCase):
     @unittest.skipUnless(check_for_no_backend(),
                          "Test should be only executed if no "
                          "backend was installed")
-    def test_data_loader(self):
-        dset = DummyDataset(600, [0.5, 0.3, 0.2])
-        sampler = SequentialSampler.from_dataset(dset)
-        loader = DataLoader(dset)
+    def _test_data_loader(self, data):
+        loader = DataLoader(data)
+        sampler = SequentialSampler.from_dataset(loader.dataset)
 
         batch_sampler = BatchSampler(sampler, 16)
         sampler_iter = iter(batch_sampler)
@@ -29,6 +29,26 @@ class DataLoaderTest(unittest.TestCase):
             len(set([_tmp
                      for _tmp in loader(next(sampler_iter))["label"]])),
             1)
+
+        self.assertEquals(loader.process_id, 0)
+        loader.process_id = 456
+        self.assertEquals(loader.process_id, 456)
+        with self.assertRaises(AttributeError):
+            loader.process_id = 123
+
+    def test_data_loader_dset(self):
+        dset = DummyDataset(600, [0.5, 0.3, 0.2])
+        self._test_data_loader(dset)
+
+    def test_data_loader_dict(self):
+        data = {"label": np.random.rand(600),
+                "data": np.random.rand(600, 1, 3, 3)}
+        self._test_data_loader(data)
+
+    def test_data_loader_iterable(self):
+        data = ({"label": np.random.rand(1), "data": np.random.rand(1, 3, 3)}
+                for i in range(600))
+        self._test_data_loader(data)
 
 
 if __name__ == '__main__':
