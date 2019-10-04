@@ -7,7 +7,7 @@ class BatchSampler(object):
     batches of a given size
     """
 
-    def __init__(self, sampler: AbstractSampler, batch_size, truncate=False):
+    def __init__(self, sampler: AbstractSampler, batch_size, drop_last=False):
         """
 
         Parameters
@@ -16,12 +16,12 @@ class BatchSampler(object):
             the actual sampler producing single-sized samples
         batch_size : int
             the size of each batch
-        truncate : bool
+        drop_last : bool
             whether or not to discard the last (possibly smaller) batch
         """
         self._sampler = sampler
         self._batchsize = batch_size
-        self._truncate = truncate
+        self._drop_last = drop_last
 
     def __iter__(self):
         """
@@ -44,7 +44,7 @@ class BatchSampler(object):
 
                 batch_idxs = []
 
-        if not self._truncate and batch_idxs:
+        if not self._drop_last and batch_idxs:
             yield batch_idxs
 
     def __len__(self):
@@ -59,7 +59,7 @@ class BatchSampler(object):
         """
         num_batches = len(self._sampler) // self._batchsize
 
-        if not self._truncate:
+        if not self._drop_last:
             num_batches += int(bool(len(self._sampler) % self._batchsize))
 
         return num_batches

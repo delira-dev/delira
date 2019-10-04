@@ -118,7 +118,7 @@ class AbstractAugmenter(object):
         if not isinstance(sampler, BatchSampler):
             if isinstance(sampler, AbstractSampler):
                 sampler = BatchSampler(sampler, batchsize,
-                                       truncate=drop_last)
+                                       drop_last=drop_last)
             else:
                 raise ValueError("Invalid Sampler given: %s" % str(sampler))
 
