@@ -1,5 +1,3 @@
-# ToDo: Add sampler tests
-
 import unittest
 import numpy as np
 from delira.data_loading.sampler import RandomSamplerWithReplacement, \
