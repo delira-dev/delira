@@ -4,7 +4,7 @@ import unittest
 import numpy as np
 from delira.data_loading.sampler import RandomSamplerWithReplacement, \
     PrevalenceRandomSampler, SequentialSampler, \
-    RandomSamplerNoReplacement, BatchSampler
+    RandomSamplerNoReplacement, BatchSampler, AbstractSampler
 
 from ..utils import check_for_no_backend
 from .utils import DummyDataset
@@ -97,6 +97,16 @@ class SamplerTest(unittest.TestCase):
 
         self.assertTrue(
             (num_samples_per_class.min() - num_samples_per_class.max()) <= 1)
+
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should only be executed "
+                         "if no backend is installed/specified"
+                         )
+    def test_abstract_sampler_iter(self):
+        sampler = AbstractSampler.from_dataset(self.dset)
+
+        with self.assertRaises(NotImplementedError):
+            iter(sampler)
 
 
 if __name__ == '__main__':
