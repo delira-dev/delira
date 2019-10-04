@@ -11,77 +11,6 @@ from delira.data_loading.data_loader import DataLoader
 from delira import get_current_debug_mode
 
 
-class _WorkerProcess(multiprocessing.Process):
-    """
-    A Process running an infinite loop of loading data for given indices
-    """
-
-    def __init__(self, dataloader: DataLoader,
-                 output_pipe: mpconnection.Connection,
-                 index_pipe: mpconnection.Connection,
-                 abort_event: multiprocessing.Event,
-                 transforms: Callable,
-                 process_id):
-        """
-        Parameters
-        ----------
-        dataloader : :class:`DataLoader`
-            the data loader which loads the data corresponding to the given
-            indices
-        output_pipe : :class:`multiprocessing.connection.Connection`
-            the pipe, the loaded data shoud be sent to
-        index_pipe : :class:`multiprocessing.connection.Connection`
-            the pipe to accept the indices
-        abort_event : class:`multiprocessing.Event`
-            the abortion event; will be set for every Exception;
-            If set: Worker terminates
-        transforms : :class:`collections.Callable`
-            the transforms to transform the data
-        process_id : int
-            the process id
-        """
-        super().__init__()
-
-        self._data_loader = dataloader
-        self._output_pipe = output_pipe
-        self._input_pipe = index_pipe
-        self._abort_event = abort_event
-        self._process_id = process_id
-        self._transforms = transforms
-
-    def run(self) -> None:
-        # set the process id
-        self._data_loader.process_id = self._process_id
-
-        try:
-            while True:
-                # check if worker should terminate
-                if self._abort_event.is_set():
-                    raise RuntimeError("Abort Event has been set externally")
-
-                # get indices if available (with timeout to frequently check
-                # for abortions
-                if self._input_pipe.poll(timeout=0.2):
-                    idxs = self._input_pipe.recv()
-
-                    # final indices -> shutdown workers
-                    if idxs is None:
-                        break
-
-                    # load data
-                    data = self._data_loader(idxs)
-
-                    #
-                    if self._transforms is not None:
-                        data = self._transforms(**data)
-
-                    self._output_pipe.send(data)
-
-        except Exception as e:
-            self._abort_event.set()
-            raise e
-
-
 class AbstractAugmenter(object):
     """
     Basic Augmenter Class providing a general Augmenter API
@@ -120,7 +49,7 @@ class AbstractAugmenter(object):
                 sampler = BatchSampler(sampler, batchsize,
                                        drop_last=drop_last)
             else:
-                raise ValueError("Invalid Sampler given: %s" % str(sampler))
+                raise TypeError("Invalid Sampler given: %s" % str(sampler))
 
         self._sampler = sampler
 
@@ -234,8 +163,6 @@ class _ParallelAugmenter(AbstractAugmenter):
                                      transforms=self._transforms,
                                      abort_event=self._abort_event,
                                      process_id=i)
-
-            # make the process daemonic and start it
             process.daemon = True
             process.start()
             # wait until process was created and started
@@ -257,20 +184,17 @@ class _ParallelAugmenter(AbstractAugmenter):
         # create copy to avoid modifying the list we iterate over
         worker = list(
             zip(self._data_pipes, self._index_pipes, self._processes))
-        # for each process:
+
         for _data_conn, _index_conn, _process in worker:
 
-            # send None to worker
             _index_conn.send(None)
-            # Close Process and wait for its termination
+
             _process.join()
             _process.close()
 
-            # close connections
             _index_conn.close()
             _data_conn.close()
 
-            # pop corresponing pipes, counters and processes from lists
             self._data_pipes.pop()
             self._data_queued.pop()
             self._index_pipes.pop()
@@ -337,10 +261,8 @@ class _ParallelAugmenter(AbstractAugmenter):
         return data
 
     def __iter__(self):
-        # start processes
         self._start_processes()
 
-        # create sampler_old iterator
         sampler_iter = iter(self._sampler)
         all_sampled = False
 
@@ -360,7 +282,6 @@ class _ParallelAugmenter(AbstractAugmenter):
             # enqueued
             while True:
 
-                # break if abort event has been set
                 if self.abort_event.is_set():
                     raise RuntimeError("Abort Event was set in one of the "
                                        "workers")
@@ -386,9 +307,79 @@ class _ParallelAugmenter(AbstractAugmenter):
             raise e
 
         finally:
-            # shutdown processes
             if self._processes_running:
                 self._shutdown_processes()
+
+
+class _WorkerProcess(multiprocessing.Process):
+    """
+    A Process running an infinite loop of loading data for given indices
+    """
+
+    def __init__(self, dataloader: DataLoader,
+                 output_pipe: mpconnection.Connection,
+                 index_pipe: mpconnection.Connection,
+                 abort_event: multiprocessing.Event,
+                 transforms: Callable,
+                 process_id):
+        """
+        Parameters
+        ----------
+        dataloader : :class:`DataLoader`
+            the data loader which loads the data corresponding to the given
+            indices
+        output_pipe : :class:`multiprocessing.connection.Connection`
+            the pipe, the loaded data shoud be sent to
+        index_pipe : :class:`multiprocessing.connection.Connection`
+            the pipe to accept the indices
+        abort_event : class:`multiprocessing.Event`
+            the abortion event; will be set for every Exception;
+            If set: Worker terminates
+        transforms : :class:`collections.Callable`
+            the transforms to transform the data
+        process_id : int
+            the process id
+        """
+        super().__init__()
+
+        self._data_loader = dataloader
+        self._output_pipe = output_pipe
+        self._input_pipe = index_pipe
+        self._abort_event = abort_event
+        self._process_id = process_id
+        self._transforms = transforms
+
+    def run(self) -> None:
+        # set the process id
+        self._data_loader.process_id = self._process_id
+
+        try:
+            while True:
+                # check if worker should terminate
+                if self._abort_event.is_set():
+                    raise RuntimeError("Abort Event has been set externally")
+
+                # get indices if available (with timeout to frequently check
+                # for abortions
+                if self._input_pipe.poll(timeout=0.2):
+                    idxs = self._input_pipe.recv()
+
+                    # final indices -> shutdown workers
+                    if idxs is None:
+                        break
+
+                    # load data
+                    data = self._data_loader(idxs)
+
+                    #
+                    if self._transforms is not None:
+                        data = self._transforms(**data)
+
+                    self._output_pipe.send(data)
+
+        except Exception as e:
+            self._abort_event.set()
+            raise e
 
 
 class _SequentialAugmenter(AbstractAugmenter):
