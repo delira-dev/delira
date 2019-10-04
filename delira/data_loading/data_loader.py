@@ -1,7 +1,7 @@
 import numpy as np
 from delira.data_loading.dataset import AbstractDataset, DictDataset, \
     IterableDataset
-from collections import Iterable
+from collections import Iterable, defaultdict
 
 
 class DataLoader:
@@ -20,8 +20,6 @@ class DataLoader:
             and return a dict of arrays if indexed
         """
         self._process_id = None
-
-        # do nothing if data
         if isinstance(data, AbstractDataset):
             dataset = data
 
@@ -53,15 +51,12 @@ class DataLoader:
         # get data for all indices
         data = [self.dataset[idx] for idx in indices]
 
-        data_dict = {}
+        data_dict = defaultdict(list)
 
         # concatenate dict entities by keys
         for _result_dict in data:
             for key, val in _result_dict.items():
-                if key in data_dict.keys():
-                    data_dict[key].append(val)
-                else:
-                    data_dict[key] = [val]
+                data_dict[key].append(val)
 
         # convert list to numpy arrays
         for key, val_list in data_dict.items():
