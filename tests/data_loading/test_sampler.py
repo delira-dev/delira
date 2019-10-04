@@ -58,6 +58,8 @@ class SamplerTest(unittest.TestCase):
         sampler = RandomSamplerWithReplacement.from_dataset(self.dset)
         samples = []
 
+        self.assertEquals(len(sampler), len(self.dset))
+
         for idx in sampler:
             self.assertIn(idx, np.arange(len(self.dset)))
             samples.append(idx)
@@ -72,6 +74,8 @@ class SamplerTest(unittest.TestCase):
 
         sampler = RandomSamplerNoReplacement.from_dataset(self.dset)
         samples = []
+
+        self.assertEquals(len(sampler), len(self.dset))
 
         for idx in sampler:
             self.assertIn(idx, np.arange(len(self.dset)))
