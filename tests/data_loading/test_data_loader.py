@@ -7,9 +7,6 @@ from ..utils import check_for_no_backend
 
 class DataLoaderTest(unittest.TestCase):
 
-    @unittest.skipUnless(check_for_no_backend(),
-                         "Test should be only executed if no "
-                         "backend was installed")
     def _test_data_loader(self, data):
         loader = DataLoader(data)
         sampler = SequentialSampler.from_dataset(loader.dataset)
@@ -36,15 +33,24 @@ class DataLoaderTest(unittest.TestCase):
         with self.assertRaises(AttributeError):
             loader.process_id = 123
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_data_loader_dset(self):
         dset = DummyDataset(600, [0.5, 0.3, 0.2])
         self._test_data_loader(dset)
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_data_loader_dict(self):
         data = {"label": np.random.rand(600),
                 "data": np.random.rand(600, 1, 3, 3)}
         self._test_data_loader(data)
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_data_loader_iterable(self):
         data = ({"label": np.random.rand(1), "data": np.random.rand(1, 3, 3)}
                 for i in range(600))
