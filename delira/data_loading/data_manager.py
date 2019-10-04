@@ -88,20 +88,12 @@ class DataManager(object):
 
         self.data_loader_cls = data_loader_cls
 
-        if not isinstance(data, AbstractDataset):
-            if isinstance(data, dict):
-                data = DictDataset(data)
-            elif isinstance(data, Iterable):
-                data = IterableDataset(data)
-            else:
-                raise TypeError("Invalid Data type given: %s"
-                                % type(data).__name__)
-
         self.data = data
 
         assert inspect.isclass(sampler_cls) and issubclass(sampler_cls,
                                                            AbstractSampler)
-        self.sampler = sampler_cls.from_dataset(self.data, **sampler_kwargs)
+        self.sampler_cls = sampler_cls
+        self.sampler_kwargs = sampler_kwargs
 
     def get_batchgen(self, seed=1):
         """
@@ -129,9 +121,12 @@ class DataManager(object):
             self.data
         )
 
+        sampler = self.sampler_cls.from_dataset(data_loader.dataset,
+                                                **self.sampler_kwargs)
+
         return Augmenter(data_loader=data_loader,
                          batchsize=self.batch_size,
-                         sampler=self.sampler,
+                         sampler=sampler,
                          num_processes=self.n_process_augmentation,
                          transforms=self.transforms,
                          seed=seed,
