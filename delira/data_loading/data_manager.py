@@ -153,8 +153,10 @@ class DataManager(object):
             "batch_size": self.batch_size,
             "n_process_augmentation": self.n_process_augmentation,
             "transforms": self.transforms,
-            "sampler_cls": self.sampler.__class__,
+            "sampler_cls": self.sampler_cls,
             "data_loader_cls": self.data_loader_cls,
+            "drop_last": self.drop_last,
+            "sample_kwargs": self.sampler_kwargs
         }
 
         return self.__class__(
