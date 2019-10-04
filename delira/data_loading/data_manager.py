@@ -165,7 +165,7 @@ class DataManager(object):
 
     def update_state_from_dict(self, new_state: dict):
         """
-        Updates internal state and therfore the behavior from dict.
+        Updates internal state and therefore the behavior from dict.
         If a key is not specified, the old attribute value will be used
 
         Parameters
@@ -177,8 +177,8 @@ class DataManager(object):
                 * ``batch_size``
                 * ``n_process_augmentation``
                 * ``data_loader_cls``
-                * ``sampler_old``
-                * ``sampling_kwargs``
+                * ``sampler_cls``
+                * ``sampler_kwargs``
                 * ``transforms``
 
             If a key is not specified, the old value of the corresponding
@@ -199,12 +199,11 @@ class DataManager(object):
         # update data_loader_cls if specified
         self.data_loader_cls = new_state.pop("data_loader_cls",
                                              self.data_loader_cls)
-        # update
-        new_sampler = new_state.pop("sampler_old", None)
-        if new_sampler is not None:
-            self.sampler = new_sampler.from_dataset(
-                self.data,
-                **new_state.pop("sampling_kwargs", {}))
+        # update sampler
+        self.sampler_cls = new_state.pop("sampler_cls", self.sampler_cls)
+        self.sampler_kwargs = new_state.pop("sampler_kwargs",
+                                            self.sampler_kwargs)
+
         self.transforms = new_state.pop("transforms", self.transforms)
 
         if new_state:
