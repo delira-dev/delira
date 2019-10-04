@@ -1,4 +1,6 @@
-from delira.data_loading import Augmenter, DataLoader, SequentialSampler
+from delira.data_loading import Augmenter, DataLoader, SequentialSampler, \
+    AbstractDataset
+import numpy as np
 from .utils import DummyDataset
 from ..utils import check_for_no_backend
 
@@ -75,6 +77,46 @@ class TestAugmenters(unittest.TestCase):
                          "backend was installed")
     def test_sequential_drop_last(self):
         self._aug_test()
+
+    def _test_sampler_indices(self, parallel: bool):
+        class Dataset(AbstractDataset):
+            def __init__(self):
+                super().__init__(None, None)
+
+                self.data = [{"data": np.ndarray([i])} for i in range(50)]
+
+            def __getitem__(self, item):
+                return self.data[item]
+
+            def __len__(self):
+                return 50
+
+        dataset = Dataset()
+
+        data_loader = DataLoader(dataset)
+        sampler = SequentialSampler.from_dataset(dataset)
+
+        if parallel:
+            aug = Augmenter(data_loader, self._batchsize, sampler, 2,
+                            drop_last=False)
+        else:
+            aug = Augmenter(data_loader, self._batchsize, sampler, 0,
+                            drop_last=False)
+
+        for idx, batch in enumerate(aug):
+            self.assertEquals(batch["data"].item(), idx)
+
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
+    def test_sampling_order_parallel(self):
+        self._test_sampler_indices(True)
+
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
+    def test_sampling_order_sequential(self):
+        self._test_sampler_indices(False)
 
 
 if __name__ == '__main__':
