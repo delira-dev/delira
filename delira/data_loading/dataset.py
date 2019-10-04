@@ -213,33 +213,154 @@ class _DatasetIter(object):
 
 
 class DictDataset(AbstractDataset):
+    """
+    Dataset to wrap a dict of keys and iterables.
+    """
     def __init__(self, data: dict):
+        """
+
+        Parameters
+        ----------
+        data : dict
+            dictionary consisting of keys and iterables.
+            The iterables should contain an item for each index
+        """
         super().__init__(None, None)
         self._data = data
 
     def __getitem__(self, index: int):
+        """
+        Function to make the dataset indexable. Returns the sample
+        corresponding to the given index
+
+        Parameters
+        ----------
+        index : int
+            the index specifying the sample to return
+
+        Returns
+        -------
+        dict
+            the sample corresponding to :param:`index`
+
+        """
         return {k: v[index] for k, v in self._data.items()}
 
     def get_sample_from_index(self, index):
+        """
+        Mapping from index to sample
+
+        Parameters
+        ----------
+        index : int
+            the index specifying the sample to return
+
+        Returns
+        -------
+        dict
+            the sample corresponding to :param:`index`
+
+        """
         return self[index]
 
     def _make_dataset(self, path: str):
+        """
+        Function to create the dataset
+        (not necessary here, since the data is already in memory)
+
+        Parameters
+        ----------
+        path : str
+            the path to load the data from
+
+        """
         pass
+
+    def __len__(self):
+        """
+        Function to determine the dataset's length
+
+        Returns
+        -------
+        int
+            the number of samples
+        """
+        return min([len(v) for v in self._data.values()])
 
 
 class IterableDataset(AbstractDataset):
+    """
+    Dataset to wrap a list of dicts.
+    """
     def __init__(self, data: Iterable):
+        """
+
+        Parameters
+        ----------
+        data : Iterable
+            an iterable of dicts each representing a single sample
+        """
         super().__init__(None, None)
         self._data = data
 
     def __getitem__(self, index):
+        """
+        Function to make the dataset indexable. Returns the sample
+        corresponding to the given index
+
+        Parameters
+        ----------
+        index : int
+           the index specifying the sample to return
+
+        Returns
+        -------
+        dict
+           the sample corresponding to :param:`index`
+
+       """
         return self._data[index]
 
     def get_sample_from_index(self, index):
+        """
+        Mapping from index to sample
+
+        Parameters
+        ----------
+        index : int
+            the index specifying the sample to return
+
+        Returns
+        -------
+        dict
+            the sample corresponding to :param:`index`
+
+        """
         return self[index]
 
     def _make_dataset(self, path: str):
+        """
+        Function to create the dataset
+        (not necessary here, since the data is already in memory)
+
+        Parameters
+        ----------
+        path : str
+            the path to load the data from
+
+        """
         pass
+
+    def __len__(self):
+        """
+        Function to determine the dataset's length
+
+        Returns
+        -------
+        int
+            the number of samples
+        """
+        return len(self._data)
 
 
 class BlankDataset(AbstractDataset):
