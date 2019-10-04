@@ -156,7 +156,6 @@ class Predictor(object):
             **pred
         )[1]
 
-
     def _at_iter_begin(self, iter_num, **kwargs):
         """
         Function defining the behavior executed at beginning of each iteration
@@ -213,8 +212,14 @@ class Predictor(object):
 
         return return_dict
 
-    def predict_data_mgr(self, datamgr: DataManager, batchsize=None,
-                         metrics=None, metric_keys=None, verbose=False, **kwargs):
+    def predict_data_mgr(
+            self,
+            datamgr: DataManager,
+            batchsize=None,
+            metrics=None,
+            metric_keys=None,
+            verbose=False,
+            **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator
         without explicitly caching anything

@@ -277,7 +277,6 @@ class BaseExperiment(object):
     def run(self, train_data: DataManager,
             val_data: DataManager = None,
             config: DeliraConfig = None, **kwargs):
-
         """
         Setup and run training
 

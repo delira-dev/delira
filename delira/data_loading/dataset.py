@@ -216,6 +216,7 @@ class DictDataset(AbstractDataset):
     """
     Dataset to wrap a dict of keys and iterables.
     """
+
     def __init__(self, data: dict):
         """
 
@@ -292,6 +293,7 @@ class IterableDataset(AbstractDataset):
     """
     Dataset to wrap a list of dicts.
     """
+
     def __init__(self, data: Iterable):
         """
 
