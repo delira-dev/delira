@@ -3,6 +3,7 @@ from multiprocessing import connection as mpconnection
 from collections import Callable
 import abc
 import os
+import sys
 import numpy as np
 import random
 
@@ -32,8 +33,9 @@ class AbstractAugmenter(object):
         batchsize : int
             the batchsize to use for sampling
         sampler : :class:`AbstractSampler`
-            the sampler_old (may be batch sampler_old or usual sampler_old), defining the
-            actual sampling strategy; Is an iterable yielding indices
+            the sampler_old (may be batch sampler_old or usual sampler_old),
+            defining the actual sampling strategy; Is an iterable yielding
+            indices
         transforms : :class:`collections.Callable`
             the transforms to apply; defaults to None
         seed : int
@@ -61,7 +63,7 @@ class AbstractAugmenter(object):
         # seed numpy.random and random as these are the random number
         # generators, which might be used for sampling
         np.random.seed(seed)
-        random.seed = seed
+        random.seed(seed)
 
     @abc.abstractmethod
     def __iter__(self):
@@ -83,8 +85,9 @@ class _ParallelAugmenter(AbstractAugmenter):
          batchsize : int
             the batchsize to use for sampling
         sampler : :class:`AbstractSampler`
-            the sampler_old (may be batch sampler_old or usual sampler_old), defining the
-            actual sampling strategy; Is an iterable yielding indices
+            the sampler_old (may be batch sampler_old or usual sampler_old),
+            defining the actual sampling strategy; Is an iterable yielding
+            indices
         num_processes : int
             the number of processes to use for dataloading + augmentation;
             if None: the number of available CPUs will be used as number of
@@ -190,7 +193,10 @@ class _ParallelAugmenter(AbstractAugmenter):
             _index_conn.send(None)
 
             _process.join()
-            _process.close()
+            if sys.version_info >= (3, 7):
+                _process.close()
+            else:
+                _process.terminate()
 
             _index_conn.close()
             _data_conn.close()
@@ -402,8 +408,9 @@ class _SequentialAugmenter(AbstractAugmenter):
         data_loader : :class:`DataLoader`
             the dataloader, loading samples for given indices
         sampler : :class:`AbstractSampler`
-            the sampler_old (may be batch sampler_old or usual sampler_old), defining the
-            actual sampling strategy; Is an iterable yielding indices
+            the sampler_old (may be batch sampler_old or usual sampler_old),
+            defining the actual sampling strategy; Is an iterable yielding
+            indices
         transforms : :class:`collections.Callable`
             the transforms to apply; defaults to None
         seed : int
@@ -447,8 +454,9 @@ class Augmenter(object):
         data_loader : :class:`DataLoader`
             the dataloader, loading samples for given indices
         sampler : :class:`AbstractSampler`
-            the sampler_old (may be batch sampler_old or usual sampler_old), defining the
-            actual sampling strategy; Is an iterable yielding indices
+            the sampler_old (may be batch sampler_old or usual sampler_old),
+            defining the actual sampling strategy; Is an iterable yielding
+            indices
         num_processes : int
             the number of processes to use for dataloading + augmentation;
             if None: the number of available CPUs will be used as number of
