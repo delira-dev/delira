@@ -25,9 +25,6 @@ class Predictor(object):
 
     """
 
-    # static variable to prevent certain attributes from overwriting
-    __KEYS_TO_GUARD = []
-
     def __init__(
             self, model, key_mapping: dict,
             convert_batch_to_npy_fn=convert_to_numpy_identity,
@@ -430,32 +427,6 @@ class Predictor(object):
             dict_like[k] = v
 
             return dict_like
-
-    def __setattr__(self, key, value):
-        """
-        Set attributes and guard specific attributes after they have been set
-        once
-
-        Parameters
-        ----------
-        key : str
-            the attributes name
-        value : Any
-            the value to set
-
-        Raises
-        ------
-        PermissionError
-            If attribute which should be set is guarded
-
-        """
-
-        # check if key has been set once
-        if key in self.__KEYS_TO_GUARD and hasattr(self, key):
-            raise PermissionError("%s should not be overwritten after "
-                                  "it has been set once" % key)
-        else:
-            super().__setattr__(key, value)
 
     @staticmethod
     def calc_metrics(batch: LookupConfig, metrics=None, metric_keys=None):
