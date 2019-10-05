@@ -27,11 +27,6 @@ class BaseNetworkTrainer(Predictor):
     """
     Defines a Base API and basic functions for Network Trainers
 
-    See Also
-    --------
-    :class:`PyTorchNetworkTrainer`
-    :class:`TfNetworkTrainer`
-
     """
 
     __KEYS_TO_GUARD = ["use_gpu",
@@ -809,12 +804,6 @@ class BaseNetworkTrainer(Predictor):
         if "exp_name" in _logging_kwargs.keys():
             _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
                                           "_%02d" % self.fold
-
-        # remove prior Trixihandlers and reinitialize it with given logging
-        # type
-        # This facilitates visualization of multiple splits/fold inside one
-        # tensorboard-instance by means of
-        # different tf.Summary.FileWriters()
 
         level = _logging_kwargs.pop("level")
 
