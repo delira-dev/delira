@@ -83,7 +83,10 @@ class TestAugmenters(unittest.TestCase):
             def __init__(self):
                 super().__init__(None, None)
 
-                self.data = [{"data": np.ndarray([i])} for i in range(50)]
+                self.data = []
+
+                for i in range(50):
+                    self.data.append({"data": i})
 
             def __getitem__(self, item):
                 return self.data[item]
@@ -97,10 +100,10 @@ class TestAugmenters(unittest.TestCase):
         sampler = SequentialSampler.from_dataset(dataset)
 
         if parallel:
-            aug = Augmenter(data_loader, self._batchsize, sampler, 2,
+            aug = Augmenter(data_loader, 1, sampler, 2,
                             drop_last=False)
         else:
-            aug = Augmenter(data_loader, self._batchsize, sampler, 0,
+            aug = Augmenter(data_loader, 1, sampler, 0,
                             drop_last=False)
 
         for idx, batch in enumerate(aug):
