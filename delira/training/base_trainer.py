@@ -557,35 +557,6 @@ class BaseNetworkTrainer(Predictor):
             logger.error(e)
             raise e
 
-    def register_callback(self, callback: AbstractCallback):
-        """
-        Register Callback to Trainer
-
-        Parameters
-        ----------
-        callback : :class:`AbstractCallback`
-            the callback to register
-
-        Raises
-        ------
-        AssertionError
-            `callback` is not an instance of :class:`AbstractCallback` and has
-            not both methods ['at_epoch_begin', 'at_epoch_end']
-
-        """
-        assertion_str = "Given callback is not valid; Must be instance of " \
-                        "AbstractCallback or provide functions " \
-                        "'at_training_begin' and 'at_training_end'"
-
-        instance_check = isinstance(callback, AbstractCallback)
-        attr_check_begin_train = hasattr(callback, "at_training_begin")
-        attr_check_end_train = hasattr(callback, "at_training_end")
-        attr_check_both_train = attr_check_begin_train and attr_check_end_train
-
-        assert instance_check or attr_check_both_train, assertion_str
-
-        super().register_callback(callback)
-
     def save_state(self, file_name, *args, **kwargs):
         """
         saves the current state
@@ -636,11 +607,6 @@ class BaseNetworkTrainer(Predictor):
         new_state : dict
             new state to update internal state from
 
-        Returns
-        -------
-        :class:`BaseNetworkTrainer`
-            the trainer with a modified state
-
         """
         for key, val in new_state.items():
             if key.startswith("__") and key.endswith("__"):
@@ -653,9 +619,7 @@ class BaseNetworkTrainer(Predictor):
                 logger.error("Trying to overwrite attribute %s of "
                              "NetworkTrainer, which is not allowed!" % key)
 
-        return self
-
-    def update_state(self, file_name, *args, **kwargs):
+    def load_update_state(self, file_name, *args, **kwargs):
         """
         Update internal state from a loaded state
 
@@ -667,11 +631,6 @@ class BaseNetworkTrainer(Predictor):
             positional arguments
         **kwargs :
             keyword arguments
-
-        Returns
-        -------
-        :class:`BaseNetworkTrainer`
-            the trainer with a modified state
 
         """
         self._update_state(self.load_state(file_name, *args, **kwargs))
