@@ -450,15 +450,8 @@ class BaseNetworkTrainer(Predictor):
         """
         self._at_training_begin()
 
-        if val_score_mode == 'highest':
-            best_val_score = 0
-        elif val_score_mode == 'lowest':
-            best_val_score = float('inf')
-        else:
-            best_val_score = None
-
-        is_best = False
-        new_val_score = best_val_score
+        best_val_score, new_val_score, is_best = \
+            self._initialize_model_selection(val_score_mode)
 
         try:
             reduce_fn = get_reduction(reduce_mode)
@@ -490,13 +483,14 @@ class BaseNetworkTrainer(Predictor):
                 # returns a generator (of size 1) and we want to get the
                 # first (and only) item
                 val_metrics = next(
-                    self.predict_data_mgr_cache_metrics_only(
+                    self.predict_data_mgr_cache(
                         datamgr_valid, datamgr_valid.batch_size,
                         metrics=self.metrics,
                         metric_keys=self.metric_keys,
-                        verbose=verbose))
+                        verbose=verbose,
+                        cache_preds=False))
 
-                val_metrics = {"val_" + k: v
+                val_metrics = {self._log_prefix + "_" + k: v
                                for k, v in val_metrics.items()}
 
                 total_metrics.update(val_metrics)
@@ -508,7 +502,7 @@ class BaseNetworkTrainer(Predictor):
             # check if metric became better
             if val_score_key is not None:
                 if val_score_key not in total_metrics:
-                    if "val_" + val_score_key not in total_metrics:
+                    if self._log_prefix + val_score_key not in total_metrics:
                         warnings.warn("val_score_key '%s' not a valid key "
                                       "for validation metrics" %
                                       str(val_score_key), UserWarning)
@@ -517,8 +511,8 @@ class BaseNetworkTrainer(Predictor):
 
                     else:
                         new_val_score = \
-                            total_metrics["val_" + val_score_key]
-                        val_score_key = "val_" + val_score_key
+                            total_metrics[self._log_prefix + val_score_key]
+                        val_score_key = self._log_prefix + val_score_key
                 else:
                     new_val_score = total_metrics.get(val_score_key)
 
@@ -832,6 +826,19 @@ class BaseNetworkTrainer(Predictor):
                 backend_cls(logging_kwargs), level=level,
                 logging_frequencies=logging_frequencies,
                 reduce_types=reduce_types))
+
+    @staticmethod
+    def _initialize_model_selection(val_score_mode):
+        if val_score_mode == 'highest':
+            best_val_score = 0
+        elif val_score_mode == 'lowest':
+            best_val_score = float('inf')
+        else:
+            best_val_score = None
+
+        is_best = False
+        new_val_score = best_val_score
+        return best_val_score, new_val_score, is_best
 
     @staticmethod
     def _search_for_prev_state(path, extensions=None):
