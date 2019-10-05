@@ -14,6 +14,8 @@ from .predictor import Predictor
 from ..data_loading.data_manager import Augmenter
 from ..models import AbstractNetwork
 
+from delira.training.utils import create_iterator
+
 logger = logging.getLogger(__name__)
 
 
@@ -206,6 +208,9 @@ class BaseNetworkTrainer(Predictor):
         else:
             self.use_gpu = False
 
+        self._log_prefix = "val"
+        self._tqdm_desc = "Validate"
+
     def _at_training_begin(self, *args, **kwargs):
         """
         Defines the behaviour at beginnig of the training
@@ -370,15 +375,10 @@ class BaseNetworkTrainer(Predictor):
         metrics, losses = [], []
 
         n_batches = batchgen.num_batches
-        if verbose:
-            iterable = tqdm(
-                enumerate(batchgen),
-                unit=' batch',
-                total=n_batches,
-                desc='Epoch %d' %
-                     epoch)
-        else:
-            iterable = enumerate(batchgen)
+
+        iterable = create_iterator(batchgen, verbose=verbose, unit="batch",
+                                   total_num=n_batches,
+                                   desc="Epoch %d" % epoch, enum=True)
 
         for iter_num, batch in iterable:
             self._at_iter_begin(epoch=epoch, iter_num=iter_num)
