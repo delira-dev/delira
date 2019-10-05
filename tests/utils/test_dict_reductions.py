@@ -4,6 +4,8 @@ import numpy as np
 from delira.utils.dict_reductions import possible_reductions, \
     flatten_dict, unflatten_dict, reduce_dict, get_reduction
 
+from ..utils import check_for_no_backend
+
 
 class TestDictReductions(unittest.TestCase):
     def setUp(self) -> None:
@@ -51,14 +53,23 @@ class TestDictReductions(unittest.TestCase):
                 }
             )
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_dict_flatten(self):
         result_dict = flatten_dict(self._test_dict, parent_key='', sep=".")
         self.assertDictEqual(result_dict, self._flattened_test_dict)
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_dict_unflatten(self):
         result_dict = unflatten_dict(self._flattened_test_dict, sep=".")
         self.assertDictEqual(result_dict, self._test_dict)
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_dict_flatten_unflatten(self):
         result_dict = unflatten_dict(flatten_dict(self._test_dict,
                                                   parent_key='', sep="."),
@@ -66,6 +77,9 @@ class TestDictReductions(unittest.TestCase):
 
         self.assertDictEqual(result_dict, self._test_dict)
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_reduction_fuctions(self):
         for key in possible_reductions():
             with self.subTest(reduce_type=key):
@@ -77,6 +91,9 @@ class TestDictReductions(unittest.TestCase):
 
                 self.assertEquals(result, self._reduction_results[key])
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_reduce_dict(self):
         for key in possible_reductions():
             with self.subTest(reduce_type=key):

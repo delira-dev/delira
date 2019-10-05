@@ -3,8 +3,14 @@ import contextlib
 from delira.training.utils import create_iterator
 import os
 
+from ..utils import check_for_no_backend
+
 
 class IteratorWrapperTest(unittest.TestCase):
+
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_wrapper_verbose(self):
         with open("logging_tmp.txt", "w") as f:
             with contextlib.redirect_stderr(f):
@@ -19,6 +25,9 @@ class IteratorWrapperTest(unittest.TestCase):
         for line in content:
             self.assertTrue(bool(line))
 
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_wrapper_non_verbose(self):
         with open("logging_tmp.txt", "w") as f:
             with contextlib.redirect_stderr(f):
