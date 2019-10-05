@@ -324,7 +324,8 @@ class DataManager(object):
     @data_loader_cls.setter
     def data_loader_cls(self, new_loader_cls):
         """
-        Setter for current data loader class, asserts if class is of valid type
+        Setter for current data loader class, asserts if class is of valid
+        type
         (must be a class and a subclass of ``DataLoader``)
 
         Parameters
@@ -341,50 +342,6 @@ class DataManager(object):
         self._data_loader_cls = new_loader_cls
 
     @property
-    def sampler(self):
-        """
-        Property to access the current sampler_old
-
-        Returns
-        -------
-
-        :class:`AbstractSampler`
-            the current sampler_old
-        """
-
-        return self._sampler
-
-    @sampler.setter
-    def sampler(self, new_sampler):
-        """
-        Setter for current sampler_old.
-        If a valid class instance is passed, the sampler_old is simply assigned, if
-        a valid class type is passed, the sampler_old is created from the dataset
-
-        Parameters
-        ----------
-        new_sampler : :class:`AbstractSampler`, type
-            instance or class object of new sampler_old
-
-        Raises
-        ------
-        ValueError
-            Neither a valid class instance nor a valid class type is given
-
-        """
-
-        if inspect.isclass(new_sampler) and issubclass(new_sampler,
-                                                       AbstractSampler):
-            self._sampler = new_sampler.from_dataset(self.data)
-
-        elif isinstance(new_sampler, AbstractSampler):
-            self._sampler = new_sampler
-
-        else:
-            raise ValueError("Given Sampler is neither a subclass of \
-                            AbstractSampler, nor an instance of a sampler_old ")
-
-    @property
     def n_samples(self):
         """
         Number of Samples
@@ -395,7 +352,7 @@ class DataManager(object):
             Number of Samples
 
         """
-        return len(self.sampler)
+        return len(self.dataset)
 
     @property
     def n_batches(self):

@@ -371,12 +371,13 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
                                                label_key)
         else:
             # Setting batchsize to length of dataset and replacing random
-            # sampler_old with replacement by random sampler_old without replacement
-            # ensures, that each sample is present in each batch and only
-            # one batch is sampled per epoch
+            # sampler_old with replacement by random sampler_old without
+            # replacement ensures, that each sample is present in each
+            # batch and only one batch is sampled per epoch
             datamgr_train.batchsize = len(datamgr_train.dataset)
-            if isinstance(datamgr_train.sampler, RandomSamplerWithReplacement):
-                datamgr_train.sampler = RandomSamplerNoReplacement
+            if issubclass(datamgr_train.sampler_cls,
+                          RandomSamplerWithReplacement):
+                datamgr_train.sampler_cls = RandomSamplerNoReplacement
 
             # additionally setting the number of epochs to train ensures,
             # that only one epoch consisting of one batch (which holds the
