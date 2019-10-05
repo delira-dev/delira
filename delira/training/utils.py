@@ -1,5 +1,6 @@
 import collections
 import numpy as np
+from tqdm import tqdm
 
 
 def recursively_convert_elements(element, check_type, conversion_fn):
@@ -98,3 +99,59 @@ def convert_to_numpy_identity(*args, **kwargs):
                                           _correct_zero_shape)
 
     return args, kwargs
+
+
+def create_iterator(base_iterable: collections.Iterable,
+                    verbose: bool = False, unit: str = "it",
+                    total_num: int = None, desc: str = None,
+                    enum: bool = False, **kwargs):
+    """
+    Function to wrap an iterable to provide verbosity and enumeration if
+    desired
+
+    Parameters
+    ----------
+    base_iterable : Iterable
+        the iterable to wrap
+    verbose : bool
+        whether to add verbosity; defaults to False
+    unit : str
+        the unit to show; Will only be used if :param:`verbose` is True;
+        defaults to None
+    total_num : int
+        the maximum number of samples in the iterator;
+        necessary in case the iterable does not have a length attribute;
+        Will only be used if :param:`verbose` is True; defaults to None
+    desc : str
+        description of the current iterable;
+        Will only be used if :param:`verbose` is True;
+    enum : bool
+        whether to enumerate over the iterable
+    **kwargs :
+        arbitrary keyword arguments passed to :class:`tqdm.tqdm`
+
+    Returns
+    -------
+    Iterable
+        a wrapped iterable with the desired options but the same content
+
+    See Also
+    --------
+    :class:`tqdm.tqdm` for accepted keyword arguments
+
+    """
+
+    if not unit.startswith(" "):
+        unit = " " + unit
+
+    if verbose:
+        iterable = tqdm(base_iterable, unit=unit,
+                        total=total_num, desc=desc, **kwargs)
+
+    else:
+        iterable = base_iterable
+
+    if enum:
+        iterable = enumerate(iterable)
+
+    return iterable

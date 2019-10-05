@@ -5,7 +5,7 @@ import numpy as np
 from tqdm import tqdm
 
 from delira.data_loading import BaseDataManager
-from delira.training.utils import convert_to_numpy_identity
+from delira.training.utils import convert_to_numpy_identity, create_iterator
 from delira.utils.config import LookupConfig
 
 from delira.training.callbacks import AbstractCallback
@@ -229,13 +229,9 @@ class Predictor(object):
 
         n_batches = batchgen.num_batches
 
-        if verbose:
-            iterable = tqdm(enumerate(batchgen), unit=' sample',
-                            total=n_batches, desc=self._tqdm_desc)
-
-        else:
-            iterable = enumerate(batchgen)
-
+        iterable = create_iterator(batchgen, verbose=verbose, unit="sample",
+                                   total_num=n_batches, desc=self._tqdm_desc,
+                                   enum=True)
         batch_list = []
 
         for i, batch in iterable:
