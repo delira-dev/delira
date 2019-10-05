@@ -53,4 +53,8 @@ class AbstractSampler(object):
             additional keyword arguments
 
         """
-        return cls(list(range(len(dset))), **kwargs)
+        if hasattr(dset, "__len__"):
+            length = len(dset)
+        else:
+            length = len([tmp for tmp in dset])
+        return cls(list(range(length)), **kwargs)

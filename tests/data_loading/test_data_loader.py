@@ -22,11 +22,6 @@ class DataLoaderTest(unittest.TestCase):
         self.assertIn("label", loader(next(sampler_iter)))
         self.assertIn("data", loader(next(sampler_iter)))
 
-        self.assertEqual(
-            len(set([_tmp
-                     for _tmp in loader(next(sampler_iter))["label"]])),
-            1)
-
         self.assertEquals(loader.process_id, 0)
         loader.process_id = 456
         self.assertEquals(loader.process_id, 456)
@@ -52,8 +47,8 @@ class DataLoaderTest(unittest.TestCase):
                          "Test should be only executed if no "
                          "backend was installed")
     def test_data_loader_iterable(self):
-        data = ({"label": np.random.rand(1), "data": np.random.rand(1, 3, 3)}
-                for i in range(600))
+        data = [{"label": np.random.rand(1), "data": np.random.rand(1, 3, 3)}
+                for i in range(600)]
         self._test_data_loader(data)
 
 
