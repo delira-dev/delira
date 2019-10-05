@@ -144,10 +144,11 @@ class BaseNetworkTrainer(Predictor):
 
         """
 
-        # explicity not call self._setup here to reuse the __init__ of
-        # abstract class. self._setup has to be called in subclass
-        if callbacks is None:
-            callbacks = []
+        super().__init__(model=network,
+                         key_mapping=key_mapping,
+                         convert_batch_to_npy_fn=convert_batch_to_npy_fn,
+                         prepare_batch_fn=network.prepare_batch,
+                         callbacks=callbacks)
 
         # check argument types
         for instance, cls_type in zip([
@@ -184,18 +185,14 @@ class BaseNetworkTrainer(Predictor):
             "logging_frequencies": logging_frequencies,
             "reduce_types": logging_reduce_types}
 
-    def _setup(self, network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-               key_mapping, convert_batch_to_npy_fn, prepare_batch_fn,
-               callbacks):
-
-        super()._setup(network, key_mapping, convert_batch_to_npy_fn,
-                       prepare_batch_fn, callbacks)
-
         self._reinitialize_logging(**self._logging_setup_kwargs)
 
         self.closure_fn = network.closure
 
-        # optimizers must exist before calling _setup()
+        self.optimizers = optim_fn(self.module, optimizer_cls,
+                                   **optimizer_params)
+
+        # ToDo: Replace this stuff by a lr_scheduler_fn similar to optim_fn
         if lr_scheduler_cls is not None:
             for key, optim in self.optimizers.items():
                 if not issubclass(lr_scheduler_cls, AbstractCallback):
