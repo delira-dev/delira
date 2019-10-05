@@ -5,6 +5,8 @@ import typing
 import warnings
 from collections import defaultdict
 
+from delira.utils.dict_reductions import get_reduction
+
 from delira.utils.config import LookupConfig
 
 import numpy as np
@@ -439,7 +441,9 @@ class BaseNetworkTrainer(Predictor):
         val_score_mode : str
             key specifying what kind of validation score is best
         reduce_mode : str
-            'mean','sum','first_only'
+            a string indicating which reduce mode to use.
+            Currently supported modes:
+                first | last | mean | median | max | min
         verbose : bool
             whether to show progress bars or not
 
@@ -456,19 +460,9 @@ class BaseNetworkTrainer(Predictor):
         is_best = False
         new_val_score = best_val_score
 
-        if reduce_mode == 'mean':
-            def reduce_fn(batch):
-                return np.mean(batch)
-        elif reduce_mode == 'sum':
-            def reduce_fn(batch):
-                return np.sum(batch)
-        elif reduce_mode == 'first_only':
-            def reduce_fn(batch):
-                return batch[0]
-        elif reduce_mode == 'last_only':
-            def reduce_fn(batch):
-                return batch[-1]
-        else:
+        try:
+            reduce_fn = get_reduction(reduce_mode)
+        except KeyError:
             raise ValueError("No valid reduce mode given")
 
         while self.curr_epoch <= num_epochs:
