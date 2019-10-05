@@ -391,11 +391,8 @@ class BaseNetworkTrainer(Predictor):
                                               fold=self.fold,
                                               iter_num=iter_num)
 
-            data_dict = self._convert_to_npy_fn(**data_dict)[1]
-            _preds = self._convert_to_npy_fn(**_preds)[1]
-
             _metrics = self.calc_metrics(
-                LookupConfig(**data_dict, **_preds),
+                self.prepare_metric_calc(data_dict, _preds),
                 self.metrics,
                 self.metric_keys)
 
