@@ -59,45 +59,16 @@ class Predictor(object):
         if callbacks is None:
             callbacks = []
 
-        self._setup(model, key_mapping, convert_batch_to_npy_fn,
-                    prepare_batch_fn, callbacks, **kwargs)
-
-        self._tqdm_desc = "Test"
-
-    def _setup(self, network, key_mapping, convert_batch_args_kwargs_to_npy_fn,
-               prepare_batch_fn, callbacks, **kwargs):
-        """
-
-        Parameters
-        ----------
-        network : :class:`AbstractNetwork`
-            the network to predict from
-        key_mapping : dict
-            a dictionary containing the mapping from the ``data_dict`` to
-            the actual model's inputs.
-            E.g. if a model accepts one input named 'x' and the data_dict
-            contains one entry named 'data' this argument would have to
-            be ``{'x': 'data'}``
-        convert_batch_to_npy_fn : type
-            a callable function to convert tensors in positional and keyword
-            arguments to numpy
-        prepare_batch_fn : (dict, str, str) -> dict
-            function converting a batch-tensor to the framework specific
-            tensor-type and pushing it to correct device, default: identity
-            function
-        callbacks : list
-            initial callbacks to register
-
-        """
-
-        self.module = network
+        self.module = model
         self.key_mapping = key_mapping
-        self._convert_to_npy_fn = convert_batch_args_kwargs_to_npy_fn
+        self._convert_to_npy_fn = convert_batch_to_npy_fn
         self._prepare_batch = prepare_batch_fn
         self._callbacks = []
 
         for cb in callbacks:
             self.register_callback(cb)
+
+        self._tqdm_desc = "Test"
 
     def __call__(self, data: dict, **kwargs):
         """
