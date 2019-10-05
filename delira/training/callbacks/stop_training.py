@@ -106,6 +106,7 @@ class EpochBasedStopping(AbstractCallback):
     Callback to stop training after certain number of epochs.
     Also increases internal epoch number of trainer
     """
+
     def __init__(self, num_epochs: int):
         """
 
@@ -144,5 +145,3 @@ class EpochBasedStopping(AbstractCallback):
 
         return {"curr_epoch": new_curr_epoch,
                 "stop_training": new_curr_epoch > self.num_epochs}
-
-
