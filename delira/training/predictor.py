@@ -68,6 +68,7 @@ class Predictor(object):
             self.register_callback(cb)
 
         self._tqdm_desc = "Test"
+        self._log_prefix = "test"
 
     def _at_iter_begin(self, iter_num, **kwargs):
         """
@@ -259,7 +260,7 @@ class Predictor(object):
                                                  metric_keys=metric_keys)
 
                 self._at_iter_end(data_dict={**batch_dict, **preds_batch},
-                                  metrics={"val_" + k: v
+                                  metrics={self._log_prefix + "_" + k: v
                                            for k, v in _metric_vals.items()},
                                   iter_num=i)
 
