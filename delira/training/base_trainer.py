@@ -3,6 +3,7 @@ import os
 import pickle
 import typing
 import warnings
+from collections import defaultdict
 
 from delira.utils.config import LookupConfig
 
@@ -406,21 +407,15 @@ class BaseNetworkTrainer(Predictor):
 
         batchgen._finish()
 
-        total_losses, total_metrics = {}, {}
+        total_losses, total_metrics = defaultdict(list), defaultdict(list)
 
         for _metrics in metrics:
             for key, val in _metrics.items():
-                if key in total_metrics:
-                    total_metrics[key].append(val)
-                else:
-                    total_metrics[key] = [val]
+                total_metrics[key] = [val]
 
         for _losses in losses:
             for key, val in _losses.items():
-                if key in total_losses:
-                    total_losses[key].append(val)
-                else:
-                    total_losses[key] = [val]
+                total_losses[key] = [val]
 
         return total_metrics, total_losses
 
@@ -828,7 +823,7 @@ class BaseNetworkTrainer(Predictor):
 
         if "exp_name" in _logging_kwargs.keys():
             _logging_kwargs["exp_name"] = _logging_kwargs["exp_name"] + \
-                "_%02d" % self.fold
+                                          "_%02d" % self.fold
 
         # remove prior Trixihandlers and reinitialize it with given logging
         # type
