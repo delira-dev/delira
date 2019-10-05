@@ -252,15 +252,7 @@ class Predictor(object):
                 preds = self.predict(batch_dict, already_prepared=True,
                                      **kwargs)
 
-                # convert batchdict back to numpy (self.predict may convert it
-                # to backend-specific tensor type) - no-op if already numpy
-                batch_dict = self._convert_to_npy_fn(**batch_dict)[1]
-
-                preds_batch = LookupConfig()
-                # explicitly free memory of old lookup config
-                gc.collect()
-                preds_batch.update(batch_dict)
-                preds_batch.update(preds)
+                preds_batch = self.prepare_metric_calc(batch_dict, preds)
 
                 # calculate metrics for predicted batch
                 _metric_vals = self.calc_metrics(preds_batch,
@@ -622,3 +614,33 @@ class Predictor(object):
         assert instance_check or attr_check_both, assertion_str
 
         self._callbacks.append(callback)
+
+    def prepare_metric_calc(self, batch_dict: dict, preds: dict):
+        """
+        Prepares for metric calculation by converting all necessary items to
+        numpy
+
+        Parameters
+        ----------
+        batch_dict : dict
+            the batch dictionary containing all network inputs and (possible)
+            gts
+        preds : dict
+            the dictionary containing all network outputs
+
+        Returns
+        -------
+        :class:`LookupConfig`
+            a single item containing all necessary values for metric
+            calculation
+        """
+        # convert batchdict back to numpy (self.predict may convert it
+        # to backend-specific tensor type) - no-op if already numpy
+        batch_dict = self._convert_to_npy_fn(**batch_dict)[1]
+
+        preds_batch = LookupConfig()
+        # explicitly free memory of old lookup config
+        gc.collect()
+        preds_batch.update(batch_dict)
+        preds_batch.update(preds)
+        return preds_batch
