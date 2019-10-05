@@ -255,7 +255,7 @@ class DataManager(object):
         """
 
         if get_current_debug_mode():
-            return 1
+            return 0
         return self._n_process_augmentation
 
     @n_process_augmentation.setter
