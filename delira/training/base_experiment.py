@@ -409,27 +409,15 @@ class BaseExperiment(object):
                                prepare_batch_fn=prepare_batch, **kwargs)
 
         # return first item of generator
-        return next(predictor.predict_data_mgr_cache(test_data, 1, metrics,
-                                                     metric_keys, verbose, cache_preds=True))
-import typing
-import logging
-import pickle
-import os
-from datetime import datetime
-import warnings
+        return next(
+            predictor.predict_data_mgr_cache(
+                test_data,
+                1,
+                metrics,
+                metric_keys,
+                verbose,
+                cache_preds=True))
 
-import copy
-
-import numpy as np
-from sklearn.model_selection import KFold, StratifiedKFold, \
-    StratifiedShuffleSplit, ShuffleSplit
-
-from delira.data_loading import BaseDataManager
-from delira.models import AbstractNetwork
-
-from delira.utils import DeliraConfig
-from delira.training.base_trainer import BaseNetworkTrainer
-from delira.training.predictor import Predictor
 
 logger = logging.getLogger(__name__)
 
