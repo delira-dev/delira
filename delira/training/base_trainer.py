@@ -455,8 +455,8 @@ class BaseNetworkTrainer(Predictor):
         """
         self._at_training_begin(num_epochs)
 
-        best_val_score, new_val_score, is_best = \
-            self._initialize_model_selection(val_score_mode)
+        best_val_score, is_best = self._initialize_model_selection(
+            val_score_mode)
 
         try:
             reduce_fn = get_reduction(reduce_mode)
@@ -485,7 +485,8 @@ class BaseNetworkTrainer(Predictor):
                 **train_losses}
 
             # validate network
-            if datamgr_valid is not None and (self.curr_epoch % self.val_freq == 0):
+            if (datamgr_valid is not None
+                    and (self.curr_epoch % self.val_freq == 0)):
                 # next must be called here because self.predict_data_mgr
                 # returns a generator (of size 1) and we want to get the
                 # first (and only) item
@@ -501,46 +502,22 @@ class BaseNetworkTrainer(Predictor):
                                for k, v in val_metrics.items()}
 
                 total_metrics.update(val_metrics)
+
             _, total_metrics = self._convert_to_npy_fn(**total_metrics)
 
             for k, v in total_metrics.items():
                 total_metrics[k] = reduce_fn(v)
 
-            # check if metric became better
-            if val_score_key is not None:
-                if val_score_key not in total_metrics:
-                    if self._log_prefix + val_score_key not in total_metrics:
-                        warnings.warn("val_score_key '%s' not a valid key "
-                                      "for validation metrics" %
-                                      str(val_score_key), UserWarning)
-
-                        new_val_score = best_val_score
-
-                    else:
-                        new_val_score = \
-                            total_metrics[self._log_prefix + val_score_key]
-                        val_score_key = self._log_prefix + val_score_key
-                else:
-                    new_val_score = total_metrics.get(val_score_key)
-
-            if new_val_score != best_val_score:
-                is_best = self._is_better_val_scores(
-                    best_val_score, new_val_score, val_score_mode)
-
-                # set best_val_score to new_val_score if is_best
-                if is_best:
-                    best_val_score = new_val_score
-
-                if is_best and verbose:
-                    logging.info("New Best Value at Epoch %03d : %03.3f" %
-                                 (self.curr_epoch, best_val_score))
+            is_best, best_val_score = self._is_better_model(val_score_key,
+                                                            total_metrics,
+                                                            best_val_score,
+                                                            val_score_mode,
+                                                            verbose)
 
             # ToDo: remove self.curr_epoch here and use the attribute from
             #  within the function
             self._at_epoch_end(total_metrics, val_score_key, self.curr_epoch,
                                is_best)
-
-            is_best = False
 
         return self._at_training_end()
 
@@ -699,6 +676,66 @@ class BaseNetworkTrainer(Predictor):
         """
         self._update_state(self.load_state(file_name, *args, **kwargs))
 
+    # ToDo: Add tests
+    def _is_better_model(self, val_score_key: str, total_metrics: dict,
+                         best_val_score: float, val_score_mode: str,
+                         verbose: bool):
+        """
+        Function to determine if the current model is better than the best
+        model so far
+
+        Parameters
+        ----------
+        val_score_key : str
+            the key indicating which metric value to use for model selection
+        total_metrics : dict
+            all metrics of the current epoch
+        best_val_score : float
+            the validation score of the best model
+        val_score_mode : str
+            determines whether a low or a high validation score is better
+        verbose : bool
+            whether to log if a new best model was found or not
+
+        Returns
+        -------
+        bool
+            whether the current model is the best model so far
+        float
+            the best validation score so far
+
+        """
+
+        # extract metric value
+        if val_score_key is not None:
+            new_val_score = total_metrics.get(
+                "val_score_key",
+                default=total_metrics.get(
+                    self._log_prefix + "_" + val_score_key, default=None))
+
+        else:
+            new_val_score = None
+
+        if new_val_score is None:
+            warnings.warn("val_score_key '%s' not a valid key "
+                          "for validation metrics" %
+                          str(val_score_key), UserWarning)
+
+        else:
+            is_best = self._is_better_val_scores(best_val_score,
+                                                 new_val_score,
+                                                 val_score_mode)
+
+            if is_best:
+                best_val_score = new_val_score
+                if verbose:
+                    logging.info("New Best Value at Epoch %03d : %03.3f" %
+                                 (self.curr_epoch, best_val_score))
+
+                return is_best, best_val_score
+
+        return False, best_val_score
+
     @staticmethod
     def _is_better_val_scores(old_val_score, new_val_score,
                               mode='highest'):
@@ -843,8 +880,6 @@ class BaseNetworkTrainer(Predictor):
         -------
         float
             the initial best validation score (worst score for given mode)
-        float
-            the current validation score (worst score for given mode)
         bool
             whether the current model is best model so far (False)
 
@@ -857,8 +892,7 @@ class BaseNetworkTrainer(Predictor):
             best_val_score = None
 
         is_best = False
-        new_val_score = best_val_score
-        return best_val_score, new_val_score, is_best
+        return best_val_score, is_best
 
     @staticmethod
     def _search_for_prev_state(path, extensions=None):
