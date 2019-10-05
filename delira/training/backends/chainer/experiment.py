@@ -2,7 +2,7 @@ import typing
 from functools import partial
 
 from delira.models.backends.chainer import AbstractChainerNetwork
-from delira.data_loading import BaseDataManager
+from delira.data_loading import DataManager
 from delira.training.base_experiment import BaseExperiment
 from delira.utils import DeliraConfig
 
@@ -77,7 +77,7 @@ class ChainerExperiment(BaseExperiment):
                          **kwargs)
 
     def test(self, network: AbstractChainerNetwork,
-             test_data: BaseDataManager,
+             test_data: DataManager,
              metrics: dict, metric_keys=None,
              verbose=False, prepare_batch=None,
              convert_fn=convert_to_numpy, **kwargs):
@@ -88,7 +88,7 @@ class ChainerExperiment(BaseExperiment):
         ----------
         network : :class:`AbstractNetwork`
             the (trained) network to test
-        test_data : :class:`BaseDataManager`
+        test_data : :class:`DataManager`
             the data to use for testing
         metrics : dict
             the metrics to calculate

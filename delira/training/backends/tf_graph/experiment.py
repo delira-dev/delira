@@ -4,7 +4,7 @@ from functools import partial
 import tensorflow as tf
 
 from delira.models.backends.tf_graph import AbstractTfGraphNetwork
-from delira.data_loading import BaseDataManager
+from delira.data_loading import DataManager
 
 from delira.utils import DeliraConfig
 from delira.training.backends.tf_eager.experiment import TfEagerExperiment
@@ -85,7 +85,7 @@ class TfGraphExperiment(TfEagerExperiment):
             trainer_cls=trainer_cls,
             **kwargs)
 
-    def test(self, network, test_data: BaseDataManager,
+    def test(self, network, test_data: DataManager,
              metrics: dict, metric_keys=None,
              verbose=False, prepare_batch=lambda x: x,
              convert_fn=None, **kwargs):
@@ -96,7 +96,7 @@ class TfGraphExperiment(TfEagerExperiment):
         ----------
         network : :class:`AbstractNetwork`
             the (trained) network to test
-        test_data : :class:`BaseDataManager`
+        test_data : :class:`DataManager`
             the data to use for testing
         metrics : dict
             the metrics to calculate

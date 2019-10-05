@@ -65,7 +65,7 @@ class TestSklearnBackend(
                          "Test should only be executed if SKLEARN backend is "
                          "installed and specified")
     def test_experiment_test(self):
-        from delira.data_loading import BaseDataManager
+        from delira.data_loading import DataManager
 
         # iterate over test cases
         for case in self._test_cases:
@@ -81,7 +81,7 @@ class TestSklearnBackend(
 
                 # create data
                 dset_test = DummyDataset(len_test)
-                dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+                dmgr_test = DataManager(dset_test, 16, 1, None)
 
                 model = network_cls()
 

@@ -2,7 +2,7 @@ __DEBUG_MODE = False
 
 # Functions to get and set the internal __DEBUG_MODE variable. This variable
 # currently only defines whether to use multiprocessing or not. At the moment
-# this is only used inside the BaseDataManager, which either returns a
+# this is only used inside the DataManager, which either returns a
 # MultiThreadedAugmenter or a SingleThreadedAugmenter depending on the current
 # debug mode.
 # All other functions using multiprocessing should be aware of this and
