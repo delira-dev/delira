@@ -168,6 +168,7 @@ class BaseNetworkTrainer(Predictor):
 
         self._fold = fold
         self.start_epoch = start_epoch
+        self.curr_epoch = start_epoch
         self.save_path = save_path
         self.losses = losses
         self.metrics = metrics
@@ -478,23 +479,27 @@ class BaseNetworkTrainer(Predictor):
         else:
             raise ValueError("No valid reduce mode given")
 
-        for epoch in range(self.start_epoch, num_epochs + 1):
+        while self.curr_epoch <= num_epochs:
 
-            self._at_epoch_begin(val_score_key, epoch,
+            # ToDo: remove self.curr_epoch here and use the attribute from
+            #  within the function
+            self._at_epoch_begin(val_score_key, self.curr_epoch,
                                  num_epochs)
 
-            batch_gen_train = datamgr_train.get_batchgen(seed=epoch)
+            batch_gen_train = datamgr_train.get_batchgen(seed=self.curr_epoch)
 
             # train single network epoch
+            # ToDo: remove self.curr_epoch here and use the attribute from
+            #  within the function
             train_metrics, train_losses = self._train_single_epoch(
-                batch_gen_train, epoch, verbose=verbose)
+                batch_gen_train, self.curr_epoch, verbose=verbose)
 
             total_metrics = {
                 **train_metrics,
                 **train_losses}
 
             # validate network
-            if datamgr_valid is not None and (epoch % self.val_freq == 0):
+            if datamgr_valid is not None and (self.curr_epoch % self.val_freq == 0):
                 # next must be called here because self.predict_data_mgr
                 # returns a generator (of size 1) and we want to get the
                 # first (and only) item
@@ -541,9 +546,11 @@ class BaseNetworkTrainer(Predictor):
 
                 if is_best and verbose:
                     logging.info("New Best Value at Epoch %03d : %03.3f" %
-                                 (epoch, best_val_score))
+                                 (self.curr_epoch, best_val_score))
 
-            self._at_epoch_end(total_metrics, val_score_key, epoch,
+            # ToDo: remove self.curr_epoch here and use the attribute from
+            #  within the function
+            self._at_epoch_end(total_metrics, val_score_key, self.curr_epoch,
                                is_best)
 
             is_best = False
@@ -551,6 +558,8 @@ class BaseNetworkTrainer(Predictor):
             # stop training (might be caused by early stopping)
             if self.stop_training:
                 break
+
+            self.curr_epoch += 1
 
         return self._at_training_end()
 
