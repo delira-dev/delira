@@ -2,7 +2,8 @@ from delira import get_backends
 
 from delira.training.callbacks.logging_callback import DefaultLoggingCallback
 from delira.training.callbacks.abstract_callback import AbstractCallback
-from delira.training.callbacks.early_stopping import EarlyStopping
+from delira.training.callbacks.stop_training import EarlyStopping, \
+    EpochBasedStopping
 
 if "TORCH" in get_backends():
     from delira.training.callbacks.pytorch_schedulers import \

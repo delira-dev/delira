@@ -98,3 +98,51 @@ class EarlyStopping(AbstractCallback):
             stop_training = False
 
         return {"stop_training": stop_training}
+
+
+# ToDo: Write tests for this callback
+class EpochBasedStopping(AbstractCallback):
+    """
+    Callback to stop training after certain number of epochs.
+    Also increases internal epoch number of trainer
+    """
+    def __init__(self, num_epochs: int):
+        """
+
+        Parameters
+        ----------
+        num_epochs : int
+            the number of epochs to train in total
+        """
+
+        super().__init__()
+        self.num_epochs = num_epochs
+
+    def at_epoch_end(self, trainer, curr_epoch, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        trainer : :class:`BaseNetworkTrainer`
+            the trainer instance
+        curr_epoch : int
+            the current epoch
+        *args :
+            arbitrary positional arguments
+        **kwargs :
+            arbitrary keyword arguments
+
+        Returns
+        -------
+        dict
+            a dict with keys 'curr_epoch' (holding the new epoch) and
+            'stop_training' (determining whether to stop the training after
+            the current epoch)
+
+        """
+        new_curr_epoch = curr_epoch + 1
+
+        return {"curr_epoch": new_curr_epoch,
+                "stop_training": new_curr_epoch > self.num_epochs}
+
+

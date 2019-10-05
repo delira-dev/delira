@@ -12,7 +12,8 @@ from delira.utils.config import LookupConfig
 import numpy as np
 from tqdm import tqdm
 
-from .callbacks import AbstractCallback, DefaultLoggingCallback
+from .callbacks import AbstractCallback, DefaultLoggingCallback, \
+    EpochBasedStopping
 from .predictor import Predictor
 from ..data_loading.data_manager import Augmenter
 from ..models import AbstractNetwork
@@ -214,18 +215,22 @@ class BaseNetworkTrainer(Predictor):
         self._log_prefix = "val"
         self._tqdm_desc = "Validate"
 
-    def _at_training_begin(self, *args, **kwargs):
+    def _at_training_begin(self, num_epochs, *args, **kwargs):
         """
         Defines the behaviour at beginnig of the training
 
         Parameters
         ----------
+        num_epochs : int
+            the number of epochs to train
         *args :
             positional arguments
         **kwargs :
             keyword arguments
 
         """
+        self.register_callback(EpochBasedStopping(num_epochs=num_epochs))
+
         for cbck in self._callbacks:
             self._update_state(cbck.at_training_begin(self, *args, **kwargs))
 
@@ -448,7 +453,7 @@ class BaseNetworkTrainer(Predictor):
             whether to show progress bars or not
 
         """
-        self._at_training_begin()
+        self._at_training_begin(num_epochs)
 
         best_val_score, new_val_score, is_best = \
             self._initialize_model_selection(val_score_mode)
@@ -458,7 +463,9 @@ class BaseNetworkTrainer(Predictor):
         except KeyError:
             raise ValueError("No valid reduce mode given")
 
-        while self.curr_epoch <= num_epochs:
+        # stop training might be caused by callbacks such as early stopping
+        # or epoch-based stopping
+        while not self.stop_training:
 
             # ToDo: remove self.curr_epoch here and use the attribute from
             #  within the function
@@ -534,12 +541,6 @@ class BaseNetworkTrainer(Predictor):
                                is_best)
 
             is_best = False
-
-            # stop training (might be caused by early stopping)
-            if self.stop_training:
-                break
-
-            self.curr_epoch += 1
 
         return self._at_training_end()
 
@@ -827,10 +828,29 @@ class BaseNetworkTrainer(Predictor):
                 logging_frequencies=logging_frequencies,
                 reduce_types=reduce_types))
 
+    # ToDo: Write tests for this method
     @staticmethod
     def _initialize_model_selection(val_score_mode):
+        """
+        Initializes the model selection based on the given val_score_mode
+
+        Parameters
+        ----------
+        val_score_mode : str
+            the mode determining whether a high or a low val_score is best
+
+        Returns
+        -------
+        float
+            the initial best validation score (worst score for given mode)
+        float
+            the current validation score (worst score for given mode)
+        bool
+            whether the current model is best model so far (False)
+
+        """
         if val_score_mode == 'highest':
-            best_val_score = 0
+            best_val_score = -float('inf')
         elif val_score_mode == 'lowest':
             best_val_score = float('inf')
         else:
