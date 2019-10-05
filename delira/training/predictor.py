@@ -70,6 +70,62 @@ class Predictor(object):
 
         self._tqdm_desc = "Test"
 
+    def _at_iter_begin(self, iter_num, **kwargs):
+        """
+        Function defining the behavior executed at beginning of each iteration
+
+        Parameters
+        ----------
+        iter_num : int
+            the number of the current iteration
+        **kwargs :
+            additional keyword arguments (forwarded to callbacks call)
+
+        Returns
+        -------
+        dict
+            combined dicts returned by the callbacks
+
+        """
+        return_dict = {}
+        for cb in self._callbacks:
+            return_dict.update(cb.at_iter_begin(self,
+                                                iter_num=iter_num,
+                                                **kwargs))
+
+        return return_dict
+
+    def _at_iter_end(self, iter_num, data_dict, metrics, **kwargs):
+        """
+        Function defining the behavior executed at beginning of each iteration
+
+        Parameters
+        ----------
+        iter_num : int
+            the number of the current iteration
+        data_dict : dict
+            dictionary holding input data and predictions
+        metrics: dict
+            calculated metrics
+        **kwargs :
+            additional keyword arguments (forwarded to callbacks call)
+
+        Returns
+        -------
+        dict
+            combined dicts returned by the callbacks
+
+        """
+        return_dict = {}
+        for cb in self._callbacks:
+            return_dict.update(cb.at_iter_end(self,
+                                              iter_num=iter_num,
+                                              data_dict=data_dict,
+                                              metrics=metrics,
+                                              **kwargs))
+
+        return return_dict
+
     def __call__(self, data: dict, **kwargs):
         """
         Method to call the class.
@@ -126,62 +182,6 @@ class Predictor(object):
         return self._convert_to_npy_fn(
             **pred
         )[1]
-
-    def _at_iter_begin(self, iter_num, **kwargs):
-        """
-        Function defining the behavior executed at beginning of each iteration
-
-        Parameters
-        ----------
-        iter_num : int
-            the number of the current iteration
-        **kwargs :
-            additional keyword arguments (forwarded to callbacks call)
-
-        Returns
-        -------
-        dict
-            combined dicts returned by the callbacks
-
-        """
-        return_dict = {}
-        for cb in self._callbacks:
-            return_dict.update(cb.at_iter_begin(self,
-                                                iter_num=iter_num,
-                                                **kwargs))
-
-        return return_dict
-
-    def _at_iter_end(self, iter_num, data_dict, metrics, **kwargs):
-        """
-        Function defining the behavior executed at beginning of each iteration
-
-        Parameters
-        ----------
-        iter_num : int
-            the number of the current iteration
-        data_dict : dict
-            dictionary holding input data and predictions
-        metrics: dict
-            calculated metrics
-        **kwargs :
-            additional keyword arguments (forwarded to callbacks call)
-
-        Returns
-        -------
-        dict
-            combined dicts returned by the callbacks
-
-        """
-        return_dict = {}
-        for cb in self._callbacks:
-            return_dict.update(cb.at_iter_end(self,
-                                              iter_num=iter_num,
-                                              data_dict=data_dict,
-                                              metrics=metrics,
-                                              **kwargs))
-
-        return return_dict
 
     def predict_data_mgr(self, datamgr, batchsize=None, metrics=None,
                          metric_keys=None, verbose=False, **kwargs):
