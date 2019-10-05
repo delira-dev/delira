@@ -6,6 +6,8 @@ from batchgenerators.dataloading.data_loader import SlimDataLoaderBase
 from queue import Empty
 import logging
 
+from delira.data_loading.load_utils import ensemble_batch
+
 logger = logging.getLogger(__name__)
 
 
@@ -83,21 +85,8 @@ class BaseDataLoader(SlimDataLoaderBase):
 
                 result = [self._get_sample(_idx) for _idx in idxs]
 
-                result_dict = {}
+                return ensemble_batch(result)
 
-                # concatenate dict entities by keys
-                for _result_dict in result:
-                    for key, val in _result_dict.items():
-                        if key in result_dict.keys():
-                            result_dict[key].append(val)
-                        else:
-                            result_dict[key] = [val]
-
-                # convert list to numpy arrays
-                for key, val_list in result_dict.items():
-                    result_dict[key] = np.asarray(val_list)
-
-                return result_dict
             except Empty:
                 pass
 

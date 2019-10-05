@@ -6,6 +6,7 @@ from skimage.io import imread
 from skimage.transform import resize
 
 from delira.utils.decorators import make_deprecated
+from typing import List, Dict, Callable
 
 
 def norm_range(mode):
@@ -307,3 +308,39 @@ class LoadSampleLabel(LoadSample):
                                     **self._label_kwargs)
         sample_dict.update(label_dict)
         return sample_dict
+
+
+def ensemble_batch(batch_list: List[Dict[str, np.ndarray]],
+                   ensemble_fn: Callable = np.asarray):
+    """
+    Function to ensemble the whole batch from a list of dicts to a single dict
+
+    Parameters
+    ----------
+    batch_list : list
+        a list of dicts each holding one sample and consisting of pairs of
+        strings and numpy arrays
+    ensemble_fn : Callable
+        a function that builds all batch items (numpy arrays)
+        to a single array; This defaults to :func:`numpy.asarray` but could also
+        be something like :func:`numpy.concatenate`
+
+    Returns
+    -------
+    dict
+        a dictionary containing pairs of strings and numpy arrays
+        holding whole batches
+
+    """
+    result_dict = collections.defaultdict(list)
+
+    # concatenate dict entities by keys
+    for sample in batch_list:
+        for key, val in sample.items():
+            result_dict[key].append(val)
+
+    # convert list to numpy arrays
+    for key, val_list in result_dict.items():
+        result_dict[key] = ensemble_fn(val_list)
+
+    return result_dict

@@ -2,7 +2,7 @@ import logging
 import gc
 
 import numpy as np
-from tqdm import tqdm
+from delira.data_loading.load_utils import ensemble_batch
 
 from delira.data_loading import BaseDataManager
 from delira.training.utils import convert_to_numpy_identity, create_iterator
@@ -247,17 +247,7 @@ class Predictor(object):
             # if queue is full process queue:
             if batchsize is None or len(batch_list) >= batchsize:
 
-                batch_dict = {}
-                for _batch in batch_list:
-                    for key, val in _batch.items():
-                        if key in batch_dict.keys():
-                            batch_dict[key].append(val)
-                        else:
-                            batch_dict[key] = [val]
-
-                for key, val_list in batch_dict.items():
-                    batch_dict[key] = np.concatenate(val_list)
-
+                batch_dict = ensemble_batch(batch_list, np.concatenate)
                 batch_dict = self._prepare_batch(batch_dict)
                 preds = self.predict(batch_dict, already_prepared=True,
                                      **kwargs)
