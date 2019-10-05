@@ -495,8 +495,9 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
         if metrics is None:
             metrics = {}
 
-        return super().predict_data_mgr(datamgr, batchsize, metrics,
-                                        metric_keys, verbose, **kwargs)
+        with torch.no_grad():
+            return super().predict_data_mgr(datamgr, batchsize, metrics,
+                                            metric_keys, verbose, **kwargs)
 
     def save_state(self, file_name, epoch, **kwargs):
         """
