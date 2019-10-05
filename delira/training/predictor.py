@@ -10,6 +10,8 @@ from delira.utils.config import LookupConfig
 
 from delira.training.callbacks import AbstractCallback
 
+from collections import defaultdict
+
 logger = logging.getLogger(__name__)
 
 
@@ -321,7 +323,7 @@ class Predictor(object):
         if metrics is None:
             metrics = {}
 
-        predictions_all, metric_vals = [], {k: [] for k in metrics.keys()}
+        predictions_all, metric_vals = [], defaultdict(list)
 
         for preds, _metric_vals in self.predict_data_mgr(
                 datamgr=datamgr,
