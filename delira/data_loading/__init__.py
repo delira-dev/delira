@@ -7,7 +7,6 @@ from delira.data_loading.dataset import BaseCacheDataset
 from delira.data_loading.dataset import BaseLazyDataset
 from delira.data_loading.dataset import ConcatDataset
 from delira.data_loading.dataset import BaseExtendCacheDataset
-from delira.data_loading.load_utils import default_load_fn_2d
 from delira.data_loading.load_utils import LoadSample
 from delira.data_loading.load_utils import LoadSampleLabel
 from delira.data_loading.sampler import LambdaSampler
