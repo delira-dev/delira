@@ -161,7 +161,7 @@ class DataManager(object):
             "sampler_cls": self.sampler_cls,
             "data_loader_cls": self.data_loader_cls,
             "drop_last": self.drop_last,
-            "sample_kwargs": self.sampler_kwargs
+            **self.sampler_kwargs
         }
 
         return self.__class__(
