@@ -172,7 +172,6 @@ script:
     # run tests or stylechecks
     - if [[ "$TEST_TYPE" == "unittests" ]]; then
           bash scripts/ci/run_tests.sh;
-          codecov;
       elif [[ "$TEST_TYPE" == "docs" ]]; then
           bash scripts/ci/build_docs.sh;
       else
