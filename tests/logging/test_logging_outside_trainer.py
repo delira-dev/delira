@@ -1,17 +1,15 @@
 import unittest
 from delira.logging import log
 from delira.training import BaseNetworkTrainer
-from delira.training.callbacks import DefaultLoggingCallback
 from delira.models import AbstractNetwork
-import logging
 import os
-import logging
+import tensorflow as tf
 
 
 class LoggingOutsideTrainerTestCase(unittest.TestCase):
 
     def test_logging_freq(self):
-        save_path = os.path.abspath(".")
+        save_path = os.path.abspath("./logs")
         config = {
             "num_epochs": 2,
             "losses": {},
@@ -31,7 +29,7 @@ class LoggingOutsideTrainerTestCase(unittest.TestCase):
             key_mapping={},
             logging_type="tensorboardx",
             logging_kwargs={
-                "level": logging.INFO
+                'logdir': save_path
             })
 
         trainer._setup(
@@ -44,10 +42,25 @@ class LoggingOutsideTrainerTestCase(unittest.TestCase):
             prepare_batch_fn=None,
             callbacks=[])
 
-        with self.assertLogs() as cm:
-            log({"text": {"text_string": "Logging outside trainer", "tag": "dummy"}})
+        tag = 'dummy'
 
-        print(len(cm.output))
+        log({"scalar": {"scalar_value": 1234, "tag": tag}})
+
+        file = [os.path.join(save_path, x)
+                for x in os.listdir(save_path)
+                if os.path.isfile(os.path.join(save_path, x))][0]
+
+        ret_val = False
+        if tf is not None:
+            for e in tf.train.summary_iterator(file):
+                for v in e.summary.value:
+                    if v.tag == tag:
+                        ret_val = True
+                        break
+                if ret_val:
+                    break
+
+        self.assertTrue(ret_val)
 
 
 if __name__ == '__main__':
