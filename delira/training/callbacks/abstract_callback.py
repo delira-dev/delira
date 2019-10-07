@@ -124,7 +124,7 @@ class AbstractCallback(object):
         Notes
         -----
         The predictor calls the callbacks with the following additional
-        arguments: `iter_num`(int)
+        arguments: `iter_num`(int), `train`(bool)
 
         The basetrainer adds following arguments (wrt the predictor):
         `curr_epoch`(int), `global_iter_num`(int)
@@ -153,6 +153,7 @@ class AbstractCallback(object):
         The predictor calls the callbacks with the following additional
         arguments: `iter_num`(int), `metrics`(dict),
         `data_dict`(dict, contains prediction and input data),
+        `train`(bool)
 
         The basetrainer adds following arguments (wrt the predictor):
         `curr_epoch`(int), `global_iter_num`(int)
