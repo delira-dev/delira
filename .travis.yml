@@ -179,6 +179,10 @@ script:
           bash scripts/ci/run_style_checks.sh;
       fi
 
+after_script:
+  - if [[ "$TEST_TYPE" == "unittests" ]]; then
+      codecov;
+
 before_deploy:
     - cd $TRAVIS_BUILD_DIR
 
