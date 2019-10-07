@@ -5,8 +5,6 @@ import numpy as np
 from skimage.io import imread
 from skimage.transform import resize
 
-from delira.utils.decorators import make_deprecated
-
 
 def norm_range(mode):
     """

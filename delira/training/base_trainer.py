@@ -493,11 +493,9 @@ class BaseNetworkTrainer(Predictor):
             self._at_epoch_begin(val_score_key, epoch,
                                  num_epochs)
 
-            batch_gen_train = datamgr_train.get_batchgen(seed=epoch)
-
             # train single network epoch
             train_metrics, train_losses = self._train_single_epoch(
-                batch_gen_train, epoch, verbose=verbose)
+                datamgr_train, epoch, verbose=verbose)
 
             total_metrics = {
                 **train_metrics,
