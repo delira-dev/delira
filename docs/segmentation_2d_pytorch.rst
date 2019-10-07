@@ -212,14 +212,14 @@ datamanagers:
 
 .. code:: ipython3
 
-    from delira.data_loading import BaseDataManager, SequentialSampler, RandomSampler
+    from delira.data_loading import DataManager, SequentialSampler, RandomSampler
     
-    manager_train = BaseDataManager(dataset_train, params.nested_get("batch_size"),
+    manager_train = DataManager(dataset_train, params.nested_get("batch_size"),
                                     transforms=transforms,
                                     sampler_cls=RandomSampler,
                                     n_process_augmentation=4)
     
-    manager_val = BaseDataManager(dataset_val, params.nested_get("batch_size"),
+    manager_val = DataManager(dataset_val, params.nested_get("batch_size"),
                                   transforms=transforms,
                                   sampler_cls=SequentialSampler,
                                   n_process_augmentation=4)

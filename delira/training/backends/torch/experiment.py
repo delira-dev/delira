@@ -4,7 +4,7 @@ import typing
 import torch
 
 from delira.models.backends.torch import AbstractPyTorchNetwork
-from delira.data_loading import BaseDataManager
+from delira.data_loading import DataManager
 
 from delira.training.base_experiment import BaseExperiment
 from delira.utils import DeliraConfig
@@ -79,7 +79,7 @@ class PyTorchExperiment(BaseExperiment):
                          trainer_cls=trainer_cls,
                          **kwargs)
 
-    def kfold(self, data: BaseDataManager, metrics: dict, num_epochs=None,
+    def kfold(self, data: DataManager, metrics: dict, num_epochs=None,
               num_splits=None, shuffle=False, random_seed=None,
               split_type="random", val_split=0.2, label_key="label",
               train_kwargs: dict = None, test_kwargs: dict = None,
@@ -90,7 +90,7 @@ class PyTorchExperiment(BaseExperiment):
 
         Parameters
         ----------
-        data : :class:`BaseDataManager`
+        data : :class:`DataManager`
             the data to use for training(, validation) and testing. Will be
             split based on ``split_type`` and ``val_split``
         metrics : dict
@@ -121,7 +121,7 @@ class PyTorchExperiment(BaseExperiment):
             the label to use for stratification. Will be ignored unless
             ``split_type`` is 'stratified'. Default: 'label'
         train_kwargs : dict or None
-            kwargs to update the behavior of the :class:`BaseDataManager`
+            kwargs to update the behavior of the :class:`DataManager`
             containing the train data. If None: empty dict will be passed
         metric_keys : dict of tuples
             the batch_dict keys to use for each metric to calculate.
@@ -129,7 +129,7 @@ class PyTorchExperiment(BaseExperiment):
             If no values are given for a key, per default ``pred`` and
             ``label`` will be used for metric calculation
         test_kwargs : dict or None
-            kwargs to update the behavior of the :class:`BaseDataManager`
+            kwargs to update the behavior of the :class:`DataManager`
             containing the test and validation data.
             If None: empty dict will be passed
         config : :class:`Parameters`or None
@@ -163,7 +163,7 @@ class PyTorchExperiment(BaseExperiment):
         and :class:`sklearn.model_selection.StratifiedShuffleSplit`
         for stratified data-splitting
 
-        * :meth:`BaseDataManager.update_from_state_dict` for updating the
+        * :meth:`DataManager.update_from_state_dict` for updating the
         data managers by kwargs
 
         * :meth:`BaseExperiment.run` for the training
@@ -199,7 +199,7 @@ class PyTorchExperiment(BaseExperiment):
             verbose=verbose,
             **kwargs)
 
-    def test(self, network, test_data: BaseDataManager,
+    def test(self, network, test_data: DataManager,
              metrics: dict, metric_keys=None,
              verbose=False, prepare_batch=None,
              convert_fn=None, **kwargs):
@@ -210,7 +210,7 @@ class PyTorchExperiment(BaseExperiment):
         ----------
         network : :class:`AbstractNetwork`
             the (trained) network to test
-        test_data : :class:`BaseDataManager`
+        test_data : :class:`DataManager`
             the data to use for testing
         metrics : dict
             the metrics to calculate

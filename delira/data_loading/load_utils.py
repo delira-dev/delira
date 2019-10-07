@@ -9,13 +9,11 @@ from skimage.transform import resize
 def norm_range(mode):
     """
     Closure function for range normalization
-
     Parameters
     ----------
     mode : str
         '-1,1' normalizes data to range [-1, 1], while '0,1'
         normalizes data to range [0, 1]
-
     Returns
     -------
     callable
@@ -24,12 +22,10 @@ def norm_range(mode):
     def norm_fn(data):
         """
         Returns the input data normalized to the range
-
         Parameters
         ----------
         data : np.ndarray
             data which should be normalized
-
         Returns
         -------
         np.ndarary
@@ -51,11 +47,9 @@ def norm_range(mode):
 def norm_zero_mean_unit_std(data):
     """
     Return normalized data with mean 0, standard deviation 1
-
     Parameters
     ----------
     data : np.nadarray
-
     Returns
     -------
     np.ndarray
@@ -76,7 +70,6 @@ class LoadSample:
                  norm_fn=norm_range('-1,1'),
                  **kwargs):
         """
-
         Parameters
         ----------
         sample_ext : dict of iterable
@@ -95,13 +88,11 @@ class LoadSample:
             function to normalize input. Default: normalize range to [-1, 1]
         kwargs :
             variable number of keyword arguments passed to load function
-
         Examples
         --------
         Simple loading function which returns a dict with `data`
         >>> from delira.data_loading.nii import load_nii
         >>> load_fn = LoadSample({'data:': ['data.nii']}, load_nii)
-
         Loading function for data (casted to float32 and normalized) and
         segmentation (casted to unit8)
         >>> from delira.data_loading.nii import load_nii
@@ -122,12 +113,10 @@ class LoadSample:
     def __call__(self, path) -> dict:
         """
         Load sample from multiple files
-
         Parameters
         ----------
         path : str
             defines patch to folder which contain the _sample_ext
-
         Returns
         -------
         dict
@@ -167,7 +156,6 @@ class LoadSampleLabel(LoadSample):
                  sample_kwargs=None, **kwargs):
         """
         Load sample and label from folder
-
         Parameters
         ----------
         sample_ext : dict of list
@@ -194,7 +182,6 @@ class LoadSampleLabel(LoadSample):
             additional keyword arguments passed to LoadSample
         kwargs :
             variable number of keyword arguments passed to _label_fn
-
         See Also
         --------
         :class: `LoadSample`
@@ -212,11 +199,9 @@ class LoadSampleLabel(LoadSample):
     def __call__(self, path) -> dict:
         """
         Loads a sample and a label
-
         Parameters
         ----------
         path : str
-
         Returns
         -------
         dict

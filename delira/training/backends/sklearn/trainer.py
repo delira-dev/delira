@@ -4,8 +4,8 @@ from delira.training.utils import convert_to_numpy_identity as \
 from delira.training.base_trainer import BaseNetworkTrainer
 from delira.io.sklearn import save_checkpoint, load_checkpoint
 from delira.models.backends.sklearn import SklearnEstimator
-from delira.data_loading import BaseDataManager
-from delira.data_loading.sampler import RandomSampler, \
+from delira.data_loading import DataManager
+from delira.data_loading.sampler import RandomSamplerWithReplacement, \
     RandomSamplerNoReplacement
 from delira.training.callbacks.logging_callback import DefaultLoggingCallback
 import os
@@ -282,7 +282,7 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
                                          "checkpoint_best.pkl"),
                             epoch)
 
-    def _get_classes_if_necessary(self, dmgr: BaseDataManager, verbose,
+    def _get_classes_if_necessary(self, dmgr: DataManager, verbose,
                                   label_key=None):
         """
         Checks if available classes have to be collected before starting
@@ -291,7 +291,7 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
 
         Parameters
         ----------
-        dmgr : :class:`BaseDataManager`
+        dmgr : :class:`DataManager`
             the datamanager to collect the classes from
         verbose : bool
             verbosity
@@ -371,12 +371,13 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
                                                label_key)
         else:
             # Setting batchsize to length of dataset and replacing random
-            # sampler with replacement by random sampler without replacement
-            # ensures, that each sample is present in each batch and only
-            # one batch is sampled per epoch
+            # sampler_old with replacement by random sampler_old without
+            # replacement ensures, that each sample is present in each
+            # batch and only one batch is sampled per epoch
             datamgr_train.batchsize = len(datamgr_train.dataset)
-            if isinstance(datamgr_train.sampler, RandomSampler):
-                datamgr_train.sampler = RandomSamplerNoReplacement
+            if issubclass(datamgr_train.sampler_cls,
+                          RandomSamplerWithReplacement):
+                datamgr_train.sampler_cls = RandomSamplerNoReplacement
 
             # additionally setting the number of epochs to train ensures,
             # that only one epoch consisting of one batch (which holds the
