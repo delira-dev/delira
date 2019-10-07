@@ -3,11 +3,18 @@ from delira.logging import log
 from delira.training import BaseNetworkTrainer
 from delira.models import AbstractNetwork
 import os
-import tensorflow as tf
+from tests.utils import check_for_tf_graph_backend
+
+try:
+    import tensorflow as tf
+except ImportError:
+    tf = None
 
 
 class LoggingOutsideTrainerTestCase(unittest.TestCase):
 
+    @unittest.skipUnless(check_for_tf_graph_backend(),
+                         "TF Backend not installed")
     def test_logging_freq(self):
         save_path = os.path.abspath("./logs")
         config = {
