@@ -451,7 +451,7 @@ class BaseCacheDataset(AbstractDataset):
                 data.append(self._load_fn(p, **self._load_kwargs))
         else:
             # call _sample_fn for all elements inside directory
-            assert os.path.isdir(path), '%s is not a valid directory' % dir
+            assert os.path.isdir(path), '%s is not a valid directory' % path
             for p in tqdm(os.listdir(path), unit='samples',
                           desc="Loading samples"):
                 data.append(self._load_fn(os.path.join(path, p),
@@ -531,7 +531,7 @@ class BaseLazyDataset(AbstractDataset):
             data = list(path)
         else:
             # generate list from all items
-            assert os.path.isdir(path), '%s is not a valid directory' % dir
+            assert os.path.isdir(path), '%s is not a valid directory' % path
             data = [os.path.join(path, p) for p in os.listdir(path)]
         return data
 
