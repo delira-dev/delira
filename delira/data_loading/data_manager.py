@@ -93,8 +93,8 @@ class DataManager(object):
 
         self.data = data
 
-        if not inspect.isclass(sampler_cls) and issubclass(sampler_cls,
-                                                           AbstractSampler):
+        if not (inspect.isclass(sampler_cls) and issubclass(sampler_cls,
+                                                            AbstractSampler)):
             raise TypeError
 
         self.sampler_cls = sampler_cls
@@ -302,8 +302,8 @@ class DataManager(object):
 
         """
 
-        if new_transforms is not None or isinstance(new_transforms,
-                                                    AbstractTransform):
+        if new_transforms is not None and not isinstance(
+                new_transforms, AbstractTransform):
             raise TypeError
 
         self._transforms = new_transforms
