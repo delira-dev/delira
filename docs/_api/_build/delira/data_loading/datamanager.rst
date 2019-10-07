@@ -10,10 +10,10 @@ Datamanager
 The datamanager wraps a dataloader and combines it with augmentations
 and multiprocessing.
 
-:hidden:`BaseDataManager`
+:hidden:`DataManager`
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: BaseDataManager
+.. autoclass:: DataManager
     :members:
     :undoc-members:
     :show-inheritance:

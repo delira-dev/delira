@@ -1,5 +1,5 @@
 import numpy as np
-from delira.data_loading import AbstractDataset, BaseDataManager
+from delira.data_loading import AbstractDataset, DataManager
 from delira.training import BaseExperiment
 from tests.utils import check_for_chainer_backend, \
     check_for_tf_eager_backend, check_for_tf_graph_backend, \
@@ -79,8 +79,9 @@ def run_experiment(experiment_cls, config, network_cls, len_train, len_test,
     dset_train = DummyDataset(len_train)
     dset_test = DummyDataset(len_test)
 
-    dmgr_train = BaseDataManager(dset_train, 16, 4, None)
-    dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+    dmgr_train = DataManager(dset_train, 16, 4, None)
+    dmgr_test = DataManager(dset_test, 16, 1, None)
+
     return exp.run(dmgr_train, dmgr_test)
 
 
@@ -90,7 +91,7 @@ def test_experiment(experiment_cls, config, network_cls, len_test, **kwargs):
     exp = experiment_cls(config, network_cls, **kwargs)
 
     dset_test = DummyDataset(len_test)
-    dmgr_test = BaseDataManager(dset_test, 16, 1, None)
+    dmgr_test = DataManager(dset_test, 16, 1, None)
 
     model = network_cls()
 
@@ -108,7 +109,7 @@ def kfold_experiment(experiment_cls, config, network_cls, len_data,
     exp = experiment_cls(config, network_cls, **kwargs)
 
     dset = DummyDataset(len_data)
-    dmgr = BaseDataManager(dset, 16, 1, None)
+    dmgr = DataManager(dset, 16, 1, None)
 
     return exp.kfold(data=dmgr, metrics=config.nested_get("metrics"),
                      shuffle=shuffle, split_type=split_type,

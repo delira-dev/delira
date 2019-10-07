@@ -6,13 +6,13 @@ from delira.training.base_trainer import BaseNetworkTrainer
 from delira.training.callbacks.logging_callback import DefaultLoggingCallback
 from delira.io.tf import load_checkpoint, save_checkpoint
 from delira.models.backends.tf_graph import AbstractTfGraphNetwork
+from delira.data_loading import DataManager
 import os
 import logging
 
 from tensorflow import executing_eagerly
 
 from batchgenerators.dataloading import MultiThreadedAugmenter
-
 
 logger = logging.getLogger(__name__)
 
@@ -295,21 +295,22 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
 
         return super()._at_training_end(*args, **kwargs)
 
-    def _train_single_epoch(self, batchgen, epoch, verbose=False):
+    def _train_single_epoch(self, dmgr_train: DataManager, epoch,
+                            verbose=False):
         """
         Trains the network a single epoch
 
         Parameters
         ----------
-        batchgen : MultiThreadedAugmenter
-            Generator yielding the training batches
+        dmgr_train : :class:`DataManager`
+            Datamanager to create the data generator
         epoch : int
             current epoch
 
         """
         self.module.training = True
 
-        return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
+        return super()._train_single_epoch(dmgr_train, epoch, verbose=verbose)
 
     def predict_data_mgr(self, datamgr, batch_size=None, metrics=None,
                          metric_keys=None, verbose=False, **kwargs):
@@ -318,7 +319,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
 
         Parameters
         ----------
-        datamgr : :class:`BaseDataManager`
+        datamgr : :class:`DataManager`
             Manager producing a generator holding the batches
         batch_size : int
             Artificial batchsize (sampling will be done with batchsize
