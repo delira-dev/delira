@@ -113,5 +113,6 @@ def generate_save_path(save_path):
         if not os.path.isdir(new_path):
             break
     if i:
-        print('Save path is a duplicate and got changed to {}'.format(new_path))
+        print('Save path is a duplicate and got changed to {}'
+              .format(new_path))
     return new_path
