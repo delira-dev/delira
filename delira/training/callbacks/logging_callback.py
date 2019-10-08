@@ -50,7 +50,8 @@ class DefaultLoggingCallback(AbstractCallback):
                                    logging_frequencies=logging_frequencies,
                                    reduce_types=reduce_types, level=level)
 
-    def at_iter_end(self, trainer, iter_num=None, data_dict=None, **kwargs):
+    def at_iter_end(self, trainer, iter_num=None, data_dict=None, train=False,
+                    **kwargs):
         """
         Function logging the metrics at the end of each iteration
 
@@ -63,6 +64,8 @@ class DefaultLoggingCallback(AbstractCallback):
             (unused in this callback)
         data_dict : dict
             the current data dict (including predictions)
+        train: bool
+            signals if callback is called by trainer or predictor
         **kwargs :
             additional keyword arguments
 
@@ -76,7 +79,14 @@ class DefaultLoggingCallback(AbstractCallback):
         global_step = kwargs.get("global_iter_num", None)
 
         for k, v in metrics.items():
-            self._logger.log({"scalar": {"tag": k, "scalar_value": v,
+            self._logger.log({"scalar": {"tag": self.create_tag(k, train),
+                                         "scalar_value": v,
                                          "global_step": global_step}})
 
         return {}
+
+    @staticmethod
+    def create_tag(tag: str, train: bool):
+        if train:
+            tag = tag + "_val"
+        return tag

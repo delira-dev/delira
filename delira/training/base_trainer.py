@@ -13,6 +13,7 @@ from .callbacks import AbstractCallback, DefaultLoggingCallback
 from .predictor import Predictor
 from ..data_loading import Augmenter, DataManager
 from ..models import AbstractNetwork
+from ..logging import register_logger, make_logger
 
 logger = logging.getLogger(__name__)
 
@@ -322,8 +323,11 @@ class BaseNetworkTrainer(Predictor):
         """
         for cb in self._callbacks:
             self._update_state(cb.at_iter_begin(
-                self, iter_num=iter_num, curr_epoch=epoch,
-                global_iter_num=self._global_iter_num, **kwargs,
+                self, iter_num=iter_num,
+                curr_epoch=epoch,
+                global_iter_num=self._global_iter_num,
+                train=True,
+                **kwargs,
             ))
 
     def _at_iter_end(self, iter_num, data_dict, metrics, epoch=0, **kwargs):
@@ -347,9 +351,12 @@ class BaseNetworkTrainer(Predictor):
 
         for cb in self._callbacks:
             self._update_state(cb.at_iter_end(
-                self, iter_num=iter_num, data_dict=data_dict,
-                metrics=metrics, curr_epoch=epoch,
+                self, iter_num=iter_num,
+                data_dict=data_dict,
+                metrics=metrics,
+                curr_epoch=epoch,
                 global_iter_num=self._global_iter_num,
+                train=True,
                 **kwargs,
             ))
 
@@ -833,11 +840,15 @@ class BaseNetworkTrainer(Predictor):
 
         level = _logging_kwargs.pop("level")
 
+        logger = backend_cls(_logging_kwargs)
+
         self.register_callback(
             logging_callback_cls(
-                backend_cls(logging_kwargs), level=level,
+                logger, level=level,
                 logging_frequencies=logging_frequencies,
                 reduce_types=reduce_types))
+
+        register_logger(self._callbacks[-1]._logger, self.name)
 
     @staticmethod
     def _search_for_prev_state(path, extensions=None):
