@@ -17,7 +17,7 @@ def non_string_warning(func):
         Parameters
         ----------
         config: :class:`Config`
-            decorated function receive :param`self` as first argument
+            decorated function receive :param:`self` as first argument
         key : immutable type
             key which is checked
 
@@ -134,7 +134,11 @@ class Config(dict):
         current_level = self
         for k in keys:
             if k not in current_level:
-                current_level[k] = self._create_internal_dict()
+                if create:
+                    current_level[k] = self._create_internal_dict()
+                else:
+                    raise KeyError(
+                        "{} was not found in internal dict.".format(k))
             # traverse to needed dict
             current_level = current_level[k]
         return current_level
@@ -249,7 +253,7 @@ class Config(dict):
         update_dict : dictlike
             values which should be added to config
         deepcopy : bool, optional
-            copies values from :param`update_dict`, by default False
+            copies values from :param:`update_dict`, by default False
         overwrite : bool, optional
             overwrite existing values inside config, by default False
 
@@ -274,7 +278,7 @@ class Config(dict):
         item : Any
             item which should be assigned
         deepcopy : bool, optional
-            copies :param`item`, by default False
+            copies :param:`item`, by default False
         overwrite : bool, optional
             overwrite existing values inside config, by default False
         """
@@ -322,9 +326,9 @@ class Config(dict):
             defines the format how the config is saved, by default yaml.dump
         encoder_cls : :class:`Encoder`, optional
             transforms config to a format which can be formatted by the
-            :param`formatter`, by default Encoder
+            :param:`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to :param`formatter`
+            additional keyword arguments passed to :param:`formatter`
         """
         self._timestamp = now()
         encoded_self = encoder_cls().encode(self)
@@ -342,9 +346,9 @@ class Config(dict):
             defines the format how the config is saved, by default yaml.dump
         encoder_cls : :class:`Encoder`, optional
             transforms config to a format which can be formatted by the
-            :param`formatter`, by default Encoder
+            :param:`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to :param`formatter`
+            additional keyword arguments passed to :param:`formatter`
         """
         self._timestamp = now()
         encoded_self = encoder_cls().encode(self)
@@ -362,9 +366,9 @@ class Config(dict):
             defines the format how the config is saved, by default yaml.dump
         decoder_cls : :class:`Encoder`, optional
             transforms config to a format which can be formatted by the
-            :param`formatter`, by default Encoder
+            :param:`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to :param`formatter`
+            additional keyword arguments passed to :param:`formatter`
         """
         with open(path, "r") as f:
             decoded_format = formatter(f, **kwargs)
@@ -383,9 +387,9 @@ class Config(dict):
             defines the format how the config is saved, by default yaml.dump
         decoder_cls : :class:`Encoder`, optional
             transforms config to a format which can be formatted by the
-            :param`formatter`, by default Encoder
+            :param:`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to :param`formatter`
+            additional keyword arguments passed to :param:`formatter`
         """
         decoded_format = formatter(data, **kwargs)
         decoded_format = decoder_cls().decode(decoded_format)
@@ -411,7 +415,7 @@ class Config(dict):
         Raises
         ------
         TypeError
-            raised if :param`value` is not a dict (or a subclass of dict)
+            raised if :param:`value` is not a dict (or a subclass of dict)
         """
         if not isinstance(value, dict):
             raise TypeError("Value must be an instance of dict but type {} "
@@ -467,9 +471,9 @@ class Config(dict):
             defines the format how the config is saved, by default yaml.dump
         decoder_cls : :class:`Encoder`, optional
             trasforms config to a format which can be formatted by the
-            :param`formatter`, by default Encoder
+            :param:`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to :param`formatter`
+            additional keyword arguments passed to :param:`formatter`
 
         Returns
         -------
@@ -495,9 +499,9 @@ class Config(dict):
             defines the format how the config is saved, by default yaml.dump
         decoder_cls : :class:`Encoder`, optional
             trasforms config to a format which can be formatted by the
-            :param`formatter`, by default Encoder
+            :param:`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to :param`formatter`
+            additional keyword arguments passed to :param:`formatter`
 
         Returns
         -------
@@ -546,14 +550,14 @@ class LookupConfig(Config):
         """
         contain = True
         try:
-            self.nested_get(key)
+            self.nested_get(key, allow_multiple=True)
         except KeyError:
             contain = False
         return contain
 
-    def nested_get(self, key, *args, **kwargs):
+    def nested_get(self, key, *args, allow_multiple=False, **kwargs):
         """
-        Returns all occurances of :param`key` in :param`self` and subdicts
+        Returns all occurances of :param:`key` in :param:`self` and subdicts
 
         Parameters
         ----------
@@ -561,14 +565,16 @@ class LookupConfig(Config):
             the key to search for
         *args :
             positional arguments to provide default value
+        allow_multiple: bool
+            allow multiple results
         **kwargs :
             keyword arguments to provide default value
 
         Raises
         ------
         KeyError
-            Multiple Values are found for key
-            (unclear which value should be returned)
+            Multiple Values are found for key and :param:`allow_multiple` is
+            False (unclear which value should be returned)
             OR
             No Value was found for key and no default value was given
 
@@ -583,7 +589,10 @@ class LookupConfig(Config):
             return self[key]
         results = nested_lookup(key, self)
         if len(results) > 1:
-            raise KeyError("Multiple Values found for key %s" % key)
+            if allow_multiple:
+                return results
+            else:
+                raise KeyError("Multiple Values found for key %s" % key)
         elif len(results) == 0:
             if "default" in kwargs:
                 return kwargs["default"]
@@ -689,7 +698,7 @@ class DeliraConfig(LookupConfig):
         Raises
         ------
         TypeError
-            raised if :param`new_params` is not a dict (or a subclass of dict)
+            raised if :param:`new_params` is not a dict (or a subclass of dict)
         """
         if not isinstance(new_params, dict):
             raise TypeError("new_params must be an instance of dict but "
@@ -727,7 +736,7 @@ class DeliraConfig(LookupConfig):
         Raises
         ------
         TypeError
-            raised if :param`new_params` is not a dict (or a subclass of dict)
+            raised if :param:`new_params` is not a dict (or a subclass of dict)
         """
         if not isinstance(new_params, dict):
             raise TypeError("new_params must be an instance of dict but "
@@ -764,7 +773,7 @@ class DeliraConfig(LookupConfig):
         Raises
         ------
         TypeError
-            raised if :param`new_params` is not a dict (or a subclass of dict)
+            raised if :param:`new_params` is not a dict (or a subclass of dict)
         """
         if not isinstance(new_params, dict):
             raise TypeError("new_params must be an instance of dict but "
@@ -801,7 +810,7 @@ class DeliraConfig(LookupConfig):
         Raises
         ------
         TypeError
-            raised if :param`new_params` is not a dict (or a subclass of dict)
+            raised if :param:`new_params` is not a dict (or a subclass of dict)
         """
         if not isinstance(new_params, dict):
             raise TypeError("new_params must be an instance of dict but "

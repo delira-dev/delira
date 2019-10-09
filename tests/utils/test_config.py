@@ -97,6 +97,18 @@ class ConfigTest(unittest.TestCase):
     @unittest.skipUnless(
         check_for_no_backend(),
         "Test should only be executed if no backend is specified")
+    def test_config_access_with_non_existing_keys(self):
+        cf = self.config_cls(self.example_dict)
+
+        with self.assertRaises(KeyError):
+            cf["unknown_key"]
+
+        with self.assertRaises(KeyError):
+            cf["shallowStr.unknown_key"]
+
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
     def test_update(self):
         cf = self.config_cls.create_from_dict(self.example_dict)
         with self.assertRaises(ValueError):
@@ -227,6 +239,14 @@ class LookupConfigTest(ConfigTest):
 
         self.assertIsNone(cf.nested_get("nonExistingKey", None))
         self.assertIsNone(cf.nested_get("nonExistingKey", default=None))
+
+        cf["nested_duplicate.deep"] = "duplicate"
+        with self.assertRaises(KeyError):
+            cf.nested_get("deep")
+
+        multiple_val = cf.nested_get("deep", allow_multiple=True)
+        self.assertEqual(multiple_val, [{"deepStr": "b", "deepNum": 2},
+                                        "duplicate"])
 
 
 class DeliraConfigTest(LookupConfigTest):
