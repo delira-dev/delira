@@ -555,7 +555,7 @@ class LookupConfig(Config):
             contain = False
         return contain
 
-    def nested_get(self, key, *args, allow_multiple=False,  **kwargs):
+    def nested_get(self, key, *args, allow_multiple=False, **kwargs):
         """
         Returns all occurances of :param`key` in :param`self` and subdicts
 
@@ -573,8 +573,8 @@ class LookupConfig(Config):
         Raises
         ------
         KeyError
-            Multiple Values are found for key and allow_multiple is False
-            (unclear which value should be returned)
+            Multiple Values are found for key and :param`allow_multiple` is 
+            False (unclear which value should be returned)
             OR
             No Value was found for key and no default value was given
 
