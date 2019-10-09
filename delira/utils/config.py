@@ -134,7 +134,11 @@ class Config(dict):
         current_level = self
         for k in keys:
             if k not in current_level:
-                current_level[k] = self._create_internal_dict()
+                if create:
+                    current_level[k] = self._create_internal_dict()
+                else:
+                    raise KeyError(
+                        "{} was not found in internal dict.".format(k))
             # traverse to needed dict
             current_level = current_level[k]
         return current_level
@@ -546,12 +550,12 @@ class LookupConfig(Config):
         """
         contain = True
         try:
-            self.nested_get(key)
+            self.nested_get(key, allow_multiple=True)
         except KeyError:
             contain = False
         return contain
 
-    def nested_get(self, key, *args, **kwargs):
+    def nested_get(self, key, *args, allow_multiple=False,  **kwargs):
         """
         Returns all occurances of :param`key` in :param`self` and subdicts
 
@@ -561,13 +565,15 @@ class LookupConfig(Config):
             the key to search for
         *args :
             positional arguments to provide default value
+        allow_multiple: bool
+            allow multiple results
         **kwargs :
             keyword arguments to provide default value
 
         Raises
         ------
         KeyError
-            Multiple Values are found for key
+            Multiple Values are found for key and allow_multiple is False
             (unclear which value should be returned)
             OR
             No Value was found for key and no default value was given
@@ -583,7 +589,10 @@ class LookupConfig(Config):
             return self[key]
         results = nested_lookup(key, self)
         if len(results) > 1:
-            raise KeyError("Multiple Values found for key %s" % key)
+            if allow_multiple:
+                return results
+            else:
+                raise KeyError("Multiple Values found for key %s" % key)
         elif len(results) == 0:
             if "default" in kwargs:
                 return kwargs["default"]
