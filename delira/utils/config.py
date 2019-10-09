@@ -573,7 +573,7 @@ class LookupConfig(Config):
         Raises
         ------
         KeyError
-            Multiple Values are found for key and :param`allow_multiple` is 
+            Multiple Values are found for key and :param`allow_multiple` is
             False (unclear which value should be returned)
             OR
             No Value was found for key and no default value was given
