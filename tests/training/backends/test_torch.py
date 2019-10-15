@@ -1,6 +1,6 @@
 import unittest
 from tests.utils import check_for_torch_backend
-from delira.training import Parameters
+from delira.utils import DeliraConfig
 from sklearn.metrics import mean_absolute_error
 from .utils import create_experiment_test_template_for_backend
 
@@ -34,24 +34,25 @@ class TestTorchBackend(
             import torch
             from delira.training import PyTorchExperiment
 
-            params = Parameters(fixed_params={
+            config = DeliraConfig()
+            config.fixed_params = {
                 "model": {},
                 "training": {
                     "losses": {
                         "L1":
-                            torch.nn.BCEWithLogitsLoss()},
+                        torch.nn.BCEWithLogitsLoss()},
                     "optimizer_cls": torch.optim.Adam,
                     "optimizer_params": {},
                     "num_epochs": 2,
-                    "val_metrics": {"mae": mean_absolute_error},
+                    "metrics": {"mae": mean_absolute_error},
                     "lr_sched_cls": None,
                     "lr_sched_params": {}}
-            })
+            }
             model_cls = DummyNetworkTorch
             experiment_cls = PyTorchExperiment
 
         else:
-            params = None
+            config = None
             model_cls = None
             experiment_cls = None
 
@@ -60,7 +61,7 @@ class TestTorchBackend(
 
         self._test_cases = [
             {
-                "params": params,
+                "config": config,
                 "network_cls": model_cls,
                 "len_train": len_train,
                 "len_test": len_test,

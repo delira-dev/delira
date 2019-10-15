@@ -1,16 +1,18 @@
 from delira.training.backends.tf_graph.utils import initialize_uninitialized
 from delira.training.backends.tf_eager.utils import create_optims_default
-from delira.training.utils import convert_to_numpy_identity as convert_to_numpy
+from delira.training.utils import convert_to_numpy_identity \
+    as convert_to_numpy
 from delira.training.base_trainer import BaseNetworkTrainer
+from delira.training.callbacks.logging_callback import DefaultLoggingCallback
 from delira.io.tf import load_checkpoint, save_checkpoint
 from delira.models.backends.tf_graph import AbstractTfGraphNetwork
+from delira.data_loading import DataManager
 import os
 import logging
 
 from tensorflow import executing_eagerly
 
 from batchgenerators.dataloading import MultiThreadedAugmenter
-
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +34,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
                  losses: dict,
                  optimizer_cls,
                  optimizer_params=None,
-                 train_metrics=None,
-                 val_metrics=None,
+                 metrics=None,
                  lr_scheduler_cls=None,
                  lr_scheduler_params=None,
                  gpu_ids=None,
@@ -41,6 +42,9 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
                  optim_fn=create_optims_default,
                  logging_type="tensorboardx",
                  logging_kwargs=None,
+                 logging_callback_cls=DefaultLoggingCallback,
+                 logging_frequencies=None,
+                 logging_reduce_types=None,
                  fold=0,
                  callbacks=None,
                  start_epoch=1,
@@ -69,11 +73,8 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
             optimizer class implementing the optimization algorithm of choice
         optimizer_params : dict
             keyword arguments passed to optimizer during construction
-        train_metrics : dict, optional
-            metrics, which will be evaluated during train phase
-            (should work on numpy arrays)
-        val_metrics : dict, optional
-            metrics, which will be evaluated during test phase
+        metrics : dict, optional
+            metrics, which will be evaluated during train and validation phase
             (should work on numpy arrays)
         lr_scheduler_cls : Any
             learning rate schedule class: must implement step() method
@@ -92,6 +93,27 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
             If callable: it must be a logging handler class
         logging_kwargs : dict
             dictionary containing all logging keyword arguments
+        logging_callback_cls : class
+            the callback class to create and register for logging
+        logging_frequencies : int or dict
+            specifies how often to log for each key.
+            If int: integer will be applied to all valid keys
+            if dict: should contain a frequency per valid key. Missing keys
+                will be filled with a frequency of 1 (log every time)
+            None is equal to empty dict here.
+        logging_reduce_types : str of FunctionType or dict
+            if str:
+                specifies the reduction type to use. Valid types are
+                'last' | 'first' | 'mean' | 'median' | 'max' | 'min'.
+                The given type will be mapped to all valid keys.
+            if FunctionType:
+                specifies the actual reduction function. Will be applied
+                for all keys.
+            if dict: should contain pairs of valid logging keys and either
+                str or FunctionType. Specifies the logging value per key.
+                Missing keys will be filles with a default value of 'last'.
+                Valid types for strings are
+                'last' | 'first' | 'mean' 'median' | 'max' | 'min'.
         fold : int
             current cross validation fold (0 per default)
         callbacks : list
@@ -118,10 +140,8 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
 
         if optimizer_params is None:
             optimizer_params = {}
-        if train_metrics is None:
-            train_metrics = {}
-        if val_metrics is None:
-            val_metrics = {}
+        if metrics is None:
+            metrics = {}
         if lr_scheduler_params is None:
             lr_scheduler_params = {}
         if gpu_ids is None:
@@ -131,23 +151,42 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
         if callbacks is None:
             callbacks = []
 
-        super().__init__(
-            network, save_path, losses, optimizer_cls, optimizer_params,
-            train_metrics, val_metrics, lr_scheduler_cls, lr_scheduler_params,
-            gpu_ids, save_freq, optim_fn, key_mapping, logging_type,
-            logging_kwargs, fold, callbacks, start_epoch, metric_keys,
-            convert_batch_to_npy_fn, val_freq)
+        super().__init__(network=network,
+                         save_path=save_path,
+                         losses=losses,
+                         optimizer_cls=optimizer_cls,
+                         optimizer_params=optimizer_params,
+                         metrics=metrics,
+                         lr_scheduler_cls=lr_scheduler_cls,
+                         lr_scheduler_params=lr_scheduler_params,
+                         gpu_ids=gpu_ids,
+                         save_freq=save_freq,
+                         optim_fn=optim_fn,
+                         key_mapping=key_mapping,
+                         logging_type=logging_type,
+                         logging_kwargs=logging_kwargs,
+                         logging_callback_cls=logging_callback_cls,
+                         logging_frequencies=logging_frequencies,
+                         logging_reduce_types=logging_reduce_types,
+                         fold=fold,
+                         callbacks=callbacks,
+                         start_epoch=start_epoch,
+                         metric_keys=metric_keys,
+                         convert_batch_to_npy_fn=convert_batch_to_npy_fn,
+                         val_freq=val_freq,
+                         **kwargs
+                         )
 
         self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                     lr_scheduler_cls, lr_scheduler_params,
-                    key_mapping, convert_batch_to_npy_fn, gpu_ids)
+                    key_mapping, convert_batch_to_npy_fn, gpu_ids, callbacks)
 
         for key, val in kwargs.items():
             setattr(self, key, val)
 
     def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
                lr_scheduler_cls, lr_scheduler_params, key_mapping,
-               convert_batch_to_npy_fn, gpu_ids):
+               convert_batch_to_npy_fn, gpu_ids, callbacks):
         """
         Defines the Trainers Setup
 
@@ -169,6 +208,8 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
             the identity function
         gpu_ids : list
             list containing ids of GPUs to use; if empty: use cpu instead
+        callbacks : list
+            initial callbacks to register
 
         Raises
         ------
@@ -205,7 +246,8 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
         self.optimizers = optim_fn(optimizer_cls, **optimizer_params)
 
         super()._setup(network, lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-                       key_mapping, convert_batch_to_npy_fn, lambda x: x)
+                       key_mapping, convert_batch_to_npy_fn, lambda x: x,
+                       callbacks)
 
         self.use_gpu = True
 
@@ -231,7 +273,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
                 self.update_state(latest_state_path)
                 self.start_epoch = latest_epoch
 
-    def _at_training_end(self):
+    def _at_training_end(self, *args, **kwargs):
         """
         Defines Behaviour at end of training: Loads best model if available
 
@@ -251,23 +293,24 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
                                            'checkpoint_best')
                               )
 
-        return self.module
+        return super()._at_training_end(*args, **kwargs)
 
-    def _train_single_epoch(self, batchgen, epoch, verbose=False):
+    def _train_single_epoch(self, dmgr_train: DataManager, epoch,
+                            verbose=False):
         """
         Trains the network a single epoch
 
         Parameters
         ----------
-        batchgen : MultiThreadedAugmenter
-            Generator yielding the training batches
+        dmgr_train : :class:`DataManager`
+            Datamanager to create the data generator
         epoch : int
             current epoch
 
         """
         self.module.training = True
 
-        return super()._train_single_epoch(batchgen, epoch, verbose=verbose)
+        return super()._train_single_epoch(dmgr_train, epoch, verbose=verbose)
 
     def predict_data_mgr(self, datamgr, batch_size=None, metrics=None,
                          metric_keys=None, verbose=False, **kwargs):
@@ -276,7 +319,7 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
 
         Parameters
         ----------
-        datamgr : :class:`BaseDataManager`
+        datamgr : :class:`DataManager`
             Manager producing a generator holding the batches
         batch_size : int
             Artificial batchsize (sampling will be done with batchsize
