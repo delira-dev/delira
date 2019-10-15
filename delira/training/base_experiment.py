@@ -15,7 +15,8 @@ from delira import get_backends
 from delira.data_loading import DataManager
 from delira.models import AbstractNetwork
 
-from delira.utils import DeliraConfig, generate_save_path
+from delira.utils import DeliraConfig
+from delira.training.utils import generate_save_path
 from delira.training.base_trainer import BaseNetworkTrainer
 from delira.training.predictor import Predictor
 
