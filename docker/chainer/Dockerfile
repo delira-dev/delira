@@ -1,4 +1,4 @@
-FROM nvidia/cuda:9.2-base-ubuntu18.04
+FROM ubuntu:18.04
 
 RUN apt-get update && apt-get install -y \
     curl \
@@ -25,8 +25,8 @@ RUN conda install python=3.7
 RUN pip install --upgrade pip
 RUN git clone https://github.com/justusschock/delira.git && \
     pip install pip wheel && \
-    pip install -r delira/requirements.txt && \
-    pip install -r delira/requirements_extra_torch.txt && \
+    pip install -r delira/requirements/base.txt && \
+    pip install -r delira/requirements/chainer.txt && \
     pip install delira/
 ENV PYTHONPATH /home/containeruser/delira:$PYTHONPATH
 CMD ["/bin/bash"]
