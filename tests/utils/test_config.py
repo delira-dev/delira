@@ -318,7 +318,7 @@ class DeliraConfigTest(LookupConfigTest):
                           "    __type__:\n"
                           "      module: delira.utils.config\n"
                           "      name: LookupConfig\n".format(
-                             cf["_timestamp"])))
+                              cf["_timestamp"])))
 
         self.assertEqual(cf_str_full,
                          ("__convert__:\n"
@@ -334,7 +334,7 @@ class DeliraConfigTest(LookupConfigTest):
                           "    __type__:\n"
                           "      module: delira.utils.config\n"
                           "      name: DeliraConfig\n".format(
-                             cf["_timestamp"], cf["_version"])))
+                              cf["_timestamp"], cf["_version"])))
 
     @unittest.skipUnless(
         check_for_no_backend(),
