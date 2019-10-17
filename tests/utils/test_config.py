@@ -245,8 +245,15 @@ class LookupConfigTest(ConfigTest):
             cf.nested_get("deep")
 
         multiple_val = cf.nested_get("deep", allow_multiple=True)
-        self.assertEqual(multiple_val, [{"deepStr": "b", "deepNum": 2},
-                                        "duplicate"])
+
+        expected_result = [{"deepStr": "b", "deepNum": 2},
+                           "duplicate"]
+
+        for val in multiple_val:
+            self.assertIn(val, expected_result)
+            expected_result.pop(expected_result.index(val))
+
+        self.assertEquals(len(expected_result), 0)
 
 
 class DeliraConfigTest(LookupConfigTest):
@@ -311,7 +318,7 @@ class DeliraConfigTest(LookupConfigTest):
                           "    __type__:\n"
                           "      module: delira.utils.config\n"
                           "      name: LookupConfig\n".format(
-                              cf["_timestamp"])))
+                             cf["_timestamp"])))
 
         self.assertEqual(cf_str_full,
                          ("__convert__:\n"
@@ -327,7 +334,7 @@ class DeliraConfigTest(LookupConfigTest):
                           "    __type__:\n"
                           "      module: delira.utils.config\n"
                           "      name: DeliraConfig\n".format(
-                              cf["_timestamp"], cf["_version"])))
+                             cf["_timestamp"], cf["_version"])))
 
     @unittest.skipUnless(
         check_for_no_backend(),
