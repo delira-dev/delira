@@ -7,6 +7,7 @@ from .codecs import Encoder, Decoder
 
 import yaml
 import argparse
+import sys
 
 
 def non_string_warning(func):
@@ -29,9 +30,10 @@ def non_string_warning(func):
         if not isinstance(key, str):
             warnings.warn("The key {} is not a string, but a {}. "
                           "This may lead to unwanted behavior!".format(
-                              key, type(key)), RuntimeWarning)
+                key, type(key)), RuntimeWarning)
 
         return func(config, key, *args, **kwargs)
+
     return warning_wrapper
 
 
@@ -512,6 +514,134 @@ class Config(dict):
         config.loads(data, formatter=formatter, decoder_cls=decoder_cls,
                      **kwargs)
         return config
+
+    def create_argparser(self):
+        '''
+        Creates an argparser for all values in the config
+        Following the pattern: `--training.learning_rate 1234`
+
+        Returns
+        -------
+        argparse.ArgumentParser
+            parser for all variables in the config
+        '''
+        parser = argparse.ArgumentParser(allow_abbrev=False)
+
+        def str2bool(v):
+            if v.lower() in ('yes', 'true', 't', 'y', '1'):
+                return True
+            elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+                return False
+            else:
+                raise argparse.ArgumentTypeError('Boolean value expected.')
+
+        def add_val(dict_like, prefix=''):
+            for key, val in dict_like.items():
+                name = "--{}".format(prefix + key)
+                if val is None:
+                    parser.add_argument(name)
+                else:
+                    if type(val) == bool:
+                        parser.add_argument(name, type=str2bool)
+                    elif isinstance(val, (list, tuple)):
+                        if len(val) > 0 and type(val[0]) != type:
+                            parser.add_argument(name, type=type(val[0]))
+                        else:
+                            parser.add_argument(name)
+                    elif isinstance(val, dict):
+                        add_val(val, prefix=key + '.')
+                    elif isinstance(val, type):
+                        parser.add_argument(name, type=val)
+                    else:
+                        parser.add_argument(name, type=type(val))
+
+        add_val(self)
+        return parser
+
+    @staticmethod
+    def _add_unknown_args(unknown_args):
+        '''
+        Can add unknown args as parsed by argparsers method
+        `parse_unknown_args`.
+
+        Parameters
+        ------
+        unknown_args : list
+            list of unknown args
+        Returns
+        ------
+        Config
+            a config of the parsed args
+        '''
+        # first element in the list must be a key
+        assert unknown_args[0].startswith('--')
+
+        args = Config()
+        # take first key
+        key = unknown_args[0][2:]
+        idx, done, val = 1, False, []
+        while not done:
+            try:
+                item = unknown_args[idx]
+            except IndexError:
+                done = True
+            if item.startswith('--') or done:
+                # save key with its value
+                if len(val) == 0:
+                    # key is used as flag
+                    args[key] = True
+                elif len(val) == 1:
+                    args[key] = val[0]
+                else:
+                    args[key] = val
+                # new key and flush data
+                key = item[2:]
+                val = []
+            else:
+                val.append(item)
+            idx += 1
+        return args
+
+    def update_from_argparse(self, parser=None, add_unknown_items=False):
+        '''
+        Updates the config with all values from the command line.
+        Following the pattern: `--training.learning_rate 1234`
+
+        Raises
+        ------
+        TypeError
+            raised if another datatype than currently in the config is parsed
+        Returns
+        -------
+        dict
+            dictionary containing only updated arguments
+        '''
+
+        if len(sys.argv) > 1:
+            if not parser:
+                parser = self.create_argparser()
+
+            params, unknown = parser.parse_known_args()
+            params = vars(params)
+            if len(unknown) > 0 and add_unknown_items:
+                warnings.warn(
+                    "Called with unknown arguments: {} They will note be stored "
+                    "if you do not set `add_unknown_items` to true.".format(unknown),
+                    RuntimeWarning)
+
+            new_params = Config()
+            for key, val in params.items():
+                if val is None:
+                    continue
+                new_params[key] = val
+
+            # update dict
+            self.update(new_params, overwrite=True)
+            if add_unknown_items:
+                additional_params = self._add_unknown_args(unknown)
+                self.update(additional_params)
+                new_params.update(additional_params)
+            return new_params
 
 
 class LookupConfig(Config):

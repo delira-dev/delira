@@ -1,7 +1,9 @@
 import unittest
 import os
+import sys
 import copy
 import argparse
+from unittest.mock import patch
 from delira._version import get_versions
 
 from delira.utils.config import Config, LookupConfig, DeliraConfig
@@ -215,6 +217,35 @@ class ConfigTest(unittest.TestCase):
         cf = self.config_cls.create_from_dict(self.example_dict)
         self.assertTrue(isinstance(cf["deep"], self.config_cls))
 
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
+    def test_create_argparser(self):
+        cf = self.config_cls.create_from_dict(self.example_dict)
+        testargs = ['--shallowNum', '10', '--deep.deepStr', 'check', '--testlist', 'ele1', 'ele2', '--setflag']
+        parser = cf.create_argparser()
+        known, unknown = parser.parse_known_args(testargs)
+        self.assertEqual(vars(known)['shallowNum'], 10)
+        self.assertEqual(vars(known)['deep.deepStr'], 'check')
+        self.assertEqual(unknown, ['--testlist', 'ele1', 'ele2', '--setflag'])
+
+    @unittest.skipUnless(
+        check_for_no_backend(),
+        "Test should only be executed if no backend is specified")
+    def test_update_from_argparse(self):
+        cf = self.config_cls.create_from_dict(self.example_dict)
+        testargs = ['--shallowNum', '10',
+                    '--deep.deepStr', 'check',
+                    '--testlist', 'ele1', 'ele2',
+                    '--setflag']
+        # placeholder pyfile because argparser omits first argument from sys argv
+        with patch.object(sys, 'argv', ['pyfile.py'] + testargs):
+            cf.update_from_argparse(add_unknown_items=True)
+        self.assertEqual(cf['shallowNum'], int(testargs[1]))
+        self.assertEqual(cf['deep']['deepStr'], testargs[3])
+        self.assertEqual(cf['testlist'], testargs[5:7])
+        self.assertEqual(cf['setflag'], True)
+
 
 class LookupConfigTest(ConfigTest):
     def setUp(self):
@@ -311,7 +342,7 @@ class DeliraConfigTest(LookupConfigTest):
                           "    __type__:\n"
                           "      module: delira.utils.config\n"
                           "      name: LookupConfig\n".format(
-                              cf["_timestamp"])))
+                             cf["_timestamp"])))
 
         self.assertEqual(cf_str_full,
                          ("__convert__:\n"
@@ -327,7 +358,7 @@ class DeliraConfigTest(LookupConfigTest):
                           "    __type__:\n"
                           "      module: delira.utils.config\n"
                           "      name: DeliraConfig\n".format(
-                              cf["_timestamp"], cf["_version"])))
+                             cf["_timestamp"], cf["_version"])))
 
     @unittest.skipUnless(
         check_for_no_backend(),
