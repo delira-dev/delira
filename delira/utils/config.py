@@ -625,8 +625,9 @@ class Config(dict):
             params = vars(params)
             if len(unknown) > 0 and add_unknown_items:
                 warnings.warn(
-                    "Called with unknown arguments: {} They will note be stored "
-                    "if you do not set `add_unknown_items` to true.".format(unknown),
+                    "Called with unknown arguments: {} "
+                    "They will note be stored if you do not set "
+                    "`add_unknown_items` to true.".format(unknown),
                     RuntimeWarning)
 
             new_params = Config()
