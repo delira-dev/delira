@@ -50,6 +50,7 @@ class BaseExperiment(object):
                  checkpoint_freq=1,
                  trainer_cls=BaseNetworkTrainer,
                  predictor_cls=Predictor,
+                 continue_training=False,
                  **kwargs):
         """
 
@@ -109,7 +110,8 @@ class BaseExperiment(object):
         if save_path is None:
             save_path = os.path.abspath(".")
 
-        self.save_path = generate_save_path(os.path.join(save_path, name))
+        self.save_path = generate_save_path(
+            os.path.join(save_path, name), not continue_training)
 
         os.makedirs(self.save_path, exist_ok=True)
 
