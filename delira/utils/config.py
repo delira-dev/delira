@@ -32,7 +32,7 @@ def non_string_warning(func):
         if not isinstance(key, str):
             warnings.warn("The key {} is not a string, but a {}. "
                           "This may lead to unwanted behavior!".format(
-                key, type(key)), RuntimeWarning)
+                              key, type(key)), RuntimeWarning)
 
         return func(config, key, *args, **kwargs)
 
