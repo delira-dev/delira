@@ -9,6 +9,7 @@ from delira._version import get_versions
 from delira.utils.config import Config, LookupConfig, DeliraConfig
 from delira.logging import Logger, TensorboardBackend, make_logger, \
     register_logger
+import warnings
 
 from . import check_for_no_backend
 
@@ -254,6 +255,10 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(cf['deep']['deepStr'], testargs[3])
         self.assertEqual(cf['testlist'], testargs[5:7])
         self.assertEqual(cf['setflag'], True)
+        with warnings.catch_warnings(record=True) as w:
+            with patch.object(sys, 'argv', ['pyfile.py', '--unknown', 'arg']):
+                cf.update_from_argparse(add_unknown_items=False)
+        self.assertEqual(len(w), 1)
 
 
 class LookupConfigTest(ConfigTest):
@@ -351,7 +356,7 @@ class DeliraConfigTest(LookupConfigTest):
                           "    __type__:\n"
                           "      module: delira.utils.config\n"
                           "      name: LookupConfig\n".format(
-                              cf["_timestamp"])))
+                             cf["_timestamp"])))
 
         self.assertEqual(cf_str_full,
                          ("__convert__:\n"
@@ -367,7 +372,7 @@ class DeliraConfigTest(LookupConfigTest):
                           "    __type__:\n"
                           "      module: delira.utils.config\n"
                           "      name: DeliraConfig\n".format(
-                              cf["_timestamp"], cf["_version"])))
+                             cf["_timestamp"], cf["_version"])))
 
     @unittest.skipUnless(
         check_for_no_backend(),

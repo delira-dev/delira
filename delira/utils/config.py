@@ -8,6 +8,8 @@ from .codecs import Encoder, Decoder
 import yaml
 import argparse
 import sys
+import collections
+import inspect
 
 
 def non_string_warning(func):
@@ -30,7 +32,7 @@ def non_string_warning(func):
         if not isinstance(key, str):
             warnings.warn("The key {} is not a string, but a {}. "
                           "This may lead to unwanted behavior!".format(
-                              key, type(key)), RuntimeWarning)
+                key, type(key)), RuntimeWarning)
 
         return func(config, key, *args, **kwargs)
 
@@ -527,30 +529,22 @@ class Config(dict):
         '''
         parser = argparse.ArgumentParser(allow_abbrev=False)
 
-        def str2bool(v):
-            if v.lower() in ('yes', 'true', 't', 'y', '1'):
-                return True
-            elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-                return False
-            else:
-                raise argparse.ArgumentTypeError('Boolean value expected.')
-
         def add_val(dict_like, prefix=''):
             for key, val in dict_like.items():
                 name = "--{}".format(prefix + key)
                 if val is None:
                     parser.add_argument(name)
                 else:
-                    if type(val) == bool:
-                        parser.add_argument(name, type=str2bool)
-                    elif isinstance(val, (list, tuple)):
+                    if isinstance(val, int):
+                        parser.add_argument(name, type=type(val))
+                    elif isinstance(val, collections.Mapping):
+                        add_val(val, prefix=key + '.')
+                    elif isinstance(val, collections.Iterable):
                         if len(val) > 0 and type(val[0]) != type:
                             parser.add_argument(name, type=type(val[0]))
                         else:
                             parser.add_argument(name)
-                    elif isinstance(val, dict):
-                        add_val(val, prefix=key + '.')
-                    elif isinstance(val, type):
+                    elif issubclass(val, type) or inspect.isclass(val):
                         parser.add_argument(name, type=val)
                     else:
                         parser.add_argument(name, type=type(val))
@@ -574,7 +568,10 @@ class Config(dict):
             a config of the parsed args
         '''
         # first element in the list must be a key
-        assert unknown_args[0].startswith('--')
+        if not isinstance(unknown_args[0], str):
+            unknown_args = [str(arg) for arg in unknown_args]
+        if not unknown_args[0].startswith('--'):
+            raise ValueError
 
         args = Config()
         # take first key
@@ -623,10 +620,10 @@ class Config(dict):
 
             params, unknown = parser.parse_known_args()
             params = vars(params)
-            if len(unknown) > 0 and add_unknown_items:
+            if unknown and not add_unknown_items:
                 warnings.warn(
                     "Called with unknown arguments: {} "
-                    "They will note be stored if you do not set "
+                    "They will not be stored if you do not set "
                     "`add_unknown_items` to true.".format(unknown),
                     RuntimeWarning)
 
