@@ -102,11 +102,11 @@ def convert_to_numpy_identity(*args, **kwargs):
     return args, kwargs
 
 
-def generate_save_path(save_path, timestamp: bool):
+def generate_save_path(save_path):
     i = 0
     now = datetime.now()
     date_str = '{}_{:02d}_{:02d}_'.format(
-        now.year, now.month, now.day) if timestamp else ''
+        now.year, now.month, now.day)
     while True:
         new_path = os.path.join(save_path, '{}{:03d}'.format(date_str, i))
         i += 1

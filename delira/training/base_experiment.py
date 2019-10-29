@@ -50,7 +50,7 @@ class BaseExperiment(object):
                  checkpoint_freq=1,
                  trainer_cls=BaseNetworkTrainer,
                  predictor_cls=Predictor,
-                 continue_training=False,
+                 unique_name=True,
                  **kwargs):
         """
 
@@ -88,6 +88,9 @@ class BaseExperiment(object):
             the trainer class to use for training the model
         predictor_cls : subclass of :class:`Predictor`
             the predictor class to use for testing the model
+        unique_name : boolean
+            if the name is not unique an experiment with the same
+            name will be continued
         **kwargs :
             additional keyword arguments
 
@@ -110,8 +113,11 @@ class BaseExperiment(object):
         if save_path is None:
             save_path = os.path.abspath(".")
 
-        self.save_path = generate_save_path(
-            os.path.join(save_path, name), not continue_training)
+        if unique_name:
+            self.save_path = generate_save_path(
+                os.path.join(save_path, name))
+        else:
+            self.save_path = os.path.join(save_path, name)
 
         os.makedirs(self.save_path, exist_ok=True)
 
