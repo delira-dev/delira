@@ -151,7 +151,7 @@ class BaseBackend(object, metaclass=ABCMeta):
 
         """
         # get item from dict
-        process_item = self._queue.get(timeout=0.5)
+        process_item = self._queue.get(timeout=0.001)
         # log item if item is dict
         if isinstance(process_item, dict):
 
