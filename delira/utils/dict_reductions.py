@@ -205,7 +205,11 @@ def reduce_dict(items: list, reduce_fn) -> dict:
 
     for k, v in result_dict.items():
         # check if all items are equal
-        if all([_v == v[0] for _v in v[1:]]):
+        equals = [_v == v[0] for _v in v[1:]]
+        for idx, equality in enumerate(equals):
+            if isinstance(equality, np.ndarray):
+                equals[idx] = equality.all()
+        if all(equals):
             # use first item since they are equal
             result_dict[k] = v[0]
         else:
