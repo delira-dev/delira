@@ -137,6 +137,9 @@ if 'TORCH' in get_backends():
 
             return {}
 
+        def at_epoch_end(self, trainer, **kwargs):
+            return {}
+
     class ReduceLROnPlateauCallback(DefaultPyTorchSchedulerCallback):
         """
         Wraps PyTorch's `ReduceLROnPlateau` Scheduler as Callback
