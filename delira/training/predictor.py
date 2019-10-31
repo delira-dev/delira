@@ -275,7 +275,7 @@ class Predictor(object):
         batch_list = []
 
         for i, batch in iterable:
-            self._at_iter_begin(iter_num=i)
+            Predictor._at_iter_begin(self, iter_num=i)
 
             if not batch_list and (n_batches - i) < batchsize:
                 batchsize = n_batches - i

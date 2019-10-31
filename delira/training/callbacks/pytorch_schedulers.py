@@ -115,7 +115,7 @@ if 'TORCH' in get_backends():
                      anneal_strategy, cycle_momentum, base_momentum, max_momentum, div_factor,
                      final_div_factor, last_epoch)
 
-        def at_iter_begin(self, trainer,
+        def at_iter_begin(self, trainer, train,
                          **kwargs):
             """
             Executes a single scheduling step
@@ -133,7 +133,8 @@ if 'TORCH' in get_backends():
                 modified trainer
 
             """
-            self.scheduler.step()
+            if train:
+                self.scheduler.step()
 
             return {}
 
