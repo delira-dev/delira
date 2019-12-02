@@ -3,8 +3,7 @@ from delira.training.callbacks.abstract_callback import AbstractCallback
 
 if 'TORCH' in get_backends():
     from torch.optim.lr_scheduler import ReduceLROnPlateau, \
-    CosineAnnealingLR, ExponentialLR, LambdaLR, MultiStepLR, StepLR, OneCycleLR
-
+        CosineAnnealingLR, ExponentialLR, LambdaLR, MultiStepLR, StepLR, OneCycleLR
 
     class DefaultPyTorchSchedulerCallback(AbstractCallback):
         """
@@ -54,9 +53,21 @@ if 'TORCH' in get_backends():
 
         """
 
-        def __init__(self, optimizer, max_lr, total_steps=None, epochs=None, steps_per_epoch=None, pct_start=0.3,
-                     anneal_strategy='cos', cycle_momentum=True, base_momentum=0.85, max_momentum=0.95, div_factor=25.0,
-                     final_div_factor=10000.0, last_epoch=-1):
+        def __init__(
+                self,
+                optimizer,
+                max_lr,
+                total_steps=None,
+                epochs=None,
+                steps_per_epoch=None,
+                pct_start=0.3,
+                anneal_strategy='cos',
+                cycle_momentum=True,
+                base_momentum=0.85,
+                max_momentum=0.95,
+                div_factor=25.0,
+                final_div_factor=10000.0,
+                last_epoch=-1):
             """
 
             Parameters
@@ -111,12 +122,23 @@ if 'TORCH' in get_backends():
                 Default: -1
             """
             super().__init__()
-            self.scheduler = OneCycleLR(optimizer, max_lr, total_steps, epochs, steps_per_epoch, pct_start,
-                     anneal_strategy, cycle_momentum, base_momentum, max_momentum, div_factor,
-                     final_div_factor, last_epoch)
+            self.scheduler = OneCycleLR(
+                optimizer,
+                max_lr,
+                total_steps,
+                epochs,
+                steps_per_epoch,
+                pct_start,
+                anneal_strategy,
+                cycle_momentum,
+                base_momentum,
+                max_momentum,
+                div_factor,
+                final_div_factor,
+                last_epoch)
 
         def at_iter_begin(self, trainer, train,
-                         **kwargs):
+                          **kwargs):
             """
             Executes a single scheduling step
 
