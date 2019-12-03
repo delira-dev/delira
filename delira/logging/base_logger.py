@@ -1,4 +1,4 @@
-from multiprocessing.queues import Queue as MpQueue 
+from multiprocessing.queues import Queue as MpQueue
 from threading import Event
 from queue import Queue, Full
 from delira.logging.base_backend import BaseBackend
