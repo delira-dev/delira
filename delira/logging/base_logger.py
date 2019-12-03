@@ -1,5 +1,6 @@
-from multiprocessing import Queue, Event
-from queue import Full
+from multiprocessing.queues import Queue as MpQueue 
+from threading import Event
+from queue import Queue, Full
 from delira.logging.base_backend import BaseBackend
 from delira.utils.dict_reductions import get_reduction, possible_reductions, \
     reduce_dict
@@ -231,8 +232,9 @@ class Logger(object):
 
         """
         if hasattr(self, "_flush_queue"):
-            self._flush_queue.close()
-            self._flush_queue.join_thread()
+            if isinstance(self._flush_queue, MpQueue):
+                self._flush_queue.close()
+                self._flush_queue.join_thread()
 
         if hasattr(self, "abort_event"):
             self._abort_event.set()
