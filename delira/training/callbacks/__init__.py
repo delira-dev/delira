@@ -20,5 +20,6 @@ if "TORCH" in get_backends():
         ReduceLROnPlateauCallback as ReduceLROnPlateauCallbackPyTorch
     from delira.training.callbacks.pytorch_schedulers import StepLRCallback \
         as StepLRCallbackPyTorch
-    from delira.training.callbacks.pytorch_schedulers import OneCycleLRCallback \
-        as OneCycleLRCallbackPyTorch
+    from delira.training.callbacks.pytorch_schedulers import \
+        OneCycleLRCallback as OneCycleLRCallbackPyTorch
+    
