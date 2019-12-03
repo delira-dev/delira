@@ -3,7 +3,8 @@ from delira.training.callbacks.abstract_callback import AbstractCallback
 
 if 'TORCH' in get_backends():
     from torch.optim.lr_scheduler import ReduceLROnPlateau, \
-        CosineAnnealingLR, ExponentialLR, LambdaLR, MultiStepLR, StepLR, OneCycleLR
+        CosineAnnealingLR, ExponentialLR, LambdaLR, MultiStepLR, StepLR, \
+        OneCycleLR
 
     class DefaultPyTorchSchedulerCallback(AbstractCallback):
         """
@@ -75,20 +76,21 @@ if 'TORCH' in get_backends():
             optimizer (Optimizer): Wrapped optimizer.
             max_lr (float or list): Upper learning rate boundaries in the cycle
                 for each parameter group.
-            total_steps (int): The total number of steps in the cycle. Note that
-                if a value is provided here, then it must be inferred by providing
-                a value for epochs and steps_per_epoch.
+            total_steps (int): The total number of steps in the cycle. Note 
+                that if a value is provided here, then it must be inferred by 
+                providing a value for epochs and steps_per_epoch.
                 Default: None
             epochs (int): The number of epochs to train for. This is used along
-                with steps_per_epoch in order to infer the total number of steps in the cycle
-                if a value for total_steps is not provided.
+                with steps_per_epoch in order to infer the total number of steps
+                in the cycle if a value for total_steps is not provided.
                 Default: None
-            steps_per_epoch (int): The number of steps per epoch to train for. This is
-                used along with epochs in order to infer the total number of steps in the
-                cycle if a value for total_steps is not provided.
+            steps_per_epoch (int): The number of steps per epoch to train for. 
+                This is used along with epochs in order to infer the total 
+                number of steps in the cycle if a value for total_steps is 
+                not provided.
                 Default: None
-            pct_start (float): The percentage of the cycle (in number of steps) spent
-                increasing the learning rate.
+            pct_start (float): The percentage of the cycle (in number of steps) 
+                spent increasing the learning rate.
                 Default: 0.3
             anneal_strategy (str): {'cos', 'linear'}
                 Specifies the annealing strategy.
@@ -96,17 +98,17 @@ if 'TORCH' in get_backends():
             cycle_momentum (bool): If ``True``, momentum is cycled inversely
                 to learning rate between 'base_momentum' and 'max_momentum'.
                 Default: True
-            base_momentum (float or list): Lower momentum boundaries in the cycle
-                for each parameter group. Note that momentum is cycled inversely
-                to learning rate; at the peak of a cycle, momentum is
+            base_momentum (float or list): Lower momentum boundaries in the 
+                cycle for each parameter group. Note that momentum is cycled 
+                inversely to learning rate; at the peak of a cycle, momentum is
                 'base_momentum' and learning rate is 'max_lr'.
                 Default: 0.85
-            max_momentum (float or list): Upper momentum boundaries in the cycle
-                for each parameter group. Functionally,
+            max_momentum (float or list): Upper momentum boundaries in the 
+                cycle for each parameter group. Functionally,
                 it defines the cycle amplitude (max_momentum - base_momentum).
                 Note that momentum is cycled inversely
-                to learning rate; at the start of a cycle, momentum is 'max_momentum'
-                and learning rate is 'base_lr'
+                to learning rate; at the start of a cycle, momentum is 
+                'max_momentum' and learning rate is 'base_lr'
                 Default: 0.95
             div_factor (float): Determines the initial learning rate via
                 initial_lr = max_lr/div_factor
@@ -114,11 +116,13 @@ if 'TORCH' in get_backends():
             final_div_factor (float): Determines the minimum learning rate via
                 min_lr = initial_lr/final_div_factor
                 Default: 1e4
-            last_epoch (int): The index of the last batch. This parameter is used when
-                resuming a training job. Since `step()` should be invoked after each
-                batch instead of after each epoch, this number represents the total
-                number of *batches* computed, not the total number of epochs computed.
-                When last_epoch=-1, the schedule is started from the beginning.
+            last_epoch (int): The index of the last batch. This parameter is 
+                used when resuming a training job. Since `step()` should be 
+                invoked after each batch instead of after each epoch, this 
+                number represents the total number of *batches* computed, 
+                not the total number of epochs computed. 
+                When last_epoch=-1, the schedule is started from the 
+                beginning.
                 Default: -1
             """
             super().__init__()
