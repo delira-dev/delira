@@ -22,4 +22,3 @@ if "TORCH" in get_backends():
         as StepLRCallbackPyTorch
     from delira.training.callbacks.pytorch_schedulers import \
         OneCycleLRCallback as OneCycleLRCallbackPyTorch
-    
