@@ -15,8 +15,9 @@ from tqdm import tqdm
 from .callbacks import AbstractCallback, DefaultLoggingCallback, \
     EpochBasedStopping
 from .predictor import Predictor
-from ..data_loading.data_manager import Augmenter
+from ..data_loading import Augmenter, DataManager
 from ..models import AbstractNetwork
+from ..logging import register_logger, make_logger
 
 from delira.training.utils import create_iterator
 
@@ -328,8 +329,11 @@ class BaseNetworkTrainer(Predictor):
         """
         for cb in self._callbacks:
             self._update_state(cb.at_iter_begin(
-                self, iter_num=iter_num, curr_epoch=epoch,
-                global_iter_num=self._global_iter_num, **kwargs,
+                self, iter_num=iter_num,
+                curr_epoch=epoch,
+                global_iter_num=self._global_iter_num,
+                train=True,
+                **kwargs,
             ))
 
     def _at_iter_end(self, iter_num, data_dict, metrics, epoch=0, **kwargs):
@@ -353,23 +357,26 @@ class BaseNetworkTrainer(Predictor):
 
         for cb in self._callbacks:
             self._update_state(cb.at_iter_end(
-                self, iter_num=iter_num, data_dict=data_dict,
-                metrics=metrics, curr_epoch=epoch,
+                self, iter_num=iter_num,
+                data_dict=data_dict,
+                metrics=metrics,
+                curr_epoch=epoch,
                 global_iter_num=self._global_iter_num,
+                train=True,
                 **kwargs,
             ))
 
         self._global_iter_num += 1
 
-    def _train_single_epoch(self, batchgen: Augmenter, epoch,
+    def _train_single_epoch(self, dmgr_train: DataManager, epoch,
                             verbose=False):
         """
         Trains the network a single epoch
 
         Parameters
         ----------
-        batchgen : :class:`Augmenter`
-            Generator yielding the training batches
+        dmgr_train : :class:`DataManager`
+            Datamanager to create the data generator
         epoch : int
             current epoch
 
@@ -382,6 +389,7 @@ class BaseNetworkTrainer(Predictor):
         iterable = create_iterator(batchgen, verbose=verbose, unit="batch",
                                    total_num=n_batches,
                                    desc="Epoch %d" % epoch, enum=True)
+
 
         for iter_num, batch in iterable:
             self._at_iter_begin(epoch=epoch, iter_num=iter_num)
@@ -406,8 +414,6 @@ class BaseNetworkTrainer(Predictor):
                               data_dict={**batch, **_preds},
                               metrics={**_metrics, **_losses},
                               )
-
-        batchgen._finish()
 
         total_losses, total_metrics = defaultdict(list), defaultdict(list)
 
@@ -474,6 +480,7 @@ class BaseNetworkTrainer(Predictor):
             #  within the function
             train_metrics, train_losses = self._train_single_epoch(
                 batch_gen_train, self.curr_epoch, verbose=verbose)
+                datamgr_train, epoch, verbose=verbose)
 
             total_metrics = {
                 **train_metrics,
@@ -807,9 +814,11 @@ class BaseNetworkTrainer(Predictor):
 
         level = _logging_kwargs.pop("level")
 
+        logger = backend_cls(_logging_kwargs)
+
         self.register_callback(
             logging_callback_cls(
-                backend_cls(logging_kwargs), level=level,
+                logger, level=level,
                 logging_frequencies=logging_frequencies,
                 reduce_types=reduce_types))
 

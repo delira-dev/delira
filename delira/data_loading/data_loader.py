@@ -1,107 +1,98 @@
-
-from delira.data_loading.dataset import AbstractDataset
-
 import numpy as np
-from batchgenerators.dataloading.data_loader import SlimDataLoaderBase
-from queue import Empty
-import logging
 
-from delira.data_loading.load_utils import ensemble_batch
-
-logger = logging.getLogger(__name__)
+from delira.data_loading.dataset import AbstractDataset, DictDataset, \
+    IterableDataset
+from collections import Iterable, defaultdict
 
 
-class BaseDataLoader(SlimDataLoaderBase):
+
+class DataLoader:
     """
-    Class to create a data batch out of data samples
-
+    Basic Dataloader class, that returns data for a given set of indices and
+    combines it as batches
     """
 
-    def __init__(self, dataset: AbstractDataset,
-                 sampler_queues: list,
-                 batch_size=1, num_batches=None, seed=1):
+    def __init__(self, data):
         """
-
         Parameters
         ----------
-        dataset : AbstractDataset
-            dataset to perform sample loading
-        batch_size : int
-            number of samples per batch
-        sampler_queues : list of :class:`multiprocessing.Queue`
-            the queue,s the sample indices to load will be put to.
-            Necessary for interprocess communication
-        num_batches : int
-            number of batches to load
-        seed : int
-            seed for Random Number Generator
-
-        Raises
-        ------
-        AssertionError
-            `sampler` is not :obj:`None` and `sampler` is not an instance of
-            the :class:`.sampler.AbstractSampler`
-
-        See Also
-        --------
-        :class:`.sampler.SequentialSampler`
-
+        data : Any
+            the data to use; Ideally this either is a dataset, an iterable or
+            a dict, but in general, this must only be indexable, have a length
+            and return a dict of arrays if indexed
         """
+        self._process_id = None
+        if isinstance(data, AbstractDataset):
+            dataset = data
 
-        # store dataset in self._data
-        super().__init__(dataset, batch_size)
+        else:
+            # wrap it into dataset depending on datatype
+            if isinstance(data, dict):
+                dataset = DictDataset(data)
+            elif isinstance(data, Iterable):
+                dataset = IterableDataset(data)
+            else:
+                raise TypeError("Invalid dataset type: %s"
+                                % type(data).__name__)
 
-        self.sampler_queues = sampler_queues
+        self.dataset = dataset
 
-        self.n_samples = len(dataset)
-        if num_batches is None:
-            num_batches = len(dataset) // batch_size
-
-        self.num_batches = num_batches
-        self._seed = seed
-        np.random.seed(seed)
-
-    def generate_train_batch(self):
+    def __call__(self, indices):
         """
-        Generate Indices which behavior based on self.sampling gets data based
-        on indices
-
+        Loads data for given indices and combines them to batches
+        Parameters
+        ----------
+        indices : list
+            a list of integers specifying the data indices
         Returns
         -------
         dict
-            data and labels
-
-        Raises
-        ------
-        StopIteration
-            If the maximum number of batches has been generated
+            a dict of numpy arrays (specifying the batches)
         """
 
-        idxs = None
-        sampler_queue = self.sampler_queues[self.thread_id]
-        while idxs is None:
-            try:
-                idxs = sampler_queue.get(timeout=0.2)
+        # get data for all indices
+        data = [self.dataset[idx] for idx in indices]
 
-                result = [self._get_sample(_idx) for _idx in idxs]
+        data_dict = defaultdict(list)
 
-                return ensemble_batch(result)
+        # concatenate dict entities by keys
+        for _result_dict in data:
+            for key, val in _result_dict.items():
+                data_dict[key].append(val)
 
-            except Empty:
-                pass
+        # convert list to numpy arrays
+        for key, val_list in data_dict.items():
+            data_dict[key] = np.asarray(val_list)
 
-    def _get_sample(self, index):
+        return data_dict
+
+    @property
+    def process_id(self):
         """
-        Helper functions which returns an element of the dataset
-
-        Parameters
-        ----------
-        index : int
-            index specifying which sample to return
-
+        A Property to access the process id
         Returns
         -------
-        dict
-            Returned Data
+        int
+            the process id
         """
-        return self._data[index]
+        if self._process_id is None:
+            return 0
+        return self._process_id
+
+    @process_id.setter
+    def process_id(self, new_id):
+        """
+        Setter for the :attr:`process_id`; Makes sure, that the process id is
+        only set once
+        Parameters
+        ----------
+        new_id : int
+        Raises
+        ------
+        AttributeError
+            if the process id has already been set once
+        """
+        if self._process_id is not None:
+            raise AttributeError("Attribute 'process_id' can be set only once")
+
+        self._process_id = new_id

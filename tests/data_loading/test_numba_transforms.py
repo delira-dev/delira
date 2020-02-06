@@ -2,6 +2,7 @@ import unittest
 
 from batchgenerators.transforms import ZoomTransform, PadTransform, Compose
 import numpy as np
+from ..utils import check_for_no_backend
 
 try:
     import numba
@@ -35,16 +36,25 @@ class NumbaTest(unittest.TestCase):
         self.assertTupleEqual(output_normal.shape, output_numba.shape)
 
     @unittest.skipIf(numba is None, "Numba must be imported successfully")
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_zoom(self):
         self.compare_transform_outputs(self._basic_zoom_trafo,
                                        self._numba_zoom_trafo)
 
     @unittest.skipIf(numba is None, "Numba must be imported successfully")
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_pad(self):
         self.compare_transform_outputs(self._basic_pad_trafo,
                                        self._numba_pad_trafo)
 
     @unittest.skipIf(numba is None, "Numba must be imported successfully")
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should be only executed if no "
+                         "backend was installed")
     def test_compose(self):
         self.compare_transform_outputs(self._basic_compose_trafo,
                                        self._numba_compose_trafo)

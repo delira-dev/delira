@@ -7,6 +7,9 @@ from .codecs import Encoder, Decoder
 
 import yaml
 import argparse
+import sys
+import collections
+import inspect
 
 
 def non_string_warning(func):
@@ -17,7 +20,7 @@ def non_string_warning(func):
         Parameters
         ----------
         config: :class:`Config`
-            decorated function receive :param`self` as first argument
+            decorated function receive :param:`self` as first argument
         key : immutable type
             key which is checked
 
@@ -32,6 +35,7 @@ def non_string_warning(func):
                               key, type(key)), RuntimeWarning)
 
         return func(config, key, *args, **kwargs)
+
     return warning_wrapper
 
 
@@ -134,7 +138,11 @@ class Config(dict):
         current_level = self
         for k in keys:
             if k not in current_level:
-                current_level[k] = self._create_internal_dict()
+                if create:
+                    current_level[k] = self._create_internal_dict()
+                else:
+                    raise KeyError(
+                        "{} was not found in internal dict.".format(k))
             # traverse to needed dict
             current_level = current_level[k]
         return current_level
@@ -249,7 +257,7 @@ class Config(dict):
         update_dict : dictlike
             values which should be added to config
         deepcopy : bool, optional
-            copies values from :param`update_dict`, by default False
+            copies values from :param:`update_dict`, by default False
         overwrite : bool, optional
             overwrite existing values inside config, by default False
 
@@ -274,7 +282,7 @@ class Config(dict):
         item : Any
             item which should be assigned
         deepcopy : bool, optional
-            copies :param`item`, by default False
+            copies :param:`item`, by default False
         overwrite : bool, optional
             overwrite existing values inside config, by default False
         """
@@ -322,9 +330,9 @@ class Config(dict):
             defines the format how the config is saved, by default yaml.dump
         encoder_cls : :class:`Encoder`, optional
             transforms config to a format which can be formatted by the
-            :param`formatter`, by default Encoder
+            :param:`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to :param`formatter`
+            additional keyword arguments passed to :param:`formatter`
         """
         self._timestamp = now()
         encoded_self = encoder_cls().encode(self)
@@ -342,9 +350,9 @@ class Config(dict):
             defines the format how the config is saved, by default yaml.dump
         encoder_cls : :class:`Encoder`, optional
             transforms config to a format which can be formatted by the
-            :param`formatter`, by default Encoder
+            :param:`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to :param`formatter`
+            additional keyword arguments passed to :param:`formatter`
         """
         self._timestamp = now()
         encoded_self = encoder_cls().encode(self)
@@ -362,9 +370,9 @@ class Config(dict):
             defines the format how the config is saved, by default yaml.dump
         decoder_cls : :class:`Encoder`, optional
             transforms config to a format which can be formatted by the
-            :param`formatter`, by default Encoder
+            :param:`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to :param`formatter`
+            additional keyword arguments passed to :param:`formatter`
         """
         with open(path, "r") as f:
             decoded_format = formatter(f, **kwargs)
@@ -383,9 +391,9 @@ class Config(dict):
             defines the format how the config is saved, by default yaml.dump
         decoder_cls : :class:`Encoder`, optional
             transforms config to a format which can be formatted by the
-            :param`formatter`, by default Encoder
+            :param:`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to :param`formatter`
+            additional keyword arguments passed to :param:`formatter`
         """
         decoded_format = formatter(data, **kwargs)
         decoded_format = decoder_cls().decode(decoded_format)
@@ -411,7 +419,7 @@ class Config(dict):
         Raises
         ------
         TypeError
-            raised if :param`value` is not a dict (or a subclass of dict)
+            raised if :param:`value` is not a dict (or a subclass of dict)
         """
         if not isinstance(value, dict):
             raise TypeError("Value must be an instance of dict but type {} "
@@ -467,9 +475,9 @@ class Config(dict):
             defines the format how the config is saved, by default yaml.dump
         decoder_cls : :class:`Encoder`, optional
             trasforms config to a format which can be formatted by the
-            :param`formatter`, by default Encoder
+            :param:`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to :param`formatter`
+            additional keyword arguments passed to :param:`formatter`
 
         Returns
         -------
@@ -495,9 +503,9 @@ class Config(dict):
             defines the format how the config is saved, by default yaml.dump
         decoder_cls : :class:`Encoder`, optional
             trasforms config to a format which can be formatted by the
-            :param`formatter`, by default Encoder
+            :param:`formatter`, by default Encoder
         kwargs:
-            additional keyword arguments passed to :param`formatter`
+            additional keyword arguments passed to :param:`formatter`
 
         Returns
         -------
@@ -508,6 +516,130 @@ class Config(dict):
         config.loads(data, formatter=formatter, decoder_cls=decoder_cls,
                      **kwargs)
         return config
+
+    def create_argparser(self):
+        '''
+        Creates an argparser for all values in the config
+        Following the pattern: `--training.learning_rate 1234`
+
+        Returns
+        -------
+        argparse.ArgumentParser
+            parser for all variables in the config
+        '''
+        parser = argparse.ArgumentParser(allow_abbrev=False)
+
+        def add_val(dict_like, prefix=''):
+            for key, val in dict_like.items():
+                name = "--{}".format(prefix + key)
+                if val is None:
+                    parser.add_argument(name)
+                else:
+                    if isinstance(val, int):
+                        parser.add_argument(name, type=type(val))
+                    elif isinstance(val, collections.Mapping):
+                        add_val(val, prefix=key + '.')
+                    elif isinstance(val, collections.Iterable):
+                        if len(val) > 0 and type(val[0]) != type:
+                            parser.add_argument(name, type=type(val[0]))
+                        else:
+                            parser.add_argument(name)
+                    elif issubclass(val, type) or inspect.isclass(val):
+                        parser.add_argument(name, type=val)
+                    else:
+                        parser.add_argument(name, type=type(val))
+
+        add_val(self)
+        return parser
+
+    @staticmethod
+    def _add_unknown_args(unknown_args):
+        '''
+        Can add unknown args as parsed by argparsers method
+        `parse_unknown_args`.
+
+        Parameters
+        ------
+        unknown_args : list
+            list of unknown args
+        Returns
+        ------
+        Config
+            a config of the parsed args
+        '''
+        # first element in the list must be a key
+        if not isinstance(unknown_args[0], str):
+            unknown_args = [str(arg) for arg in unknown_args]
+        if not unknown_args[0].startswith('--'):
+            raise ValueError
+
+        args = Config()
+        # take first key
+        key = unknown_args[0][2:]
+        idx, done, val = 1, False, []
+        while not done:
+            try:
+                item = unknown_args[idx]
+            except IndexError:
+                done = True
+            if item.startswith('--') or done:
+                # save key with its value
+                if len(val) == 0:
+                    # key is used as flag
+                    args[key] = True
+                elif len(val) == 1:
+                    args[key] = val[0]
+                else:
+                    args[key] = val
+                # new key and flush data
+                key = item[2:]
+                val = []
+            else:
+                val.append(item)
+            idx += 1
+        return args
+
+    def update_from_argparse(self, parser=None, add_unknown_items=False):
+        '''
+        Updates the config with all values from the command line.
+        Following the pattern: `--training.learning_rate 1234`
+
+        Raises
+        ------
+        TypeError
+            raised if another datatype than currently in the config is parsed
+        Returns
+        -------
+        dict
+            dictionary containing only updated arguments
+        '''
+
+        if len(sys.argv) > 1:
+            if not parser:
+                parser = self.create_argparser()
+
+            params, unknown = parser.parse_known_args()
+            params = vars(params)
+            if unknown and not add_unknown_items:
+                warnings.warn(
+                    "Called with unknown arguments: {} "
+                    "They will not be stored if you do not set "
+                    "`add_unknown_items` to true.".format(unknown),
+                    RuntimeWarning)
+
+            new_params = Config()
+            for key, val in params.items():
+                if val is None:
+                    continue
+                new_params[key] = val
+
+            # update dict
+            self.update(new_params, overwrite=True)
+            if add_unknown_items:
+                additional_params = self._add_unknown_args(unknown)
+                self.update(additional_params)
+                new_params.update(additional_params)
+            return new_params
 
 
 class LookupConfig(Config):
@@ -546,14 +678,14 @@ class LookupConfig(Config):
         """
         contain = True
         try:
-            self.nested_get(key)
+            self.nested_get(key, allow_multiple=True)
         except KeyError:
             contain = False
         return contain
 
-    def nested_get(self, key, *args, **kwargs):
+    def nested_get(self, key, *args, allow_multiple=False, **kwargs):
         """
-        Returns all occurances of :param`key` in :param`self` and subdicts
+        Returns all occurances of :param:`key` in :param:`self` and subdicts
 
         Parameters
         ----------
@@ -561,14 +693,16 @@ class LookupConfig(Config):
             the key to search for
         *args :
             positional arguments to provide default value
+        allow_multiple: bool
+            allow multiple results
         **kwargs :
             keyword arguments to provide default value
 
         Raises
         ------
         KeyError
-            Multiple Values are found for key
-            (unclear which value should be returned)
+            Multiple Values are found for key and :param:`allow_multiple` is
+            False (unclear which value should be returned)
             OR
             No Value was found for key and no default value was given
 
@@ -583,7 +717,10 @@ class LookupConfig(Config):
             return self[key]
         results = nested_lookup(key, self)
         if len(results) > 1:
-            raise KeyError("Multiple Values found for key %s" % key)
+            if allow_multiple:
+                return results
+            else:
+                raise KeyError("Multiple Values found for key %s" % key)
         elif len(results) == 0:
             if "default" in kwargs:
                 return kwargs["default"]
@@ -689,7 +826,7 @@ class DeliraConfig(LookupConfig):
         Raises
         ------
         TypeError
-            raised if :param`new_params` is not a dict (or a subclass of dict)
+            raised if :param:`new_params` is not a dict (or a subclass of dict)
         """
         if not isinstance(new_params, dict):
             raise TypeError("new_params must be an instance of dict but "
@@ -727,7 +864,7 @@ class DeliraConfig(LookupConfig):
         Raises
         ------
         TypeError
-            raised if :param`new_params` is not a dict (or a subclass of dict)
+            raised if :param:`new_params` is not a dict (or a subclass of dict)
         """
         if not isinstance(new_params, dict):
             raise TypeError("new_params must be an instance of dict but "
@@ -764,7 +901,7 @@ class DeliraConfig(LookupConfig):
         Raises
         ------
         TypeError
-            raised if :param`new_params` is not a dict (or a subclass of dict)
+            raised if :param:`new_params` is not a dict (or a subclass of dict)
         """
         if not isinstance(new_params, dict):
             raise TypeError("new_params must be an instance of dict but "
@@ -801,7 +938,7 @@ class DeliraConfig(LookupConfig):
         Raises
         ------
         TypeError
-            raised if :param`new_params` is not a dict (or a subclass of dict)
+            raised if :param:`new_params` is not a dict (or a subclass of dict)
         """
         if not isinstance(new_params, dict):
             raise TypeError("new_params must be an instance of dict but "
