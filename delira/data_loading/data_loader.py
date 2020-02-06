@@ -5,7 +5,6 @@ from delira.data_loading.dataset import AbstractDataset, DictDataset, \
 from collections import Iterable, defaultdict
 
 
-
 class DataLoader:
     """
     Basic Dataloader class, that returns data for a given set of indices and

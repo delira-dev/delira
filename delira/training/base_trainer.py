@@ -390,7 +390,6 @@ class BaseNetworkTrainer(Predictor):
                                    total_num=n_batches,
                                    desc="Epoch %d" % epoch, enum=True)
 
-
         for iter_num, batch in iterable:
             self._at_iter_begin(epoch=epoch, iter_num=iter_num)
 
@@ -480,9 +479,9 @@ class BaseNetworkTrainer(Predictor):
             #  within the function
             train_metrics, train_losses = self._train_single_epoch(
                 batch_gen_train, self.curr_epoch, verbose=verbose)
-                datamgr_train, epoch, verbose=verbose)
+                datamgr_train, epoch, verbose = verbose)
 
-            total_metrics = {
+            total_metrics={
                 **train_metrics,
                 **train_losses}
 
@@ -492,7 +491,7 @@ class BaseNetworkTrainer(Predictor):
                 # next must be called here because self.predict_data_mgr
                 # returns a generator (of size 1) and we want to get the
                 # first (and only) item
-                val_metrics = next(
+                val_metrics=next(
                     self.predict_data_mgr_cache(
                         datamgr_valid, datamgr_valid.batch_size,
                         metrics=self.metrics,
@@ -500,7 +499,7 @@ class BaseNetworkTrainer(Predictor):
                         verbose=verbose,
                         cache_preds=False))
 
-                val_metrics = {self._log_prefix + "_" + k: v
+                val_metrics={self._log_prefix + "_" + k: v
                                for k, v in val_metrics.items()}
 
                 total_metrics.update(val_metrics)
@@ -553,7 +552,7 @@ class BaseNetworkTrainer(Predictor):
 
         """
         try:
-            self._fold = int(fold)
+            self._fold=int(fold)
 
         except ValueError as e:
             logger.error(e)
@@ -596,7 +595,7 @@ class BaseNetworkTrainer(Predictor):
 
         """
         with open(file_name, "rb") as f:
-            new_state = pickle.load(f, *args, **kwargs)
+            new_state=pickle.load(f, *args, **kwargs)
 
         return new_state
 
