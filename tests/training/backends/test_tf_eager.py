@@ -1,7 +1,7 @@
 import unittest
 import gc
 from tests.utils import check_for_tf_eager_backend
-from delira.training import Parameters
+from delira.utils import DeliraConfig
 from sklearn.metrics import mean_absolute_error
 from .utils import create_experiment_test_template_for_backend
 
@@ -37,7 +37,8 @@ class TestTfEagerBackend(
             tf.enable_eager_execution()
             from delira.training import TfEagerExperiment
 
-            params = Parameters(fixed_params={
+            config = DeliraConfig()
+            config.fixed_params = {
                 "model": {},
                 "training": {
                     "losses": {
@@ -46,15 +47,15 @@ class TestTfEagerBackend(
                     "optimizer_cls": tf.train.AdamOptimizer,
                     "optimizer_params": {"learning_rate": 1e-3},
                     "num_epochs": 2,
-                    "val_metrics": {"mae": mean_absolute_error},
+                    "metrics": {"mae": mean_absolute_error},
                     "lr_sched_cls": None,
                     "lr_sched_params": {}}
-            })
+            }
             model_cls = DummyNetworkTfEager
             experiment_cls = TfEagerExperiment
 
         else:
-            params = None
+            config = None
             model_cls = None
             experiment_cls = None
 
@@ -63,7 +64,7 @@ class TestTfEagerBackend(
 
         self._test_cases = [
             {
-                "params": params,
+                "config": config,
                 "network_cls": model_cls,
                 "len_train": len_train,
                 "len_test": len_test,

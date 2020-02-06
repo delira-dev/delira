@@ -1,15 +1,17 @@
 import logging
-import copy
 import gc
 
 import numpy as np
 from tqdm import tqdm
 from functools import partial
 
-from delira.data_loading import BaseDataManager
+from delira.data_loading import DataManager
 from delira.training.utils import convert_to_numpy_identity
+
 from delira.utils.config import LookupConfig
 from delira.utils.misc import flatten_dict, unflatten_dict
+
+from delira.training.callbacks import AbstractCallback
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,9 @@ class Predictor(object):
             convert_batch_to_npy_fn=convert_to_numpy_identity,
             prepare_batch_fn=lambda x: x,
             tta_transforms: tuple = (), tta_reduce_fn=None,
-            tta_inverse_transforms: tuple = (), **kwargs):
+            tta_inverse_transforms: tuple = (), 
+            callbacks=None, **kwargs):
+
         """
 
         Parameters
@@ -61,20 +65,26 @@ class Predictor(object):
         tta_inverse_transforms : tuple
             transforms to apply, if the transform has to be reverted before
             reducing (e.g. in Segmentation tasks)
+        callbacks : list
+            initial callbacks to register
         **kwargs :
             additional keyword arguments
 
         """
+        if callbacks is None:
+            callbacks = []
 
         self._setup(model, key_mapping, convert_batch_to_npy_fn,
                     prepare_batch_fn, tta_transforms, tta_reduce_fn,
                     tta_inverse_transforms, **kwargs)
+                    prepare_batch_fn, callbacks, **kwargs)
 
         self._tqdm_desc = "Test"
 
     def _setup(self, network, key_mapping, convert_batch_args_kwargs_to_npy_fn,
                prepare_batch_fn, tta_transforms, tta_reduce_fn,
-               tta_inverse_transforms, **kwargs):
+               tta_inverse_transforms, callbacks, **kwargs):
+
         """
 
         Parameters
@@ -103,8 +113,11 @@ class Predictor(object):
         tta_inverse_transforms : tuple
             transforms to apply, if the transform has to be reverted before
             reducing (e.g. in Segmentation tasks)
+        callbacks : list
+            initial callbacks to register
 
         """
+
         self.module = network
         self.key_mapping = key_mapping
         self._convert_to_npy_fn = convert_batch_args_kwargs_to_npy_fn
@@ -117,6 +130,10 @@ class Predictor(object):
         if tta_inverse_transforms:
             assert len(tta_inverse_transforms) == len(tta_transforms)
         self._tta_inverse_transforms = tta_inverse_transforms
+        self._callbacks = []
+
+        for cb in callbacks:
+            self.register_callback(cb)
 
     def __call__(self, data: dict, **kwargs):
         """
@@ -136,7 +153,7 @@ class Predictor(object):
         """
         return self.predict(data, **kwargs)
 
-    def predict(self, data: dict, **kwargs):
+    def predict(self, data: dict, already_prepared=False, **kwargs):
         """
         Predict single batch
         Returns the predictions corresponding to the given data
@@ -146,6 +163,9 @@ class Predictor(object):
         ----------
         data : dict
             batch dictionary
+        already_prepared : bool
+            if True, the `prepare_batch` function won't be called on the data
+            anymore
         **kwargs :
             keyword arguments(directly passed to ``prepare_batch``)
 
@@ -193,17 +213,96 @@ class Predictor(object):
                 **pred
             )[1]
 
-        return _predict(data, **kwargs)
+        if not already_prepared:
+            data = self._prepare_batch(data, **kwargs)
 
-    def predict_data_mgr(self, datamgr, batchsize=None, metrics=None,
-                         metric_keys=None, verbose=False, **kwargs):
+        mapped_data = {
+            k: data[v] for k, v in self.key_mapping.items()}
+
+        pred = self.module(
+            **mapped_data
+        )
+
+        # converts positional arguments and keyword arguments,
+        # but returns only keyword arguments, since positional
+        # arguments are not given.
+        return self._convert_to_npy_fn(
+            **pred
+        )[1]
+
+    def _at_iter_begin(self, iter_num, **kwargs):
+        """
+        Function defining the behavior executed at beginning of each iteration
+
+        Parameters
+        ----------
+        iter_num : int
+            the number of the current iteration
+        **kwargs :
+            additional keyword arguments (forwarded to callbacks call)
+
+        Returns
+        -------
+        dict
+            combined dicts returned by the callbacks
+
+        """
+        return_dict = {}
+        for cb in self._callbacks:
+            return_dict.update(cb.at_iter_begin(self,
+                                                iter_num=iter_num,
+                                                train=False,
+                                                **kwargs))
+
+        return return_dict
+
+    def _at_iter_end(self, iter_num, data_dict, metrics, **kwargs):
+        """
+        Function defining the behavior executed at beginning of each iteration
+
+        Parameters
+        ----------
+        iter_num : int
+            the number of the current iteration
+        data_dict : dict
+            dictionary holding input data and predictions
+        metrics: dict
+            calculated metrics
+        **kwargs :
+            additional keyword arguments (forwarded to callbacks call)
+
+        Returns
+        -------
+        dict
+            combined dicts returned by the callbacks
+
+        """
+        return_dict = {}
+        for cb in self._callbacks:
+            return_dict.update(cb.at_iter_end(self,
+                                              iter_num=iter_num,
+                                              data_dict=data_dict,
+                                              metrics=metrics,
+                                              train=False,
+                                              **kwargs))
+
+        return return_dict
+
+    def predict_data_mgr(
+            self,
+            datamgr: DataManager,
+            batchsize=None,
+            metrics=None,
+            metric_keys=None,
+            verbose=False,
+            **kwargs):
         """
         Defines a routine to predict data obtained from a batchgenerator
         without explicitly caching anything
 
         Parameters
         ----------
-        datamgr : :class:`BaseDataManager`
+        datamgr : :class:`DataManager`
             Manager producing a generator holding the batches
         batchsize : int
             Artificial batchsize (sampling will be done with batchsize
@@ -235,11 +334,10 @@ class Predictor(object):
             batchsize = orig_batch_size
 
         datamgr.batch_size = 1
-        datamgr.n_process_augmentation = 1
 
         batchgen = datamgr.get_batchgen()
 
-        n_batches = batchgen.num_batches
+        n_batches = datamgr.n_batches
 
         if verbose:
             iterable = tqdm(enumerate(batchgen), unit=' sample',
@@ -251,6 +349,7 @@ class Predictor(object):
         batch_list = []
 
         for i, batch in iterable:
+            Predictor._at_iter_begin(self, iter_num=i)
 
             if not batch_list and (n_batches - i) < batchsize:
                 batchsize = n_batches - i
@@ -273,7 +372,13 @@ class Predictor(object):
                 for key, val_list in batch_dict.items():
                     batch_dict[key] = np.concatenate(val_list)
 
-                preds = self.predict(copy.deepcopy(batch_dict), **kwargs)
+                batch_dict = self._prepare_batch(batch_dict)
+                preds = self.predict(batch_dict, already_prepared=True,
+                                     **kwargs)
+
+                # convert batchdict back to numpy (self.predict may convert it
+                # to backend-specific tensor type) - no-op if already numpy
+                batch_dict = self._convert_to_npy_fn(**batch_dict)[1]
 
                 preds_batch = LookupConfig()
                 # explicitly free memory of old lookup config
@@ -286,11 +391,15 @@ class Predictor(object):
                                                  metrics=metrics,
                                                  metric_keys=metric_keys)
 
+                self._at_iter_end(data_dict={**batch_dict, **preds_batch},
+                                  metrics={"val_" + k: v
+                                           for k, v in _metric_vals.items()},
+                                  iter_num=i)
+
                 yield preds, _metric_vals
 
                 batch_list = []
 
-        batchgen._finish()
         datamgr.batch_size = orig_batch_size
         datamgr.n_process_augmentation = orig_num_aug_processes
 
@@ -305,7 +414,7 @@ class Predictor(object):
 
         Parameters
         ----------
-        datamgr : :class:`BaseDataManager`
+        datamgr : :class:`DataManager`
             Manager producing a generator holding the batches
         batchsize : int
             Artificial batchsize (sampling will be done with batchsize
@@ -355,7 +464,7 @@ class Predictor(object):
 
         Parameters
         ----------
-        datamgr : :class:`BaseDataManager`
+        datamgr : :class:`DataManager`
             Manager producing a generator holding the batches
         batchsize : int
             Artificial batchsize (sampling will be done with batchsize
@@ -405,7 +514,7 @@ class Predictor(object):
 
         Parameters
         ----------
-        datamgr : :class:`BaseDataManager`
+        datamgr : :class:`DataManager`
             Manager producing a generator holding the batches
         batchsize : int
             Artificial batchsize (sampling will be done with batchsize
@@ -603,7 +712,7 @@ class Predictor(object):
         if metrics is None:
             metrics = {}
         if metric_keys is None:
-            metric_keys = {k: ("pred", "label") for k in metrics.keys()}
+            metric_keys = {k: ("label", "pred") for k in metrics.keys()}
 
         return {key: metric_fn(*[batch.nested_get(k)
                                  for k in metric_keys[key]])
@@ -688,3 +797,31 @@ class Predictor(object):
                 return unflatten_dict(results)
             return wrapper
         return decorate_fn
+
+    def register_callback(self, callback: AbstractCallback):
+        """
+        Register Callback to Trainer
+
+        Parameters
+        ----------
+        callback : :class:`AbstractCallback`
+            the callback to register
+
+        Raises
+        ------
+        AssertionError
+            `callback` is not an instance of :class:`AbstractCallback` and has
+            not both methods ['at_iter_begin', 'at_iter_end']
+
+        """
+        assertion_str = "Given callback is not valid; Must be instance of " \
+                        "AbstractCallback or provide functions " \
+                        "'at_iter_begin' and 'at_iter_end'"
+        instance_check = isinstance(callback, AbstractCallback)
+        attr_check_begin = hasattr(callback, "at_iter_begin")
+        attr_check_end = hasattr(callback, "at_iter_end")
+        attr_check_both = attr_check_begin and attr_check_end
+
+        assert instance_check or attr_check_both, assertion_str
+
+        self._callbacks.append(callback)

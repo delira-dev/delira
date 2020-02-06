@@ -84,7 +84,7 @@ class BaseMessenger(ABC):
             result of experiment
         """
         if self._notify_epochs is not None:
-            callbacks = kwargs.pop("callbacks", [])
+            callbacks = list(kwargs.pop("callbacks", []))
             callbacks.append(MessengerEpochCallback(self._notify_epochs,
                                                     self))
             kwargs["callbacks"] = callbacks
@@ -282,7 +282,7 @@ class MessengerFoldCallback(AbstractCallback):
         super().__init__()
         self._messenger = messenger
 
-    def at_training_start(self, trainer, **kwargs) -> dict:
+    def at_training_begin(self, trainer, **kwargs) -> dict:
         """
         End of training callback
 

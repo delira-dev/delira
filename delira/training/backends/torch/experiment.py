@@ -4,10 +4,10 @@ import typing
 import torch
 
 from delira.models.backends.torch import AbstractPyTorchNetwork
-from delira.data_loading import BaseDataManager
+from delira.data_loading import DataManager
 
 from delira.training.base_experiment import BaseExperiment
-from delira.training.parameters import Parameters
+from delira.utils import DeliraConfig
 
 from delira.training.backends.torch.trainer import PyTorchNetworkTrainer
 from delira.training.backends.torch.utils import create_optims_default
@@ -16,7 +16,7 @@ from delira.training.backends.torch.utils import convert_to_numpy
 
 class PyTorchExperiment(BaseExperiment):
     def __init__(self,
-                 params: typing.Union[str, Parameters],
+                 config: typing.Union[str, DeliraConfig],
                  model_cls: AbstractPyTorchNetwork,
                  n_epochs=None,
                  name=None,
@@ -31,10 +31,10 @@ class PyTorchExperiment(BaseExperiment):
 
         Parameters
         ----------
-        params : :class:`Parameters` or str
-            the training parameters, if string is passed,
-            it is treated as a path to a pickle file, where the
-            parameters are loaded from
+        config : :class:`DeliraConfig` or str
+            the training config, if string is passed,
+            it is treated as a path to a file, where the
+            config is loaded from
         model_cls : Subclass of :class:`AbstractPyTorchNetwork`
             the class implementing the model to train
         n_epochs : int or None
@@ -70,7 +70,7 @@ class PyTorchExperiment(BaseExperiment):
 
         if key_mapping is None:
             key_mapping = {"x": "data"}
-        super().__init__(params=params, model_cls=model_cls,
+        super().__init__(config=config, model_cls=model_cls,
                          n_epochs=n_epochs, name=name, save_path=save_path,
                          key_mapping=key_mapping,
                          val_score_key=val_score_key,
@@ -79,25 +79,25 @@ class PyTorchExperiment(BaseExperiment):
                          trainer_cls=trainer_cls,
                          **kwargs)
 
-    def kfold(self, data: BaseDataManager, metrics: dict, num_epochs=None,
+    def kfold(self, data: DataManager, metrics: dict, num_epochs=None,
               num_splits=None, shuffle=False, random_seed=None,
               split_type="random", val_split=0.2, label_key="label",
               train_kwargs: dict = None, test_kwargs: dict = None,
-              metric_keys: dict = None, params=None, verbose=False,
+              metric_keys: dict = None, config=None, verbose=False,
               **kwargs):
         """
         Performs a k-Fold cross-validation
 
         Parameters
         ----------
-        data : :class:`BaseDataManager`
+        data : :class:`DataManager`
             the data to use for training(, validation) and testing. Will be
             split based on ``split_type`` and ``val_split``
         metrics : dict
             dictionary containing the metrics to evaluate during k-fold
         num_epochs : int or None
             number of epochs to train (if not given, will either be
-            extracted from ``params``, ``self.parms`` or ``self.n_epochs``)
+            extracted from ``config``, ``self.config`` or ``self.n_epochs``)
         num_splits : int or None
             the number of splits to extract from ``data``.
             If None: uses a default of 10
@@ -121,7 +121,7 @@ class PyTorchExperiment(BaseExperiment):
             the label to use for stratification. Will be ignored unless
             ``split_type`` is 'stratified'. Default: 'label'
         train_kwargs : dict or None
-            kwargs to update the behavior of the :class:`BaseDataManager`
+            kwargs to update the behavior of the :class:`DataManager`
             containing the train data. If None: empty dict will be passed
         metric_keys : dict of tuples
             the batch_dict keys to use for each metric to calculate.
@@ -129,12 +129,12 @@ class PyTorchExperiment(BaseExperiment):
             If no values are given for a key, per default ``pred`` and
             ``label`` will be used for metric calculation
         test_kwargs : dict or None
-            kwargs to update the behavior of the :class:`BaseDataManager`
+            kwargs to update the behavior of the :class:`DataManager`
             containing the test and validation data.
             If None: empty dict will be passed
-        params : :class:`Parameters`or None
+        config : :class:`Parameters`or None
             the training and model parameters
-            (will be merged with ``self.params``)
+            (will be merged with ``self.config``)
         verbose : bool
             verbosity
         **kwargs :
@@ -163,7 +163,7 @@ class PyTorchExperiment(BaseExperiment):
         and :class:`sklearn.model_selection.StratifiedShuffleSplit`
         for stratified data-splitting
 
-        * :meth:`BaseDataManager.update_from_state_dict` for updating the
+        * :meth:`DataManager.update_from_state_dict` for updating the
         data managers by kwargs
 
         * :meth:`BaseExperiment.run` for the training
@@ -195,11 +195,11 @@ class PyTorchExperiment(BaseExperiment):
             train_kwargs=train_kwargs,
             test_kwargs=test_kwargs,
             metric_keys=metric_keys,
-            params=params,
+            config=config,
             verbose=verbose,
             **kwargs)
 
-    def test(self, network, test_data: BaseDataManager,
+    def test(self, network, test_data: DataManager,
              metrics: dict, metric_keys=None,
              verbose=False, prepare_batch=None,
              convert_fn=None, **kwargs):
@@ -210,7 +210,7 @@ class PyTorchExperiment(BaseExperiment):
         ----------
         network : :class:`AbstractNetwork`
             the (trained) network to test
-        test_data : :class:`BaseDataManager`
+        test_data : :class:`DataManager`
             the data to use for testing
         metrics : dict
             the metrics to calculate

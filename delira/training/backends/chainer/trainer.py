@@ -1,5 +1,6 @@
 from delira.training.backends.chainer.utils import convert_to_numpy
 from delira.training.backends.chainer.utils import create_optims_default
+from delira.training.callbacks.logging_callback import DefaultLoggingCallback
 from delira.io.chainer import load_checkpoint, save_checkpoint
 from delira.models.backends.chainer import AbstractChainerNetwork, \
     DataParallelChainerNetwork, \
@@ -30,8 +31,7 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
                  losses=None,
                  optimizer_cls=None,
                  optimizer_params=None,
-                 train_metrics=None,
-                 val_metrics=None,
+                 metrics=None,
                  lr_scheduler_cls=None,
                  lr_scheduler_params=None,
                  gpu_ids=None,
@@ -39,6 +39,9 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
                  optim_fn=create_optims_default,
                  logging_type="tensorboardx",
                  logging_kwargs=None,
+                 logging_callback_cls=DefaultLoggingCallback,
+                 logging_frequencies=None,
+                 logging_reduce_types=None,
                  fold=0,
                  callbacks=None,
                  start_epoch=1,
@@ -71,11 +74,8 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             choice
         optimizer_params : dict
             keyword arguments passed to optimizer during construction
-        train_metrics : dict, optional
-            metrics, which will be evaluated during train phase
-            (should work on framework's tensor types)
-        val_metrics : dict, optional
-            metrics, which will be evaluated during test phase
+        metrics : dict, optional
+            metrics, which will be evaluated during train and validation phase
             (should work on numpy arrays)
         lr_scheduler_cls : Any
             learning rate schedule class: must implement step() method
@@ -94,6 +94,27 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             If callable: it must be a logging handler class
         logging_kwargs : dict
             dictionary containing all logging keyword arguments
+        logging_callback_cls : class
+            the callback class to create and register for logging
+        logging_frequencies : int or dict
+            specifies how often to log for each key.
+            If int: integer will be applied to all valid keys
+            if dict: should contain a frequency per valid key. Missing keys
+                will be filled with a frequency of 1 (log every time)
+            None is equal to empty dict here.
+        logging_reduce_types : str of FunctionType or dict
+            if str:
+                specifies the reduction type to use. Valid types are
+                'last' | 'first' | 'mean' | 'median' | 'max' | 'min'.
+                The given type will be mapped to all valid keys.
+            if FunctionType:
+                specifies the actual reduction function. Will be applied
+                for all keys.
+            if dict: should contain pairs of valid logging keys and either
+                str or FunctionType. Specifies the logging value per key.
+                Missing keys will be filles with a default value of 'last'.
+                Valid types for strings are
+                'last' | 'first' | 'mean' | 'median' | 'max' | 'min'.
         fold : int
             current cross validation fold (0 per default)
         callbacks : list
@@ -138,25 +159,42 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             gpu_ids = []
         if lr_scheduler_params is None:
             lr_scheduler_params = {}
-        if val_metrics is None:
-            val_metrics = {}
-        if train_metrics is None:
-            train_metrics = {}
+        if metrics is None:
+            metrics = {}
         if optimizer_params is None:
             optimizer_params = {}
 
-        super().__init__(
-            network, save_path, losses, optimizer_cls, optimizer_params,
-            train_metrics, val_metrics, lr_scheduler_cls,
-            lr_scheduler_params, gpu_ids, save_freq, optim_fn, key_mapping,
-            logging_type, logging_kwargs, fold, callbacks, start_epoch,
-            metric_keys, convert_batch_to_npy_fn, val_freq)
+        super().__init__(network=network,
+                         save_path=save_path,
+                         losses=losses,
+                         optimizer_cls=optimizer_cls,
+                         optimizer_params=optimizer_params,
+                         metrics=metrics,
+                         lr_scheduler_cls=lr_scheduler_cls,
+                         lr_scheduler_params=lr_scheduler_params,
+                         gpu_ids=gpu_ids,
+                         save_freq=save_freq,
+                         optim_fn=optim_fn,
+                         key_mapping=key_mapping,
+                         logging_type=logging_type,
+                         logging_kwargs=logging_kwargs,
+                         logging_callback_cls=logging_callback_cls,
+                         logging_frequencies=logging_frequencies,
+                         logging_reduce_types=logging_reduce_types,
+                         fold=fold,
+                         callbacks=callbacks,
+                         start_epoch=start_epoch,
+                         metric_keys=metric_keys,
+                         convert_batch_to_npy_fn=convert_batch_to_npy_fn,
+                         val_freq=val_freq,
+                         **kwargs
+                         )
 
         self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                     lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                     key_mapping, convert_batch_to_npy_fn,
                     mixed_precision, tta_transforms, tta_reduce_fn,
-                    tta_inverse_transforms)
+                    tta_inverse_transforms, callbacks)
 
         for key, val in kwargs.items():
             setattr(self, key, val)
@@ -164,7 +202,8 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
     def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
                lr_scheduler_cls, lr_scheduler_params, gpu_ids,
                key_mapping, convert_batch_to_npy_fn, mixed_precision,
-               tta_transforms, tta_reduce_fn, tta_inverse_transforms):
+               tta_transforms, tta_reduce_fn, tta_inverse_transforms, callbacks):
+
         """
         Defines the Trainers Setup
 
@@ -197,6 +236,8 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
         tta_inverse_transforms : tuple
             transforms to apply, if the transform has to be reverted before
             reducing (e.g. in Segmentation tasks)
+        callbacks : list
+            initial callbacks to register
 
         """
 
@@ -206,7 +247,7 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
         super()._setup(network, None, lr_scheduler_params,
                        gpu_ids, key_mapping, convert_batch_to_npy_fn,
                        network.prepare_batch, tta_transforms, tta_reduce_fn,
-                       tta_inverse_transforms)
+                       tta_inverse_transforms, callbacks)
 
         if mixed_precision:
             # enable chainer mixed precision globally
@@ -214,21 +255,20 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
 
         # Load latest epoch file if available
         if os.path.isdir(self.save_path):
-            if os.path.isdir(self.save_path):
-                latest_state_path, latest_epoch = self._search_for_prev_state(
-                    self.save_path)
+            latest_state_path, latest_epoch = self._search_for_prev_state(
+                self.save_path)
 
-                if latest_state_path is not None:
+            if latest_state_path is not None:
 
-                    # if pth file does not exist, load pt file instead
-                    if not os.path.isfile(latest_state_path):
-                        latest_state_path = latest_state_path[:-1]
+                # if pth file does not exist, load pt file instead
+                if not os.path.isfile(latest_state_path):
+                    latest_state_path = latest_state_path[:-1]
 
-                    logger.info("Attempting to load state from previous \
-                                training from %s" % latest_state_path)
+                logger.info("Attempting to load state from previous \
+                            training from %s" % latest_state_path)
 
-                    self.update_state(latest_state_path)
-                    self.start_epoch = latest_epoch
+                self.update_state(latest_state_path)
+                self.start_epoch = latest_epoch
 
         if chainer.chainerx.is_available():
             gpu_device_prefix = "cuda:"
@@ -318,11 +358,14 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             keyword arguments
 
         """
+        for cbck in self._callbacks:
+            self._update_state(cbck.at_training_begin(self, *args, **kwargs))
+
         self.save_state(os.path.join(
             self.save_path, "checkpoint_epoch_%d" % self.start_epoch),
             self.start_epoch)
 
-    def _at_training_end(self):
+    def _at_training_end(self, *args, **kwargs):
         """
         Defines Behaviour at end of training: Loads best model if
         available
@@ -340,7 +383,7 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
             self.update_state(os.path.join(self.save_path,
                                            'checkpoint_best.chain'))
 
-        return self.module
+        return super()._at_training_end(*args, **kwargs)
 
     def _at_epoch_end(self, metrics_val, val_score_key, epoch, is_best,
                       **kwargs):
@@ -412,7 +455,7 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
 
         Parameters
         ----------
-        datamgr : :class:`BaseDataManager`
+        datamgr : :class:`DataManager`
             Manager producing a generator holding the batches
         batchsize : int
             Artificial batchsize (sampling will be done with batchsize
