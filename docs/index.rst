@@ -3,9 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-===================================
-delira - Deep Learning In RAdiology
-===================================
+=====================================================================
+delira - A Backend Agnostic High Level Deep Learning Library
+=====================================================================
 
 .. toctree::
    :maxdepth: 2
@@ -18,11 +18,11 @@ delira - Deep Learning In RAdiology
    :caption: Tutorials:
 
    tutorial_delira
-   tutorial_dataset
    classification_pytorch
    gan_pytorch
    segmentation_2d_pytorch
    segmentation_3d_pytorch
+   custom_backend
 
 
 .. toctree::
@@ -32,7 +32,7 @@ delira - Deep Learning In RAdiology
 
    _api/_build/modules
 
-   GitHub <https://github.com/justusschock/delira>
+   GitHub <https://github.com/delira-dev/delira>
 
 
 

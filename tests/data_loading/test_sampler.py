@@ -1,146 +1,114 @@
 import unittest
-
 import numpy as np
+from delira.data_loading.sampler import RandomSamplerWithReplacement, \
+    PrevalenceRandomSampler, SequentialSampler, \
+    RandomSamplerNoReplacement, BatchSampler, AbstractSampler
 
-from delira.data_loading.sampler import LambdaSampler, \
-    PrevalenceRandomSampler, \
-    PrevalenceSequentialSampler, \
-    RandomSampler, \
-    SequentialSampler, \
-    StoppingPrevalenceRandomSampler, \
-    WeightedRandomSampler
-from . import DummyDataset
+from ..utils import check_for_no_backend
+from .utils import DummyDataset
 
 
 class SamplerTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.dset = DummyDataset(600, [0.5, 0.3, 0.2])
 
-    def test_lambda_sampler(self):
-        np.random.seed(1)
-        dset = DummyDataset(600, [0.5, 0.3, 0.2])
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should only be executed "
+                         "if no backend is installed/specified")
+    def test_batch_sampler(self):
+        for batchsize in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
+            for truncate in [True, False]:
 
-        def sampling_fn_a(index_list, n_indices):
-            return index_list[:n_indices]
+                with self.subTest(batchsize=batchsize, truncate=truncate):
+                    sampler = BatchSampler(
+                        SequentialSampler.from_dataset(self.dset),
+                        batchsize, truncate)
 
-        def sampling_fn_b(index_list, n_indices):
-            return index_list[-n_indices:]
+                    sampler_iter = iter(sampler)
+                    for i in range(len(sampler)):
+                        batch = next(sampler_iter)
 
-        sampler_a = LambdaSampler(list(range(len(dset))), sampling_fn_a)
-        sampler_b = LambdaSampler(list(range(len(dset))), sampling_fn_b)
+                        if i < len(sampler) - 1:
+                            self.assertEquals(len(batch), batchsize)
 
-        self.assertEqual(sampler_a(15), list(range(15)))
-        self.assertEqual(sampler_b(15), list(range(len(dset) - 15, len(dset))))
+                        else:
+                            if truncate:
+                                self.assertLessEqual(len(batch), batchsize)
 
-    def test_prevalence_random_sampler(self):
-        np.random.seed(1)
-        dset = DummyDataset(600, [0.5, 0.3, 0.2])
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should only be executed "
+                         "if no backend is installed/specified")
+    def test_sequential(self):
+        prev_index = None
+        sampler = SequentialSampler.from_dataset(self.dset)
 
-        sampler = PrevalenceRandomSampler.from_dataset(dset)
+        for idx in sampler:
+            if prev_index is not None:
+                self.assertEquals(idx, prev_index + 1)
 
-        for batch_len in [1, 2, 3]:
-            with self.subTest(batch_len=batch_len):
+            prev_index = idx
 
-                equal_batch = sampler(batch_len)
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should only be executed "
+                         "if no backend is installed/specified")
+    def test_random_replacement(self):
 
-                seen_labels = []
-                for idx in equal_batch:
-                    curr_label = dset[idx]["label"]
+        sampler = RandomSamplerWithReplacement.from_dataset(self.dset)
+        samples = []
 
-                    self.assertNotIn(curr_label, seen_labels)
-                    seen_labels.append(curr_label)
+        self.assertEquals(len(sampler), len(self.dset))
 
-        self.assertEqual(len(sampler(5)), 5)
+        for idx in sampler:
+            self.assertIn(idx, np.arange(len(self.dset)))
+            samples.append(idx)
 
-    def test_prevalence_sequential_sampler(self):
-        np.random.seed(1)
-        dset = DummyDataset(600, [0.5, 0.3, 0.2])
+        # check if all samples are only sampled once (extremly unlikely)
+        self.assertFalse((np.bincount(samples) == 1).all())
 
-        sampler = PrevalenceSequentialSampler.from_dataset(dset)
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should only be executed "
+                         "if no backend is installed/specified")
+    def test_random_no_replacement(self):
 
-        # ToDo add test considering actual sampling strategy
-        self.assertEqual(len(sampler(5)), 5)
+        sampler = RandomSamplerNoReplacement.from_dataset(self.dset)
+        samples = []
 
-    def test_random_sampler(self):
-        np.random.seed(1)
-        dset = DummyDataset(600, [0.5, 0.3, 0.2])
+        self.assertEquals(len(sampler), len(self.dset))
 
-        sampler = RandomSampler.from_dataset(dset)
+        for idx in sampler:
+            self.assertIn(idx, np.arange(len(self.dset)))
+            samples.append(idx)
 
-        self.assertEqual(len(sampler(250)), 250)
+        # check if all samples are only sampled once
+        self.assertTrue((np.bincount(samples) == 1).all())
 
-        # checks if labels are all the same (should not happen if random
-        # sampled)
-        self.assertGreater(
-            len(set([dset[_idx]["label"] for _idx in sampler(301)])), 1)
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should only be executed "
+                         "if no backend is installed/specified")
+    def test_prevalence_sampler(self):
 
-    def test_sequential_sampler(self):
-        np.random.seed(1)
-        dset = DummyDataset(600, [0.5, 0.3, 0.2])
+        sampler = PrevalenceRandomSampler.from_dataset(self.dset)
+        sample_classes = []
 
-        sampler = SequentialSampler.from_dataset(dset)
+        for idx in sampler:
+            self.assertIn(idx, np.arange(len(self.dset)))
 
-        # if sequentially sampled, the first 300 items should have label 0 -> 1
-        # unique element
-        self.assertEqual(len(set([dset[_idx]["label"]
-                                  for _idx in sampler(100)])), 1)
-        self.assertEqual(len(sampler(100)), 100)
+            sample_classes.append(self.dset[idx]["label"])
 
-        # next 100 elements also same label -> next 201 elements: two different
-        # labels
-        self.assertEqual(len(set([dset[_idx]["label"]
-                                  for _idx in sampler(101)])), 2)
+        num_samples_per_class = np.bincount(sample_classes)
 
-    def test_stopping_prevalence_random_sampler(self):
-        np.random.seed(1)
-        dset = DummyDataset(600, [0.5, 0.3, 0.2])
+        self.assertTrue(
+            (num_samples_per_class.min() - num_samples_per_class.max()) <= 1)
 
-        sampler = StoppingPrevalenceRandomSampler.from_dataset(dset)
+    @unittest.skipUnless(check_for_no_backend(),
+                         "Test should only be executed "
+                         "if no backend is installed/specified"
+                         )
+    def test_abstract_sampler_iter(self):
+        sampler = AbstractSampler.from_dataset(self.dset)
 
-        with self.assertRaises(StopIteration):
-            for i in range(121):
-                sample = sampler(3)
-                self.assertEqual(
-                    len(set(dset[_idx]["label"] for _idx in sample)), 3)
-
-    def test_stopping_prevalence_sequential_sampler(self):
-        np.random.seed(1)
-        dset = DummyDataset(600, [0.5, 0.3, 0.2])
-
-        sampler = StoppingPrevalenceRandomSampler.from_dataset(dset)
-
-        with self.assertRaises(StopIteration):
-            for i in range(121):
-                sample = sampler(3)
-                self.assertEqual(
-                    len(set([dset[_idx]["label"] for _idx in sample])), 3)
-
-
-def test_weighted_sampler():
-    np.random.seed(1)
-    dset = DummyDataset(600, [0.5, 0.3, 0.2])
-
-    sampler = WeightedRandomSampler.from_dataset(dset)
-
-    assert len(sampler(250)) == 250
-
-    # checks if labels are all the same (should not happen if random sampled)
-    assert len(set([dset[_idx]["label"] for _idx in sampler(301)])) > 1
-
-
-def test_weighted_prevalence_sampler():
-    np.random.seed(1)
-    dset = DummyDataset(2000, [0.5, 0.3, 0.2])
-
-    sampler = WeightedPrevalenceRandomSampler.from_dataset(dset)
-
-    assert len(sampler(250)) == 250
-
-    # checks if labels are all the same (should not happen if random sampled)
-    n_draw = 1000
-    label_list = [dset[_idx]["label"] for _idx in sampler(n_draw)]
-    assert len(set(label_list)) > 1
-    assert abs(label_list.count(0) / n_draw - (1 / 3)) < 0.1
-    assert abs(label_list.count(1) / n_draw - (1 / 3)) < 0.1
-    assert abs(label_list.count(2) / n_draw - (1 / 3)) < 0.1
+        with self.assertRaises(NotImplementedError):
+            iter(sampler)
 
 
 if __name__ == '__main__':

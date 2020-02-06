@@ -1,7 +1,7 @@
 .. role:: hidden
     :class: hidden-section
 
-.. currentmodule:: delira.data_loading
+.. currentmodule:: delira.data_loading.data_manager
 
 
 Datamanager
@@ -10,10 +10,18 @@ Datamanager
 The datamanager wraps a dataloader and combines it with augmentations
 and multiprocessing.
 
-:hidden:`BaseDataManager`
+:hidden:`DataManager`
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: BaseDataManager
+.. autoclass:: DataManager
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:hidden:`Augmenter`
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Augmenter
     :members:
     :undoc-members:
     :show-inheritance:

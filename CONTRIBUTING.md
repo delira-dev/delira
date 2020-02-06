@@ -22,6 +22,8 @@ that well tested so far, but we want to change this in future).
 
 > **Note:** To improve readability and maintainability, [PEP8 Style](https://www.python.org/dev/peps/pep-0008/) should always be followed (no exceptions).
 
+> **Note:** To ensure our CI/CD running correctly, you should *never* use relative imports but absolute ones.
+
 > **Note:** If you added a feature, you should also add it to the documentation
 
 4. After finishing the coding part, send a pull request to 
@@ -97,4 +99,4 @@ Testing is done with a `unittest` suite
 for formatting docstrings. Length of line inside docstrings block must be limited to 80 characters to
 fit into Jupyter documentation popups.
 
-[this repo]: https://github.com/justusschock/delira
+[this repo]: https://github.com/delira-dev/delira

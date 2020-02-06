@@ -12,19 +12,20 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+
+from delira._version import get_versions
 import os
 import sys
 import re
 
 # source code directory, relative to this file, for sphinx-build
-sys.path.insert(0, os.path.abspath('../.'))
-
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 # -- Project information -----------------------------------------------------
 
 project = 'delira'
-copyright = '2019, Justus Schock, Oliver Rippel, Christoph Haarburger'
-author = 'Justus Schock, Oliver Rippel, Christoph Haarburger'
+copyright = '2019, Justus Schock, Michael Baumgartner, Oliver Rippel, Christoph Haarburger'
+author = 'Justus Schock, Michael Baumgartner, Oliver Rippel, Christoph Haarburger'
 
 
 def read_file(file):
@@ -33,18 +34,11 @@ def read_file(file):
     return content
 
 
-def find_version(file):
-    content = read_file(file)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", content,
-                              re.M)
-    if version_match:
-        return version_match.group(1)
-
-
+whole_version = get_versions()["version"]
 # The short X.Y version
-version = find_version("../delira/__init__.py")  # delira.__version__
+version = whole_version.split("+", 1)[0]
 # The full version, including alpha/beta/rc tags
-release = version  # delira.__version__
+release = whole_version  # delira.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -169,7 +163,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'delira.tex', 'delira Documentation',
-     'Justus Schock, Oliver Rippel, Christoph Haarburger', 'manual'),
+     author, 'manual'),
 ]
 
 
@@ -207,13 +201,29 @@ intersphinx_mapping = {
         None),
     'torch': (
         'https://pytorch.org/docs/stable/',
-        None)}
+        None),
+    'tensorflow': (
+        'https://www.tensorflow.org/api_docs/python/',
+        None),
+    'chainer': (
+        'https://docs.chainer.org/en/stable/',
+        None),
+    'sklearn': (
+        'https://scikit-learn.org/stable/documentation/',
+        None),
+    'numpy': (
+        'https://docs.scipy.org/doc/numpy/reference/',
+        None),
+    'scipy': (
+        'https://docs.scipy.org/doc/scipy/reference/'
+    )
+}
 
 # -- Options for todo extension ----------------------------------------------
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
-
+autoclass_content = 'both'
 add_module_names = False
 
 autodoc_default_flags = ['members',
@@ -259,7 +269,8 @@ autodoc_mock_imports = [
     "PIL",
     "umap",
     "tensorflow",
-    "yaml"
+    "yaml",
+    "chainer"
 ]
 
 # autodoc_mock_imports = [

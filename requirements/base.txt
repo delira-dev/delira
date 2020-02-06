@@ -1,0 +1,12 @@
+numpy>=1.15.0
+scikit-learn>=0.20.0
+jupyter>=1.0.0
+ipython
+joblib
+pylint
+tqdm
+visdom>=0.1.8.5
+pyyaml
+batchgenerators>=0.18.2,!=0.19.2,<0.19.4
+tensorboardX
+nested_lookup
