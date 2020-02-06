@@ -1,11 +1,19 @@
 [<img src="https://img.shields.io/badge/chat-slack%20channel-75BBC4.svg">](https://join.slack.com/t/deliradev/shared_invite/enQtNjI1MjA4MjQzMzQ2LTUzNTQ0MjQyNjJjNzgyODczY2Y1YjYxNjA3ZmQ0MGFhODhkYzQ4M2RjMGM1YWM3YWU5MDM0ZjdiNTQ4MmQ0ZDk)
 [![PyPI version](https://badge.fury.io/py/delira.svg)](https://badge.fury.io/py/delira) [![Build Status](https://travis-ci.com/delira-dev/delira.svg?branch=master)](https://travis-ci.com/delira-dev/delira) [![Documentation Status](https://readthedocs.org/projects/delira/badge/?version=master)](https://delira.readthedocs.io/en/master/?badge=master) [![codecov](https://codecov.io/gh/justusschock/delira/branch/master/graph/badge.svg)](https://codecov.io/gh/delira-dev/delira)
-![LICENSE](https://img.shields.io/github/license/delira-dev/delira.svg) [![DOI](http://joss.theoj.org/papers/10.21105/joss.01488/status.svg)](https://doi.org/10.21105/joss.01488)
+[![DOI](http://joss.theoj.org/papers/10.21105/joss.01488/status.svg)](https://doi.org/10.21105/joss.01488)
 
 ![logo](docs/_static/logo/delira.svg "delira - A Backend Agnostic High Level Deep Learning Library")
 
 # delira - A Backend Agnostic High Level Deep Learning Library
 Authors: [Justus Schock, Michael Baumgartner, Oliver Rippel, Christoph Haarburger](AUTHORS.rst)
+
+Copyright (C) 2020 by RWTH Aachen University                      
+http://www.rwth-aachen.de                                             
+                                                                         
+License:                                                                                                                                       
+This software is dual-licensed under:                                 
+• Commercial license (please contact: lfb@lfb.rwth-aachen.de)         
+• AGPL (GNU Affero General Public License) open source license        
 
 ## Introduction
 `delira` is designed to work as a backend agnostic high level deep learning library. You can choose among several computation [backends](#choose-backend).

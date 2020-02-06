@@ -76,12 +76,10 @@ class DefaultLoggingCallback(AbstractCallback):
         """
 
         metrics = kwargs.get("metrics", {})
-        global_step = kwargs.get("global_iter_num", None)
 
         for k, v in metrics.items():
             self._logger.log({"scalar": {"tag": self.create_tag(k, train),
-                                         "scalar_value": v,
-                                         "global_step": global_step}})
+                                         "scalar_value": v}})
 
         return {}
 
