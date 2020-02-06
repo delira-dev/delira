@@ -170,7 +170,6 @@ class SklearnEstimatorTrainer(BaseNetworkTrainer):
     def _setup(self, estimator, key_mapping, convert_batch_to_npy_fn,
                tta_transforms, tta_reduce_fn, tta_inverse_transforms,
                callbacks):
-
         """
         Defines the Trainers Setup
 

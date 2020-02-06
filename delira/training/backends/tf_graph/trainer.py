@@ -202,7 +202,6 @@ class TfGraphNetworkTrainer(BaseNetworkTrainer):
                lr_scheduler_cls, lr_scheduler_params, key_mapping,
                convert_batch_to_npy_fn, gpu_ids, tta_transforms, tta_reduce_fn,
                tta_inverse_transforms, callbacks):
-
         """
         Defines the Trainers Setup
 

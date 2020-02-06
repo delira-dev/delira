@@ -183,7 +183,7 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
         self._setup(network, optim_fn, optimizer_cls, optimizer_params,
                     lr_scheduler_cls, lr_scheduler_params,
                     key_mapping, convert_batch_to_npy_fn, gpu_ids,
-                    tta_transforms, tta_reduce_fn, tta_inverse_transforms, 
+                    tta_transforms, tta_reduce_fn, tta_inverse_transforms,
                     callbacks)
 
         for key, val in kwargs.items():
@@ -192,9 +192,8 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
     def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
                lr_scheduler_cls, lr_scheduler_params, key_mapping,
                convert_batch_to_npy_fn, gpu_ids,
-               tta_transforms, tta_reduce_fn, tta_inverse_transforms, 
+               tta_transforms, tta_reduce_fn, tta_inverse_transforms,
                callbacks):
-
         """
         Defines the Trainers Setup
 
@@ -260,16 +259,16 @@ class TfEagerNetworkTrainer(BaseNetworkTrainer):
                        network.prepare_batch, tta_transforms, tta_reduce_fn,
                        tta_inverse_transforms)
                        network.prepare_batch, callbacks)
-          
-        self._prepare_batch = partial(self._prepare_batch,
-                                      input_device=self.input_device,
-                                      output_device=self.output_device)
+
+        self._prepare_batch=partial(self._prepare_batch,
+                                      input_device = self.input_device,
+                                      output_device = self.output_device)
 
         # Load latest epoch file if available
         if os.path.isdir(self.save_path):
             # check all files in directory starting with "checkpoint" and
             # not ending with "_best.meta"
-            latest_state_path, latest_epoch = self._search_for_prev_state(
+            latest_state_path, latest_epoch=self._search_for_prev_state(
                 self.save_path
             )
 

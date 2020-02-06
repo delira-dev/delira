@@ -199,11 +199,22 @@ class ChainerNetworkTrainer(BaseNetworkTrainer):
         for key, val in kwargs.items():
             setattr(self, key, val)
 
-    def _setup(self, network, optim_fn, optimizer_cls, optimizer_params,
-               lr_scheduler_cls, lr_scheduler_params, gpu_ids,
-               key_mapping, convert_batch_to_npy_fn, mixed_precision,
-               tta_transforms, tta_reduce_fn, tta_inverse_transforms, callbacks):
-
+    def _setup(
+            self,
+            network,
+            optim_fn,
+            optimizer_cls,
+            optimizer_params,
+            lr_scheduler_cls,
+            lr_scheduler_params,
+            gpu_ids,
+            key_mapping,
+            convert_batch_to_npy_fn,
+            mixed_precision,
+            tta_transforms,
+            tta_reduce_fn,
+            tta_inverse_transforms,
+            callbacks):
         """
         Defines the Trainers Setup
 

@@ -34,9 +34,8 @@ class Predictor(object):
             convert_batch_to_npy_fn=convert_to_numpy_identity,
             prepare_batch_fn=lambda x: x,
             tta_transforms: tuple = (), tta_reduce_fn=None,
-            tta_inverse_transforms: tuple = (), 
+            tta_inverse_transforms: tuple = (),
             callbacks=None, **kwargs):
-
         """
 
         Parameters
@@ -79,7 +78,7 @@ class Predictor(object):
                     tta_inverse_transforms, **kwargs)
                     prepare_batch_fn, callbacks, **kwargs)
 
-        self._tqdm_desc = "Test"
+        self._tqdm_desc="Test"
 
     def _setup(self, network, key_mapping, convert_batch_args_kwargs_to_npy_fn,
                prepare_batch_fn, tta_transforms, tta_reduce_fn,

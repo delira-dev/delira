@@ -266,7 +266,6 @@ class PyTorchNetworkTrainer(BaseNetworkTrainer):
                key_mapping, convert_batch_to_npy_fn, mixed_precision,
                mixed_precision_kwargs, tta_transforms, tta_reduce_fn,
                tta_inverse_transforms, callbacks):
-
         """
         Defines the Trainers Setup
 
